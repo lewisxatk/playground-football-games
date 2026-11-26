@@ -4,16 +4,50 @@ import { getCandidates, getPlayer, getTransferHints, type Candidate, type League
 import "./career-file.css";
 
 type Mode = "EASY" | "MEDIUM" | "HARD" | "CULT HERO" | "EXTREME";
-type Row = { id:string; season:string; club:string; loan:boolean; apps:number|null; goals:number|null; covered:boolean; spellApps:number|null; spellGoals:number|null };
+type Row = { id:string; season:string; club:string; clubKey:string; loan:boolean; apps:number|null; goals:number|null; covered:boolean; spellApps:number|null; spellGoals:number|null };
+type FreeNote = { id:string; label:string; value:string };
 type Hint = { id:string; label:string; cost:number; value:string; available:boolean };
 
 const MODES: { name:Mode; note:string; colour:string }[] = [
-  {name:"EASY",note:"World-famous names",colour:"lime"},
-  {name:"MEDIUM",note:"Big careers, less obvious",colour:"blue"},
-  {name:"HARD",note:"For the detail people",colour:"orange"},
-  {name:"CULT HERO",note:"Proper football knowledge",colour:"pink"},
-  {name:"EXTREME",note:"Five leagues. Archive from 2000/01.",colour:"violet"}
+  {name:"EASY",note:"Global stars and household names",colour:"lime"},
+  {name:"MEDIUM",note:"Big names, less obvious careers",colour:"blue"},
+  {name:"HARD",note:"For serious football watchers",colour:"orange"},
+  {name:"CULT HERO",note:"Fan favourites and cult careers",colour:"pink"},
+  {name:"EXTREME",note:"Deep cuts from all five leagues",colour:"violet"}
 ];
+
+const MODE_NAMES: Record<Exclude<Mode,"EXTREME">,string[]> = {
+  EASY: [
+    "Cristiano Ronaldo","Lionel Messi","Neymar","Kylian Mbappe","Mohamed Salah","Erling Haaland","Harry Kane",
+    "Kevin De Bruyne","Robert Lewandowski","Luka Modric","Sergio Ramos","Zlatan Ibrahimovic","Luis Suarez",
+    "Karim Benzema","Wayne Rooney","Thierry Henry","Ronaldinho","Andres Iniesta","Xavi","David Beckham",
+    "Steven Gerrard","Frank Lampard","Didier Drogba","Gareth Bale","Eden Hazard","Antoine Griezmann",
+    "Thomas Muller","Manuel Neuer","Toni Kroos","Andrea Pirlo","Francesco Totti","Zinedine Zidane",
+    "Alessandro Del Piero"
+  ],
+  MEDIUM: [
+    "Sadio Mane","Robin van Persie","David Silva","Angel Di Maria","Edinson Cavani","Carlos Tevez",
+    "Fernando Torres","Yaya Toure","Cesc Fabregas","Mesut Ozil","Alexis Sanchez","Radamel Falcao",
+    "Gerard Pique","Ivan Rakitic","Samuel Eto'o","Miroslav Klose","Arjen Robben","Franck Ribery",
+    "Bastian Schweinsteiger","Wesley Sneijder","Diego Costa","Gonzalo Higuain","Mario Mandzukic",
+    "Dani Alves","Marcelo","Vincent Kompany","Nemanja Vidic","Patrice Evra","Juan Mata","Edin Dzeko",
+    "Marco Reus","Mario Gotze"
+  ],
+  HARD: [
+    "Antonio Di Natale","Marek Hamsik","Claudio Marchisio","Ezequiel Lavezzi","Diego Milito","Jermain Defoe",
+    "Darren Bent","Dimitar Berbatov","Santi Cazorla","Samir Nasri","Juan Roman Riquelme","Diego Forlan",
+    "Mikel Arteta","Radja Nainggolan","Arda Turan","Javier Pastore","Ever Banega","Klaas-Jan Huntelaar",
+    "Mario Gomez","Kevin Gameiro","Stevan Jovetic","Claudio Pizarro","Aritz Aduriz","Obafemi Martins",
+    "Goran Pandev","Antonio Valencia","Giuseppe Rossi","Mauro Zarate"
+  ],
+  "CULT HERO": [
+    "Juninho Pernambucano","Jay-Jay Okocha","Peter Crouch","Nani","Djibril Cisse","Roque Santa Cruz",
+    "Antonio Cassano","Tuncay Sanli","Morten Gamst Pedersen","Steed Malbranque","Hossam Ghaly",
+    "Nihat Kahveci","Shunsuke Nakamura","Guti","Simao Sabrosa","Ricardo Quaresma","Juan Valeron",
+    "Javier Saviola","Elano","Kevin Kuranyi","Florent Malouda","Benjani","Yakubu","Youri Djorkaeff"
+  ]
+};
+const CURATED_NAMES = new Set(Object.values(MODE_NAMES).flat().map(clean));
 const LEAGUES: {label:string;code:LeagueCode}[] = [
   {label:"All top five",code:"ALL"},{label:"Premier League",code:"ENG-PL"},{label:"La Liga",code:"ESP-LL"},
   {label:"Serie A",code:"ITA-SA"},{label:"Bundesliga",code:"DEU-BL"},{label:"Ligue 1",code:"FRA-L1"}
@@ -26,14 +60,24 @@ function makeRows(p:Player):Row[]{
   const rows:Row[]=[];
   for(const spell of ordered(p)){
     const start=spell.start??yearOf(spell.years),end=spell.end??start;
-    if(start==null){rows.push({id:"s"+spell.seq,season:spell.years||"Date not recorded",club:spell.club,loan:spell.loan,apps:null,goals:null,covered:false,spellApps:spell.apps,spellGoals:spell.goals});continue;}
+    const clubKey=spell.clubQid||clean(spell.clubLink||spell.club);
+    if(start==null){
+      rows.push({id:"s"+spell.seq,season:spell.years||"Date not recorded",club:spell.club,clubKey,loan:spell.loan,
+        apps:null,goals:null,covered:false,spellApps:spell.apps,spellGoals:spell.goals});
+      continue;
+    }
     for(let y=start;y<=Math.min(end??start,start+35);y++){
-      let found=p.stats.filter(s=>clean(s.clubLink||s.club)===clean(spell.clubLink||spell.club)&&yearOf(s.season)===y);
-      if(!found.length)found=p.stats.filter(s=>clean(s.club)===clean(spell.club)&&yearOf(s.season)===y);
-      rows.push({id:spell.seq+"-"+y,season:y+"/"+String((y+1)%100).padStart(2,"0"),club:spell.club,loan:spell.loan,
-        apps:found.length?found.reduce((n,s)=>n+(s.apps??0),0):null,
-        goals:found.length?found.reduce((n,s)=>n+(s.goals??0),0):null,covered:found.length>0,
-        spellApps:y===start?spell.apps:null,spellGoals:y===start?spell.goals:null});
+      const found=p.stats.filter(stat=>{
+        if(yearOf(stat.season)!==y)return false;
+        if(spell.clubQid&&stat.clubQid)return spell.clubQid===stat.clubQid;
+        if(spell.clubLink&&stat.clubLink)return clean(spell.clubLink)===clean(stat.clubLink);
+        return clean(spell.club)===clean(stat.club);
+      });
+      rows.push({id:spell.seq+"-"+y,season:y+"/"+String((y+1)%100).padStart(2,"0"),
+        club:spell.club,clubKey,loan:spell.loan,
+        apps:found.length&&found.some(x=>x.apps!==null)?found.reduce((n,x)=>n+(x.apps??0),0):null,
+        goals:found.length&&found.some(x=>x.goals!==null)?found.reduce((n,x)=>n+(x.goals??0),0):null,
+        covered:found.length>0,spellApps:y===start?spell.apps:null,spellGoals:y===start?spell.goals:null});
     }
   }
   return rows;
@@ -46,11 +90,43 @@ const ageOf=(p:Player)=>{
   return String(age);
 };
 function fits(c:Candidate,m:Mode){
-  if(m==="EASY")return c.apps>=250;
-  if(m==="MEDIUM")return c.apps>=100;
-  if(m==="HARD")return c.apps>=40&&c.spells>=2;
-  if(m==="CULT HERO")return c.apps>=20&&c.apps<350&&c.clubs>=2;
-  return true;
+  if(c.statSeasons<2)return false;
+  const name=clean(c.name);
+  if(m==="EXTREME")return !CURATED_NAMES.has(name);
+  return MODE_NAMES[m].some(candidate=>clean(candidate)===name);
+}
+function randomFreeRows(rows:Row[]):string[]{
+  const available=rows.filter(row=>row.covered&&(row.apps!==null||row.goals!==null));
+  const shuffled=[...available].sort(()=>Math.random()-.5);
+  const selected:Row[]=[];
+  for(const row of shuffled){
+    if(selected.length>=2)break;
+    if(!selected.some(existing=>existing.clubKey===row.clubKey))selected.push(row);
+  }
+  for(const row of shuffled){
+    if(selected.length>=2)break;
+    if(!selected.some(existing=>existing.id===row.id))selected.push(row);
+  }
+  return selected.map(row=>row.id);
+}
+function makeFreeNote(player:Player):FreeNote|null{
+  const career=ordered(player);
+  const first=career[0],last=career[career.length-1];
+  const position=player.position.trim();
+  const broadPosition=(()=>{
+    const value=position.toUpperCase();
+    if(/GK|GOALKEEPER/.test(value))return "Goalkeeper";
+    if(/DF|DEFENDER|BACK/.test(value))return "Defender";
+    if(/MF|MIDFIELDER|MID/.test(value))return "Midfielder";
+    if(/FW|FORWARD|STRIKER|ATTACK/.test(value))return "Forward";
+    return position;
+  })();
+  const options:FreeNote[]=[];
+  if(broadPosition)options.push({id:"position",label:"Position group",value:broadPosition});
+  if(player.nationality)options.push({id:"nationality",label:"Nationality",value:player.nationality});
+  if(first?.start&&last?.end)options.push({id:"span",label:"Career window",value:first.start+"–"+last.end});
+  if(!options.length)return null;
+  return options[Math.floor(Math.random()*options.length)];
 }
 function matches(input:string,p:Player){
   const g=clean(input);if(!g)return false;
@@ -79,7 +155,7 @@ function careerHint(p:Player):Hint[]{
 }
 
 export default function CareerFilePage(){
-  const [mode,setMode]=useState<Mode>("EXTREME");
+  const [mode,setMode]=useState<Mode>("EASY");
   const [league,setLeague]=useState<LeagueCode>("ALL");
   const [pool,setPool]=useState<Candidate[]>([]);
   const [player,setPlayer]=useState<Player|null>(null);
@@ -88,6 +164,8 @@ export default function CareerFilePage(){
   const [attempts,setAttempts]=useState(0);
   const [score,setScore]=useState(1000);
   const [revealed,setRevealed]=useState<string[]>([]);
+  const [freeRows,setFreeRows]=useState<string[]>([]);
+  const [freeNote,setFreeNote]=useState<FreeNote|null>(null);
   const [opened,setOpened]=useState<string[]>([]);
   const [transfers,setTransfers]=useState<Transfer[]|null>(null);
   const [feesBusy,setFeesBusy]=useState(false);
@@ -102,23 +180,28 @@ export default function CareerFilePage(){
   const seen=useRef<Set<string>>(new Set());
 
   const newPlayer=useCallback(async(deck:Candidate[],selectedMode:Mode)=>{
-    const filtered=deck.filter(c=>fits(c,selectedMode));
-    const options=filtered.length?filtered:deck;
-    if(!options.length)throw new Error("No player files matched. Try another competition or mode.");
+    const options=deck.filter(c=>fits(c,selectedMode));
+    if(!options.length)throw new Error("There are no verified "+selectedMode+" player files in this league selection yet. Try All Top Five or another difficulty.");
     let available=options.filter(c=>!seen.current.has(c.id));
     if(!available.length){seen.current.clear();available=options;setNote("The draw has cycled. Your used files are back in the mix.");}
     const choice=available[Math.floor(Math.random()*available.length)];
     seen.current.add(choice.id);
     setLoadingPlayer(true);
-    try{const record=await getPlayer(choice.id);const timeline=makeRows(record);
+    try{
+      const record=await getPlayer(choice.id);
+      const timeline=makeRows(record);
       if(!timeline.length)throw new Error("This player has no readable career timeline.");
-      setPlayer(record);setRows(timeline);setRound(n=>n+1);setStatus("playing");
+      const free= randomFreeRows(timeline);
+      if(free.length<2)throw new Error("This player's source does not contain two usable season-stat clues. The file was skipped; try the next player.");
+      const note=makeFreeNote(record);
+      setPlayer(record);setRows(timeline);setFreeRows(free);setRevealed(free);setFreeNote(note);
+      setOpened(note?[note.id]:[]);setRound(n=>n+1);setStatus("playing");
     }finally{setLoadingPlayer(false);}
   },[]);
 
   useEffect(()=>{
     let live=true;seen.current.clear();setBusy(true);setError("");
-    setPlayer(null);setRows([]);setOpened([]);setRevealed([]);setTransfers(null);setFeesError("");
+    setPlayer(null);setRows([]);setOpened([]);setRevealed([]);setFreeRows([]);setFreeNote(null);setTransfers(null);setFeesError("");
     setGuess("");setAttempts(0);setScore(1000);setStatus("playing");setNote("");
     getCandidates(league).then(async list=>{if(!live)return;setPool(list);await newPlayer(list,mode);})
       .catch(e=>{if(live)setError(e instanceof Error?e.message:"Could not open the player archive.");})
@@ -155,7 +238,7 @@ export default function CareerFilePage(){
   };
   const next=async()=>{
     if(!pool.length)return;
-    setPlayer(null);setRows([]);setGuess("");setAttempts(0);setScore(1000);setRevealed([]);setOpened([]);
+    setPlayer(null);setRows([]);setGuess("");setAttempts(0);setScore(1000);setRevealed([]);setFreeRows([]);setFreeNote(null);setOpened([]);
     setTransfers(null);setFeesError("");setStatus("playing");setNote("");setCopied(false);setError("");
     try{await newPlayer(pool,mode);}catch(e){setError(e instanceof Error?e.message:"Could not load another player.");}
   };
@@ -201,7 +284,7 @@ export default function CareerFilePage(){
       <div className="cf-mode-grid">{MODES.map((m,i)=><motion.button key={m.name}
         className={"cf-mode-card "+m.colour+(mode===m.name?" chosen":"")} onClick={()=>setMode(m.name)}
         whileHover={{y:-5,rotate:i%2?1:-1}} whileTap={{scale:.98}}>
-        <span className="cf-mode-index">0{i+1} / PG</span><strong>{m.name}</strong><small>{m.note}</small><i>{mode===m.name?"SELECTED ✓":"SELECT ↗"}</i>
+        <span className="cf-mode-index">0{i+1} / PG</span><strong>{m.name}</strong><small>{m.note}</small><small className="cf-mode-count">{pool.length?pool.filter(c=>fits(c,m.name)).length+" FILES IN THE DRAW":"LOADING PLAYER POOL"}</small><i>{mode===m.name?"SELECTED ✓":"SELECT ↗"}</i>
       </motion.button>)}</div>
       <div className="cf-round-note"><span><b>{mode}</b> / {league==="ALL"?"ALL FIVE LEAGUES":LEAGUES.find(x=>x.code===league)?.label.toUpperCase()}</span><span>10 GUESSES · 1,000 STARTING POINTS · CLUES COST POINTS</span></div>
     </section>
@@ -218,14 +301,14 @@ export default function CareerFilePage(){
           <div className="cf-subject"><div><small>PLAYER UNKNOWN</small><strong>THE<br/><em>JOURNEY.</em></strong><span>{rows.length} TIMELINE ENTRIES / {player.spells.length} CLUB SPELLS</span></div><div className="cf-crest-stack"><span>PG</span><span>?</span><span>90</span></div></div>
           <div className="cf-timeline-toolbar"><div><b>CAREER TIMELINE</b><small>{revealedCount} / {rows.length} REVEALED</small></div>
             <button onClick={revealAll} disabled={status!=="playing"||revealedCount===rows.length}>REVEAL FULL CAREER · {Math.max(0,rows.length-revealedCount)*35} PTS</button></div>
-          <div className="cf-table-wrap"><table className="cf-table"><thead><tr><th>SEASON</th><th>CLUB</th><th>APPS</th><th>GOALS</th><th/></tr></thead>
-            <tbody>{rows.map((r,i)=>{const shown=revealed.includes(r.id)||status!=="playing";return <motion.tr key={r.id} className={shown?"unblurred":"hidden-row"}
+          <div className="cf-free-brief"><div><span>FREE SCOUTING NOTE</span><strong>{freeNote?freeNote.label:"TWO FREE SEASON CLUES"}</strong><p>{freeNote?freeNote.value:"Two sourced season records are opened for every player."}</p></div><span className="cf-free-tag">NO POINTS DEDUCTED</span></div><div className="cf-table-wrap"><table className="cf-table"><thead><tr><th>SEASON</th><th>CLUB</th><th>APPS</th><th>GOALS</th><th/></tr></thead>
+            <tbody>{rows.map((r,i)=>{const shown=revealed.includes(r.id)||status!=="playing";return <motion.tr key={r.id} className={shown?(freeRows.includes(r.id)?"unblurred cf-free-row":"unblurred cf-paid-row"):"hidden-row"}
               initial={{opacity:0,x:-8}} animate={{opacity:1,x:0}} transition={{delay:Math.min(i*.012,.4)}}>
               <td><span className={shown?"":"cf-blur"}>{r.season}</span></td>
               <td><span className={shown?"":"cf-blur"}>{r.club}</span>{shown&&r.loan&&<small className="cf-loan">LOAN</small>}{shown&&(r.spellApps!=null||r.spellGoals!=null)&&<small className="cf-spell-total">SPELL TOTAL · {fmt(r.spellApps)} APPS / {fmt(r.spellGoals)} GOALS</small>}</td>
               <td><span className={shown?"":"cf-blur"}>{r.covered?fmt(r.apps):"—"}</span></td>
               <td><span className={shown?"":"cf-blur"}>{r.covered?fmt(r.goals):"—"}</span></td>
-              <td>{shown?<span className="cf-revealed-tick">✓</span>:<button className="cf-reveal-row" onClick={()=>revealRow(r)} disabled={status!=="playing"}>−35 ↗</button>}</td>
+              <td>{shown?<span className="cf-revealed-tick">{freeRows.includes(r.id)?"FREE":"✓"}</span>:<button className="cf-reveal-row" onClick={()=>revealRow(r)} disabled={status!=="playing"}>−35 ↗</button>}</td>
             </motion.tr>;})}</tbody></table></div>
           <div className="cf-record-foot"><span>APPS / GOALS: WHERE A SEASON SOURCE EXISTS</span><span>— = NOT RECORDED</span></div>
           <div className="cf-source-note">Career-spell totals are shown separately from season totals. Season totals are only shown where the source has them; missing totals are not guessed. Source statistics are marked unverified. <a href={player.wikipediaUrl} target="_blank" rel="noreferrer">OPEN THE ORIGINAL PLAYER SOURCE ↗</a></div>
