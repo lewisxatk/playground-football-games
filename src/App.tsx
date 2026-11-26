@@ -7,7 +7,7 @@ type Game = { number: string; title: string; description: string; tag: string; t
 const games: Game[] = [
   { number: "01", title: "LOWBALL", description: "Know your football? Prove it when the pressure is on.", tag: "QUICK FIRE", tone: "lime", icon: "↘", status: "PLAY NOW" },
   { number: "02", title: "THE CLIMB", description: "One wrong answer and the run is over. How far can you go?", tag: "STREAK", tone: "orange", icon: "↗", status: "READY" },
-  { number: "03", title: "DRAFT XI", description: "Build a side. Make the picks. Back your football brain.", tag: "SQUAD BUILDER", tone: "blue", icon: "✳", status: "PLAY NOW" },
+  { number: "03", title: "DRAFT XI", description: "Build a side. Make the picks. Back your football brain.", tag: "SQUAD BUILDER", tone: "blue", icon: "⚽", status: "PLAY NOW" },
   { number: "04", title: "CAREER FILE", description: "Read the seasons. Unlock clues. Name the player.", tag: "PLAYER QUIZ", tone: "pink", icon: "?", status: "PLAY NOW" },
 ];
 
