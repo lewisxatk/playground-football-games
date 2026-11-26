@@ -90,7 +90,10 @@ const ageOf=(p:Player)=>{
 };
 function isSamePlayerName(actual:string,curated:string){
   const a=clean(actual),b=clean(curated);
-  return a===b||a.startsWith(b+" ")||b.startsWith(a+" ");
+  if(a===b)return true;
+  // Allow a longer formal name where the curated name contains both first and last names,
+  // but never classify every player sharing a one-word name (for example, "Xavi").
+  return b.includes(" ")&&(a.startsWith(b+" ")||b.startsWith(a+" "));
 }
 function fits(c:Candidate,m:Mode){
   if(c.statSeasons<2)return false;
