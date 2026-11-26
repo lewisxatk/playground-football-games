@@ -4,7 +4,7 @@ import { getCandidates, getPlayer, getTransferHints, type Candidate, type League
 import "./career-file.css";
 
 type Mode = "EASY" | "MEDIUM" | "HARD" | "CULT HERO" | "EXTREME";
-type Row = { id:string; season:string; club:string; loan:boolean; apps:number|null; goals:number|null; covered:boolean };
+type Row = { id:string; season:string; club:string; loan:boolean; apps:number|null; goals:number|null; covered:boolean; spellApps:number|null; spellGoals:number|null };
 type Hint = { id:string; label:string; cost:number; value:string; available:boolean };
 
 const MODES: { name:Mode; note:string; colour:string }[] = [
@@ -26,7 +26,7 @@ function makeRows(p:Player):Row[]{
   const rows:Row[]=[];
   for(const spell of ordered(p)){
     const start=spell.start??yearOf(spell.years),end=spell.end??start;
-    if(start==null){rows.push({id:"s"+spell.seq,season:spell.years||"Date not recorded",club:spell.club,loan:spell.loan,apps:spell.apps,goals:spell.goals,covered:false});continue;}
+    if(start==null){rows.push({id:"s"+spell.seq,season:spell.years||"Date not recorded",club:spell.club,loan:spell.loan,apps:null,goals:null,covered:false,spellApps:spell.apps,spellGoals:spell.goals});continue;}
     for(let y=start;y<=Math.min(end??start,start+35);y++){
       let found=p.stats.filter(s=>clean(s.clubLink||s.club)===clean(spell.clubLink||spell.club)&&yearOf(s.season)===y);
       if(!found.length)found=p.stats.filter(s=>clean(s.club)===clean(spell.club)&&yearOf(s.season)===y);
@@ -221,13 +221,13 @@ export default function CareerFilePage(){
             <tbody>{rows.map((r,i)=>{const shown=revealed.includes(r.id)||status!=="playing";return <motion.tr key={r.id} className={shown?"unblurred":"hidden-row"}
               initial={{opacity:0,x:-8}} animate={{opacity:1,x:0}} transition={{delay:Math.min(i*.012,.4)}}>
               <td><span className={shown?"":"cf-blur"}>{r.season}</span></td>
-              <td><span className={shown?"":"cf-blur"}>{r.club}</span>{shown&&r.loan&&<small className="cf-loan">LOAN</small>}</td>
+              <td><span className={shown?"":"cf-blur"}>{r.club}</span>{shown&&r.loan&&<small className="cf-loan">LOAN</small>}{shown&&(r.spellApps!=null||r.spellGoals!=null)&&<small className="cf-spell-total">SPELL TOTAL · {fmt(r.spellApps)} APPS / {fmt(r.spellGoals)} GOALS</small>}</td>
               <td><span className={shown?"":"cf-blur"}>{r.covered?fmt(r.apps):"—"}</span></td>
               <td><span className={shown?"":"cf-blur"}>{r.covered?fmt(r.goals):"—"}</span></td>
               <td>{shown?<span className="cf-revealed-tick">✓</span>:<button className="cf-reveal-row" onClick={()=>revealRow(r)} disabled={status!=="playing"}>−35 ↗</button>}</td>
             </motion.tr>;})}</tbody></table></div>
           <div className="cf-record-foot"><span>APPS / GOALS: WHERE A SEASON SOURCE EXISTS</span><span>— = NOT RECORDED</span></div>
-          <div className="cf-source-note">Career spells come from the player career record. Season totals are only shown where the source has them; missing totals are not guessed. Source statistics are marked unverified. <a href={player.wikipediaUrl} target="_blank" rel="noreferrer">OPEN THE ORIGINAL PLAYER SOURCE ↗</a></div>
+          <div className="cf-source-note">Career-spell totals are shown separately from season totals. Season totals are only shown where the source has them; missing totals are not guessed. Source statistics are marked unverified. <a href={player.wikipediaUrl} target="_blank" rel="noreferrer">OPEN THE ORIGINAL PLAYER SOURCE ↗</a></div>
         </section>
         <aside className="cf-side">
           <div className="cf-scorecard"><div><small>YOUR SCORE</small><strong>{score.toLocaleString("en-GB")}<i> PTS</i></strong></div><div><small>GUESSES LEFT</small><strong>{left}<i> / 10</i></strong></div>
