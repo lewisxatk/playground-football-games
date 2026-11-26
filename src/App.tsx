@@ -95,10 +95,10 @@ function CareerFile() {
 
 type StatCard = {name:string; club:string; nation:string; stat:number; label:string};
 const duelRounds:StatCard[][] = [
- [{name:"Harry Kane",club:"Bayern Munich",nation:"England",stat:280,label:"Premier League goals"},{name:"Sergio Agüero",club:"Manchester City",nation:"Argentina",stat:184,label:"Premier League goals"}],
- [{name:"Wayne Rooney",club:"Manchester United",nation:"England",stat:208,label:"Premier League goals"},{name:"Andy Cole",club:"Manchester United",nation:"England",stat:187,label:"Premier League goals"}],
+ [{name:"Alan Shearer",club:"Newcastle United",nation:"England",stat:260,label:"Premier League goals"},{name:"Wayne Rooney",club:"Manchester United",nation:"England",stat:208,label:"Premier League goals"}],
+ [{name:"Steven Gerrard",club:"Liverpool",nation:"England",stat:120,label:"Premier League goals"},{name:"Paul Scholes",club:"Manchester United",nation:"England",stat:107,label:"Premier League goals"}],
  [{name:"Thierry Henry",club:"Arsenal",nation:"France",stat:175,label:"Premier League goals"},{name:"Frank Lampard",club:"Chelsea",nation:"England",stat:177,label:"Premier League goals"}],
- [{name:"Mohamed Salah",club:"Liverpool",nation:"Egypt",stat:190,label:"Premier League goals"},{name:"Robbie Fowler",club:"Liverpool",nation:"England",stat:163,label:"Premier League goals"}]
+ [{name:"Mohamed Salah",club:"Liverpool",nation:"Egypt",stat:193,label:"Premier League goals"},{name:"Robbie Fowler",club:"Liverpool",nation:"England",stat:163,label:"Premier League goals"}]
 ];
 function Lowball() {
  const [round,setRound]=useState(0); const [score,setScore]=useState(0); const [streak,setStreak]=useState(0); const [feedback,setFeedback]=useState("");
