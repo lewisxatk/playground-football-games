@@ -47,7 +47,6 @@ const MODE_NAMES: Record<Exclude<Mode,"EXTREME">,string[]> = {
     "Javier Saviola","Elano","Kevin Kuranyi","Florent Malouda","Benjani","Yakubu","Youri Djorkaeff"
   ]
 };
-const CURATED_NAMES = new Set(Object.values(MODE_NAMES).flat().map(clean));
 const LEAGUES: {label:string;code:LeagueCode}[] = [
   {label:"All top five",code:"ALL"},{label:"Premier League",code:"ENG-PL"},{label:"La Liga",code:"ESP-LL"},
   {label:"Serie A",code:"ITA-SA"},{label:"Bundesliga",code:"DEU-BL"},{label:"Ligue 1",code:"FRA-L1"}
