@@ -79,7 +79,7 @@ function CareerFile() {
       <div className="career-record">
         <div className="record-top"><span>PLAYER CAREER / SEASON RECORD</span><span>FILE {String(round+1).padStart(2,"0")}</span></div>
         <div className="record-title"><div><span className="career-kicker">MYSTERY PLAYER</span><h3>WHO'S<br/><em>THE PLAYER?</em></h3></div><div className="silhouette">?</div></div>
-        <div className="career-table-wrap"><table className="career-table"><thead><tr><th>SEASON</th><th>CLUB</th><th>APPS</th><th>GOALS</th></tr></thead><tbody>{player.seasons.map((s,i)=><tr key={s.season}><td>{s.season}</td><td>{s.club}</td><td>{s.apps}</td><td>{s.goals}</td></tr>)}</tbody></table></div>
+        <div className="career-table-wrap"><table className="career-table"><thead><tr><th>SEASON</th><th>CLUB</th><th>APPS</th><th>GOALS</th></tr></thead><tbody>{player.seasons.map((s)=><tr key={s.season}><td>{s.season}</td><td>{s.club}</td><td>{s.apps}</td><td>{s.goals}</td></tr>)}</tbody></table></div>
         <div className="record-foot"><span>COMPETITIVE APPEARANCES & GOALS</span><span>DATA SAMPLE / SEE SOURCES</span></div>
       </div>
       <div className="career-side">
