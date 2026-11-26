@@ -89,11 +89,23 @@ const ageOf=(p:Player)=>{
   if(now.getUTCMonth()<d.getUTCMonth()||(now.getUTCMonth()===d.getUTCMonth()&&now.getUTCDate()<d.getUTCDate()))age--;
   return String(age);
 };
+function isSamePlayerName(actual:string,curated:string){
+  const a=clean(actual),b=clean(curated);
+  return a===b||a.startsWith(b+" ")||b.startsWith(a+" ");
+}
 function fits(c:Candidate,m:Mode){
   if(c.statSeasons<2)return false;
-  const name=clean(c.name);
-  if(m==="EXTREME")return !CURATED_NAMES.has(name);
-  return MODE_NAMES[m].some(candidate=>clean(candidate)===name);
+  const isCurated=Object.values(MODE_NAMES).some(list=>list.some(name=>isSamePlayerName(c.name,name)));
+  if(m==="EXTREME")return !isCurated;
+  return MODE_NAMES[m].some(name=>isSamePlayerName(c.name,name));
+}
+function positionLabel(raw:string){
+  const value=raw.toUpperCase();
+  if(/GK|GOALKEEPER/.test(value))return "Goalkeeper";
+  if(/DF|DEFENDER|BACK/.test(value))return "Defender";
+  if(/MF|MIDFIELDER|MID/.test(value))return "Midfielder";
+  if(/FW|FORWARD|STRIKER|ATTACK/.test(value))return "Forward";
+  return raw.trim();
 }
 function randomFreeRows(rows:Row[]):string[]{
   const available=rows.filter(row=>row.covered&&(row.apps!==null||row.goals!==null));
@@ -112,15 +124,7 @@ function randomFreeRows(rows:Row[]):string[]{
 function makeFreeNote(player:Player):FreeNote|null{
   const career=ordered(player);
   const first=career[0],last=career[career.length-1];
-  const position=player.position.trim();
-  const broadPosition=(()=>{
-    const value=position.toUpperCase();
-    if(/GK|GOALKEEPER/.test(value))return "Goalkeeper";
-    if(/DF|DEFENDER|BACK/.test(value))return "Defender";
-    if(/MF|MIDFIELDER|MID/.test(value))return "Midfielder";
-    if(/FW|FORWARD|STRIKER|ATTACK/.test(value))return "Forward";
-    return position;
-  })();
+  const broadPosition=positionLabel(player.position);
   const options:FreeNote[]=[];
   if(broadPosition)options.push({id:"position",label:"Position group",value:broadPosition});
   if(player.nationality)options.push({id:"nationality",label:"Nationality",value:player.nationality});
@@ -139,7 +143,7 @@ function careerHint(p:Player):Hint[]{
   const totalApps=p.spells.reduce((n,s)=>n+(s.apps??0),0),totalGoals=p.spells.reduce((n,s)=>n+(s.goals??0),0);
   const age=ageOf(p);
   return [
-    {id:"position",label:"Position",cost:90,value:p.position||"Not listed in the top-five league squad records",available:true},
+    {id:"position",label:"Position",cost:90,value:positionLabel(p.position)||"Not listed in the top-five league squad records",available:true},
     {id:"nationality",label:"Nationality",cost:90,value:p.nationality||"Not listed in the top-five league squad records",available:true},
     {id:"age",label:"Age / birth year",cost:90,value:age?age+" years old":p.birthDate?"Born "+p.birthDate.slice(0,4):"Birth date not recorded",available:!!(age||p.birthDate)},
     {id:"height",label:"Height",cost:70,value:p.height?p.height+" cm":"Height not recorded",available:p.height!=null},
@@ -184,18 +188,27 @@ export default function CareerFilePage(){
     if(!options.length)throw new Error("There are no verified "+selectedMode+" player files in this league selection yet. Try All Top Five or another difficulty.");
     let available=options.filter(c=>!seen.current.has(c.id));
     if(!available.length){seen.current.clear();available=options;setNote("The draw has cycled. Your used files are back in the mix.");}
-    const choice=available[Math.floor(Math.random()*available.length)];
-    seen.current.add(choice.id);
+    const draw=[...available].sort(()=>Math.random()-.5);
     setLoadingPlayer(true);
+    let lastProblem="The player source did not contain two usable season-stat clues.";
     try{
-      const record=await getPlayer(choice.id);
-      const timeline=makeRows(record);
-      if(!timeline.length)throw new Error("This player has no readable career timeline.");
-      const free= randomFreeRows(timeline);
-      if(free.length<2)throw new Error("This player's source does not contain two usable season-stat clues. The file was skipped; try the next player.");
-      const note=makeFreeNote(record);
-      setPlayer(record);setRows(timeline);setFreeRows(free);setRevealed(free);setFreeNote(note);
-      setOpened(note?[note.id]:[]);setRound(n=>n+1);setStatus("playing");
+      for(const choice of draw){
+        seen.current.add(choice.id);
+        try{
+          const record=await getPlayer(choice.id);
+          const timeline=makeRows(record);
+          if(!timeline.length){lastProblem="The player had no readable career timeline.";continue;}
+          const free=randomFreeRows(timeline);
+          if(free.length<2){lastProblem="The player had fewer than two season records that could be matched to their club career.";continue;}
+          const note=makeFreeNote(record);
+          setPlayer(record);setRows(timeline);setFreeRows(free);setRevealed(free);setFreeNote(note);
+          setOpened(note?[note.id]:[]);setRound(n=>n+1);setStatus("playing");
+          return;
+        }catch(problem){
+          lastProblem=problem instanceof Error?problem.message:"Could not read this player's career file.";
+        }
+      }
+      throw new Error("No complete player file could be drawn for "+selectedMode+". "+lastProblem+" Try another league or difficulty.");
     }finally{setLoadingPlayer(false);}
   },[]);
 
@@ -286,7 +299,7 @@ export default function CareerFilePage(){
         whileHover={{y:-5,rotate:i%2?1:-1}} whileTap={{scale:.98}}>
         <span className="cf-mode-index">0{i+1} / PG</span><strong>{m.name}</strong><small>{m.note}</small><small className="cf-mode-count">{pool.length?pool.filter(c=>fits(c,m.name)).length+" FILES IN THE DRAW":"LOADING PLAYER POOL"}</small><i>{mode===m.name?"SELECTED ✓":"SELECT ↗"}</i>
       </motion.button>)}</div>
-      <div className="cf-round-note"><span><b>{mode}</b> / {league==="ALL"?"ALL FIVE LEAGUES":LEAGUES.find(x=>x.code===league)?.label.toUpperCase()}</span><span>10 GUESSES · 1,000 STARTING POINTS · CLUES COST POINTS</span></div>
+      <div className="cf-round-note"><span><b>{mode}</b> / {league==="ALL"?"ALL FIVE LEAGUES":LEAGUES.find(x=>x.code===league)?.label.toUpperCase()}</span><span>10 GUESSES · 1,000 STARTING POINTS · 2 FREE SEASONS</span></div>
     </section>
     <section className="cf-game-area">
       <div className="cf-game-heading"><div><span>03 / THE DOSSIER</span><h2>WHO'S THE<br/><em>PLAYER?</em></h2></div>
@@ -327,7 +340,7 @@ export default function CareerFilePage(){
           </section>
           <section className="cf-side-panel cf-hints"><div className="cf-hint-head"><span className="cf-side-kicker">05 / THE CLUE ROOM</span><span>SPEND TO REVEAL</span></div>
             {hints.map(h=><div className="cf-hint-row" key={h.id}><div><b>{h.label}</b>{opened.includes(h.id)&&<p>{h.value}</p>}</div>
-              <button onClick={()=>unlock(h)} disabled={!h.available||opened.includes(h.id)||status!=="playing"}>{opened.includes(h.id)?"UNLOCKED ✓":h.available?"−"+h.cost+" PTS ↗":"NO DATA"}</button></div>)}
+              <button onClick={()=>unlock(h)} disabled={!h.available||opened.includes(h.id)||status!=="playing"}>{opened.includes(h.id)?(freeNote?.id===h.id?"FREE ✓":"UNLOCKED ✓"):h.available?"−"+h.cost+" PTS ↗":"NO DATA"}</button></div>)}
             <div className="cf-hint-row cf-transfer-row"><div><b>Transfer history / fees</b>
               {opened.includes("fees")&&(feesBusy?<p>Searching the transfer archive…</p>:feesError?<p>{feesError}</p>:transfers?.length?
                 <div className="cf-transfer-list">{transfers.map((t,i)=><p key={i}><strong>{t.year||"Year ?"}</strong> · {t.from||"Unknown"} → {t.to||"Unknown"}<br/><b>{t.fee}</b>{t.league?" · "+t.league:""}</p>)}</div>:
