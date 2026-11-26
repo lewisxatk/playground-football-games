@@ -18,7 +18,6 @@ export type Transfer = { year: string; from: string; to: string; fee: string; le
 
 type Archive = { db: any; conn: any; query: (sql: string, params?: unknown[]) => Promise<any[]> };
 let dbPromise: Promise<Archive> | undefined;
-let transferPromise: Promise<void> | undefined;
 const CDN = "https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.32.0/dist/";
 const BIG_FIVE = ["ENG-PL", "ESP-LL", "ITA-SA", "DEU-BL", "FRA-L1"];
 
@@ -145,48 +144,20 @@ export async function getPlayer(id: string): Promise<Player> {
   };
 }
 export async function getTransferHints(names: string[]): Promise<Transfer[]> {
-  const a = await careerArchive();
-  if (!transferPromise) {
-    transferPromise = (async () => {
-      const response = await fetch("/career-data/transfers.csv", { cache: "force-cache" });
-      if (!response.ok) throw new Error("Transfer data request failed (" + response.status + ").");
-      const csv = await response.text();
-      if (!csv.toLowerCase().includes("player_name") || csv.trimStart().startsWith("<"))
-        throw new Error("The transfer endpoint did not return the expected CSV file.");
-      // Fetch from our same-origin Pages Function and register the bytes as text.
-      await a.db.registerFileText("transfers.csv", csv);
-      await a.conn.query("CREATE VIEW transfer_archive AS SELECT * FROM read_csv_auto('transfers.csv',header=true,ignore_errors=true)");
-    })().catch(error => {
-      transferPromise = undefined;
-      throw error;
-    });
+  const params = new URLSearchParams();
+  for (const name of Array.from(new Set(names.map(value => value.trim()).filter(Boolean)))) {
+    params.append("name", name);
   }
-  await transferPromise;
-  const cols = await a.query("DESCRIBE transfer_archive");
-  const colNames = new Set(cols.map((c: any) => String(c.column_name).toLowerCase()));
-  if (!colNames.has("player_name")) throw new Error("The transfer source has no player name column.");
-  const found: any[] = [];
-  for (const name of Array.from(new Set(names.map(v => v.trim()).filter(Boolean)))) {
-    found.push(...await a.query(
-      "SELECT * FROM transfer_archive WHERE lower(trim(player_name))=lower(trim(?)) LIMIT 60",
-      [name]
-    ));
-  }
-  const get = (row: any, key: string) => row[key] == null ? "" : String(row[key]);
-  const unique = new Map<string, Transfer>();
-  for (const row of found) {
-    const raw = get(row, "fee").trim();
-    const cleaned = get(row, "fee_cleaned");
-    const fee = raw && raw !== "?" && raw !== "-" ? raw :
-      cleaned && Number.isFinite(Number(cleaned)) ? "Approx. €" + Number(cleaned).toFixed(2) + "m" : "Not disclosed";
-    const item = {
-      year: get(row, "year"),
-      from: get(row, "source_club"),
-      to: get(row, "target_club"),
-      fee,
-      league: get(row, "source_league") || get(row, "target_league")
-    };
-    unique.set([item.year,item.from,item.to,item.fee].join("|"), item);
-  }
-  return Array.from(unique.values()).sort((x,y) => x.year.localeCompare(y.year));
+  if (!params.toString()) return [];
+  const response = await fetch("/career-data/transfer-hints?" + params.toString(), { cache: "no-cache" });
+  if (!response.ok) throw new Error("Transfer data lookup failed (" + response.status + ").");
+  const data = await response.json();
+  if (!Array.isArray(data)) throw new Error("The transfer lookup returned an invalid response.");
+  return data.map((row: any) => ({
+    year: String(row.year ?? ""),
+    from: String(row.from ?? ""),
+    to: String(row.to ?? ""),
+    fee: String(row.fee ?? "Not disclosed"),
+    league: String(row.league ?? "")
+  }));
 }
