@@ -116,8 +116,8 @@ export async function getPlayer(id: string): Promise<Player> {
   const a = await careerArchive();
   // Run queries sequentially on the shared DuckDB connection; concurrent prepared queries can contend on one connection.
   const spells = await a.query("SELECT * FROM career WHERE player_qid=? ORDER BY seq", [id]);
-  const stats = await a.query("SELECT club,club_link,season,SUM(apps) apps,SUM(goals) goals,SUM(assists) assists " +
-    "FROM stat_club WHERE player_qid=? AND coalesce(competition_group,'')<>'Total' GROUP BY club,club_link,season", [id]);
+  const stats = await a.query("SELECT club,club_link,club_qid,season,SUM(apps) apps,SUM(goals) goals,SUM(assists) assists " +
+    "FROM stat_club WHERE player_qid=? AND coalesce(competition_group,'')<>'Total' GROUP BY club,club_link,club_qid,season", [id]);
   const profile = await a.query("SELECT full_name,height_cm,birth_place FROM player_profile WHERE player_qid=? LIMIT 1", [id]);
   const birth = await a.query("SELECT birth_date,precision FROM birth WHERE player_qid=? LIMIT 1", [id]);
   const national = await a.query("SELECT SUM(caps) caps,SUM(goals) goals,list(team_name) teams FROM national WHERE player_qid=?", [id]);
@@ -134,9 +134,9 @@ export async function getPlayer(id: string): Promise<Player> {
     birthplace: String(info.birth_place ?? ""),
     spells: spells.map((r: any) => ({ seq: Number(r.seq ?? 0), years: String(r.years_raw ?? ""),
       start: n(r.start_year), end: n(r.end_year), club: String(r.club_name ?? "Unknown club"),
-      clubLink: String(r.club_link ?? ""), loan: Boolean(r.loan), apps: n(r.apps), goals: n(r.goals),
+      clubLink: String(r.club_link ?? ""), clubQid: String(r.club_qid ?? ""), loan: Boolean(r.loan), apps: n(r.apps), goals: n(r.goals),
       sourceTitle: String(r.source_title ?? source), sourceRevision: n(r.source_revid) ?? revision })),
-    stats: stats.map((r: any) => ({ club: String(r.club ?? ""), clubLink: String(r.club_link ?? ""),
+    stats: stats.map((r: any) => ({ club: String(r.club ?? ""), clubLink: String(r.club_link ?? ""), clubQid: String(r.club_qid ?? ""),
       season: String(r.season ?? ""), apps: n(r.apps), goals: n(r.goals), assists: n(r.assists) })),
     caps: n(intl.caps), internationalGoals: n(intl.goals),
     teams: Array.isArray(intl.teams) ? intl.teams.map(String).filter(Boolean) : [],
