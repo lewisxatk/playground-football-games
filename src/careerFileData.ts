@@ -151,8 +151,8 @@ type TransferIndex = Map<string, Transfer[]>;
 let transferIndexPromise: Promise<TransferIndex> | null = null;
 
 function normaliseTransferName(value: string): string {
-  return value.toLocaleLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "")
-    .replace(/[^a-z0-9 ]/g, " ").replace(/\\s+/g, " ").trim();
+  return value.toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
 }
 
 function parseTransferCsvLine(line: string): string[] {
@@ -184,11 +184,11 @@ async function loadTransferIndex(): Promise<TransferIndex> {
   let fields: Record<string, number> = {};
 
   const processLine = (rawLine: string) => {
-    const line = rawLine.replace(/\\r$/, "");
+    const line = rawLine.replace(/\r$/, "");
     if (!line) return;
     const values = parseTransferCsvLine(line);
     if (!columns) {
-      columns = values.map((value, i) => i === 0 ? value.replace(/^\\uFEFF/, "").trim() : value.trim());
+      columns = values.map((value, i) => i === 0 ? value.replace(/^\uFEFF/, "").trim() : value.trim());
       columns.forEach((column, i) => { fields[column] = i; });
       if (fields.player_name === undefined) throw new Error("Transfer data is missing its player_name column.");
       return;
@@ -220,11 +220,11 @@ async function loadTransferIndex(): Promise<TransferIndex> {
       const { value, done } = await reader.read();
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
-      let newline = buffer.indexOf("\\n");
+      let newline = buffer.indexOf("\n");
       while (newline >= 0) {
         processLine(buffer.slice(0, newline));
         buffer = buffer.slice(newline + 1);
-        newline = buffer.indexOf("\\n");
+        newline = buffer.indexOf("\n");
       }
     }
     buffer += decoder.decode();
