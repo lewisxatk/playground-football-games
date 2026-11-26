@@ -68,8 +68,10 @@ function makeRows(p:Player):Row[]{
     for(let y=start;y<=Math.min(end??start,start+35);y++){
       const found=p.stats.filter(stat=>{
         if(yearOf(stat.season)!==y)return false;
-        if(spell.clubQid&&stat.clubQid)return spell.clubQid===stat.clubQid;
-        if(spell.clubLink&&stat.clubLink)return clean(spell.clubLink)===clean(stat.clubLink);
+        // Prefer stable Wikidata identity, then page links; fall back to the displayed club
+        // name because career infobox links may be redirects while the stats table uses another title.
+        if(spell.clubQid&&stat.clubQid&&spell.clubQid===stat.clubQid)return true;
+        if(spell.clubLink&&stat.clubLink&&clean(spell.clubLink)===clean(stat.clubLink))return true;
         return clean(spell.club)===clean(stat.club);
       });
       const sourceSeason=found.find(stat=>stat.season)?.season.trim();
@@ -332,8 +334,8 @@ export default function CareerFilePage(){
               <td><span className={shown?"":"cf-blur"}>{r.covered?fmt(r.goals):"—"}</span></td>
               <td>{shown?<span className="cf-revealed-tick">{freeRows.includes(r.id)?"FREE":"✓"}</span>:<button className="cf-reveal-row" onClick={()=>revealRow(r)} disabled={status!=="playing"}>−35 ↗</button>}</td>
             </motion.tr>;})}</tbody></table></div>
-          <div className="cf-record-foot"><span>APPS / GOALS: WHERE A SEASON SOURCE EXISTS</span><span>— = NOT RECORDED</span></div>
-          <div className="cf-source-note">Career-spell totals are shown separately from season totals. Season totals are only shown where the source has them; missing totals are not guessed. Source statistics are marked unverified. <a href={player.wikipediaUrl} target="_blank" rel="noreferrer">OPEN THE ORIGINAL PLAYER SOURCE ↗</a></div>
+          <div className="cf-record-foot"><span>APPS / GOALS: SOURCE TOTALS ACROSS LISTED COMPETITION GROUPS</span><span>— = NOT RECORDED</span></div>
+          <div className="cf-source-note">Career-spell totals are shown separately from season totals. Season figures combine the source’s listed non-total competition groups for that club and season. Missing totals are not guessed; source statistics are unverified. <a href={player.wikipediaUrl} target="_blank" rel="noreferrer">OPEN THE ORIGINAL PLAYER SOURCE ↗</a></div>
         </section>
         <aside className="cf-side">
           <div className="cf-scorecard"><div><small>YOUR SCORE</small><strong>{score.toLocaleString("en-GB")}<i> PTS</i></strong></div><div><small>GUESSES LEFT</small><strong>{left}<i> / 10</i></strong></div>
