@@ -183,7 +183,7 @@ export default function CareerFilePage(){
       <div className="cf-hero-art" aria-label="Animated football pitch graphic">
         <div className="cf-score-strip"><span>PG / SCOUTING DEPT.</span><span>LIVE DOSSIER <i/></span></div>
         <div className="cf-mini-pitch"><div className="cf-halfway"/><div className="cf-centre-circle"/><div className="cf-box left"/><div className="cf-box right"/>
-          <motion.div className="cf-ball" animate={{x:[0,16,-11,0],y:[0,-9,4,0],rotate:[0,130,270,360]}} transition={{duration:6.5,repeat:Infinity,ease:"easeInOut"}}>✳</motion.div>
+          <motion.div className="cf-ball" animate={{x:[0,16,-11,0],y:[0,-9,4,0],rotate:[0,130,270,360]}} transition={{duration:6.5,repeat:Infinity,ease:"easeInOut"}}/>
           <motion.div className="cf-runner runner-a" animate={{x:[0,26,4,0],y:[0,17,-4,0]}} transition={{duration:5,repeat:Infinity,ease:"easeInOut"}}>09</motion.div>
           <motion.div className="cf-runner runner-b" animate={{x:[0,-22,3,0],y:[0,-12,7,0]}} transition={{duration:6,repeat:Infinity,ease:"easeInOut"}}>10</motion.div>
           <div className="cf-pitch-note">THE<br/>90 MIN.</div>
