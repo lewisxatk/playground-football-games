@@ -239,11 +239,16 @@ export default function CareerFilePage(){
     setRevealed(rows.map(r=>r.id));setScore(v=>Math.max(0,v-extra.length*35));
   };
   const revealFees=async()=>{
-    if(!player||opened.includes("fees")||status!=="playing")return;
-    setOpened(v=>[...v,"fees"]);setScore(v=>Math.max(0,v-200));setFeesBusy(true);setFeesError("");
-    try{setTransfers(await getTransferHints([player.name,player.fullName]));}
-    catch(e){setFeesError(e instanceof Error?e.message:"Could not load the transfer dataset.");}
-    finally{setFeesBusy(false);}
+    if(!player||opened.includes("fees")||status!=="playing"||feesBusy)return;
+    setFeesBusy(true);setFeesError("");
+    try{
+      const results=await getTransferHints([player.name,player.fullName]);
+      setTransfers(results);
+      setOpened(v=>[...v,"fees"]);
+      if(results.length>0)setScore(v=>Math.max(0,v-200));
+    }catch(e){
+      setFeesError(e instanceof Error?e.message:"Could not load the transfer dataset. No points were deducted; try again.");
+    }finally{setFeesBusy(false);}
   };
   const submit=(event:FormEvent)=>{
     event.preventDefault();if(!player||!guess.trim()||status!=="playing")return;
@@ -346,8 +351,8 @@ export default function CareerFilePage(){
             <div className="cf-hint-row cf-transfer-row"><div><b>Transfer history / fees</b>
               {opened.includes("fees")&&(feesBusy?<p>Searching the transfer archive…</p>:feesError?<p>{feesError}</p>:transfers?.length?
                 <div className="cf-transfer-list">{transfers.map((t,i)=><p key={i}><strong>{t.year||"Year ?"}</strong> · {t.from||"Unknown"} → {t.to||"Unknown"}<br/><b>{t.fee}</b>{t.league?" · "+t.league:""}</p>)}</div>:
-                <p>No matching entry in the 2005–2024 transfer dataset. This does not mean the player moved for free.</p>)}
-            </div><button onClick={revealFees} disabled={opened.includes("fees")||status!=="playing"}>{opened.includes("fees")?"UNLOCKED ✓":"−200 PTS ↗"}</button></div>
+                <p>No matching entry in the 2005–2024 transfer dataset. No points were deducted. This does not mean the player moved for free.</p>)}
+            </div><button onClick={revealFees} disabled={opened.includes("fees")||feesBusy||status!=="playing"}>{feesBusy?"SEARCHING…":opened.includes("fees")?(transfers?.length?"UNLOCKED · −200 PTS ✓":"NO FEE RECORD · FREE ✓"):"−200 PTS ↗"}</button></div>
           </section>
           <div className="cf-side-actions"><button onClick={next} disabled={busy||loadingPlayer||!pool.length}>{loadingPlayer?"LOADING…":"NEXT PLAYER ↗"}</button><span>USED FILES ARE AVOIDED UNTIL THE DRAW REFRESHES.</span></div>
         </aside>
