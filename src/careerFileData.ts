@@ -22,12 +22,11 @@ const CDN = "https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.32.0/dist/";
 const BIG_FIVE = ["ENG-PL", "ESP-LL", "ITA-SA", "DEU-BL", "FRA-L1"];
 
 async function openDb(): Promise<Archive> {
-  const [workerRes, wasmRes, manifestRes] = await Promise.all([
-    fetch(CDN + "duckdb-browser-eh.worker.js"),
-    fetch(CDN + "duckdb-eh.wasm"),
-    fetch("/career-data/data/manifest.json", { cache: "no-cache" })
+  const [workerRes, manifestRes] = await Promise.all([
+    fetch(CDN + "duckdb-browser-eh.worker.js", { cache: "force-cache" }),
+    fetch("/career-data/data/manifest.json", { cache: "force-cache" })
   ]);
-  if (!workerRes.ok || !wasmRes.ok) throw new Error("Could not load the player archive engine.");
+  if (!workerRes.ok) throw new Error("Could not load the player archive worker (" + workerRes.status + ").");
   if (!manifestRes.ok) throw new Error("The career archive is not available right now (" + manifestRes.status + ").");
   const manifest = await manifestRes.json();
   const workerUrl = URL.createObjectURL(new Blob([await workerRes.arrayBuffer()], { type: "text/javascript" }));
@@ -88,7 +87,7 @@ export async function getCandidates(league: LeagueCode): Promise<Candidate[]> {
     "), stats_by_season AS (" +
     " SELECT player_qid, coalesce(nullif(club_qid,''),nullif(club_link,''),club) AS club_key, season, " +
     " SUM(apps) AS apps, SUM(goals) AS goals " +
-    " FROM stat_club WHERE coalesce(competition_group,'')<>'Total' " +
+    " FROM stat_club sc JOIN eligible e ON e.player_qid=sc.player_qid WHERE coalesce(competition_group,'')<>'Total' " +
     " GROUP BY player_qid, coalesce(nullif(club_qid,''),nullif(club_link,''),club), season" +
     "), stats_summary AS (" +
     " SELECT player_qid, COUNT(*) FILTER (WHERE apps IS NOT NULL AND goals IS NOT NULL) AS stat_seasons " +
@@ -96,7 +95,7 @@ export async function getCandidates(league: LeagueCode): Promise<Candidate[]> {
     ") " +
     "SELECT c.candidate_id, c.player_name, c.spells, c.clubs, c.apps, s.stat_seasons " +
     "FROM career_summary c JOIN stats_summary s ON s.player_qid=c.candidate_id " +
-    "WHERE c.apps>=20 AND s.stat_seasons>=2 ORDER BY c.player_name LIMIT 60000";
+    "WHERE c.apps>=20 AND s.stat_seasons>=2 ORDER BY hash(c.candidate_id) LIMIT 12000";
   const rows = await archive.query(sql, codes);
   return rows.map((r: any) => ({
     id: String(r.candidate_id), name: String(r.player_name ?? ""),
