@@ -98,16 +98,15 @@ const n = (v: unknown): number | null => v == null || v === "" ? null : Number(v
 
 export async function getPlayer(id: string): Promise<Player> {
   const a = await careerArchive();
-  const [spells, stats, profile, birth, national, positions, nations] = await Promise.all([
-    a.query("SELECT * FROM career WHERE player_qid=? ORDER BY seq", [id]),
-    a.query("SELECT club,club_link,season,SUM(apps) apps,SUM(goals) goals,SUM(assists) assists " +
-      "FROM stat_club WHERE player_qid=? AND coalesce(competition_group,'')<>'Total' GROUP BY club,club_link,season", [id]),
-    a.query("SELECT full_name,height_cm,birth_place FROM player_profile WHERE player_qid=? LIMIT 1", [id]),
-    a.query("SELECT birth_date,precision FROM birth WHERE player_qid=? LIMIT 1", [id]),
-    a.query("SELECT SUM(caps) caps,SUM(goals) goals,list(team_name) teams FROM national WHERE player_qid=?", [id]),
-    a.query("SELECT position,COUNT(*) n FROM squad WHERE player_qid=? AND competition IN ('ENG-PL','ESP-LL','ITA-SA','DEU-BL','FRA-L1') AND position IS NOT NULL AND trim(position)<>'' GROUP BY position ORDER BY n DESC LIMIT 1", [id]),
-    a.query("SELECT nationality,COUNT(*) n FROM squad WHERE player_qid=? AND competition IN ('ENG-PL','ESP-LL','ITA-SA','DEU-BL','FRA-L1') AND nationality IS NOT NULL AND trim(nationality)<>'' GROUP BY nationality ORDER BY n DESC LIMIT 1", [id])
-  ]);
+  // Run queries sequentially on the shared DuckDB connection; concurrent prepared queries can contend on one connection.
+  const spells = await a.query("SELECT * FROM career WHERE player_qid=? ORDER BY seq", [id]);
+  const stats = await a.query("SELECT club,club_link,season,SUM(apps) apps,SUM(goals) goals,SUM(assists) assists " +
+    "FROM stat_club WHERE player_qid=? AND coalesce(competition_group,'')<>'Total' GROUP BY club,club_link,season", [id]);
+  const profile = await a.query("SELECT full_name,height_cm,birth_place FROM player_profile WHERE player_qid=? LIMIT 1", [id]);
+  const birth = await a.query("SELECT birth_date,precision FROM birth WHERE player_qid=? LIMIT 1", [id]);
+  const national = await a.query("SELECT SUM(caps) caps,SUM(goals) goals,list(team_name) teams FROM national WHERE player_qid=?", [id]);
+  const positions = await a.query("SELECT position,COUNT(*) n FROM squad WHERE player_qid=? AND competition IN ('ENG-PL','ESP-LL','ITA-SA','DEU-BL','FRA-L1') AND position IS NOT NULL AND trim(position)<>'' GROUP BY position ORDER BY n DESC LIMIT 1", [id]);
+  const nations = await a.query("SELECT nationality,COUNT(*) n FROM squad WHERE player_qid=? AND competition IN ('ENG-PL','ESP-LL','ITA-SA','DEU-BL','FRA-L1') AND nationality IS NOT NULL AND trim(nationality)<>'' GROUP BY nationality ORDER BY n DESC LIMIT 1", [id]);
   if (!spells.length) throw new Error("No usable career record for this player. Try the next file.");
   const first = spells[0], info = profile[0] ?? {}, dob = birth[0] ?? {}, intl = national[0] ?? {};
   const source = String(first.source_title ?? "");
