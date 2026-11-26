@@ -136,9 +136,11 @@ function DraftXI(){
 function App() {
   const [active, setActive] = useState("ALL GAMES");
   const [email, setEmail] = useState("");
-  const [joined, setJoined] = useState(false);\n  const [playing, setPlaying] = useState("");
+  const [joined, setJoined] = useState(false);
+  const [playing, setPlaying] = useState("");
   const filters = ["ALL GAMES", "QUICK FIRE", "STREAK", "PLAYER QUIZ"];
-  const visible = active === "ALL GAMES" ? games : games.filter((g) => g.tag === active);\n  const launch = (name:string) => { setPlaying(name); document.getElementById("game-player")?.scrollIntoView({behavior:"smooth",block:"start"}); };
+  const visible = active === "ALL GAMES" ? games : games.filter((g) => g.tag === active);
+  const launch = (name:string) => { setPlaying(name); document.getElementById("game-player")?.scrollIntoView({behavior:"smooth",block:"start"}); };
 
   return (
     <main className="site-shell">
