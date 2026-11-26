@@ -50,17 +50,8 @@ async function openDb(): Promise<Archive> {
     await register(file, path);
     await conn.query("CREATE VIEW " + table + " AS SELECT * FROM read_parquet('" + file + "')");
   }
-  const squads: string[] = [];
-  const seasons = Object.entries(manifest.seasons ?? {}).sort((a: any, b: any) => String(a[0]).localeCompare(String(b[0])));
-  for (let index = 0; index < seasons.length; index++) {
-    const season: any = seasons[index][1];
-    if (!season.files?.squad?.path) continue;
-    const file = "squad_" + index + ".parquet";
-    await register(file, season.files.squad.path);
-    squads.push("'" + file + "'");
-  }
-  if (!squads.length) throw new Error("The archive contains no season squad files.");
-  await conn.query("CREATE VIEW squad AS SELECT * FROM read_parquet([" + squads.join(",") + "], union_by_name=true)");
+  // Do not register every season squad parquet on startup. The files are numerous and
+  // very large on mobile; the quiz can draw and show its core career clues without them.
   const query = async (sql: string, params: unknown[] = []) => {
     const statement = await conn.prepare(sql);
     try {
@@ -121,18 +112,18 @@ export async function getPlayer(id: string): Promise<Player> {
   const spells = await a.query("SELECT * FROM career WHERE player_qid=? ORDER BY seq", [id]);
   const stats = await a.query("SELECT club,club_link,club_qid,season,SUM(apps) apps,SUM(goals) goals,SUM(assists) assists " +
     "FROM stat_club WHERE player_qid=? AND coalesce(competition_group,'')<>'Total' GROUP BY club,club_link,club_qid,season", [id]);
-  const profile = await a.query("SELECT full_name,height_cm,birth_place FROM player_profile WHERE player_qid=? LIMIT 1", [id]);
+  const profile = await a.query("SELECT * FROM player_profile WHERE player_qid=? LIMIT 1", [id]);
   const birth = await a.query("SELECT birth_date,precision FROM birth WHERE player_qid=? LIMIT 1", [id]);
   const national = await a.query("SELECT SUM(caps) caps,SUM(goals) goals,list(team_name) teams FROM national WHERE player_qid=?", [id]);
-  const positions = await a.query("SELECT position,COUNT(*) n FROM squad WHERE player_qid=? AND competition IN ('ENG-PL','ESP-LL','ITA-SA','DEU-BL','FRA-L1') AND position IS NOT NULL AND trim(position)<>'' GROUP BY position ORDER BY n DESC LIMIT 1", [id]);
-  const nations = await a.query("SELECT nationality,COUNT(*) n FROM squad WHERE player_qid=? AND competition IN ('ENG-PL','ESP-LL','ITA-SA','DEU-BL','FRA-L1') AND nationality IS NOT NULL AND trim(nationality)<>'' GROUP BY nationality ORDER BY n DESC LIMIT 1", [id]);
+  // Position and nationality are optional profile clues. Never scan every season squad file
+  // just to populate them; those files are intentionally excluded from the initial load.
   if (!spells.length) throw new Error("No usable career record for this player. Try the next file.");
   const first = spells[0], info = profile[0] ?? {}, dob = birth[0] ?? {}, intl = national[0] ?? {};
   const source = String(first.source_title ?? "");
   const revision = n(first.source_revid);
   return {
     id, name: String(first.player ?? "Unknown"), fullName: String(info.full_name ?? first.player ?? "Unknown"),
-    nationality: String(nations[0]?.nationality ?? ""), position: String(positions[0]?.position ?? ""),
+    nationality: String(info.nationality ?? (Array.isArray(intl.teams) ? intl.teams[0] : "") ?? ""), position: String(info.position ?? ""),
     height: n(info.height_cm), birthDate: String(dob.birth_date ?? ""), birthPrecision: n(dob.precision),
     birthplace: String(info.birth_place ?? ""),
     spells: spells.map((r: any) => ({ seq: Number(r.seq ?? 0), years: String(r.years_raw ?? ""),
