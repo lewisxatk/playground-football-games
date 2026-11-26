@@ -21,8 +21,8 @@ function parseCsvLine(line: string): string[] {
 }
 
 function normalisePlayerName(value: string): string {
-  return value.toLocaleLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "")
-    .replace(/[^a-z0-9 ]/g, " ").replace(/\\s+/g, " ").trim();
+  return value.toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
 }
 
 async function transferHints(names: string[]): Promise<Response> {
@@ -38,11 +38,11 @@ async function transferHints(names: string[]): Promise<Response> {
   let columns: string[] | null = null;
   let matched: Array<{ year: string; from: string; to: string; fee: string; league: string }> = [];
   const processLine = (rawLine: string) => {
-    const line = rawLine.replace(/\\r$/, "");
+    const line = rawLine.replace(/\r$/, "");
     if (!line) return;
     const values = parseCsvLine(line);
     if (!columns) {
-      columns = values.map((value, index) => index === 0 ? value.replace(/^\\uFEFF/, "").trim() : value.trim());
+      columns = values.map((value, index) => index === 0 ? value.replace(/^\uFEFF/, "").trim() : value.trim());
       return;
     }
     const row: Record<string, string> = {};
@@ -68,7 +68,7 @@ async function transferHints(names: string[]): Promise<Response> {
       const { value, done } = await reader.read();
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
-      let newline = buffer.indexOf("\\n");
+      let newline = buffer.indexOf("\n");
       while (newline >= 0) {
         processLine(buffer.slice(0, newline));
         buffer = buffer.slice(newline + 1);
