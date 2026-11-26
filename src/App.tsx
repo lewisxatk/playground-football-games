@@ -7,7 +7,7 @@ const games: Game[] = [
   { number: "01", title: "LOWBALL", description: "Know your football? Prove it when the pressure is on.", tag: "QUICK FIRE", tone: "lime", icon: "↘", status: "READY" },
   { number: "02", title: "THE CLIMB", description: "One wrong answer and the run is over. How far can you go?", tag: "STREAK", tone: "orange", icon: "↗", status: "READY" },
   { number: "03", title: "DRAFT XI", description: "Build a side. Make the picks. Back your football brain.", tag: "SQUAD BUILDER", tone: "blue", icon: "✳", status: "COMING UP" },
-  { number: "04", title: "WHO AM I?", description: "Clues get easier. Your score gets smaller. Name the player.", tag: "PLAYER QUIZ", tone: "pink", icon: "?", status: "COMING UP" },
+  { number: "04", title: "CAREER FILE", description: "Read the seasons. Unlock clues. Name the player.", tag: "PLAYER QUIZ", tone: "pink", icon: "?", status: "COMING UP" },
 ];
 
 
@@ -31,6 +31,13 @@ const careerPlayers: CareerPlayer[] = [
       {season:"2019/20",club:"Manchester City",apps:48,goals:16},{season:"2020/21",club:"Manchester City",apps:40,goals:10},
       {season:"2021/22",club:"Manchester City",apps:45,goals:19},{season:"2022/23",club:"Manchester City",apps:49,goals:10}
     ], spotlight:"2021/22",spotlightClub:"Manchester City",spotlightApps:45,spotlightGoals:19 },
+  { name: "Steven Gerrard", difficulty: "HARD", category: "CLUB LEGEND", nationality: "England", position: "Midfielder", age: 46, status: "Retired",
+    seasons: [
+      {season:"2000/01",club:"Liverpool",apps:50,goals:10},{season:"2001/02",club:"Liverpool",apps:45,goals:4},
+      {season:"2002/03",club:"Liverpool",apps:54,goals:7},{season:"2003/04",club:"Liverpool",apps:47,goals:6},
+      {season:"2004/05",club:"Liverpool",apps:43,goals:13},{season:"2005/06",club:"Liverpool",apps:53,goals:23},
+      {season:"2006/07",club:"Liverpool",apps:51,goals:11},{season:"2007/08",club:"Liverpool",apps:52,goals:21}
+    ], spotlight:"2005/06",spotlightClub:"Liverpool",spotlightApps:53,spotlightGoals:23 },
   { name: "Matt Le Tissier", difficulty: "CULT HERO", category: "ONE-CLUB ICON", nationality: "England", position: "Forward", age: 57, status: "Retired",
     seasons: [
       {season:"1989/90",club:"Southampton",apps:44,goals:24},{season:"1990/91",club:"Southampton",apps:43,goals:23},
@@ -136,7 +143,7 @@ function App() {
         <div className="game-grid">{visible.map((g,i)=><motion.article key={g.number} className={`game-card ${g.tone}`} initial={{opacity:0,y:18}} whileInView={{opacity:1,y:0}} viewport={{once:true,amount:.2}} transition={{duration:.45,delay:i*.07}}>
           <div className="card-top"><span>PG / GAME {g.number}</span><span className="card-status">{g.status}</span></div>
           <div className="game-symbol">{g.icon}</div>
-          <div className="game-card-bottom"><span className="game-tag">{g.tag}</span><h3>{g.title}</h3><p>{g.description}</p><a href="#daily" className="card-link" aria-label={`Explore ${g.title}`}>↗</a></div>
+          <div className="game-card-bottom"><span className="game-tag">{g.tag}</span><h3>{g.title}</h3><p>{g.description}</p><a href={g.title === "CAREER FILE" ? "#career-file" : "#daily"} className="card-link" aria-label={`Explore ${g.title}`}>↗</a></div>
         </motion.article>)}</div>
       </section>
 
