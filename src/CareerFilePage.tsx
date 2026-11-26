@@ -32,7 +32,8 @@ function makeRows(p:Player):Row[]{
       if(!found.length)found=p.stats.filter(s=>clean(s.club)===clean(spell.club)&&yearOf(s.season)===y);
       rows.push({id:spell.seq+"-"+y,season:y+"/"+String((y+1)%100).padStart(2,"0"),club:spell.club,loan:spell.loan,
         apps:found.length?found.reduce((n,s)=>n+(s.apps??0),0):null,
-        goals:found.length?found.reduce((n,s)=>n+(s.goals??0),0):null,covered:found.length>0});
+        goals:found.length?found.reduce((n,s)=>n+(s.goals??0),0):null,covered:found.length>0,
+        spellApps:y===start?spell.apps:null,spellGoals:y===start?spell.goals:null});
     }
   }
   return rows;
