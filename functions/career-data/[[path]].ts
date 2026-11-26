@@ -72,7 +72,7 @@ async function transferHints(names: string[]): Promise<Response> {
       while (newline >= 0) {
         processLine(buffer.slice(0, newline));
         buffer = buffer.slice(newline + 1);
-        newline = buffer.indexOf("\\n");
+        newline = buffer.indexOf("\n");
       }
     }
     buffer += decoder.decode();
