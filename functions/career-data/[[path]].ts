@@ -36,31 +36,30 @@ async function transferHints(names: string[]): Promise<Response> {
   const decoder = new TextDecoder();
   let buffer = "";
   let columns: string[] | null = null;
+  let index: Record<string, number> = {};
   let matched: Array<{ year: string; from: string; to: string; fee: string; league: string }> = [];
   const processLine = (rawLine: string) => {
     const line = rawLine.replace(/\r$/, "");
     if (!line) return;
     const values = parseCsvLine(line);
     if (!columns) {
-      columns = values.map((value, index) => index === 0 ? value.replace(/^\uFEFF/, "").trim() : value.trim());
+      columns = values.map((value, i) => i === 0 ? value.replace(/^\uFEFF/, "").trim() : value.trim());
+      columns.forEach((column, i) => { index[column] = i; });
+      if (index.player_name === undefined) throw new Error("player_name column is missing");
       return;
     }
-    const row: Record<string, string> = {};
-    columns.forEach((column, index) => { row[column] = values[index] ?? ""; });
-    if (!wanted.has(normalisePlayerName(row.player_name ?? ""))) return;
-    const rawFee = (row.fee ?? "").trim();
-    const cleaned = (row.fee_cleaned ?? "").trim();
+    const at = (column: string) => values[index[column] ?? -1] ?? "";
+    if (!wanted.has(normalisePlayerName(at("player_name")))) return;
+    const rawFee = at("fee").trim();
+    const cleaned = at("fee_cleaned").trim();
     const fee = rawFee && rawFee !== "?" && rawFee !== "-"
       ? rawFee
       : cleaned !== "" && Number.isFinite(Number(cleaned))
         ? "Approx. €" + Number(cleaned).toFixed(2) + "m"
         : "Not disclosed";
     matched.push({
-      year: row.year ?? "",
-      from: row.source_club ?? "",
-      to: row.target_club ?? "",
-      fee,
-      league: row.source_league || row.target_league || row.league || ""
+      year: at("year"), from: at("source_club"), to: at("target_club"), fee,
+      league: at("source_league") || at("target_league") || at("league")
     });
   };
   try {
