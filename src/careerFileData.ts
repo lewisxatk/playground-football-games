@@ -85,10 +85,10 @@ export async function getCandidates(league: LeagueCode): Promise<Candidate[]> {
     " SUM(coalesce(cr.apps,0)) AS apps " +
     " FROM career cr JOIN eligible e ON e.player_qid=cr.player_qid GROUP BY cr.player_qid" +
     "), stats_by_season AS (" +
-    " SELECT player_qid, coalesce(nullif(club_qid,''),nullif(club_link,''),club) AS club_key, season, " +
+    " SELECT sc.player_qid, coalesce(nullif(sc.club_qid,''),nullif(sc.club_link,''),sc.club) AS club_key, sc.season, " +
     " SUM(apps) AS apps, SUM(goals) AS goals " +
     " FROM stat_club sc JOIN eligible e ON e.player_qid=sc.player_qid WHERE coalesce(competition_group,'')<>'Total' " +
-    " GROUP BY player_qid, coalesce(nullif(club_qid,''),nullif(club_link,''),club), season" +
+    " GROUP BY sc.player_qid, coalesce(nullif(sc.club_qid,''),nullif(sc.club_link,''),sc.club), sc.season" +
     "), stats_summary AS (" +
     " SELECT player_qid, COUNT(*) FILTER (WHERE apps IS NOT NULL AND goals IS NOT NULL) AS stat_seasons " +
     " FROM stats_by_season GROUP BY player_qid" +
