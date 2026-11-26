@@ -126,6 +126,7 @@ const draftPool=[
 ];
 function DraftXI(){
  const [picked,setPicked]=useState<string[]>([]);
+ const [locked,setLocked]=useState(false);
  const budget=85;const spent=draftPool.filter(p=>picked.includes(p.name)).reduce((n,p)=>n+p.cost,0);
  const toggle=(name:string)=>{if(locked)return;setPicked(old=>old.includes(name)?old.filter(x=>x!==name):old.length<11?[...old,name]:old);};
  const counts={GK:picked.filter(n=>draftPool.find(p=>p.name===n)?.pos==="GK").length,DEF:picked.filter(n=>draftPool.find(p=>p.name===n)?.pos==="DEF").length,MID:picked.filter(n=>draftPool.find(p=>p.name===n)?.pos==="MID").length,FWD:picked.filter(n=>draftPool.find(p=>p.name===n)?.pos==="FWD").length};
