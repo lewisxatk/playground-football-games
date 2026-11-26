@@ -349,7 +349,7 @@ export default function CareerFilePage(){
             {hints.map(h=><div className="cf-hint-row" key={h.id}><div><b>{h.label}</b>{opened.includes(h.id)&&<p>{h.value}</p>}</div>
               <button onClick={()=>unlock(h)} disabled={!h.available||opened.includes(h.id)||status!=="playing"}>{opened.includes(h.id)?(freeNote?.id===h.id?"FREE ✓":"UNLOCKED ✓"):h.available?"−"+h.cost+" PTS ↗":"NO DATA"}</button></div>)}
             <div className="cf-hint-row cf-transfer-row"><div><b>Transfer history / fees</b>
-              {opened.includes("fees")&&(feesBusy?<p>Searching the transfer archive…</p>:feesError?<p>{feesError}</p>:transfers?.length?
+              {(opened.includes("fees")||Boolean(feesError))&&(feesBusy?<p>Searching the transfer archive…</p>:feesError?<p>{feesError}</p>:transfers?.length?
                 <div className="cf-transfer-list">{transfers.map((t,i)=><p key={i}><strong>{t.year||"Year ?"}</strong> · {t.from||"Unknown"} → {t.to||"Unknown"}<br/><b>{t.fee}</b>{t.league?" · "+t.league:""}</p>)}</div>:
                 <p>No matching entry in the 2005–2024 transfer dataset. No points were deducted. This does not mean the player moved for free.</p>)}
             </div><button onClick={revealFees} disabled={opened.includes("fees")||feesBusy||status!=="playing"}>{feesBusy?"SEARCHING…":opened.includes("fees")?(transfers?.length?"UNLOCKED · −200 PTS ✓":"NO FEE RECORD · FREE ✓"):"−200 PTS ↗"}</button></div>
