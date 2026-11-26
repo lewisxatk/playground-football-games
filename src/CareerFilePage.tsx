@@ -23,7 +23,9 @@ const MODE_NAMES: Record<Exclude<Mode,"EXTREME">,string[]> = {
     "Karim Benzema","Wayne Rooney","Thierry Henry","Ronaldinho","Andres Iniesta","Xavi","David Beckham",
     "Steven Gerrard","Frank Lampard","Didier Drogba","Gareth Bale","Eden Hazard","Antoine Griezmann",
     "Thomas Muller","Manuel Neuer","Toni Kroos","Andrea Pirlo","Francesco Totti","Zinedine Zidane",
-    "Alessandro Del Piero"
+    "Alessandro Del Piero","Ronaldo Nazario","Rivaldo","Kaka","Luis Figo","Raul","Iker Casillas",
+    "Gianluigi Buffon","Carles Puyol","Xabi Alonso","Sergio Busquets","Sergio Aguero","Son Heung-min",
+    "Bruno Fernandes","Bukayo Saka","Phil Foden","Vinicius Junior","Jude Bellingham","Rodri"
   ],
   MEDIUM: [
     "Sadio Mane","Robin van Persie","David Silva","Angel Di Maria","Edinson Cavani","Carlos Tevez",
@@ -31,20 +33,26 @@ const MODE_NAMES: Record<Exclude<Mode,"EXTREME">,string[]> = {
     "Gerard Pique","Ivan Rakitic","Samuel Eto'o","Miroslav Klose","Arjen Robben","Franck Ribery",
     "Bastian Schweinsteiger","Wesley Sneijder","Diego Costa","Gonzalo Higuain","Mario Mandzukic",
     "Dani Alves","Marcelo","Vincent Kompany","Nemanja Vidic","Patrice Evra","Juan Mata","Edin Dzeko",
-    "Marco Reus","Mario Gotze"
+    "Marco Reus","Mario Gotze","David Villa","Pedro Rodriguez","Diego Godin","Thiago Alcantara",
+    "Ivan Perisic","Mario Balotelli","Ciro Immobile","Miralem Pjanic","Christian Eriksen","Henrikh Mkhitaryan",
+    "Raphael Varane","Pepe","Jordi Alba","Sergio Busquets","Juan Mata","Mousa Dembele"
   ],
   HARD: [
     "Antonio Di Natale","Marek Hamsik","Claudio Marchisio","Ezequiel Lavezzi","Diego Milito","Jermain Defoe",
     "Darren Bent","Dimitar Berbatov","Santi Cazorla","Samir Nasri","Juan Roman Riquelme","Diego Forlan",
     "Mikel Arteta","Radja Nainggolan","Arda Turan","Javier Pastore","Ever Banega","Klaas-Jan Huntelaar",
     "Mario Gomez","Kevin Gameiro","Stevan Jovetic","Claudio Pizarro","Aritz Aduriz","Obafemi Martins",
-    "Goran Pandev","Antonio Valencia","Giuseppe Rossi","Mauro Zarate"
+    "Goran Pandev","Antonio Valencia","Giuseppe Rossi","Mauro Zarate","Hernan Crespo","David Trezeguet",
+    "Gaizka Mendieta","Tomas Rosicky","Maxi Rodriguez","Luis Garcia","Walter Samuel","Diego Capel",
+    "Joaquin","David Pizarro","Simone Inzaghi","Bafetimbi Gomis","Claudio Lopez"
   ],
   "CULT HERO": [
     "Juninho Pernambucano","Jay-Jay Okocha","Peter Crouch","Nani","Djibril Cisse","Roque Santa Cruz",
     "Antonio Cassano","Tuncay Sanli","Morten Gamst Pedersen","Steed Malbranque","Hossam Ghaly",
     "Nihat Kahveci","Shunsuke Nakamura","Guti","Simao Sabrosa","Ricardo Quaresma","Juan Valeron",
-    "Javier Saviola","Elano","Kevin Kuranyi","Florent Malouda","Benjani","Yakubu","Youri Djorkaeff"
+    "Javier Saviola","Elano","Kevin Kuranyi","Florent Malouda","Benjani","Yakubu","Youri Djorkaeff",
+    "Kanu","Hatem Ben Arfa","Shola Ameobi","Mido","Demba Ba","Obafemi Martins","Benoit Assou-Ekotto",
+    "Roque Santa Cruz","John Carew","Aílton","Mark Viduka","Nicolas Anelka","Niko Kranjcar","Rafael van der Vaart"
   ]
 };
 const LEAGUES: {label:string;code:LeagueCode}[] = [
@@ -141,7 +149,15 @@ function makeFreeNote(player:Player):FreeNote|null{
 function matches(input:string,p:Player){
   const g=clean(input);if(!g)return false;
   const accepted=new Set([clean(p.name),clean(p.fullName)]);
-  for(const name of [p.name,p.fullName]){const bits=clean(name).split(" ");if(bits.length)accepted.add(bits[bits.length-1]);}
+  const particles=new Set(["van","von","de","del","di","da","dos","das","du","la","le","ter","den","der"]);
+  for(const name of [p.name,p.fullName]){
+    const bits=clean(name).split(" ").filter(Boolean);
+    if(bits.length){
+      accepted.add(bits[bits.length-1]);
+      if(bits.length>1&&particles.has(bits[bits.length-2]))accepted.add(bits.slice(-2).join(" "));
+      if(bits.length>2&&particles.has(bits[bits.length-3]))accepted.add(bits.slice(-3).join(" "));
+    }
+  }
   return accepted.has(g);
 }
 function careerHint(p:Player):Hint[]{
