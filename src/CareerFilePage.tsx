@@ -72,7 +72,9 @@ function makeRows(p:Player):Row[]{
         if(spell.clubLink&&stat.clubLink)return clean(spell.clubLink)===clean(stat.clubLink);
         return clean(spell.club)===clean(stat.club);
       });
-      rows.push({id:spell.seq+"-"+y,season:y+"/"+String((y+1)%100).padStart(2,"0"),
+      const sourceSeason=found.find(stat=>stat.season)?.season.trim();
+      const displayedSeason=sourceSeason?sourceSeason.replace(/[–—-]/g,"/"):y+"/"+String((y+1)%100).padStart(2,"0");
+      rows.push({id:spell.seq+"-"+y,season:displayedSeason,
         club:spell.club,clubKey,loan:spell.loan,
         apps:found.length&&found.some(x=>x.apps!==null)?found.reduce((n,x)=>n+(x.apps??0),0):null,
         goals:found.length&&found.some(x=>x.goals!==null)?found.reduce((n,x)=>n+(x.goals??0),0):null,
@@ -360,7 +362,7 @@ export default function CareerFilePage(){
     </section>
     <section className="cf-bottom-strip"><div><span>THE PLAYGROUND PLAYER ARCHIVE</span><strong>READ THE GAME.<br/>READ THE CAREER.</strong></div>
       <div className="cf-source-credits"><b>DATA & SOURCES</b>
-        <p>Career timelines derive from OpenFootballBase. Its five major-league squad archive covers 2000/01 onwards; player infobox timelines can include earlier senior spells. Appearance and goal figures are published as found on English Wikipedia and are explicitly unverified. Wikipedia text is CC BY-SA 4.0; Wikidata is CC0. Player source pages and revisions are traceable.</p>
+        <p>Career timelines derive from OpenFootballBase. Its five major-league squad archive begins in 2000/01, although a player’s infobox career may show earlier spells. The playable draw requires at least two club-season stat rows. The documented stat_club source only covers players of Champions League clubs from seven major countries since 2010, so this is a curated playable archive, not every professional footballer. Appearance and goal figures are published as found on English Wikipedia and are explicitly unverified; missing seasons remain blank. Wikipedia text is CC BY-SA 4.0; Wikidata is CC0.</p>
         <p>Transfer clues use Tiago Cumetti’s Football Transfers Dataset (2005–2024), collected from Transfermarkt pages. It is CC BY 4.0 and includes undisclosed or missing fees. No match does not mean a free transfer.</p>
         <a href="https://github.com/florentfougeres/OpenFootballBase-Data" target="_blank" rel="noreferrer">OPEN FOOTBALL DATA SOURCE ↗</a>
         <a href="https://doi.org/10.5281/zenodo.17921143" target="_blank" rel="noreferrer">TRANSFER DATA / DOI ↗</a>
