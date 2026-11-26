@@ -143,21 +143,108 @@ export async function getPlayer(id: string): Promise<Player> {
       (revision ? "&oldid=" + revision : "") : "https://en.wikipedia.org/wiki/" + encodeURIComponent(String(first.player ?? ""))
   };
 }
-export async function getTransferHints(names: string[]): Promise<Transfer[]> {
-  const params = new URLSearchParams();
-  for (const name of Array.from(new Set(names.map(value => value.trim()).filter(Boolean)))) {
-    params.append("name", name);
+type TransferIndex = Map<string, Transfer[]>;
+let transferIndexPromise: Promise<TransferIndex> | null = null;
+
+function normaliseTransferName(value: string): string {
+  return value.toLocaleLowerCase().normalize("NFD").replace(/[\\u0300-\\u036f]/g, "")
+    .replace(/[^a-z0-9 ]/g, " ").replace(/\\s+/g, " ").trim();
+}
+
+function parseTransferCsvLine(line: string): string[] {
+  const values: string[] = [];
+  let value = "";
+  let quoted = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (quoted) {
+      if (char === '"' && line[i + 1] === '"') { value += '"'; i++; }
+      else if (char === '"') quoted = false;
+      else value += char;
+    } else if (char === '"') quoted = true;
+    else if (char === ",") { values.push(value); value = ""; }
+    else value += char;
   }
-  if (!params.toString()) return [];
-  const response = await fetch("/career-data/transfer-hints?" + params.toString(), { cache: "no-cache" });
-  if (!response.ok) throw new Error("Transfer data lookup failed (" + response.status + ").");
-  const data = await response.json();
-  if (!Array.isArray(data)) throw new Error("The transfer lookup returned an invalid response.");
-  return data.map((row: any) => ({
-    year: String(row.year ?? ""),
-    from: String(row.from ?? ""),
-    to: String(row.to ?? ""),
-    fee: String(row.fee ?? "Not disclosed"),
-    league: String(row.league ?? "")
-  }));
+  values.push(value);
+  return values;
+}
+
+async function loadTransferIndex(): Promise<TransferIndex> {
+  const response = await fetch("/career-data/transfers.csv", { cache: "force-cache" });
+  if (!response.ok || !response.body) throw new Error("Transfer data download failed (" + response.status + ").");
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  const index = new Map<string, Transfer[]>();
+  let buffer = "";
+  let columns: string[] | null = null;
+  let fields: Record<string, number> = {};
+
+  const processLine = (rawLine: string) => {
+    const line = rawLine.replace(/\\r$/, "");
+    if (!line) return;
+    const values = parseTransferCsvLine(line);
+    if (!columns) {
+      columns = values.map((value, i) => i === 0 ? value.replace(/^\\uFEFF/, "").trim() : value.trim());
+      columns.forEach((column, i) => { fields[column] = i; });
+      if (fields.player_name === undefined) throw new Error("Transfer data is missing its player_name column.");
+      return;
+    }
+    const get = (key: string) => values[fields[key] ?? -1] ?? "";
+    const playerKey = normaliseTransferName(get("player_name"));
+    if (!playerKey) return;
+    const rawFee = get("fee").trim();
+    const cleaned = get("fee_cleaned").trim();
+    const fee = rawFee && rawFee !== "?" && rawFee !== "-"
+      ? rawFee
+      : cleaned !== "" && Number.isFinite(Number(cleaned))
+        ? "Approx. €" + Number(cleaned).toFixed(2) + "m"
+        : "Not disclosed";
+    const record: Transfer = {
+      year: get("year"),
+      from: get("source_club"),
+      to: get("target_club"),
+      fee,
+      league: get("source_league") || get("target_league") || get("league")
+    };
+    const existing = index.get(playerKey);
+    if (existing) existing.push(record);
+    else index.set(playerKey, [record]);
+  };
+
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let newline = buffer.indexOf("\\n");
+      while (newline >= 0) {
+        processLine(buffer.slice(0, newline));
+        buffer = buffer.slice(newline + 1);
+        newline = buffer.indexOf("\\n");
+      }
+    }
+    buffer += decoder.decode();
+    if (buffer) processLine(buffer);
+    if (!columns) throw new Error("The transfer data file was empty.");
+  } finally {
+    reader.releaseLock();
+  }
+  return index;
+}
+
+export async function getTransferHints(names: string[]): Promise<Transfer[]> {
+  if (!transferIndexPromise) {
+    transferIndexPromise = loadTransferIndex().catch(error => {
+      transferIndexPromise = null;
+      throw error;
+    });
+  }
+  const index = await transferIndexPromise;
+  const unique = new Map<string, Transfer>();
+  for (const name of names) {
+    for (const record of index.get(normaliseTransferName(name)) ?? []) {
+      unique.set([record.year,record.from,record.to,record.fee].join("|"), record);
+    }
+  }
+  return Array.from(unique.values()).sort((a,b) => a.year.localeCompare(b.year));
 }
