@@ -1,13 +1,13 @@
 import * as duckdb from "@duckdb/duckdb-wasm";
 
 export type LeagueCode = "ALL" | "ENG-PL" | "ESP-LL" | "ITA-SA" | "DEU-BL" | "FRA-L1";
-export type Candidate = { id: string; name: string; apps: number; spells: number; clubs: number };
+export type Candidate = { id: string; name: string; apps: number; spells: number; clubs: number; statSeasons: number };
 export type Spell = {
   seq: number; years: string; start: number | null; end: number | null; club: string;
-  clubLink: string; loan: boolean; apps: number | null; goals: number | null;
+  clubLink: string; clubQid: string; loan: boolean; apps: number | null; goals: number | null;
   sourceTitle: string; sourceRevision: number | null;
 };
-export type Stat = { club: string; clubLink: string; season: string; apps: number | null; goals: number | null; assists: number | null };
+export type Stat = { club: string; clubLink: string; clubQid: string; season: string; apps: number | null; goals: number | null; assists: number | null };
 export type Player = {
   id: string; name: string; fullName: string; nationality: string; position: string;
   height: number | null; birthDate: string; birthPrecision: number | null; birthplace: string;
@@ -81,18 +81,34 @@ export async function getCandidates(league: LeagueCode): Promise<Candidate[]> {
   const archive = await careerArchive();
   const codes = league === "ALL" ? BIG_FIVE : [league];
   const marks = codes.map(() => "?").join(",");
-  const sql = "WITH big_clubs AS (" +
-    "SELECT DISTINCT c.wikidata_qid qid FROM competition_club cc JOIN club c ON c.wikipedia_title=cc.club " +
-    "WHERE cc.competition IN (" + marks + ") AND c.wikidata_qid IS NOT NULL), " +
-    "eligible AS (SELECT DISTINCT cr.player_qid FROM career cr JOIN big_clubs b ON b.qid=cr.club_qid " +
-    "WHERE cr.player_qid IS NOT NULL AND trim(cr.player_qid)<> '') " +
-    "SELECT cr.player_qid AS candidate_id, any_value(cr.player) AS player_name, COUNT(*) AS spells, " +
-    "COUNT(DISTINCT coalesce(nullif(cr.club_qid,''),cr.club_name)) AS clubs, " +
-    "SUM(coalesce(cr.apps,0)) AS apps FROM career cr JOIN eligible e ON e.player_qid=cr.player_qid " +
-    "GROUP BY cr.player_qid HAVING SUM(coalesce(cr.apps,0))>=20 ORDER BY random() LIMIT 8000";
+  // Require at least two real club-season statistical records so every round can offer free stats clues.
+  const sql =
+    "WITH big_clubs AS (" +
+    " SELECT DISTINCT c.wikidata_qid AS qid FROM competition_club cc " +
+    " JOIN club c ON c.wikipedia_title=cc.club " +
+    " WHERE cc.competition IN (" + marks + ") AND c.wikidata_qid IS NOT NULL" +
+    "), eligible AS (" +
+    " SELECT DISTINCT cr.player_qid FROM career cr JOIN big_clubs b ON b.qid=cr.club_qid " +
+    " WHERE cr.player_qid IS NOT NULL AND trim(cr.player_qid)<>''" +
+    "), career_summary AS (" +
+    " SELECT cr.player_qid AS candidate_id, any_value(cr.player) AS player_name, " +
+    " COUNT(*) AS spells, COUNT(DISTINCT coalesce(nullif(cr.club_qid,''),cr.club_name)) AS clubs, " +
+    " SUM(coalesce(cr.apps,0)) AS apps " +
+    " FROM career cr JOIN eligible e ON e.player_qid=cr.player_qid GROUP BY cr.player_qid" +
+    "), stats_summary AS (" +
+    " SELECT player_qid, COUNT(DISTINCT CASE WHEN apps IS NOT NULL OR goals IS NOT NULL THEN " +
+    " coalesce(nullif(club_qid,''),nullif(club_link,''),club) || '|' || season END) AS stat_seasons " +
+    " FROM stat_club WHERE coalesce(competition_group,'')<>'Total' GROUP BY player_qid" +
+    ") " +
+    "SELECT c.candidate_id, c.player_name, c.spells, c.clubs, c.apps, s.stat_seasons " +
+    "FROM career_summary c JOIN stats_summary s ON s.player_qid=c.candidate_id " +
+    "WHERE c.apps>=20 AND s.stat_seasons>=2 ORDER BY random() LIMIT 30000";
   const rows = await archive.query(sql, codes);
-  return rows.map((r: any) => ({ id: String(r.candidate_id), name: String(r.player_name ?? ""),
-    apps: Number(r.apps ?? 0), spells: Number(r.spells ?? 0), clubs: Number(r.clubs ?? 0) }));
+  return rows.map((r: any) => ({
+    id: String(r.candidate_id), name: String(r.player_name ?? ""),
+    apps: Number(r.apps ?? 0), spells: Number(r.spells ?? 0),
+    clubs: Number(r.clubs ?? 0), statSeasons: Number(r.stat_seasons ?? 0)
+  }));
 }
 const n = (v: unknown): number | null => v == null || v === "" ? null : Number(v);
 
