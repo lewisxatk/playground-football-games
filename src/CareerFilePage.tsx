@@ -207,7 +207,7 @@ export default function CareerFilePage(){
 
   const newPlayer=useCallback(async(deck:Candidate[],selectedMode:Mode)=>{
     const options=deck.filter(c=>fits(c,selectedMode));
-    if(!options.length)throw new Error("There are no verified "+selectedMode+" player files in this league selection yet. Try All Top Five or another difficulty.");
+    if(!options.length)throw new Error("There are no playable "+selectedMode+" files with two complete season-stat clues in this league selection yet. Try All Top Five or another difficulty.");
     let available=options.filter(c=>!seen.current.has(c.id));
     if(!available.length){seen.current.clear();available=options;setNote("The draw has cycled. Your used files are back in the mix.");}
     const draw=[...available].sort(()=>Math.random()-.5);
