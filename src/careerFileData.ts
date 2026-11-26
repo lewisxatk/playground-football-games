@@ -101,7 +101,7 @@ export async function getCandidates(league: LeagueCode): Promise<Candidate[]> {
     ") " +
     "SELECT c.candidate_id, c.player_name, c.spells, c.clubs, c.apps, s.stat_seasons " +
     "FROM career_summary c JOIN stats_summary s ON s.player_qid=c.candidate_id " +
-    "WHERE c.apps>=20 AND s.stat_seasons>=2 ORDER BY random() LIMIT 30000";
+    "WHERE c.apps>=20 AND s.stat_seasons>=2 ORDER BY c.player_name LIMIT 60000";
   const rows = await archive.query(sql, codes);
   return rows.map((r: any) => ({
     id: String(r.candidate_id), name: String(r.player_name ?? ""),
