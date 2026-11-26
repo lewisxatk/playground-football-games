@@ -12,7 +12,7 @@ const MODES: { name:Mode; note:string; colour:string }[] = [
   {name:"MEDIUM",note:"Big careers, less obvious",colour:"blue"},
   {name:"HARD",note:"For the detail people",colour:"orange"},
   {name:"CULT HERO",note:"Proper football knowledge",colour:"pink"},
-  {name:"EXTREME",note:"Any era. Any big-five league.",colour:"violet"}
+  {name:"EXTREME",note:"Five leagues. Archive from 2000/01.",colour:"violet"}
 ];
 const LEAGUES: {label:string;code:LeagueCode}[] = [
   {label:"All top five",code:"ALL"},{label:"Premier League",code:"ENG-PL"},{label:"La Liga",code:"ESP-LL"},
@@ -227,7 +227,7 @@ export default function CareerFilePage(){
               <td>{shown?<span className="cf-revealed-tick">✓</span>:<button className="cf-reveal-row" onClick={()=>revealRow(r)} disabled={status!=="playing"}>−35 ↗</button>}</td>
             </motion.tr>;})}</tbody></table></div>
           <div className="cf-record-foot"><span>APPS / GOALS: WHERE A SEASON SOURCE EXISTS</span><span>— = NOT RECORDED</span></div>
-          <div className="cf-source-note">Career spells come from the player career record. Season totals are only shown where the source has them; missing totals are not guessed. Source statistics are marked unverified.</div>
+          <div className="cf-source-note">Career spells come from the player career record. Season totals are only shown where the source has them; missing totals are not guessed. Source statistics are marked unverified. <a href={player.wikipediaUrl} target="_blank" rel="noreferrer">OPEN THE ORIGINAL PLAYER SOURCE ↗</a></div>
         </section>
         <aside className="cf-side">
           <div className="cf-scorecard"><div><small>YOUR SCORE</small><strong>{score.toLocaleString("en-GB")}<i> PTS</i></strong></div><div><small>GUESSES LEFT</small><strong>{left}<i> / 10</i></strong></div>
@@ -256,8 +256,8 @@ export default function CareerFilePage(){
     </section>
     <section className="cf-bottom-strip"><div><span>THE PLAYGROUND PLAYER ARCHIVE</span><strong>READ THE GAME.<br/>READ THE CAREER.</strong></div>
       <div className="cf-source-credits"><b>DATA & SOURCES</b>
-        <p>Career timelines and available season totals derive from OpenFootballBase, built using Wikipedia and Wikidata. The source describes career statistics as unverified and reports missing coverage rather than filling gaps.</p>
-        <p>Transfer clues use Tiago Cumetti's Football Transfers Dataset (2005–2024), collected from Transfermarkt pages. No record does not mean a free transfer.</p>
+        <p>Career timelines derive from OpenFootballBase. Its five major-league squad archive covers 2000/01 onwards; player infobox timelines can include earlier senior spells. Appearance and goal figures are published as found on English Wikipedia and are explicitly unverified. Wikipedia text is CC BY-SA 4.0; Wikidata is CC0. Player source pages and revisions are traceable.</p>
+        <p>Transfer clues use Tiago Cumetti’s Football Transfers Dataset (2005–2024), collected from Transfermarkt pages. It is CC BY 4.0 and includes undisclosed or missing fees. No match does not mean a free transfer.</p>
         <a href="https://github.com/florentfougeres/OpenFootballBase-Data" target="_blank" rel="noreferrer">OPEN FOOTBALL DATA SOURCE ↗</a>
         <a href="https://doi.org/10.5281/zenodo.17921143" target="_blank" rel="noreferrer">TRANSFER DATA / DOI ↗</a>
       </div>
