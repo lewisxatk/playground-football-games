@@ -32,10 +32,10 @@ const MODE_NAMES: Record<Exclude<Mode,"EXTREME">,string[]> = {
     "Fernando Torres","Yaya Toure","Cesc Fabregas","Mesut Ozil","Alexis Sanchez","Radamel Falcao",
     "Gerard Pique","Ivan Rakitic","Samuel Eto'o","Miroslav Klose","Arjen Robben","Franck Ribery",
     "Bastian Schweinsteiger","Wesley Sneijder","Diego Costa","Gonzalo Higuain","Mario Mandzukic",
-    "Dani Alves","Marcelo","Vincent Kompany","Nemanja Vidic","Patrice Evra","Juan Mata","Edin Dzeko",
+    "Dani Alves","Marcelo","Vincent Kompany","Nemanja Vidic","Patrice Evra","Edin Dzeko",
     "Marco Reus","Mario Gotze","David Villa","Pedro Rodriguez","Diego Godin","Thiago Alcantara",
     "Ivan Perisic","Mario Balotelli","Ciro Immobile","Miralem Pjanic","Christian Eriksen","Henrikh Mkhitaryan",
-    "Raphael Varane","Pepe","Jordi Alba","Sergio Busquets","Juan Mata","Mousa Dembele"
+    "Raphael Varane","Pepe","Jordi Alba","Juan Mata","Mousa Dembele"
   ],
   HARD: [
     "Antonio Di Natale","Marek Hamsik","Claudio Marchisio","Ezequiel Lavezzi","Diego Milito","Jermain Defoe",
@@ -122,7 +122,7 @@ function positionLabel(raw:string){
   return raw.trim();
 }
 function randomFreeRows(rows:Row[]):string[]{
-  const available=rows.filter(row=>row.covered&&(row.apps!==null||row.goals!==null));
+  const available=rows.filter(row=>row.covered&&row.apps!==null&&row.goals!==null);
   const shuffled=[...available].sort(()=>Math.random()-.5);
   const selected:Row[]=[];
   for(const row of shuffled){
