@@ -94,10 +94,14 @@ export async function getCandidates(league: LeagueCode): Promise<Candidate[]> {
     " COUNT(*) AS spells, COUNT(DISTINCT coalesce(nullif(cr.club_qid,''),cr.club_name)) AS clubs, " +
     " SUM(coalesce(cr.apps,0)) AS apps " +
     " FROM career cr JOIN eligible e ON e.player_qid=cr.player_qid GROUP BY cr.player_qid" +
+    "), stats_by_season AS (" +
+    " SELECT player_qid, coalesce(nullif(club_qid,''),nullif(club_link,''),club) AS club_key, season, " +
+    " SUM(apps) AS apps, SUM(goals) AS goals " +
+    " FROM stat_club WHERE coalesce(competition_group,'')<>'Total' " +
+    " GROUP BY player_qid, coalesce(nullif(club_qid,''),nullif(club_link,''),club), season" +
     "), stats_summary AS (" +
-    " SELECT player_qid, COUNT(DISTINCT CASE WHEN apps IS NOT NULL OR goals IS NOT NULL THEN " +
-    " coalesce(nullif(club_qid,''),nullif(club_link,''),club) || '|' || season END) AS stat_seasons " +
-    " FROM stat_club WHERE coalesce(competition_group,'')<>'Total' GROUP BY player_qid" +
+    " SELECT player_qid, COUNT(*) FILTER (WHERE apps IS NOT NULL AND goals IS NOT NULL) AS stat_seasons " +
+    " FROM stats_by_season GROUP BY player_qid" +
     ") " +
     "SELECT c.candidate_id, c.player_name, c.spells, c.clubs, c.apps, s.stat_seasons " +
     "FROM career_summary c JOIN stats_summary s ON s.player_qid=c.candidate_id " +
