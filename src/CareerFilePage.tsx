@@ -165,7 +165,6 @@ export default function CareerFilePage(){
       else if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);setCopied(true);}}
     catch{/* sharing may be cancelled */}
   };
-  const start=spells[0],end=spells[spells.length-1];
 
   return <main className="cf-page" id="top">
     <div className="cf-grain" aria-hidden="true"/>
