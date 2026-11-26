@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { motion } from "motion/react";
-import { getCandidates, getPlayer, getTransferHints, type Candidate, type LeagueCode, type Player, type Transfer, type Spell } from "./careerFileData";
+import { getCandidates, getPlayer, getTransferHints, type Candidate, type LeagueCode, type Player, type Transfer } from "./careerFileData";
 import "./career-file.css";
 
 type Mode = "EASY" | "MEDIUM" | "HARD" | "CULT HERO" | "EXTREME";
@@ -125,7 +125,6 @@ export default function CareerFilePage(){
     return()=>{live=false;};
   },[league,mode,newPlayer]);
 
-  const spells=useMemo(()=>player?ordered(player):[],[player]);
   const hints=useMemo(()=>player?careerHint(player):[],[player]);
   const left=Math.max(0,10-attempts),revealedCount=revealed.length;
   const unlock=(hint:Hint)=>{
