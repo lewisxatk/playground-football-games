@@ -110,6 +110,11 @@ function HomePage() {
         </motion.article>)}</div>
       </section>
 
+      <section className="career-section" id="game-player">
+        {playing ? <><div className="active-game-title"><span>NOW PLAYING / {playing}</span><button onClick={()=>setPlaying("")}>CLOSE ×</button></div>
+          {playing==="LOWBALL"?<Lowball/>:playing==="THE CLIMB"?<TheClimb/>:<DraftXI/>}
+        </> : <div className="game-launcher"><span>THE ARCADE / SELECT A GAME ABOVE</span><strong>THREE GAMES.<br/>YOUR CALL.</strong><p>Career File now has its own full page. Choose one of the other game cards to play here.</p></div>}
+      </section>
 
       <section className="daily-section" id="daily"><div className="daily-left"><div className="eyebrow"><span className="eyebrow-line"/> THE DAILY / YOUR MOVE</div><h2>ONE DAY.<br/><em>ONE SHOT.</em><br/>ALL BRAGGING.</h2><p>A fresh challenge to get the group chat going. Get involved, compare scores and settle absolutely nothing.</p></div><div className="daily-ticket"><div className="ticket-header"><span>PLAYGROUND DAILY</span><span>NO. 001</span></div><div className="ticket-main"><span className="ticket-star">✳</span><span className="ticket-small">YOUR DAILY DOSE OF FOOTBALL</span><strong>READY<br/>WHEN<br/>YOU ARE.</strong><span className="ticket-arrow">↗</span></div><div className="ticket-footer"><span>ONE CHALLENGE. EVERY DAY.</span><span>PG—001</span></div></div></section>
 
@@ -119,9 +124,6 @@ function HomePage() {
     </main>
   );
 }
-
-export default App;
-
 
 function App() {
   const path = window.location.pathname.replace(/\/+$/, "");
