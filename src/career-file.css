@@ -47,3 +47,15 @@
 /* Football artwork replaces the temporary star glyph. */
 .cf-ball{font-size:0;background-color:var(--p);background-image:radial-gradient(circle at 50% 50%,var(--i) 0 10%,transparent 11%),radial-gradient(circle at 23% 28%,var(--i) 0 8%,transparent 9%),radial-gradient(circle at 77% 28%,var(--i) 0 8%,transparent 9%),radial-gradient(circle at 23% 73%,var(--i) 0 8%,transparent 9%),radial-gradient(circle at 77% 73%,var(--i) 0 8%,transparent 9%);background-repeat:no-repeat}
 .cf-ball:after{content:"";position:absolute;inset:7px;border:1px solid rgba(17,27,26,.35);border-radius:50%}
+
+/* Free clues are visually distinct from paid reveals. */
+.cf-mode-count{font-size:7px!important;font-weight:900!important;letter-spacing:.08em;color:rgba(17,27,26,.68);margin-top:3px}
+.cf-free-brief{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:13px 14px;margin:12px 0;background:#e2edc9;border:1px solid var(--i);border-left:5px solid #91ad45}
+.cf-free-brief>div{min-width:0}.cf-free-brief>div>span{display:block;font-size:7px;font-weight:900;letter-spacing:.15em;color:#698436}
+.cf-free-brief strong{display:block;margin-top:4px;font:900 15px 'Barlow Condensed',sans-serif;letter-spacing:.04em}
+.cf-free-brief p{margin:3px 0 0;font-size:11px;font-weight:700;color:#465332}
+.cf-free-tag{flex-shrink:0;padding:7px 9px;background:var(--g);border:1px solid var(--i);font-size:7px;font-weight:900;letter-spacing:.08em}
+.cf-table tr.cf-free-row{background:#d8ecaf!important;box-shadow:inset 3px 0 #8aa83e}
+.cf-table tr.cf-paid-row{background:#e3efc9}
+.cf-revealed-tick{font-size:8px;letter-spacing:.06em}
+@media(max-width:620px){.cf-free-brief{align-items:flex-start;flex-direction:column}.cf-free-tag{align-self:flex-start}.cf-mode-count{font-size:6px!important}}
