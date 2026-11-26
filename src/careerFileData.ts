@@ -86,12 +86,12 @@ export async function getCandidates(league: LeagueCode): Promise<Candidate[]> {
     "WHERE cc.competition IN (" + marks + ") AND c.wikidata_qid IS NOT NULL), " +
     "eligible AS (SELECT DISTINCT cr.player_qid FROM career cr JOIN big_clubs b ON b.qid=cr.club_qid " +
     "WHERE cr.player_qid IS NOT NULL AND trim(cr.player_qid)<> '') " +
-    "SELECT cr.player_qid id, any_value(cr.player) name, COUNT(*) spells, " +
-    "COUNT(DISTINCT coalesce(nullif(cr.club_qid,''),cr.club_name)) clubs, " +
-    "SUM(coalesce(cr.apps,0)) apps FROM career cr JOIN eligible e ON e.player_qid=cr.player_qid " +
+    "SELECT cr.player_qid AS candidate_id, any_value(cr.player) AS player_name, COUNT(*) AS spells, " +
+    "COUNT(DISTINCT coalesce(nullif(cr.club_qid,''),cr.club_name)) AS clubs, " +
+    "SUM(coalesce(cr.apps,0)) AS apps FROM career cr JOIN eligible e ON e.player_qid=cr.player_qid " +
     "GROUP BY cr.player_qid HAVING SUM(coalesce(cr.apps,0))>=20 ORDER BY random() LIMIT 8000";
   const rows = await archive.query(sql, codes);
-  return rows.map((r: any) => ({ id: String(r.id), name: String(r.name ?? ""),
+  return rows.map((r: any) => ({ id: String(r.candidate_id), name: String(r.player_name ?? ""),
     apps: Number(r.apps ?? 0), spells: Number(r.spells ?? 0), clubs: Number(r.clubs ?? 0) }));
 }
 const n = (v: unknown): number | null => v == null || v === "" ? null : Number(v);
