@@ -388,7 +388,7 @@ function ClimbPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:n
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
  };
  const levels:QuizTier[]=["EASY","MEDIUM","HARD","EXTREME"];
- return <Frame account={account} game="the-climb" eyebrow="SURVIVAL QUIZ / FIVE QUESTIONS" title="KEEP CLIMBING." description="Five source-backed questions: four from English domestic football and one international. Three lives." number="02" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
+ return <Frame account={account} game="the-climb" eyebrow="SURVIVAL QUIZ / FIVE QUESTIONS" title="KEEP CLIMBING." description="Five source-backed questions: English and UK football first, with international football alongside it. Three lives." number="02" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
  {done&&mode==="daily"?<Success title="RUN COMPLETE." detail="Your daily climb is banked. Unlimited practice has fresh questions." button="PRACTICE RUN" onAgain={()=>{setMode("practice");restart("practice");}}/>:
   loading&&bank.length===0?<Card className="climb-loading"><motion.div animate={{y:[0,-10,0],rotate:[0,180,360]}} transition={{duration:1.4,repeat:Infinity}}>⚽</motion.div><b>OPENING THE CC0 MATCH ARCHIVE</b><span>CHECKING FOUR HISTORIC DIFFICULTY POOLS…</span></Card>:
   error||bank.length===0?<Card className="arc-feedback"><b>QUESTION BANK UNAVAILABLE</b><p>{error||"The CC0 football question pool could not be opened."}</p><button className="arc-button" onClick={retry}>RETRY MATCH DATABASE ↗</button></Card>:
@@ -397,7 +397,7 @@ function ClimbPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:n
    <div className="grid-difficulty">{levels.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>restart(mode,level)}>{difficultyLabel(level)}</button>)}</div>
    <p className="difficulty-note">{difficultyDescription(difficulty)}</p>
    <div className="climb-life-track">{[0,1,2].map(i=><i key={i} className={i<lives?"alive":""}/>)}</div>
-   <div className="climb-source-line"><span>{question?.category??"FOOTBALL"}</span><span>{question?.region==="ENGLISH_DOMESTIC"?"ENGLISH DOMESTIC FOOTBALL":"INTERNATIONAL FOOTBALL"}</span></div>
+   <div className="climb-source-line"><span>{question?.category??"FOOTBALL"}</span><span>{question?.region==="ENGLISH_DOMESTIC"?"ENGLISH DOMESTIC FOOTBALL":question?.region==="UK"?"ENGLISH / UK FOOTBALL":"INTERNATIONAL FOOTBALL"}</span></div>
    <h2>{ended?"RUN COMPLETE.":question?.question??"No question available."}</h2>
    {ended?<div className="arc-feedback"><p>You climbed {step+1} questions and banked {score} points.</p><button className="arc-button" onClick={()=>restart(mode)}>RUN IT BACK ↻</button></div>:
     <><div className="climb-options">{question?.options.map(option=><motion.button key={option} whileTap={{scale:.985}} onClick={()=>choose(option)} disabled={!!answer} className={answer===option?(option===question.answer?"correct":"wrong"):""}>{option}<i>↗</i></motion.button>)}</div>
@@ -1226,7 +1226,7 @@ function QuickQuizPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
    setDifficulty(newDifficulty);setIndex(0);setChosen("");setLocked(false);setScore(0);setSeconds(15);setTyped("");setTypingDone(false);setFinished(false);
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
  };
- return <Frame account={account} game="timed-quiz" eyebrow="17 DAILY QUESTIONS / ENGLISH FOOTBALL FIRST" title="THE QUICK QUIZ." description="Thirteen English domestic questions and four international questions. Five Easy, five Medium, five Hard and two Extreme. Faster answers earn more points." number="16" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
+ return <Frame account={account} game="timed-quiz" eyebrow="17 DAILY QUESTIONS / ENGLISH FOOTBALL FIRST" title="THE QUICK QUIZ." description="English and UK football first: thirteen English/UK questions and four international questions. Five Easy, five Medium, five Hard and two Extreme." number="16" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
  {done&&mode==="daily"?<Success title="FULL-TIME." detail="Today's 17-question English-first quiz has been banked. Practice runs are ten questions each." button="PRACTICE QUIZ" onAgain={()=>{setMode("practice");restart("practice");}}/>:
   loading&&!bank?<Card className="quiz-loading"><motion.div animate={{scale:[1,1.08,1],rotate:[0,12,-12,0]}} transition={{duration:1.4,repeat:Infinity}}>⚽</motion.div><b>THE QUIZMASTER IS PICKING THE QUESTIONS</b><span>OPENING THE VALIDATED FOOTBALL QUESTION BANK…</span></Card>:
   error||bank.length===0?<Card className="arc-feedback"><b>QUESTION BANK UNAVAILABLE</b><p>{error||"The validated football question bank could not be opened."}</p><button className="arc-button" onClick={retry}>RETRY QUESTION BANK ↗</button></Card>:
@@ -1240,7 +1240,7 @@ function QuickQuizPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
    <div className="quiz-question"><div className="quiz-type-cursor"/><h2>{typed}{!typingDone&&<i className="quiz-caret"/>}</h2><div className="quiz-progress"><i style={{width:(progress*100)+"%"}}/></div></div>
    {typingDone&&<motion.div className="quiz-options" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}}>{question.options.map(option=><motion.button key={option} whileTap={{scale:.985}} onClick={()=>choose(option)} disabled={locked} className={locked&&option===question.answer?"correct":locked&&option===chosen?"wrong":""}>{option}</motion.button>)}</motion.div>}
    {locked&&<motion.div className={"arc-feedback "+(chosen===question.answer?"quiz-goal":"quiz-miss")} initial={{opacity:0,y:12,scale:.98}} animate={{opacity:1,y:0,scale:1}}><b>{chosen===question.answer?"GOAL! CORRECT.":chosen?"NOT THIS TIME.":"TIME'S UP."}</b><p>{question.explanation}</p><small>{question.source}</small><button className="arc-button" onClick={next}>{index+1===questions.length?"SEE FINAL SCORE":"NEXT QUESTION ↗"}</button></motion.div>}
-   <div className="arc-game-foot"><span>{question.category} / {question.region==="ENGLISH_DOMESTIC"?"ENGLISH DOMESTIC FOOTBALL":"INTERNATIONAL FOOTBALL"}</span><span>{quizSeconds(question.tier)} SECONDS · {quizPoints(question.tier)} PTS</span></div>
+   <div className="arc-game-foot"><span>{question.category} / {question.region==="ENGLISH_DOMESTIC"?"ENGLISH DOMESTIC FOOTBALL":question.region==="UK"?"ENGLISH / UK FOOTBALL":"INTERNATIONAL FOOTBALL"}</span><span>{quizSeconds(question.tier)} SECONDS · {quizPoints(question.tier)} PTS</span></div>
   </Card>}
  </Frame>;
 }
