@@ -563,14 +563,80 @@ function RevealPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  </Frame>;
 }
 
+type CheckoutMetric="leagueGoals"|"caps";
+type CheckoutDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
+type CheckoutPlayer={id:string;name:string;value:number;label:string};
 function FiveOhOnePage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
- const [mode,setMode]=useMode();const [remaining,setRemaining]=useState(501);const [picked,setPicked]=useState<string[]>([]);const [bust,setBust]=useState(false);const [finish,setFinish]=useState(false);const done=account.daily[utcDay()]?.["football-501"]!==undefined;
- const pool=useMemo(()=>shuffle(LEAGUE_GOALS,mode==="daily"?hashSeed("501"+utcDay()):Math.floor(Math.random()*1e9)),[mode]);
- const pick=(p:{name:string;value:number})=>{if(finish||bust||picked.includes(p.name))return;const next=remaining-p.value;if(next<0){setBust(true);return;}const count=picked.length+1;setPicked(v=>[...v,p.name]);setRemaining(next);if(next===0){setFinish(true);if(mode==="daily")onDaily("football-501",Math.max(100,1000-count*100));}};
- const bankRun=()=>{if(!picked.length||finish)return;setFinish(true);if(mode==="daily")onDaily("football-501",Math.max(0,1000-remaining*2));};
- const restart=()=>{setRemaining(501);setPicked([]);setBust(false);setFinish(false);};
- return <Frame account={account} game="football-501" eyebrow="COUNTDOWN / PREMIER LEAGUE GOALS" title="FOOTBALL 501." description="Use each player's Premier League goal total once. Get exactly to zero for the best score, or bank your closest safe finish." number="10" mode={mode} setMode={m=>{setMode(m);restart();}}>
- {done&&mode==="daily"?<Success title="COUNTDOWN BANKED." detail="Today's 501 is complete. Try another countdown in practice." button="PRACTICE" onAgain={()=>setMode("practice")}/>:<Card className="checkout-game"><div className="checkout-score"><small>REMAINING</small><strong>{remaining}</strong><div className="checkout-rings"><i/><i/><i/></div></div><div className="arc-game-meta"><span>PLAYERS USED {picked.length}</span><b>NO BUSTS ALLOWED</b></div><div className="checkout-cards">{pool.slice(0,6).map(p=><button key={p.name} disabled={picked.includes(p.name)||bust||finish} onClick={()=>pick(p)}><small>{p.name}</small><b>{p.value}</b><i>PL GOALS</i></button>)}</div>{bust&&<div className="arc-feedback"><b>BUST.</b><p>That pick would take you below zero. Your previous total is unchanged.</p><button className="arc-button" onClick={()=>setBust(false)}>TRY ANOTHER ↗</button></div>}{finish&&<Success title={remaining===0?"CHECKOUT!":"RUN BANKED."} detail={remaining===0?"You hit exactly zero.":"You finished "+remaining+" away from zero."} button="RUN IT BACK" onAgain={restart}/>}<div className="arc-game-foot"><span>PLAYER GOALS / EACH PLAYER ONCE</span><button className="arc-button" disabled={!picked.length||finish} onClick={bankRun}>BANK THIS RUN ↗</button><button className="arc-quiet" onClick={restart}>RESET COUNTDOWN</button></div></Card>}
+ const [mode,setMode]=useMode();const [difficulty,setDifficulty]=useState<CheckoutDifficulty>("STANDARD");
+ const [metric,setMetric]=useState<CheckoutMetric>("leagueGoals");
+ const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
+ const [remaining,setRemaining]=useState(501);const [turnStart,setTurnStart]=useState(501);
+ const [turnPicks,setTurnPicks]=useState<CheckoutPlayer[]>([]);const [used,setUsed]=useState<string[]>([]);
+ const [busts,setBusts]=useState(0);const [bust,setBust]=useState(false);const [finish,setFinish]=useState(false);const [runBanked,setRunBanked]=useState(false);
+ const done=account.daily[utcDay()]?.["football-501"]!==undefined;
+ const seed=mode==="daily"?"501:"+utcDay():"501:PRACTICE:"+practiceSeed;
+ const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,seed,1600);
+ const pool=useMemo(()=>{
+   const mapped=archivePlayers.map(archivePlayerToGamePlayer).map(p=>({
+     id:p.archiveId,name:p.name,
+     value:metric==="leagueGoals"?p.leagueGoals:(p.caps??-1),
+     label:metric==="leagueGoals"?"RECORDED LEAGUE GOALS":"INTERNATIONAL CAPS",
+     coverage:metric==="leagueGoals"?p.leagueGoalSeasons:(p.caps??0)
+   })).filter(p=>p.value>0&&(metric!=="leagueGoals"||p.coverage>=2));
+   return mapped.length>=8?mapped:LEAGUE_GOALS.map(p=>({id:p.name,name:p.name,value:p.value,label:"PREMIER LEAGUE GOALS",coverage:1}));
+ },[archivePlayers,metric]);
+ const maxValue=difficulty==="EASY"?300:difficulty==="STANDARD"?220:difficulty==="HARD"?130:80;
+ const options=useMemo(()=>{
+   const valid=pool.filter(p=>!used.includes(p.id)&&p.value<=maxValue);
+   const source=valid.length>=6?valid:pool.filter(p=>!used.includes(p.id));
+   return shuffle(source,hashSeed(seed+":"+remaining+":"+turnPicks.length+":"+difficulty+":"+metric)).slice(0,6);
+ },[pool,used,maxValue,seed,remaining,turnPicks.length,difficulty,metric]);
+ const currentVisitTotal=turnPicks.reduce((n,p)=>n+p.value,0);
+ const safeRemaining=remaining;
+ const visitEnded=turnPicks.length===3;
+ const score=remaining===0?1000:Math.max(0,1000-remaining*2-busts*100);
+ const pick=(p:CheckoutPlayer)=>{
+   if(finish||runBanked||bust||visitEnded||used.includes(p.id))return;
+   const next=remaining-p.value;
+   const visitUsed=[...used,p.id];
+   if(next<0){
+     setUsed(visitUsed);setBusts(v=>v+1);setRemaining(turnStart);setTurnPicks([]);setBust(true);
+     return;
+   }
+   setUsed(visitUsed);setTurnPicks(v=>[...v,p]);setRemaining(next);
+   if(next===0){setFinish(true);if(mode==="daily")onDaily("football-501",Math.max(100,1000-(used.length+1)*20-busts*100));}
+ };
+ const nextVisit=()=>{
+   if(turnPicks.length!==3||finish||runBanked)return;
+   setTurnStart(remaining);setTurnPicks([]);setBust(false);
+ };
+ const bankRun=()=>{
+   if(used.length===0||finish||runBanked)return;
+   setRunBanked(true);if(mode==="daily")onDaily("football-501",score);
+ };
+ const reset=(newMode:Mode=mode,newDifficulty:CheckoutDifficulty=difficulty,newMetric:CheckoutMetric=metric)=>{
+   setDifficulty(newDifficulty);setMetric(newMetric);setRemaining(501);setTurnStart(501);setTurnPicks([]);setUsed([]);setBusts(0);setBust(false);setFinish(false);setRunBanked(false);
+   if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
+ };
+ return <Frame account={account} game="football-501" eyebrow="THREE DARTS / ONE CHECKOUT" title="FOOTBALL 501." description="Choose player-stat darts to work down from 501. Three picks make a visit. Busting below zero wipes the visit." number="10" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
+ {done&&mode==="daily"?<Success title="CHECKOUT BANKED." detail="Today's 501 challenge is complete. Practice is unlimited." button="PRACTICE" onAgain={()=>{setMode("practice");reset("practice");}}/>:
+  <Card className="checkout-game">
+   <div className="arc-game-meta"><span>VISIT / {Math.floor(used.length/3)+1}</span><b>{difficulty} · {metric==="leagueGoals"?"LEAGUE GOALS":"INTERNATIONAL CAPS"}</b></div>
+   <div className="grid-difficulty">{(["EASY","STANDARD","HARD","EXTREME"] as CheckoutDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level,metric)}>{level}</button>)}</div>
+   <div className="checkout-scoreboard">
+    <div className="checkout-target"><span>REMAINING</span><strong key={remaining}>{remaining}</strong><small>{remaining===0?"CHECKOUT!":remaining<=170?"ON THE FINISH":"301 / 501 CLUBHOUSE"}</small></div>
+    <div className="checkout-dartboard"><div className="dart-ring ring-one"/><div className="dart-ring ring-two"/><div className="dart-ring ring-three"/><div className="dart-bull"/><motion.div className="dart-flight" animate={{x:[-30,6,0],y:[-26,4,0],rotate:[-35,8,0],opacity:[0,1,1]}} transition={{duration:.48,repeat:Infinity,repeatDelay:1.8}}/></div>
+   </div>
+   <div className="checkout-turn"><div><small>THIS VISIT</small><b>{turnPicks.length} / 3 DARTS</b></div><div className="checkout-dart-slots">{[0,1,2].map(i=><div className={turnPicks[i]?"hit":""} key={i}><small>DART {i+1}</small><b>{turnPicks[i]?turnPicks[i].value:"—"}</b></div>)}</div><div className="checkout-turn-total"><small>VISIT TOTAL</small><strong>{currentVisitTotal}</strong></div></div>
+   {loading&&pool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.4,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>SCOUTING THE DARTS POOL</b><span>Collecting players with recorded statistics.</span></div>:
+    <><div className="arc-game-meta"><span>CHOOSE A PLAYER AS YOUR NEXT DART</span><b>{options.length} OPTIONS</b></div><div className="checkout-cards">{options.map(p=><button key={p.id} disabled={turnPicks.length===3||finish||runBanked||bust} onClick={()=>pick(p)}><small>{p.name}</small><b>{p.value.toLocaleString("en-GB")}</b><i>{p.label}</i></button>)}</div></>}
+   {bust&&<div className="arc-feedback"><b>BUST — VISIT WIPED.</b><p>Your total stays at {turnStart}. The three darts in that visit score zero.</p><button className="arc-button" onClick={()=>setBust(false)}>RESET DARTS ↗</button></div>}
+   {visitEnded&&!finish&&<div className="arc-feedback"><b>VISIT COMPLETE · {currentVisitTotal} POINTS</b><p>You are now on {remaining}. Start the next visit when you're ready.</p><button className="arc-button" onClick={nextVisit}>NEXT VISIT ↗</button></div>}
+   {(finish||runBanked)&&<div className="arc-feedback"><b>{remaining===0?"CHECKOUT!":"RUN BANKED."} · {score}/1000</b><p>{remaining===0?"Exactly zero — perfect finish.":"You finished "+remaining+" away from zero after "+busts+" busts."}</p><button className="arc-button" onClick={()=>reset(mode)}>ANOTHER RUN ↗</button></div>}
+   <div className="arc-game-foot"><span>{used.length} PLAYERS USED · {busts} BUSTS</span><button className="arc-button" disabled={used.length===0||finish||runBanked} onClick={bankRun}>BANK SCORE ↗</button><button className="arc-quiet" onClick={()=>reset(mode)}>RESET</button></div>
+   <p className="arc-muted">{metric==="leagueGoals"?"Recorded league-goal rows are incomplete for some players; only player totals with at least two recorded seasons are eligible.":"International caps are aggregated from the career archive and may be incomplete."} This is a custom player-stat darts mode, not official PDC scoring.</p>
+   {error&&<div className="arc-feedback"><b>ARCHIVE FALLBACK</b><p>The player-stat archive is unavailable. The starter Premier League goal list is active.</p><button className="arc-quiet" onClick={retry}>RETRY DATABASE</button></div>}
+  </Card>}
  </Frame>;
 }
 
