@@ -17,6 +17,7 @@ Pinned inputs:
 | [OpenFootball clubs](https://github.com/openfootball/clubs) | `ae3800227c449447b3a337fc0aac79a8f02f4c8b` | Club identity, aliases, country and stadium metadata |
 | [Mart Jürisoo international results](https://github.com/martj42/international_results) | `ca84241bb3eed854a1956a2fab442fe4daad40dd` | Men's senior international match results and recorded goalscorers |
 | [OpenFootball World Cup](https://github.com/openfootball/worldcup.json) | `516d3825c3bd23fdc298c4014e84bde78f2d4965` | Source for the retained 1982–2022 starting-line-up snapshot in `public/data/worldcup-lineups.json` |
+| [OpenFootball Champions League](https://github.com/openfootball/champions-league) | `abfaeddc2ee3d14f99ecc163c9ddb46cb4d67cef` | UEFA Champions League, Europa League and Conference League match results and qualifiers |
 | [OpenFootball England](https://github.com/openfootball/england) | `9ee7a0c351805c99cc334478a9bf04b7d0432fec` | Premier League, English top-four divisions and domestic cup match results |
 
 The international-results source is a men's senior full-international dataset. OpenFootball England covers the Premier League, English top-four tiers, plus FA Cup/EFL Cup seasons available in the pinned repository. These are match-result datasets, not complete player performance statistics.
