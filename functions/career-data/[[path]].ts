@@ -33,7 +33,9 @@ export async function onRequest(context: {
     return new Response("Not found", { status: 404 });
   }
 
-  const headers = new Headers({ accept: "*/*" });
+  const headers = new Headers({ accept: path === "transfers.csv" ? "text/csv,*/*" : "*/*" });
+  headers.set("user-agent", "Mozilla/5.0 (compatible; PLAYGROUND-Football-Arcade/1.0; +https://playground-football-games.pages.dev)");
+  if (path === "transfers.csv") headers.set("referer", "https://zenodo.org/");
   const range = context.request.headers.get("range");
   if (range) headers.set("range", range);
   const upstream = await fetch(target, { method: context.request.method, headers });
