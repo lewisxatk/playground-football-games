@@ -683,13 +683,13 @@ function buildGridPuzzle(players:GamePlayer[],difficulty:GridDifficulty,seed:num
    .filter(country=>(countryTotals.get(country)??0)>=minCountry)
    .sort((a,b)=>(byCountry.get(b)?.size??0)-(byCountry.get(a)?.size??0));
  const candidateCountries=(countries.length>=4?countries:Array.from(byCountry.keys())
-   .sort((a,b)=>(byCountry.get(b)?.size??0)-(byCountry.get(a)?.size??0))).slice(0,28);
+   .sort((a,b)=>(byCountry.get(b)?.size??0)-(byCountry.get(a)?.size??0))).slice(0,20);
  if(candidateCountries.length<4)return null;
  let best:GridPuzzle|null=null,bestQuality=-Infinity,attempt=0;
  const makeCandidate=(nationKeys:string[],commonClubs:string[])=>{
    const ranked=commonClubs.filter(club=>(clubTotals.get(club)??0)>=minClub || difficulty==="HARD" || difficulty==="EXTREME");
    if(ranked.length<4)return;
-   const sample=shuffle(ranked,seed+attempt*19).slice(0,Math.min(12,ranked.length));
+   const sample=shuffle(ranked,seed+attempt*19).slice(0,Math.min(8,ranked.length));
    for(let a=0;a<sample.length-3;a++)for(let b=a+1;b<sample.length-2;b++)
     for(let c=b+1;c<sample.length-1;c++)for(let d=c+1;d<sample.length;d++){
      const chosen=[sample[a],sample[b],sample[c],sample[d]];
@@ -1136,7 +1136,7 @@ function makeDynamicStrandsPack(players:GamePlayer[],seed:number):typeof STRANDS
  const groups:{kind:"CLUB"|"NATION";label:string;members:GamePlayer[]}[]=[];
  const addGroup=(kind:"CLUB"|"NATION",label:string,items:GamePlayer[])=>{
    const unique=[...new Map(items.map(p=>[p.archiveId,p])).values()];
-   if(unique.length>=10)groups.push({kind,label,members:unique});
+   if(unique.length>=6)groups.push({kind,label,members:unique});
  };
  const byClub=new Map<string,{label:string;members:GamePlayer[]}>();
  const byNation=new Map<string,{label:string;members:GamePlayer[]}>();
@@ -1157,29 +1157,33 @@ function makeDynamicStrandsPack(players:GamePlayer[],seed:number):typeof STRANDS
  const orderedGroups=shuffle(groups,seed);
  for(let groupIndex=0;groupIndex<orderedGroups.length;groupIndex++){
    const group=orderedGroups[groupIndex];
-   const spangram=(group.kind==="CLUB"?group.label:group.label+" PLAYERS")
-     .normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,"");
-   if(spangram.length!==13&&spangram.length!==14)continue;
+   const base=group.label.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,"");
+   const spangramCandidates=group.kind==="NATION"?[base+"PLAYERS"]:
+     [base,base.length===9?base+"FCXI":base.length===7?base+"PLAYERS":""].filter(Boolean);
+   const spangram=spangramCandidates.find(word=>word.length===13||word.length===14);
+   if(!spangram)continue;
    const target=48-spangram.length;
    const candidates=[...new Set(shuffle(group.members,seed+groupIndex*31)
      .map(p=>p.surname.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,""))
      .filter(word=>word.length>=3&&word.length<=8))];
-   if(candidates.length<8)continue;
-   const dp:Map<number,string[]>[]=Array.from({length:9},()=>new Map<number,string[]>());
-   dp[0].set(0,[]);
-   for(const word of candidates){
-     for(let count=7;count>=0;count--){
-       for(const [sum,chosen] of Array.from(dp[count].entries())){
-         const next=sum+word.length;
-         if(next>target||dp[count+1].has(next))continue;
-         dp[count+1].set(next,[...chosen,word]);
+   if(candidates.length<6)continue;
+   for(let wordCount=6;wordCount<=Math.min(8,candidates.length);wordCount++){
+     const dp:Map<number,string[]>[]=Array.from({length:wordCount+1},()=>new Map<number,string[]>());
+     dp[0].set(0,[]);
+     for(const word of candidates){
+       for(let count=wordCount-1;count>=0;count--){
+         for(const [sum,chosen] of Array.from(dp[count].entries())){
+           const next=sum+word.length;
+           if(next>target||dp[count+1].has(next))continue;
+           dp[count+1].set(next,[...chosen,word]);
+         }
        }
      }
-   }
-   const words=dp[8].get(target);
-   if(words&&new Set(words).size===8){
-     const theme=group.kind==="CLUB"?"PLAYERS WHO PLAYED FOR "+group.label:"PLAYERS WHO REPRESENTED "+group.label;
-     return {spangram,words,theme};
+     const words=dp[wordCount].get(target);
+     if(words&&new Set(words).size===wordCount){
+       const theme=group.kind==="CLUB"?"PLAYERS WHO PLAYED FOR "+group.label:"PLAYERS WHO REPRESENTED "+group.label;
+       return {spangram,words,theme};
+     }
    }
  }
  return null;
@@ -1210,7 +1214,13 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
  const seed=mode==="daily"?"STRANDS:"+utcDay()+":"+boardNo:"STRANDS:PRACTICE:"+practiceSeed+":"+boardNo;
  const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,4200);
  const pool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
- const dynamicPack=useMemo(()=>pool.length>=30?makeDynamicStrandsPack(pool,hashSeed(seed)):null,[pool,seed]);
+ const staticPool=useMemo(()=>PLAYER_DATABASE.map(p=>({
+   ...p,archiveId:p.name,careerSpells:[],seasonStats:[],careerAppsRecorded:false,careerGoalsRecorded:false,leagueAppsRecorded:false,leagueGoalsRecorded:false,
+   careerApps:0,careerGoals:0,leagueApps:0,leagueGoals:0,leagueGoalSeasons:0,leagueAssists:0,leagueAssistSeasons:0,
+   statSeasons:0,firstYear:null,lastYear:null,caps:null,internationalGoals:null,birthDate:"",currentCountry:"",currentDivision:null
+ } as GamePlayer)),[]);
+
+ const dynamicPack=useMemo(()=>makeDynamicStrandsPack(pool,hashSeed(seed))??makeDynamicStrandsPack(staticPool,hashSeed(seed+1)),[pool,staticPool,seed]);
  const staticOrder=useMemo(()=>shuffle(STRANDS_PACKS,hashSeed("STRANDS:"+utcDay())),[]);
  const pack=dynamicPack??(mode==="daily"?staticOrder[boardNo%staticOrder.length]:STRANDS_PACKS[hashSeed(seed)%STRANDS_PACKS.length]);
  const board=useMemo(()=>makeStrandsBoard(pack),[pack]);
@@ -1244,18 +1254,18 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
    const foundIndex=board.words.findIndex((w,idx)=>!solved(idx)&&(w===word||w.split("").reverse().join("")===word));
    if(foundIndex>=0){
      const next=[...found,foundIndex];setFound(next);setSelected([]);setNotice("");
-     if(next.length===9){setFinished(true);if(mode==="daily")onDaily("strands",Math.max(100,1000-nudges*100-wrong*15));}
+     if(next.length===board.words.length){setFinished(true);if(mode==="daily")onDaily("strands",Math.max(100,1000-nudges*100-wrong*15));}
    }else{setWrong(v=>v+1);setNotice(path.length>1?"No footballer on that path. Try another route.":"Drag through adjacent letters to make a name.");setSelected([]);}
  };
  const cancelPath=()=>{pathRef.current=[];setSelected([]);setDragging(false);};
  const nextBoard=()=>{setBoardNo(v=>v+1);pathRef.current=[];setSelected([]);setFound([]);setWrong(0);setNudges(0);setHintedWord(null);setNotice("");setDragging(false);setFinished(false);};
  const hint=()=>{if(nudges>=3||finished)return;const next=board.paths.findIndex((_path,index)=>!found.includes(index)&&index!==hintedWord);if(next>=0){setHintedWord(next);setNudges(v=>v+1);}};
- const currentDone=found.length===9;
+ const currentDone=found.length===board.words.length;
  const hintedCells=hintedWord===null?[]:(board.paths[hintedWord]?.slice(0,2)??[]);
  return <Frame account={account} game="strands" eyebrow="6 × 8 LETTER PUZZLE / DAILY THEME" title="FOOTBALL STRANDS." description="Find eight football names connected by one clear football theme, then trace the spangram that names the connection." number="13" mode={mode} setMode={m=>{setMode(m);setBoardNo(0);if(m==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));pathRef.current=[];setSelected([]);setFound([]);setWrong(0);setNudges(0);setHintedWord(null);setNotice("");setDragging(false);setFinished(false);}}>
- {done&&mode==="daily"?<Success title="DAILY BOARD CLEARED." detail="Today’s Strands board is complete. Fresh themed practice boards are available." button="PRACTICE STRANDS" onAgain={()=>{setMode("practice");setPracticeSeed(String(Math.floor(Math.random()*1e12)));nextBoard();}}/>:
+ {done&&mode==="daily"?<Success title="DAILY BOARD CLEARED." detail="Today’s themed Strands board is complete. Fresh club and nation practice boards are available." button="PRACTICE STRANDS" onAgain={()=>{setMode("practice");setPracticeSeed(String(Math.floor(Math.random()*1e12)));nextBoard();}}/>:
   <Card className="strands-game">
-   <div className="arc-game-meta"><span>{mode==="daily"?"TODAY’S BOARD":"PRACTICE BOARD "+(boardNo+1)}</span><b>{found.length}/9 NAMES FOUND</b></div>
+   <div className="arc-game-meta"><span>{mode==="daily"?"TODAY’S BOARD":"PRACTICE BOARD "+(boardNo+1)}</span><b>{found.length}/{board.words.length} NAMES FOUND</b></div>
    <div className="strands-theme"><small>THE THEME</small><strong>{pack.theme}</strong><span>{dynamicPack?"Every answer belongs to this club or nationality theme.":"Fallback football word board."} Select adjacent letters in any direction; diagonal links are allowed.</span></div>
    {loading&&pool.length===0&&<div className="strands-pool-note">LOADING PLAYER NAMES…</div>}
    <div className={"strands-grid "+(dragging?"is-dragging":"")} onPointerMove={handlePointerMove} onPointerUp={finishPath} onPointerCancel={cancelPath} onContextMenu={e=>e.preventDefault()}>
