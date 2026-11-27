@@ -156,8 +156,15 @@ def build_rows(manifest: dict[str, Any], files: dict[str, Any]) -> list[dict[str
     import duckdb  # installed by the GitHub Actions workflow
 
     conn = duckdb.connect(":memory:")
-    conn.execute("SET threads = 2")
-    conn.execute("SET memory_limit = '4GB'")
+    # GitHub-hosted runners have limited RAM. Force spillable external
+    # aggregation, one execution thread, and bounded fetch batches.
+    conn.execute("SET threads = 1")
+    conn.execute("SET preserve_insertion_order = false")
+    conn.execute("SET memory_limit = '5GB'")
+    spill_dir = Path(tempfile.gettempdir()) / "playground-duckdb-spill"
+    spill_dir.mkdir(parents=True, exist_ok=True)
+    conn.execute(f"SET temp_directory = {sql_path(spill_dir)}")
+    conn.execute("SET max_temp_directory_size = '25GB'")
     conn.execute(f"CREATE VIEW career AS SELECT * FROM read_parquet({sql_path(files['career'])})")
     conn.execute(f"CREATE VIEW stat_club AS SELECT * FROM read_parquet({sql_path(files['stat_club'])})")
     conn.execute(f"CREATE VIEW player_profile AS SELECT * FROM read_parquet({sql_path(files['player_profile'])})")
@@ -314,8 +321,12 @@ def build_rows(manifest: dict[str, Any], files: dict[str, Any]) -> list[dict[str
     cursor = conn.execute(query)
     columns = [d[0] for d in cursor.description]
     rows: list[dict[str, Any]] = []
-    for raw in cursor.fetchall():
-        row = dict(zip(columns, raw))
+    while True:
+        batch = cursor.fetchmany(500)
+        if not batch:
+            break
+        for raw in batch:
+            row = dict(zip(columns, raw))
         spells = json_list(row.get("spells_json"))
         clubs = []
         for spell in spells:
