@@ -24,7 +24,7 @@ type FootballKnowledgeShards = {
  "english-matches":{matches:CC0InternationalMatch[]};
  "european-club-matches":{matches:CC0InternationalMatch[]};
  "goal-events":{events:CC0InternationalGoalEvent[];scorers:Record<string,unknown>[]};
- "world-cup":{lineups:CC0WorldCupLineup[];questions:Record<string,unknown>[];playerCards:WorldCupPlayerCard[]};
+ "world-cup":{lineups:CC0WorldCupLineup[]};
  footle:{answers:string[];answerRecords:{id:string;answer:string;source:string;sourceCommit:string;licence:"CC0-1.0"}[]};
  connections:{players:CC0FootballPlayer[];packs:CC0ConnectionsPack[];clubCountryPacks?:unknown[]};
  strands:{packs:CC0StrandsPack[]};
