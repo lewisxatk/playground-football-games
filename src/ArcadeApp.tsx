@@ -1276,7 +1276,7 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
    {loading&&pool.length===0&&<div className="strands-pool-note">LOADING PLAYER NAMES…</div>}
    <div className={"strands-grid "+(dragging?"is-dragging":"")} onPointerMove={handlePointerMove} onPointerUp={finishPath} onPointerCancel={cancelPath} onContextMenu={e=>e.preventDefault()}>
     <svg className="strands-trail" viewBox="0 0 600 800" preserveAspectRatio="none" aria-hidden="true">
-     {selected.length>1&&<polyline points={selected.map(cell=>{const row=Math.floor(cell/8),col=cell%8;return ((col+.5)/6*600)+","+((row+.5)/8*800);}).join(" ")} fill="none" stroke="currentColor" strokeWidth="13" strokeLinecap="round" strokeLinejoin="round"/>}
+     {selected.length>1&&<polyline points={selected.map(cell=>{const row=Math.floor(cell/6),col=cell%6;return ((col+.5)/6*600)+","+((row+.5)/8*800);}).join(" ")} fill="none" stroke="currentColor" strokeWidth="13" strokeLinecap="round" strokeLinejoin="round"/>}
     </svg>
     {board.cells.map((letter,i)=>{
       const foundWord=found.findIndex(idx=>board.paths[idx].includes(i));const pathIndex=selected.indexOf(i);const isHinted=hintedCells.includes(i);
