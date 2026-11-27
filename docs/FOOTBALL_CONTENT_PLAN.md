@@ -82,3 +82,17 @@ A fact appearing in the master bank does not automatically count as a playable p
 The validator rejects missing or duplicate IDs/question stems, incomplete questions, missing canonical answers or aliases, repeated aliases after accent normalisation, missing category/topic/difficulty, missing difficulty rationale, missing explanations, missing competition scope or dates, missing source provenance, unverified items, invalid game mappings, and missing/duplicate answer options or a correct answer that appears other than once.
 
 Do not claim the database is complete at 500–1,000 questions. The 100-question bank is a growing foundation, not the finished content volume. Continue in researched batches, then connect validated records to game-specific data models and measure which difficulty levels are actually too easy or too hard.
+
+
+## 2026-11-27 audit correction: live content versus development seed
+
+There are two separate question systems in the current branch:
+
+- `public/data/football-facts.seed.json`: 100 curated, source-referenced development questions, 25 per difficulty tier. They are not wired into live games and currently map only to Timed Quiz and The Climb. Structural duplication checks found no duplicate question stems, but the script does not verify factual truth or licence clearance.
+- The build-generated question bank: 800 archive-derived questions per tier (3,200 total), currently used by The Climb and Quick Quiz. These are templated from player archive fields, not 3,200 individually researched questions. The source archive mixes Wikipedia-derived CC BY-SA data and Wikidata-derived CC0 data, and flags several career/stat totals as unverified or incomplete.
+
+Do not add these counts together or describe them as 3,300 approved unique facts. Keep the seed as an editorial development batch until each fact's provenance and scope has a clear rights basis; use a CC0-only source snapshot for future commercial game-content generation.
+
+The 100 records are close to the long-term UK-first balance, but 60 are in the `records` category. Future batches must deliberately add player careers, clubs, rivalries, managers, iconic matches, tournaments, stadiums and football culture. The quality gate must validate source-row evidence, exact competition scope, distractors and underlying fact IDs, not only JSON shape.
+
+See [CONTENT_AND_DATA_AUDIT_2026-11-27.md](./CONTENT_AND_DATA_AUDIT_2026-11-27.md) for the full source and game-fit audit.
