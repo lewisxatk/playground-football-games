@@ -1240,7 +1240,7 @@ function QuickQuizPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
    <div className="quiz-question"><div className="quiz-type-cursor"/><h2>{typed}{!typingDone&&<i className="quiz-caret"/>}</h2><div className="quiz-progress"><i style={{width:(progress*100)+"%"}}/></div></div>
    {typingDone&&<motion.div className="quiz-options" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}}>{question.options.map(option=><motion.button key={option} whileTap={{scale:.985}} onClick={()=>choose(option)} disabled={locked} className={locked&&option===question.answer?"correct":locked&&option===chosen?"wrong":""}>{option}</motion.button>)}</motion.div>}
    {locked&&<motion.div className={"arc-feedback "+(chosen===question.answer?"quiz-goal":"quiz-miss")} initial={{opacity:0,y:12,scale:.98}} animate={{opacity:1,y:0,scale:1}}><b>{chosen===question.answer?"GOAL! CORRECT.":chosen?"NOT THIS TIME.":"TIME'S UP."}</b><p>{question.explanation}</p><small>{question.source}</small><button className="arc-button" onClick={next}>{index+1===questions.length?"SEE FINAL SCORE":"NEXT QUESTION ↗"}</button></motion.div>}
-   <div className="arc-game-foot"><span>{question.category} / {question.region==="UK"?"UK NATIONAL SIDES":"INTERNATIONAL FOOTBALL"}</span><span>{quizSeconds(question.tier)} SECONDS · {quizPoints(question.tier)} PTS</span></div>
+   <div className="arc-game-foot"><span>{question.category} / {question.region==="ENGLISH_DOMESTIC"?"ENGLISH DOMESTIC FOOTBALL":"INTERNATIONAL FOOTBALL"}</span><span>{quizSeconds(question.tier)} SECONDS · {quizPoints(question.tier)} PTS</span></div>
   </Card>}
  </Frame>;
 }
