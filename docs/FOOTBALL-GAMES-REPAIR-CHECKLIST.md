@@ -76,3 +76,5 @@ Latest Grid runtime fixes: `18b31b793394ed8808fbe5b97ba08bfc79441f44` (club-name
 Next action: poll the latest GitHub Actions build, inspect Football Grid pack counts and fix any remaining failures, then audit each implemented game and run the full typecheck/validation/build suite.
 
 - [x] Remove obsolete duplicate Grid builder and normalize dotted club suffixes in active runtime index. Commit: `f4dba2319d2bd2c3ba5cdf8a4aeff10d438052d7`.
+
+- [x] Fix Strands mode-switch reset to clear the new multi-hint state correctly. Commit: `ed0bf93d76`.
