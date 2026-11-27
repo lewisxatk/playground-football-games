@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Barlow+Condensed:wght@500;600;700;800;900&family=Bebas+Neue&family=Oswald:wght@500;600;700&family=Russo+One&family=Space+Grotesk:wght@500;600;700&family=Teko:wght@500;600;700&display=swap');
 .arc-shell{--ap:#f3f0e7;--ai:#141b19;--ag:#c9f45c;--ao:#ff744f;--ab:#96c9e2;--av:#c9b6ed;--line:rgba(20,27,25,.22);min-height:100vh;background:var(--ap);color:var(--ai);font-family:'Cabinet Grotesk',Arial,sans-serif;overflow:hidden}
 .arc-shell *{box-sizing:border-box}.arc-shell button,.arc-shell input{font:inherit}.arc-brand{font-size:26px;font-weight:900;letter-spacing:-.09em;white-space:nowrap}.arc-brand span{font-weight:500}.arc-brand b{font-size:8px;vertical-align:top;margin-left:3px}
 .arc-top{height:74px;padding:0 5.2%;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);position:relative;z-index:20;background:rgba(243,240,231,.96)}
@@ -75,3 +75,36 @@
   .scout-column-head span{font-size:7px}
   .arc-footer{font-size:8px}
 }
+
+/* Individual game art directions: distinct paper tones, ink and display faces. */
+.arc-lowball{--ap:#f8f1dd;--ai:#1b241b;--ag:#c8f35a;--ao:#ff754f}
+.arc-the-climb{--ap:#f9e4da;--ai:#31201c;--ag:#ff8868;--ao:#9ebc53}
+.arc-draft-xi{--ap:#dceefa;--ai:#14283b;--ag:#77b5e3;--ao:#f38a54}
+.arc-career-file{--ap:#f4e2e8;--ai:#261923;--ag:#a5b969;--ao:#f27b66}
+.arc-footle{--ap:#e2f3ee;--ai:#17302c;--ag:#75cbb3;--ao:#e2a94d}
+.arc-connections{--ap:#ece4fa;--ai:#241d34;--ag:#c7a9f3;--ao:#ed9b66}
+.arc-football-grid{--ap:#e2eddb;--ai:#202c20;--ag:#94bb68;--ao:#d67e56}
+.arc-ladder{--ap:#fff0cf;--ai:#302719;--ag:#efc456;--ao:#e77c50}
+.arc-the-reveal{--ap:#e2e7ef;--ai:#1c2536;--ag:#8eabd1;--ao:#d67a64}
+.arc-football-501{--ap:#f7e6d8;--ai:#2e211b;--ag:#f2a46f;--ao:#c65a3c}
+.arc-link-up{--ap:#f4e1df;--ai:#321f21;--ag:#e99b9b;--ao:#789d73}
+.arc-missing-xi{--ap:#e4efda;--ai:#203023;--ag:#a6cb73;--ao:#f18457}
+.arc-strands{--ap:#e0eaf4;--ai:#172638;--ag:#80b5dc;--ao:#e8b64d}
+.arc-scout-signal{--ap:#e9e4f4;--ai:#272033;--ag:#b9a3e6;--ao:#e77a69}
+.arc-top{background:color-mix(in srgb,var(--ap) 96%,transparent)}
+.arc-card{background:color-mix(in srgb,var(--ap) 88%,white)}
+.arc-heading-line h1{font-family:'Barlow Condensed',sans-serif;letter-spacing:-.035em}
+.arc-lowball .arc-heading-line h1{font-family:'Anton',sans-serif;letter-spacing:-.04em}
+.arc-the-climb .arc-heading-line h1{font-family:'Teko',sans-serif;font-weight:700;letter-spacing:-.025em}
+.arc-draft-xi .arc-heading-line h1{font-family:'Oswald',sans-serif;font-weight:700;letter-spacing:-.04em}
+.arc-career-file .arc-heading-line h1{font-family:'Archivo Black',sans-serif;letter-spacing:-.075em}
+.arc-footle .arc-heading-line h1{font-family:'Bebas Neue',sans-serif;letter-spacing:.005em}
+.arc-connections .arc-heading-line h1{font-family:'Space Grotesk',sans-serif;letter-spacing:-.08em}
+.arc-football-grid .arc-heading-line h1{font-family:'Bebas Neue',sans-serif;letter-spacing:0}
+.arc-ladder .arc-heading-line h1{font-family:'Teko',sans-serif;letter-spacing:-.025em}
+.arc-the-reveal .arc-heading-line h1{font-family:'Anton',sans-serif;letter-spacing:-.04em}
+.arc-football-501 .arc-heading-line h1{font-family:'Russo One',sans-serif;letter-spacing:-.06em}
+.arc-link-up .arc-heading-line h1{font-family:'Oswald',sans-serif;letter-spacing:-.04em}
+.arc-missing-xi .arc-heading-line h1{font-family:'Archivo Black',sans-serif;letter-spacing:-.07em}
+.arc-strands .arc-heading-line h1{font-family:'Bebas Neue',sans-serif;letter-spacing:.01em}
+.arc-scout-signal .arc-heading-line h1{font-family:'Space Grotesk',sans-serif;letter-spacing:-.08em}
