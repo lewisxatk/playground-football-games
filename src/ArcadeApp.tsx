@@ -67,6 +67,11 @@ function todayGames(account:Account){return Object.keys(account.daily[utcDay()]?
 type GamePlayer = Player & {
   archiveId:string;
   careerSpells:ArchiveCareerSpell[];
+  seasonStats:ArchiveGameStat[];
+  careerAppsRecorded:boolean;
+  careerGoalsRecorded:boolean;
+  leagueAppsRecorded:boolean;
+  leagueGoalsRecorded:boolean;
   careerApps:number;
   careerGoals:number;
   leagueApps:number;
@@ -101,8 +106,11 @@ function archivePlayerToGamePlayer(p:ArchiveGamePlayer):GamePlayer{
     nationality:p.nationality||"Unlisted",position:positionCode(p.position),
     club:p.currentClub||"Unknown club",league:p.currentLeague||p.currentCountry||"Unlisted",
     active:p.lastYear!==null&&p.lastYear>=new Date().getUTCFullYear()-1,
-    ageBand,clubs:p.clubs,aliases:[name,surname].filter(Boolean),
-    archiveId:p.id,careerSpells:p.spells??[],careerApps:p.appearances,careerGoals:p.goals,leagueApps:p.leagueAppearances,
+    ageBand,clubs:p.clubs,aliases:[name,surname,p.fullName??""].filter(Boolean),
+    archiveId:p.id,careerSpells:p.spells??[],seasonStats:p.seasonStats??p.stats??[],
+    careerAppsRecorded:(p.careerAppearanceRows??0)>0,careerGoalsRecorded:(p.careerGoalRows??0)>0,
+    leagueAppsRecorded:(p.leagueAppearanceRows??0)>0,leagueGoalsRecorded:(p.leagueGoalRows??0)>0,
+    careerApps:p.appearances,careerGoals:p.goals,leagueApps:p.leagueAppearances,
     leagueGoals:p.leagueGoals,leagueGoalSeasons:p.leagueGoalSeasons,statSeasons:p.seasons,firstYear:p.firstYear,lastYear:p.lastYear,
     caps:p.caps,internationalGoals:p.internationalGoals,birthDate:p.birthDate,
     currentCountry:p.currentCountry,currentDivision:p.currentDivision
