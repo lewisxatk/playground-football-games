@@ -235,3 +235,11 @@
   .ch-loading-line i,.ch-opening-progress i { animation:none !important; }
   .ch-revealed-card,.ch-owned-card { animation:none !important; }
 }
+
+.ch-owned-league{
+  display:inline-flex;align-items:center;max-width:100%;margin-top:7px;padding:5px 7px;
+  border:1px solid #b9c5a5;background:#eaf0df;color:#52643d;
+  font-size:7px;font-weight:950;letter-spacing:.1em;text-transform:uppercase
+}
+.ch-player-facts span:first-child{background:#eaf0df;border-color:#b9c5a5;color:#52643d}
+@media(max-width:620px){.ch-owned-league{font-size:7px}}
