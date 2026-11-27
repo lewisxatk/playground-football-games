@@ -180,7 +180,7 @@ function buildInternationalQuiz(matches){
    options=pickOptions(answer,scorelines,match.id);
   }else if(selector===1){
    questionType="match-winner";answer=match.homeScore===match.awayScore?"Draw":match.homeScore>match.awayScore?match.home:match.away;
-   question="Who won the match between "+match.home+" and "+match.away+" on "+match.date+"?";
+   question="What was the result of the match between "+match.home+" and "+match.away+" on "+match.date+"?";
    explanation=match.home+" "+match.homeScore+"–"+match.awayScore+" "+match.away+". "+(answer==="Draw"?"The match finished level.":answer+" recorded the win.");
    options=pickOptions(answer,[...teams,"Draw"],match.id);
   }else if(selector===2){
@@ -190,7 +190,7 @@ function buildInternationalQuiz(matches){
    options=pickOptions(answer,totals,match.id);
   }else{
    questionType="goal-margin";answer=String(Math.abs(match.homeScore-match.awayScore));
-   question="What was the winning margin when "+match.home+" played "+match.away+" on "+match.date+"?";
+   question="What was the goal difference in the match between "+match.home+" and "+match.away+" on "+match.date+"?";
    explanation="The final score was "+match.homeScore+"–"+match.awayScore+", a margin of "+answer+" goal"+(answer==="1"?"":"s")+".";
    options=pickOptions(answer,margins,match.id);
   }
