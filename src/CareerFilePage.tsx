@@ -1,12 +1,68 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { motion } from "motion/react";
-import { getCandidates, getPlayer, getStatEligibleCandidates, getTransferHints, type Candidate, type LeagueCode, type Player, type Transfer } from "./careerFileData";
+import { getCandidates, getPlayer, getStatEligibleCandidates, getTransferHints, type Candidate, type LeagueCode, type Player, type Transfer, type ArchiveGamePlayer } from "./careerFileData";
+import { getStaticArchivePlayers } from "./useArchivePlayers";
 import "./career-file.css";
 
 type Mode = "EASY" | "MEDIUM" | "HARD" | "CULT HERO" | "EXTREME";
 type Row = { id:string; season:string; club:string; clubKey:string; loan:boolean; apps:number|null; goals:number|null; covered:boolean; spellApps:number|null; spellGoals:number|null };
 type FreeNote = { id:string; label:string; value:string };
 type Hint = { id:string; label:string; cost:number; value:string; available:boolean };
+
+function archivePlayerToCareerFile(raw:ArchiveGamePlayer):Player{
+ const spells=(raw.spells??[]).map((spell,index)=>({
+   seq:Number(spell.seq??index),
+   years:String(spell.years??""),
+   start:spell.startYear??null,
+   end:spell.endYear??spell.startYear??null,
+   club:String(spell.club??""),
+   clubLink:String(spell.clubLink??""),
+   clubQid:String(spell.clubQid??""),
+   loan:Boolean(spell.loan),
+   apps:spell.apps??null,
+   goals:spell.goals??null,
+   sourceTitle:String(spell.sourceTitle??raw.careerSourceTitle??""),
+   sourceRevision:spell.sourceRevision??raw.careerSourceRevision??null
+ }));
+ const sourceStats=raw.seasonStats??raw.stats??[];
+ const stats=sourceStats.map(stat=>({
+   club:String(stat.club??""),
+   clubLink:String(stat.clubLink??""),
+   clubQid:String(stat.clubQid??""),
+   season:String(stat.season??""),
+   apps:stat.apps??null,
+   goals:stat.goals??null,
+   assists:stat.assists??null
+ }));
+ const article=raw.careerSourceTitle?.trim();
+ return {
+   id:raw.id,
+   name:raw.name,
+   fullName:raw.fullName??raw.name,
+   nationality:raw.nationality??"",
+   position:raw.position??"",
+   height:raw.heightCm??null,
+   birthDate:raw.birthDate??"",
+   birthPrecision:raw.birthPrecision??null,
+   birthplace:raw.birthPlace??"",
+   spells,
+   stats,
+   caps:raw.caps??null,
+   internationalGoals:raw.internationalGoals??null,
+   teams:raw.nationalTeams??[],
+   wikipediaUrl:article?"https://en.wikipedia.org/wiki/"+encodeURIComponent(article.replace(/ /g,"_")):""
+ };
+}
+function archivePlayerCandidate(player:Player,raw:ArchiveGamePlayer):Candidate{
+ return {
+   id:player.id,
+   name:player.name,
+   apps:raw.appearances??0,
+   spells:player.spells.length,
+   clubs:new Set(player.spells.map(spell=>spell.clubQid||clean(spell.clubLink||spell.club)).filter(Boolean)).size,
+   statSeasons:raw.seasons??0
+ };
+}
 
 const MODES: { name:Mode; note:string; colour:string }[] = [
   {name:"EASY",note:"High-career totals and recognisable stars",colour:"lime"},
@@ -182,6 +238,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
   const [note,setNote]=useState("");
   const [copied,setCopied]=useState(false);
   const seen=useRef<Set<string>>(loadRecentCareerIds());
+  const staticPlayers=useRef<Map<string,Player>>(new Map());
 
   const newPlayer=useCallback(async(deck:Candidate[],selectedMode:Mode)=>{
     const options=deck.filter(c=>fits(c,selectedMode));
@@ -199,13 +256,18 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     setLoadingPlayer(true);
     setNote("Picking a fresh file from "+options.length.toLocaleString("en-GB")+" eligible careers…");
     try{
-      const eligible=await getStatEligibleCandidates(draw);
+      const eligible=staticPlayers.current.size
+        ?draw.filter(candidate=>{
+          const cached=staticPlayers.current.get(candidate.id);
+          return Boolean(cached&&randomFreeRows(makeRows(cached),dailyDraw?dailySeed+":"+candidate.id:undefined).length>=2);
+        })
+        :await getStatEligibleCandidates(draw);
       const ranked=[...eligible].sort((a,b)=>b.statSeasons-a.statSeasons||a.id.localeCompare(b.id));
       let lastProblem="No candidate in this draw had two complete season-stat rows.";
-      for(const choice of ranked.slice(0,6)){
+      for(const choice of ranked.slice(0,staticPlayers.current.size?36:6)){
         seen.current.add(choice.id);persistRecentCareerIds(seen.current);
         try{
-          const record=await getPlayer(choice.id);
+          const record=staticPlayers.current.get(choice.id)??await getPlayer(choice.id);
           const timeline=makeRows(record);
           const free=randomFreeRows(timeline,dailyDraw?dailySeed+":"+choice.id:undefined);
           if(!timeline.length||free.length<2){lastProblem="This career did not have two complete, matching season-stat clues.";continue;}
@@ -225,7 +287,28 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     let live=true;setBusy(true);setError("");
     setPlayer(null);setRows([]);setOpened([]);setRevealed([]);setFreeRows([]);setFreeNote(null);setTransfers(null);setFeesError("");
     setGuess("");setAttempts(0);setScore(1000);setStatus("playing");setNote("");
-    getCandidates(league).then(async list=>{if(!live)return;setPool(list);await newPlayer(list,mode);})
+    (async()=>{
+      const isDaily=!dailyDone;
+      const seed=isDaily
+        ?"PLAYGROUND-CAREER-FILE:"+new Date().toISOString().slice(0,10)+":"+mode+":"+league
+        :"PLAYGROUND-CAREER-FILE:PRACTICE:"+String(Date.now())+":"+mode+":"+league;
+      if(league==="ALL"){
+        const rawPlayers=await getStaticArchivePlayers(seed,3200);
+        if(live&&rawPlayers?.length){
+          const mapped=rawPlayers.map(archivePlayerToCareerFile);
+          staticPlayers.current=new Map(mapped.map(player=>[player.id,player]));
+          const list=mapped.map(player=>archivePlayerCandidate(player,rawPlayers.find(raw=>raw.id===player.id)!));
+          setPool(list);
+          await newPlayer(list,mode);
+          return;
+        }
+      }
+      staticPlayers.current.clear();
+      const list=await getCandidates(league);
+      if(!live)return;
+      setPool(list);
+      await newPlayer(list,mode);
+    })()
       .catch(e=>{if(live)setError(e instanceof Error?e.message:"Could not open the player archive.");})
       .finally(()=>{if(live)setBusy(false);});
     return()=>{live=false;};
