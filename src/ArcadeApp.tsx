@@ -803,7 +803,7 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
      {gridNotice&&<div className="arc-feedback"><b>NOT A MATCH.</b><p>{gridNotice}</p></div>}
      <p className="arc-muted">Every square is checked against a dated Premier League club spell and recorded nationality. There may be several valid answers per square, but you cannot reuse a footballer in another square. Source: OpenFootballBase-Data archive; season totals are unverified and attribution is shown in Career File.</p>
     </>:
-    <div className="arc-feedback"><b>{archiveGridError?"CAREER ARCHIVE UNAVAILABLE":"NO VALID 4×4 GRID IN THIS DRAW"}</b><p>{archiveGridError||"This player sample did not produce sixteen unique Premier League intersections. Draw again to search a fresh sample."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY / NEW DRAW ↗</button></div>}
+    <div className="arc-feedback"><b>{archiveGridError?"CAREER ARCHIVE UNAVAILABLE":"NO VALID 4×4 GRID IN THIS DRAW"}</b><p>{archiveGridError||"This player sample did not produce sixteen unique Premier League intersections. Draw again to search a fresh sample."}</p><button className="arc-button" onClick={()=>{setGridReload(value=>value+1);reset(mode,difficulty);}}>RETRY / NEW DRAW ↗</button></div>}
   </Card>}
  </Frame>;
 }
