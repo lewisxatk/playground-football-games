@@ -122,7 +122,7 @@ let gamePoolPromise: Promise<ArchiveGamePlayer[]> | null = null;
  * A single grouped archive pass replaces the old small hand-maintained pool
  * for random player, stats and career clue games.
  */
-export async function getArchiveGamePlayers(limit = 1600): Promise<ArchiveGamePlayer[]> {
+export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAMES-2026-01"): Promise<ArchiveGamePlayer[]> {
   if (!gamePoolPromise) {
     gamePoolPromise = (async () => {
       const a = await careerArchive();
@@ -130,7 +130,7 @@ export async function getArchiveGamePlayers(limit = 1600): Promise<ArchiveGamePl
       const sample = await a.query(
         "SELECT player_qid FROM career WHERE player_qid IS NOT NULL AND trim(player_qid)<>'' " +
         "GROUP BY player_qid ORDER BY hash(player_qid || ?) LIMIT ?",
-        [String(Date.now()) + ":" + Math.random(), sampleSize]
+        [seed, sampleSize]
       );
       const ids = sample.map((row: any) => String(row.player_qid)).filter(Boolean);
       if (!ids.length) return [];
