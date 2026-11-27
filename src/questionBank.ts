@@ -128,11 +128,11 @@ export function makeDailyQuizRound(bank: QuestionBank, seed: number): QuizQuesti
   const pick = (tier: QuizTier, region: QuizQuestion["region"], count: number, salt: number) => {
     const chosen: QuizQuestion[] = [];
     const available = shuffle(bank.tiers[tier].filter(item => item.region === region), seed + salt);
-    const categories = [...new Set(available.map(question => question.category))];
-    const orderedCategories = shuffle(categories, seed + salt + 17);
-    // First pass: spread questions across categories so a daily round is not five nationality questions.
-    for (const category of orderedCategories) {
-      const question = available.find(item => item.category === category && !usedPlayers.has(item.playerId));
+    const templates = [...new Set(available.map(question => question.id.split(":").at(-1) ?? question.category))];
+    const orderedTemplates = shuffle(templates, seed + salt + 17);
+    // First pass: spread questions across question templates so a daily round is not five nationality questions.
+    for (const template of orderedTemplates) {
+      const question = available.find(item => (item.id.split(":").at(-1) ?? item.category) === template && !usedPlayers.has(item.playerId));
       if (!question) continue;
       usedPlayers.add(question.playerId);
       chosen.push(question);
