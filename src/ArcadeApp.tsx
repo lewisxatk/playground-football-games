@@ -25,6 +25,12 @@ type Account = {
 };
 const STORAGE_KEY = "playground.local-account.v1";
 const difficultyLabel=(level:string)=>level==="STANDARD"?"MEDIUM / STANDARD":level;
+const difficultyDescription=(level:string)=>({
+ EASY:"Well-known players, major clubs and straightforward football facts.",
+ MEDIUM:"Established careers, familiar records and less obvious choices.",
+ HARD:"Tighter statistics, tougher career clues and specialist football knowledge.",
+ EXTREME:"Rare records, detailed career chronology and questions for serious obsessives."
+} as Record<string,string>)[level]??"";
 const ARCHIVE_POOL_SEED = "PLAYGROUND-GAME-POOL-2026-11";
 const EMPTY_ACCOUNT: Account = { nickname:"PLAYER 01", createdAt:new Date().toISOString(), streak:0, bestStreak:0, lastDailyDate:"", daily:{}, totals:{} };
 const GAME_LINKS = [
@@ -241,7 +247,7 @@ function LowballPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
    ?archivePool.map(p=>({name:p.name,value:p.leagueGoals,club:p.club,seasons:p.leagueGoalSeasons,id:p.archiveId}))
    :fallbackPool;
  const level=Math.min(3,Math.floor(step/5));
- const levelNames=["EASY","STANDARD","HARD","EXTREME"];
+ const levelNames=["EASY","MEDIUM / STANDARD","HARD","EXTREME"];
  const metric=archivePool.length>=2?"RECORDED LEAGUE GOALS":"PREMIER LEAGUE GOALS";
  const pair=useMemo(()=>{
    const candidates=sourcePool.filter(p=>!used.includes(p.id));
@@ -338,6 +344,8 @@ function ClimbPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:n
   <Card className="climb-play">
    <div className="arc-game-meta"><span>QUESTION {step+1} / 5</span><b>{lives} LIVES · {score} PTS</b></div>
    <div className="grid-difficulty">{levels.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>restart(mode,level)}>{level==="MEDIUM"?"MEDIUM / STANDARD":level}</button>)}</div>
+   <p className="difficulty-note">{difficultyDescription(difficulty)}</p>
+   <p className="difficulty-note">{difficultyDescription(difficulty)}</p>
    <div className="climb-life-track">{[0,1,2].map(i=><i key={i} className={i<lives?"alive":""}/>)}</div>
    <div className="climb-source-line"><span>{question?.category??"FOOTBALL"}</span><span>{question?.region==="ENGLISH"?"ENGLISH FOOTBALL":"OTHER EUROPEAN LEAGUES"}</span></div>
    <h2>{ended?"RUN COMPLETE.":question?.question??"No question available."}</h2>
