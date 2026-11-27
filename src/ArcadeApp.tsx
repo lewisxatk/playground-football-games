@@ -7,7 +7,7 @@ import {
 import { ClubBadge, CountryFlag } from "./ClubBadge";
 import { useArchivePlayers } from "./useArchivePlayers";
 import { getWorldCupLineups } from "./tournamentNationData";
-import type { ArchiveGamePlayer, ArchiveCareerSpell } from "./careerFileData";
+import type { ArchiveGamePlayer, ArchiveCareerSpell, ArchiveGameStat } from "./careerFileData";
 import CareerFilePage from "./CareerFilePage";
 import { getCareerClubsAtYear } from "./careerFileData";
 import "./arcade.css";
@@ -1537,7 +1537,7 @@ function ScoutSignalPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
  const archived=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer)
    .filter(p=>p.nationality!=="Unlisted"&&p.club!=="Unknown club"&&p.clubs.length>0),[archivePlayers]);
  const staticPool=useMemo(()=>PLAYER_DATABASE.map(p=>({
-   ...p,archiveId:p.name,careerSpells:[],careerApps:0,careerGoals:0,leagueApps:0,leagueGoals:0,leagueGoalSeasons:0,
+   ...p,archiveId:p.name,careerSpells:[],seasonStats:[],careerAppsRecorded:false,careerGoalsRecorded:false,leagueAppsRecorded:false,leagueGoalsRecorded:false,careerApps:0,careerGoals:0,leagueApps:0,leagueGoals:0,leagueGoalSeasons:0,
    statSeasons:0,firstYear:null,lastYear:null,caps:null,internationalGoals:null,birthDate:"",
    currentCountry:"",currentDivision:null
  } as GamePlayer)),[]);
