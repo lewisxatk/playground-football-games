@@ -35,7 +35,7 @@ async function parseEnglishMatches(){
   const rel=relative(ENGLAND,path).split(String.fromCharCode(92)).join("/");
   const seasonMatch=rel.match(/(?:^|\/)(\d{4})-(\d{2})\//);
   if(!seasonMatch)continue;
-  const seasonStart=Number(seasonMatch[1]),seasonEnd=2000+Number(seasonMatch[2]);
+  const seasonStart=Number(seasonMatch[1]);let seasonEnd=Math.floor(seasonStart/100)*100+Number(seasonMatch[2]);if(seasonEnd<=seasonStart)seasonEnd+=100;
   const filename=rel.split("/").at(-1)||"";
   let competition="";
   if(/premierleague/i.test(filename))competition="Premier League";
