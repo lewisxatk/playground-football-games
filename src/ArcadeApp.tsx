@@ -1271,32 +1271,37 @@ type QuizDifficulty=QuizTier;
 function makeTimedQuiz(bank: QuestionBank,difficulty:QuizDifficulty,seed:number,count=15):QuizQuestion[]{
  return makeQuestionRound(bank,difficulty,seed,count);
 }
+type QuizDifficulty=QuizTier;
+function makeTimedQuiz(bank: QuestionBank,difficulty:QuizDifficulty,seed:number,count=10):QuizQuestion[]{
+ return makeQuestionRound(bank,difficulty,seed,count);
+}
+const quizSeconds=(tier:QuizTier)=>tier==="EXTREME"?30:tier==="HARD"?25:15;
+const quizPoints=(tier:QuizTier)=>tier==="EXTREME"?300:tier==="HARD"?200:tier==="MEDIUM"?150:100;
 function QuickQuizPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();const [difficulty,setDifficulty]=useState<QuizDifficulty>("EASY");
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
  const [index,setIndex]=useState(0);const [chosen,setChosen]=useState("");const [locked,setLocked]=useState(false);
- const [score,setScore]=useState(0);const [seconds,setSeconds]=useState(10);const [typed,setTyped]=useState("");const [typingDone,setTypingDone]=useState(false);const [finished,setFinished]=useState(false);
+ const [score,setScore]=useState(0);const [seconds,setSeconds]=useState(15);const [typed,setTyped]=useState("");const [typingDone,setTypingDone]=useState(false);const [finished,setFinished]=useState(false);
  const done=account.daily[utcDay()]?.["timed-quiz"]!==undefined;
- const seed=mode==="daily"?"QUIZ:"+utcDay()+":"+difficulty:"QUIZ:PRACTICE:"+practiceSeed+":"+difficulty;
+ const seed=mode==="daily"?"QUIZ:"+utcDay():"QUIZ:PRACTICE:"+practiceSeed+":"+difficulty;
  const {bank,loading,error,retry}=useQuestionBank();
- const questions=useMemo(()=>bank?makeTimedQuiz(bank,difficulty,hashSeed(seed),15):[],[bank,difficulty,seed]);
+ const questions=useMemo(()=>!bank?[]:mode==="daily"?makeDailyQuizRound(bank,hashSeed(seed)):makeTimedQuiz(bank,difficulty,hashSeed(seed),10),[bank,mode,difficulty,seed]);
  const question=questions[index];
  const progress=question?typed.length/question.question.length:0;
  const levels:QuizDifficulty[]=["EASY","MEDIUM","HARD","EXTREME"];
  useEffect(()=>{
-   setIndex(0);setChosen("");setLocked(false);setScore(0);setSeconds(10);setTyped("");setTypingDone(false);setFinished(false);
+   setIndex(0);setChosen("");setLocked(false);setScore(0);setSeconds(15);setTyped("");setTypingDone(false);setFinished(false);
  },[difficulty,mode,practiceSeed]);
  useEffect(()=>{
    if(!question||finished)return;
-   setTyped("");setTypingDone(false);setSeconds(10);setChosen("");setLocked(false);
+   setTyped("");setTypingDone(false);setSeconds(quizSeconds(question.tier));setChosen("");setLocked(false);
    let cursor=0;
    const timer=window.setInterval(()=>{
-     cursor+=1;
-     setTyped(question.question.slice(0,cursor));
+     cursor+=1;setTyped(question.question.slice(0,cursor));
      if(cursor>=question.question.length){window.clearInterval(timer);setTypingDone(true);}
-   },24);
+   },18);
    return()=>window.clearInterval(timer);
- },[question?.question,finished]);
+ },[question?.id,finished]);
  useEffect(()=>{
    if(!typingDone||locked||finished)return;
    if(seconds<=0){setLocked(true);setChosen("");return;}
@@ -1306,31 +1311,31 @@ function QuickQuizPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
  const choose=(value:string)=>{
    if(!typingDone||locked||finished||!question)return;
    setChosen(value);setLocked(true);
-   if(value===question.answer)setScore(v=>v+100+(question.tier==="EXTREME"?100:question.tier==="HARD"?50:0));
+   if(value===question.answer)setScore(v=>v+quizPoints(question.tier));
  };
  const next=()=>{
    if(index+1>=questions.length){setFinished(true);if(mode==="daily")onDaily("timed-quiz",score);return;}
    setIndex(v=>v+1);
  };
  const restart=(newMode:Mode=mode,newDifficulty:QuizDifficulty=difficulty)=>{
-   setDifficulty(newDifficulty);setIndex(0);setChosen("");setLocked(false);setScore(0);setSeconds(10);setTyped("");setTypingDone(false);setFinished(false);
+   setDifficulty(newDifficulty);setIndex(0);setChosen("");setLocked(false);setScore(0);setSeconds(15);setTyped("");setTypingDone(false);setFinished(false);
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
  };
- const standardCount=questions.length;
- return <Frame account={account} game="timed-quiz" eyebrow="FIFTEEN QUESTIONS / TEN SECONDS EACH" title="THE QUICK QUIZ." description="A football question arrives like live commentary. Choose one of five answers before the clock runs out." number="16" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
- {done&&mode==="daily"?<Success title="FULL-TIME." detail="Today's fifteen-question quiz has been banked. Unlimited practice is ready." button="PRACTICE QUIZ" onAgain={()=>{setMode("practice");restart("practice");}}/>:
-  loading&&!bank?<Card className="quiz-loading"><motion.div animate={{scale:[1,1.08,1],rotate:[0,12,-12,0]}} transition={{duration:1.4,repeat:Infinity}}>⚽</motion.div><b>THE QUIZMASTER IS PICKING THE QUESTIONS</b><span>OPENING THE VALIDATED 3,200-QUESTION BANK…</span></Card>:
-  error||!bank?<Card className="arc-feedback"><b>QUESTION BANK UNAVAILABLE</b><p>{error||"The validated question bank could not be opened."}</p><button className="arc-button" onClick={retry}>RETRY QUESTION BANK ↗</button></Card>:
-  !questions.length?<Card className="arc-feedback"><b>NOT ENOUGH QUESTIONS FOR THIS RUN</b><p>There were not enough distinct player records to build a balanced round.</p><button className="arc-button" onClick={retry}>RETRY QUESTION BANK ↗</button></Card>:
-  finished?<Success title="FULL-TIME." detail={"You scored "+score+" points across "+standardCount+" questions."} button="NEW QUIZ" onAgain={()=>restart(mode)}/>:
+ return <Frame account={account} game="timed-quiz" eyebrow="17 DAILY QUESTIONS / MIXED DIFFICULTY" title="THE QUICK QUIZ." description="Five Easy, five Medium, five Hard and two Extreme questions. Faster rounds reward quick thinking; tougher questions are worth more." number="16" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
+ {done&&mode==="daily"?<Success title="FULL-TIME." detail="Today's 17-question mixed quiz has been banked. Practice runs are ten questions each." button="PRACTICE QUIZ" onAgain={()=>{setMode("practice");restart("practice");}}/>:
+  loading&&!bank?<Card className="quiz-loading"><motion.div animate={{scale:[1,1.08,1],rotate:[0,12,-12,0]}} transition={{duration:1.4,repeat:Infinity}}>⚽</motion.div><b>THE QUIZMASTER IS PICKING THE QUESTIONS</b><span>OPENING THE VALIDATED FOOTBALL QUESTION BANK…</span></Card>:
+  error||!bank?<Card className="arc-feedback"><b>QUESTION BANK UNAVAILABLE</b><p>{error||"The validated football question bank could not be opened."}</p><button className="arc-button" onClick={retry}>RETRY QUESTION BANK ↗</button></Card>:
+  !questions.length?<Card className="arc-feedback"><b>NOT ENOUGH QUESTIONS FOR THIS RUN</b><p>The bank did not contain enough distinct player records for this round.</p><button className="arc-button" onClick={retry}>RETRY QUESTION BANK ↗</button></Card>:
+  finished?<Success title="FULL-TIME." detail={"You scored "+score+" points across "+questions.length+" questions."} button="NEW QUIZ" onAgain={()=>restart(mode)}/>:
   <Card className="quiz-game">
-   <div className="grid-difficulty">{levels.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>restart(mode,level)}>{level==="MEDIUM"?"MEDIUM / STANDARD":level}</button>)}</div>
-   <div className="arc-game-meta"><span>{bank.meta.distribution[difficulty].total} QUESTIONS / {bank.meta.distribution[difficulty].english} ENGLISH / {bank.meta.distribution[difficulty].international} OTHER LEAGUES</span><b>QUESTION {index+1} / {questions.length}</b></div>
-   <div className="quiz-scoreboard"><div><small>YOUR SCORE</small><strong>{score}</strong></div><div><small>DIFFICULTY</small><b>{difficulty==="MEDIUM"?"MEDIUM / STANDARD":difficulty}</b></div><div><small>TIME LEFT</small><strong className={seconds<=3?"urgent":""}>{typingDone?seconds:"—"}</strong></div></div>
+   {mode==="practice"?<div className="grid-difficulty">{levels.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>restart(mode,level)}>{level==="MEDIUM"?"MEDIUM / STANDARD":level}</button>)}</div>:
+    <div className="quiz-daily-mix"><span>5 EASY</span><span>5 MEDIUM</span><span>5 HARD</span><span>2 EXTREME</span></div>}
+   <div className="arc-game-meta"><span>{mode==="daily"?"DAILY MIX":"10-QUESTION PRACTICE"} · {quizPoints(question.tier)} PTS FOR A CORRECT ANSWER</span><b>QUESTION {index+1} / {questions.length}</b></div>
+   <div className="quiz-scoreboard"><div><small>YOUR SCORE</small><strong>{score}</strong></div><div><small>DIFFICULTY</small><b>{question.tier==="MEDIUM"?"MEDIUM / STANDARD":question.tier}</b></div><div><small>TIME LEFT</small><strong className={seconds<=3?"urgent":""}>{typingDone?seconds:"—"}</strong></div></div>
    <div className="quiz-question"><div className="quiz-type-cursor"/><h2>{typed}{!typingDone&&<i className="quiz-caret"/>}</h2><div className="quiz-progress"><i style={{width:(progress*100)+"%"}}/></div></div>
    {typingDone&&<motion.div className="quiz-options" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}}>{question.options.map(option=><motion.button key={option} whileTap={{scale:.985}} onClick={()=>choose(option)} disabled={locked} className={locked&&option===question.answer?"correct":locked&&option===chosen?"wrong":""}>{option}</motion.button>)}</motion.div>}
    {locked&&<motion.div className={"arc-feedback "+(chosen===question.answer?"quiz-goal":"quiz-miss")} initial={{opacity:0,y:12,scale:.98}} animate={{opacity:1,y:0,scale:1}}><b>{chosen===question.answer?"GOAL! CORRECT.":chosen?"NOT THIS TIME.":"TIME'S UP."}</b><p>{question.explanation}</p><small>{question.source}</small><button className="arc-button" onClick={next}>{index+1===questions.length?"SEE FINAL SCORE":"NEXT QUESTION ↗"}</button></motion.div>}
-   <div className="arc-game-foot"><span>{question?.category} / {question?.region==="ENGLISH"?"ENGLISH FOOTBALL":"OTHER EUROPEAN LEAGUES"}</span><span>ONE ANSWER / NO SECOND GO</span></div>
+   <div className="arc-game-foot"><span>{question.category} / {question.region==="ENGLISH"?"ENGLISH FOOTBALL":"INTERNATIONAL FOOTBALL"}</span><span>{quizSeconds(question.tier)} SECONDS · {quizPoints(question.tier)} PTS</span></div>
   </Card>}
  </Frame>;
 }
@@ -1510,7 +1515,7 @@ function ScoutSignalPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
    <div className="scout-rows">{history.map(p=><motion.div className="scout-row" layout key={p.archiveId} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}}>
      <b>{p.name}</b>{attrs.map(([key,label])=><span key={label} className={category(key,p)?"lit":"scout-cell"} title={label+": "+(key==="careerClub"?sharedClubs(p).join(", ")||"No shared club":key==="latestClub"?p.club:key==="nationality"?p.nationality:key==="position"?p.position:key==="league"?p.league:p.ageBand)}>{valueFor(key,p)}</span>)}
    </motion.div>)}</div>
-   <form className="arc-guess-form" onSubmit={submit}><input list="scout-players" value={guess} onChange={e=>setGuess(e.target.value)} placeholder="Try a full name or surname…"/><datalist id="scout-players">{pool.map(p=><option key={p.archiveId} value={p.name}/>)}</datalist><button className="arc-button" disabled={!archiveGuess(guess,pool)||end}>SCAN PLAYER ↗</button></form>
+   <form className="arc-guess-form" onSubmit={submit}><input list="scout-players" value={guess} onChange={e=>setGuess(e.target.value)} placeholder="Try a full name or surname…"/><datalist id="scout-players">{guessPool.map(p=><option key={p.archiveId} value={p.name}/>)}</datalist><button className="arc-button" disabled={!archiveGuess(guess,guessPool)||end}>SCAN PLAYER ↗</button></form>
    <p className="arc-muted">A shared club is a club listed in both careers. Latest club uses the archive's latest listed career spell; it is not a live transfer feed.</p>
    {error&&<div className="arc-feedback"><b>ARCHIVE FALLBACK</b><p>The large archive could not be reached, so the starter list is active instead.</p><button className="arc-quiet" onClick={retry}>RETRY DATABASE</button></div>}
    {end&&<div className="arc-feedback"><b>{won?"TARGET FOUND":"THE PLAYER WAS "+target.name}</b><p>{target.nationality} · {target.position} · {target.clubs.join(" → ")}</p><button className="arc-button" onClick={reset}>NEXT SCOUT REPORT ↗</button></div>}
