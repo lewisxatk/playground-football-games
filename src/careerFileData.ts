@@ -71,6 +71,8 @@ export async function getCandidates(league: LeagueCode): Promise<Candidate[]> {
   const codes = league === "ALL" ? BIG_FIVE : [league];
   const marks = codes.map(() => "?").join(",");
   // Require at least two real club-season statistical records so every round can offer free stats clues.
+  // Keep the initial draw lightweight: only scan career and club identity tables here.
+  // Season-stat validation happens on the selected player record, not in a global aggregation.
   const sql =
     "WITH big_clubs AS (" +
     " SELECT DISTINCT c.wikidata_qid AS qid FROM competition_club cc " +
@@ -79,23 +81,13 @@ export async function getCandidates(league: LeagueCode): Promise<Candidate[]> {
     "), eligible AS (" +
     " SELECT DISTINCT cr.player_qid FROM career cr JOIN big_clubs b ON b.qid=cr.club_qid " +
     " WHERE cr.player_qid IS NOT NULL AND trim(cr.player_qid)<>''" +
-    "), career_summary AS (" +
-    " SELECT cr.player_qid AS candidate_id, any_value(cr.player) AS player_name, " +
-    " COUNT(*) AS spells, COUNT(DISTINCT coalesce(nullif(cr.club_qid,''),cr.club_name)) AS clubs, " +
-    " SUM(coalesce(cr.apps,0)) AS apps " +
-    " FROM career cr JOIN eligible e ON e.player_qid=cr.player_qid GROUP BY cr.player_qid" +
-    "), stats_by_season AS (" +
-    " SELECT sc.player_qid, coalesce(nullif(sc.club_qid,''),nullif(sc.club_link,''),sc.club) AS club_key, sc.season, " +
-    " SUM(apps) AS apps, SUM(goals) AS goals " +
-    " FROM stat_club sc JOIN eligible e ON e.player_qid=sc.player_qid WHERE coalesce(competition_group,'')<>'Total' " +
-    " GROUP BY sc.player_qid, coalesce(nullif(sc.club_qid,''),nullif(sc.club_link,''),sc.club), sc.season" +
-    "), stats_summary AS (" +
-    " SELECT player_qid, COUNT(*) FILTER (WHERE apps IS NOT NULL AND goals IS NOT NULL) AS stat_seasons " +
-    " FROM stats_by_season GROUP BY player_qid" +
     ") " +
-    "SELECT c.candidate_id, c.player_name, c.spells, c.clubs, c.apps, s.stat_seasons " +
-    "FROM career_summary c JOIN stats_summary s ON s.player_qid=c.candidate_id " +
-    "WHERE c.apps>=20 AND s.stat_seasons>=2 ORDER BY hash(c.candidate_id) LIMIT 12000";
+    "SELECT cr.player_qid AS candidate_id, any_value(cr.player) AS player_name, " +
+    "COUNT(*) AS spells, COUNT(DISTINCT coalesce(nullif(cr.club_qid,''),cr.club_name)) AS clubs, " +
+    "SUM(coalesce(cr.apps,0)) AS apps " +
+    "FROM career cr JOIN eligible e ON e.player_qid=cr.player_qid " +
+    "GROUP BY cr.player_qid HAVING SUM(coalesce(cr.apps,0))>=20 " +
+    "ORDER BY hash(cr.player_qid) LIMIT 12000";
   const rows = await archive.query(sql, codes);
   return rows.map((r: any) => ({
     id: String(r.candidate_id), name: String(r.player_name ?? ""),
