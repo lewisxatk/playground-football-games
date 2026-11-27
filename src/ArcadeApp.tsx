@@ -105,7 +105,6 @@ function archiveGuess(input:string,players:GamePlayer[]):GamePlayer|undefined{
   const key=normalise(input);
   return players.find(p=>[p.name,p.surname,...p.aliases].some(alias=>normalise(alias)===key));
 }
-function utcDateSeed(prefix:string){return prefix+":"+utcDay();}
 function playerByName(name:string){return PLAYER_DATABASE.find(p=>normalise(p.name)===normalise(name)||p.aliases.some(a=>normalise(a)===normalise(name)));}
 function acceptedName(input:string,accepted:string[]){const value=normalise(input);return accepted.some(x=>normalise(x)===value);}
 function playerSurnames(){
@@ -182,8 +181,9 @@ function LowballPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
  const {players:archivePlayers,loading:poolLoading,error:poolError,retry:retryPool}=useArchivePlayers(true,seed,1600);
  const archivePool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer)
    .filter(p=>p.leagueGoalSeasons>=2&&p.leagueGoals>=0&&p.name!=="Unknown player"),[archivePlayers]);
- const fallbackPool=LEAGUE_GOALS.map(p=>({name:p.name,value:p.value,club:"Premier League archive",seasons:1,id:p.name}));
- const sourcePool=archivePool.length>=2
+ type DuelStatPlayer={name:string;value:number;club:string;seasons:number;id:string};
+ const fallbackPool:DuelStatPlayer[]=LEAGUE_GOALS.map(p=>({name:p.name,value:p.value,club:"Premier League archive",seasons:1,id:p.name}));
+ const sourcePool:DuelStatPlayer[]=archivePool.length>=2
    ?archivePool.map(p=>({name:p.name,value:p.leagueGoals,club:p.club,seasons:p.leagueGoalSeasons,id:p.archiveId}))
    :fallbackPool;
  const level=Math.min(3,Math.floor(step/5));
@@ -195,7 +195,7 @@ function LowballPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
    const randomized=shuffle(available,hashSeed(seed+":DUEL:"+step));
    const minGap=[.28,.12,.04,0][level];
    const maxGap=[1,.28,.12,.04][level];
-   let selectedPair:[typeof randomized[number],typeof randomized[number]]|null=null;
+   let selectedPair:[DuelStatPlayer,DuelStatPlayer]|null=null;
    for(let i=0;i<randomized.length&&!selectedPair;i++){
      for(let j=i+1;j<randomized.length;j++){
        const high=Math.max(randomized[i].value,randomized[j].value);
@@ -208,7 +208,7 @@ function LowballPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
        }
      }
    }
-   return selectedPair??(randomized.length>=2?[randomized[0],randomized[1]]:fallbackPool.slice(0,2) as any);
+   return selectedPair??(randomized.length>=2?[randomized[0],randomized[1]]:[fallbackPool[0],fallbackPool[1]]);
  },[sourcePool,used,seed,step,level]);
  const correct=pair[0].value>pair[1].value?0:1;
  const choose=(i:number)=>{
