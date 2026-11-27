@@ -12,6 +12,7 @@ export type CultHeroCard = {
   nationality: string;
   position: string;
   clubs: string[];
+  league?: string;
   collectedAt: string;
   source: "mystery" | "pack";
 };
@@ -255,7 +256,8 @@ export function readCultHeroCollection(): CultHeroCard[] {
 
 export function addCultHeroCard(
   player: ArchiveGamePlayer,
-  source: CultHeroCard["source"]
+  source: CultHeroCard["source"],
+  league?: string
 ): { collection: CultHeroCard[]; added: boolean } {
   const current = readCultHeroCollection();
   if (current.some(card => card.playerId === player.id)) {
@@ -267,6 +269,7 @@ export function addCultHeroCard(
     nationality: player.nationality || "Not recorded",
     position: displayPosition(player.position) || "Not recorded",
     clubs: Array.from(new Set((player.spells ?? []).map(spell => spell.club?.trim()).filter((club): club is string => Boolean(club)))).slice(0, 8),
+    league,
     collectedAt: new Date().toISOString(),
     source,
   };
