@@ -6,14 +6,14 @@ import {
 } from "./playerData";
 import { ClubBadge, CountryFlag } from "./ClubBadge";
 import { useArchivePlayers } from "./useArchivePlayers";
-import { useQuestionBank, makeQuestionRound, makeDailyQuizRound, type QuizTier, type QuizQuestion, type QuestionBank } from "./questionBank";
+import { type QuizTier } from "./questionBank";
 import { getWorldCupLineups } from "./tournamentNationData";
 import type { ArchiveGamePlayer, ArchiveCareerSpell, ArchiveGameStat } from "./careerFileData";
 import CareerFilePage from "./CareerFilePage";
 import CultHeroPage from "./CultHeroPage";
 import CultHeroCollectionPage from "./CultHeroCollectionPage";
 import { getCareerClubsAtYear } from "./careerFileData";
-import { useFootballKnowledge } from "./footballKnowledge";
+import { useFootballKnowledge, makeCC0QuizRound, makeCC0DailyQuizRound } from "./footballKnowledge";
 import "./arcade.css";
 import "./playground-upgrades.css";
 
@@ -369,8 +369,8 @@ function ClimbPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:n
  const [step,setStep]=useState(0);const [lives,setLives]=useState(3);const [score,setScore]=useState(0);const [answer,setAnswer]=useState("");const [ended,setEnded]=useState(false);
  const done=account.daily[utcDay()]?.["the-climb"]!==undefined;
  const seed=mode==="daily"?"CLIMB:"+utcDay()+":"+difficulty:"CLIMB:PRACTICE:"+practiceSeed+":"+difficulty;
- const {bank,loading,error,retry}=useQuestionBank();
- const questions=useMemo(()=>bank?makeQuestionRound(bank,difficulty,hashSeed(seed),5):[],[bank,difficulty,seed]);
+ const {climbQuestions:bank,loading,error,retry}=useFootballKnowledge();
+ const questions=useMemo(()=>bank.length?makeCC0QuizRound(bank,difficulty,hashSeed(seed),5):[],[bank,difficulty,seed]);
  const question=questions[step];
  const choose=(value:string)=>{
    if(answer||ended||!question)return;
@@ -389,8 +389,8 @@ function ClimbPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:n
  const levels:QuizTier[]=["EASY","MEDIUM","HARD","EXTREME"];
  return <Frame account={account} game="the-climb" eyebrow="SURVIVAL QUIZ / FIVE QUESTIONS" title="KEEP CLIMBING." description="Five source-backed football questions. Three lives. Every round mixes English football with the other major European leagues." number="02" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
  {done&&mode==="daily"?<Success title="RUN COMPLETE." detail="Your daily climb is banked. Unlimited practice has fresh questions." button="PRACTICE RUN" onAgain={()=>{setMode("practice");restart("practice");}}/>:
-  loading&&!bank?<Card className="climb-loading"><motion.div animate={{y:[0,-10,0],rotate:[0,180,360]}} transition={{duration:1.4,repeat:Infinity}}>⚽</motion.div><b>OPENING THE QUESTION ARCHIVE</b><span>CHECKING FOUR DIFFICULTY POOLS…</span></Card>:
-  error||!bank?<Card className="arc-feedback"><b>QUESTION BANK UNAVAILABLE</b><p>{error||"The validated football question bank could not be opened."}</p><button className="arc-button" onClick={retry}>RETRY QUESTION BANK ↗</button></Card>:
+  loading&&bank.length===0?<Card className="climb-loading"><motion.div animate={{y:[0,-10,0],rotate:[0,180,360]}} transition={{duration:1.4,repeat:Infinity}}>⚽</motion.div><b>OPENING THE QUESTION ARCHIVE</b><span>CHECKING FOUR DIFFICULTY POOLS…</span></Card>:
+  error||bank.length===0?<Card className="arc-feedback"><b>QUESTION BANK UNAVAILABLE</b><p>{error||"The validated football question bank could not be opened."}</p><button className="arc-button" onClick={retry}>RETRY QUESTION BANK ↗</button></Card>:
   <Card className="climb-play">
    <div className="arc-game-meta"><span>QUESTION {step+1} / 5</span><b>{lives} LIVES · {score} PTS</b></div>
    <div className="grid-difficulty">{levels.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>restart(mode,level)}>{difficultyLabel(level)}</button>)}</div>
@@ -1384,9 +1384,6 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
 }
 
 type QuizDifficulty=QuizTier;
-function makeTimedQuiz(bank: QuestionBank,difficulty:QuizDifficulty,seed:number,count=10):QuizQuestion[]{
- return makeQuestionRound(bank,difficulty,seed,count);
-}
 const quizSeconds=(tier:QuizTier)=>tier==="EXTREME"?30:tier==="HARD"?25:tier==="MEDIUM"?15:10;
 const quizPoints=(tier:QuizTier)=>tier==="EXTREME"?300:tier==="HARD"?200:tier==="MEDIUM"?150:100;
 function QuickQuizPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
@@ -1396,8 +1393,8 @@ function QuickQuizPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
  const [score,setScore]=useState(0);const [seconds,setSeconds]=useState(15);const [typed,setTyped]=useState("");const [typingDone,setTypingDone]=useState(false);const [finished,setFinished]=useState(false);
  const done=account.daily[utcDay()]?.["timed-quiz"]!==undefined;
  const seed=mode==="daily"?"QUIZ:"+utcDay():"QUIZ:PRACTICE:"+practiceSeed+":"+difficulty;
- const {bank,loading,error,retry}=useQuestionBank();
- const questions=useMemo(()=>!bank?[]:mode==="daily"?makeDailyQuizRound(bank,hashSeed(seed)):makeTimedQuiz(bank,difficulty,hashSeed(seed),10),[bank,mode,difficulty,seed]);
+ const {timedQuizQuestions:bank,loading,error,retry}=useFootballKnowledge();
+ const questions=useMemo(()=>bank.length===0?[]:mode==="daily"?makeCC0DailyQuizRound(bank,hashSeed(seed)):makeCC0QuizRound(bank,difficulty,hashSeed(seed),10),[bank,mode,difficulty,seed]);
  const question=questions[index];
  const progress=question?typed.length/question.question.length:0;
  const levels:QuizDifficulty[]=["EASY","MEDIUM","HARD","EXTREME"];
@@ -1436,7 +1433,7 @@ function QuickQuizPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
  return <Frame account={account} game="timed-quiz" eyebrow="17 DAILY QUESTIONS / MIXED DIFFICULTY" title="THE QUICK QUIZ." description="Five Easy, five Medium, five Hard and two Extreme questions. Faster rounds reward quick thinking; tougher questions are worth more." number="16" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
  {done&&mode==="daily"?<Success title="FULL-TIME." detail="Today's 17-question mixed quiz has been banked. Practice runs are ten questions each." button="PRACTICE QUIZ" onAgain={()=>{setMode("practice");restart("practice");}}/>:
   loading&&!bank?<Card className="quiz-loading"><motion.div animate={{scale:[1,1.08,1],rotate:[0,12,-12,0]}} transition={{duration:1.4,repeat:Infinity}}>⚽</motion.div><b>THE QUIZMASTER IS PICKING THE QUESTIONS</b><span>OPENING THE VALIDATED FOOTBALL QUESTION BANK…</span></Card>:
-  error||!bank?<Card className="arc-feedback"><b>QUESTION BANK UNAVAILABLE</b><p>{error||"The validated football question bank could not be opened."}</p><button className="arc-button" onClick={retry}>RETRY QUESTION BANK ↗</button></Card>:
+  error||bank.length===0?<Card className="arc-feedback"><b>QUESTION BANK UNAVAILABLE</b><p>{error||"The validated football question bank could not be opened."}</p><button className="arc-button" onClick={retry}>RETRY QUESTION BANK ↗</button></Card>:
   !questions.length?<Card className="arc-feedback"><b>NOT ENOUGH QUESTIONS FOR THIS RUN</b><p>The bank did not contain enough distinct player records for this round.</p><button className="arc-button" onClick={retry}>RETRY QUESTION BANK ↗</button></Card>:
   finished?<Success title="FULL-TIME." detail={"You scored "+score+" points across "+questions.length+" questions."} button="NEW QUIZ" onAgain={()=>restart(mode)}/>:
   <Card className="quiz-game">
