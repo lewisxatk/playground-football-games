@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState, useRef, type FormEvent, type ReactNode } from "react";
-import { motion, AnimatePresence, Reorder } from "motion/react";
+import { motion, AnimatePresence, Reorder, MotionConfig } from "motion/react";
 import {
   PLAYER_DATABASE, LEAGUE_GOALS, STRANDS_PACKS,
   type Player
 } from "./playerData";
 import { ClubBadge, CountryFlag } from "./ClubBadge";
 import { useArchivePlayers } from "./useArchivePlayers";
+import { useQuestionBank, makeQuestionRound, type QuizTier, type QuizQuestion } from "./questionBank";
 import { getWorldCupLineups } from "./tournamentNationData";
 import type { ArchiveGamePlayer, ArchiveCareerSpell, ArchiveGameStat } from "./careerFileData";
 import CareerFilePage from "./CareerFilePage";
@@ -149,7 +150,7 @@ function ModeSwitch({mode,setMode,complete}:{mode:Mode;setMode:(m:Mode)=>void;co
 }
 function Frame({account,children,game,eyebrow,title,description,number,mode,setMode}:{account:Account;children:ReactNode;game:GameId;eyebrow:string;title:string;description:string;number:string;mode:Mode;setMode:(m:Mode)=>void}){
   const done=account.daily[utcDay()]?.[game]!==undefined;
-  return <div className={"arc-shell arc-"+game}><TopBar account={account}/><main className="arc-main"><GameHeading eyebrow={eyebrow} title={title} description={description} number={number}/><ModeSwitch mode={mode} setMode={setMode} complete={done}/>{children}</main><footer className="arc-footer"><a href="/">PLAYGROUND®</a><span>THE DAILY CHANGES AT 00:00 GMT · DAILY SCORES & STREAK SAVED ON THIS DEVICE</span><a href="/locker-room">LOCKER ROOM ↗</a></footer></div>;
+  return <div className={"arc-shell arc-"+game}><TopBar account={account}/><motion.main className="arc-main" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{duration:.32,ease:"easeOut"}}><GameHeading eyebrow={eyebrow} title={title} description={description} number={number}/><ModeSwitch mode={mode} setMode={setMode} complete={done}/>{children}</motion.main><footer className="arc-footer"><a href="/">PLAYGROUND®</a><span>THE DAILY CHANGES AT 00:00 GMT · DAILY SCORES & STREAK SAVED ON THIS DEVICE</span><a href="/locker-room">LOCKER ROOM ↗</a></footer></div>;
 }
 function useMode(){return useState<Mode>("daily");}
 function Success({title,detail,button,onAgain}:{title:string;detail:string;button:string;onAgain:()=>void}){
@@ -304,61 +305,47 @@ function LowballPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
  </Frame>;
 }
 
-const CLIMB_Q=[
- {q:"Which club did Didier Drogba join in 2004?",a:["Chelsea","Arsenal","Liverpool","Tottenham"],correct:"Chelsea",fact:"Drogba joined Chelsea from Marseille in July 2004."},
- {q:"Which country did George Weah represent?",a:["Nigeria","Liberia","Ghana","Cameroon"],correct:"Liberia",fact:"Weah represented Liberia internationally."},
- {q:"Who scored the extra-time winner in the 2014 World Cup final?",a:["Lionel Messi","Mario Götze","Thomas Müller","Miroslav Klose"],correct:"Mario Götze",fact:"Götze scored the winner against Argentina."},
- {q:"Which club are known as Los Colchoneros?",a:["Real Madrid","Sevilla","Atlético Madrid","Valencia"],correct:"Atlético Madrid",fact:"Los Colchoneros is Atlético Madrid's nickname."},
- {q:"Which club went unbeaten through the 2003/04 Premier League season?",a:["Chelsea","Arsenal","Manchester United","Liverpool"],correct:"Arsenal",fact:"Arsenal's Invincibles completed the season unbeaten."},
- {q:"Which country won Euro 2004?",a:["Portugal","Greece","Italy","Czech Republic"],correct:"Greece",fact:"Greece beat hosts Portugal in the final."},
- {q:"Which club did Andrea Pirlo join after leaving AC Milan in 2011?",a:["Inter","Juventus","Roma","Napoli"],correct:"Juventus",fact:"Pirlo joined Juventus on a free transfer."},
- {q:"Who won the 1998 Ballon d'Or?",a:["Zinedine Zidane","Ronaldo Nazário","David Beckham","Dennis Bergkamp"],correct:"Zinedine Zidane",fact:"Zidane won after France's World Cup victory."}
-];
 function ClimbPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
- const [mode,setMode]=useMode();const [difficulty,setDifficulty]=useState<QuizDifficulty>("STANDARD");
+ const [mode,setMode]=useMode();
+ const [difficulty,setDifficulty]=useState<QuizTier>("EASY");
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
  const [step,setStep]=useState(0);const [lives,setLives]=useState(3);const [score,setScore]=useState(0);const [answer,setAnswer]=useState("");const [ended,setEnded]=useState(false);
  const done=account.daily[utcDay()]?.["the-climb"]!==undefined;
  const seed=mode==="daily"?"CLIMB:"+utcDay()+":"+difficulty:"CLIMB:PRACTICE:"+practiceSeed+":"+difficulty;
- const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,1600);
- const pool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
- const generated=useMemo(()=>{
-   const candidates=pool.length>=20?makeTimedQuiz(pool,difficulty,hashSeed(seed)): [];
-   const picked=shuffle(candidates,hashSeed(seed+":CLIMB-QUESTIONS")).slice(0,5);
-   return picked.map(q=>({q:q.question,a:q.options,correct:q.answer,fact:q.explanation,source:q.source,tier:q.tier}));
- },[pool,difficulty,seed]);
- const fallback=useMemo(()=>shuffle(CLIMB_Q,hashSeed(seed+":fallback")).slice(0,5).map(q=>({...q,source:"PLAYGROUND starter question bank",tier:"STANDARD"})),[seed]);
- const questions=generated.length>=5?generated:fallback;
- const q=questions[step];
- const choose=(a:string)=>{
-   if(answer||ended||!q)return;
-   setAnswer(a);
-   if(a===q.correct)setScore(v=>v+100+lives*25);else setLives(v=>v-1);
+ const {bank,loading,error,retry}=useQuestionBank();
+ const questions=useMemo(()=>bank?makeQuestionRound(bank,difficulty,hashSeed(seed),5):[],[bank,difficulty,seed]);
+ const question=questions[step];
+ const choose=(value:string)=>{
+   if(answer||ended||!question)return;
+   setAnswer(value);
+   if(value===question.answer)setScore(v=>v+100+lives*25);
+   else setLives(v=>v-1);
  };
  const next=()=>{
    if(lives<=0||step===4){setEnded(true);if(mode==="daily")onDaily("the-climb",score);return;}
    setStep(v=>v+1);setAnswer("");
  };
- const restart=(newMode:Mode=mode,newDifficulty:QuizDifficulty=difficulty)=>{
+ const restart=(newMode:Mode=mode,newDifficulty:QuizTier=difficulty)=>{
    setDifficulty(newDifficulty);setStep(0);setLives(3);setScore(0);setAnswer("");setEnded(false);
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
  };
- return <Frame account={account} game="the-climb" eyebrow="SURVIVAL QUIZ / FIVE QUESTIONS" title="KEEP CLIMBING." description="Five questions. Three lives. Archive-generated football questions, with a starter fallback when the data source is unavailable." number="02" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
+ const levels:QuizTier[]=["EASY","MEDIUM","HARD","EXTREME"];
+ return <Frame account={account} game="the-climb" eyebrow="SURVIVAL QUIZ / FIVE QUESTIONS" title="KEEP CLIMBING." description="Five source-backed football questions. Three lives. Every round mixes English football with the other major European leagues." number="02" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
  {done&&mode==="daily"?<Success title="RUN COMPLETE." detail="Your daily climb is banked. Unlimited practice has fresh questions." button="PRACTICE RUN" onAgain={()=>{setMode("practice");restart("practice");}}/>:
-  loading&&pool.length===0?<Card className="climb-loading"><motion.div animate={{y:[0,-10,0],rotate:[0,180,360]}} transition={{duration:1.4,repeat:Infinity}}>⚽</motion.div><b>SCOUTING THE NEXT QUESTIONS</b><span>BUILDING FIVE FROM THE PLAYER ARCHIVE…</span></Card>:
+  loading&&!bank?<Card className="climb-loading"><motion.div animate={{y:[0,-10,0],rotate:[0,180,360]}} transition={{duration:1.4,repeat:Infinity}}>⚽</motion.div><b>OPENING THE QUESTION ARCHIVE</b><span>CHECKING FOUR DIFFICULTY POOLS…</span></Card>:
+  error||!bank?<Card className="arc-feedback"><b>QUESTION BANK UNAVAILABLE</b><p>{error||"The validated football question bank could not be opened."}</p><button className="arc-button" onClick={retry}>RETRY QUESTION BANK ↗</button></Card>:
   <Card className="climb-play">
    <div className="arc-game-meta"><span>QUESTION {step+1} / 5</span><b>{lives} LIVES · {score} PTS</b></div>
-   <div className="grid-difficulty">{(["STANDARD","EASY","MEDIUM","HARD","EXTREME"] as QuizDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>restart(mode,level)}>{level}</button>)}</div>
+   <div className="grid-difficulty">{levels.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>restart(mode,level)}>{level==="MEDIUM"?"MEDIUM / STANDARD":level}</button>)}</div>
    <div className="climb-life-track">{[0,1,2].map(i=><i key={i} className={i<lives?"alive":""}/>)}</div>
-   <div className="climb-source-line"><span>{q?.tier??"FOOTBALL"}</span><span>{generated.length>=5?"ARCHIVE QUESTION":"STARTER QUESTION"}</span></div>
-   <h2>{ended?"RUN COMPLETE.":q?.q??"No question available."}</h2>
+   <div className="climb-source-line"><span>{question?.category??"FOOTBALL"}</span><span>{question?.region==="ENGLISH"?"ENGLISH FOOTBALL":"OTHER EUROPEAN LEAGUES"}</span></div>
+   <h2>{ended?"RUN COMPLETE.":question?.question??"No question available."}</h2>
    {ended?<div className="arc-feedback"><p>You climbed {step+1} questions and banked {score} points.</p><button className="arc-button" onClick={()=>restart(mode)}>RUN IT BACK ↻</button></div>:
-    <><div className="climb-options">{q?.a.map(a=><button key={a} onClick={()=>choose(a)} disabled={!!answer} className={answer===a?(a===q.correct?"correct":"wrong"):""}>{a}<i>↗</i></button>)}</div>
-     {answer&&<div className="arc-feedback"><b>{answer===q.correct?"RIGHT ANSWER.":"NOT THIS TIME."}</b><p>{q.fact}</p><small>{q.source}</small><button className="arc-button" onClick={next}>{step===4||lives<=0?"SEE RESULT":"NEXT QUESTION"} ↗</button></div>}
+    <><div className="climb-options">{question?.options.map(option=><motion.button key={option} whileTap={{scale:.985}} onClick={()=>choose(option)} disabled={!!answer} className={answer===option?(option===question.answer?"correct":"wrong"):""}>{option}<i>↗</i></motion.button>)}</div>
+     {answer&&<motion.div className={"arc-feedback "+(answer===question.answer?"quiz-goal":"quiz-miss")} initial={{opacity:0,y:12,scale:.98}} animate={{opacity:1,y:0,scale:1}}><b>{answer===question.answer?"GOAL! RIGHT ANSWER.":"NOT THIS TIME."}</b><p>{question.explanation}</p><small>{question.source}</small><button className="arc-button" onClick={next}>{step===4||lives<=0?"SEE RESULT":"NEXT QUESTION"} ↗</button></motion.div>}
     </>}
-   {error&&<p className="arc-muted">The archive request failed; the curated starter question bank is being used.</p>}
-   <p className="arc-muted">Each quiz fact uses an available archive field. Archive coverage is incomplete and the source wording is shown after each answer.</p>
-   <div className="arc-game-foot"><span>5 QUESTIONS · 3 LIVES</span><button className="arc-quiet" onClick={()=>{retry();restart(mode);}}>REFRESH ARCHIVE</button></div>
+   <p className="arc-muted">Question bank: 800+ per difficulty. Every run uses a 75% English-club / 25% other-league mix.</p>
+   <div className="arc-game-foot"><span>5 QUESTIONS · 3 LIVES</span><span>{bank.meta.distribution[difficulty].total} IN THIS TIER</span></div>
   </Card>}
  </Frame>;
 }
@@ -444,7 +431,7 @@ function wordleEval(guess:string,target:string){const result=Array(5).fill("abse
 function FootlePage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
- const [typed,setTyped]=useState("");const [guesses,setGuesses]=useState<string[]>([]);const [end,setEnd]=useState(false);
+ const [typed,setTyped]=useState("");const [guesses,setGuesses]=useState<string[]>([]);const [end,setEnd]=useState(false);const [wordError,setWordError]=useState("");
  const done=account.daily[utcDay()]?.footle!==undefined;
  const seed=mode==="daily"?"FOOTLE:"+utcDay():"FOOTLE:PRACTICE:"+practiceSeed;
  const {players:archivePlayers,loading,error}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,1600);
@@ -454,13 +441,15 @@ function FootlePage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
      const raw=parts.slice(-1)[0]??"";
      return raw.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,"");
    }).filter(name=>name.length===5);
-   return [...new Set(archived.length>=10?archived:WORDS)].sort((a,b)=>a.localeCompare(b));
+   return [...new Set([...archived,...WORDS])].sort((a,b)=>a.localeCompare(b));
  },[archivePlayers]);
  const target=bank.length?bank[hashSeed(seed+":answer")%bank.length]:WORDS[0];
  const win=guesses.at(-1)===target;
  const submitWord=()=>{
    const word=typed.toUpperCase();
-   if(word.length!==5||!bank.includes(word)||guesses.includes(word)||end)return;
+   if(word.length!==5||guesses.includes(word)||end)return;
+   if(!bank.includes(word)){setWordError("NOT IN THE PLAYER LIST — TRY A RECORDED FIVE-LETTER SURNAME.");return;}
+   setWordError("");
    const next=[...guesses,word];setGuesses(next);setTyped("");
    if(word===target||next.length===6){setEnd(true);if(mode==="daily")onDaily("footle",word===target?Math.max(100,700-next.length*75):0);}
  };
@@ -479,19 +468,21 @@ function FootlePage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const keyRows=["QWERTYUIOP","ASDFGHJKL","ZXCVBNM"];
  const restart=(newMode:Mode=mode)=>{
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
-   setTyped("");setGuesses([]);setEnd(false);
+   setTyped("");setGuesses([]);setEnd(false);setWordError("");
  };
+ const updateTyped=(value:string)=>{setWordError("");setTyped(value.replace(/[^a-z]/gi,"").slice(0,5));};
  return <Frame account={account} game="footle" eyebrow="THE FIVE-LETTER FOOTBALL WORD" title="FOOTLE." description="Find the five-letter football surname in six guesses. A fresh shared daily word, plus an archive-backed pool for unlimited practice." number="05" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
  {done&&mode==="daily"?<Success title="TODAY'S FOOTLE IS DONE." detail="One shared daily word. Infinite archive-backed practice is still open." button="UNLIMITED PRACTICE" onAgain={()=>{setMode("practice");restart("practice");}}/>:
   loading&&archivePlayers.length===0?<Card className="footle-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>SCOUTING FIVE-LETTER NAMES</b><span>BUILDING A FRESH WORD BANK FROM THE PLAYER ARCHIVE…</span></Card>:
   <Card className="footle-game">
    <div className="arc-game-meta"><span>6 GUESSES / 5 LETTERS</span><b>{bank.length} VALID PLAYER SURNAMES</b></div>
-   <div className="footle-board">{Array.from({length:6},(_,r)=><div className="footle-row" key={r}>{Array.from({length:5},(_,c)=>{const word=guesses[r];const colour=word?wordleEval(word,target)[c]:"";return <div key={c} className={"footle-cell "+colour}>{word?.[c]??(r===guesses.length?typed[c]??"":"")}</div>;})}</div>)}</div>
-   {end&&<div className="arc-feedback"><b>{win?"YOU GOT IT.":"THE WORD WAS "+target}</b><p>{win?"A proper bit of football knowledge.":"Try another player surname in the archive."}</p>{mode==="practice"&&<button className="arc-button" onClick={()=>restart("practice")}>NEXT WORD ↗</button>}</div>}
-   <form className="footle-entry" onSubmit={submit}><input value={typed} onChange={e=>setTyped(e.target.value.replace(/[^a-z]/gi,"").slice(0,5))} placeholder="TYPE A 5-LETTER NAME" maxLength={5} disabled={end}/><button className="arc-button" disabled={typed.length!==5||end||!bank.includes(typed.toUpperCase())||guesses.includes(typed.toUpperCase())}>ENTER ↵</button></form>
-   <div className="footle-keyboard" aria-label="On-screen keyboard">{keyRows.map((row,i)=><div className="footle-key-row" key={row}>{row.split("").map(letter=><button type="button" key={letter} className={keyStatus(letter)} aria-label={letter+" key"} onClick={()=>!end&&setTyped(v=>(v+letter).slice(0,5))}>{letter}</button>)}{i===2&&<><button type="button" className="wide-key" onClick={submitWord} disabled={end||typed.length!==5||!bank.includes(typed.toUpperCase())}>ENTER</button><button type="button" className="wide-key" aria-label="Delete last letter" onClick={()=>setTyped(v=>v.slice(0,-1))} disabled={end}>⌫</button></>}</div>)}</div>
+   <div className="footle-board">{Array.from({length:6},(_,r)=><div className="footle-row" key={r}>{Array.from({length:5},(_,c)=>{const word=guesses[r];const colour=word?wordleEval(word,target)[c]:"";const character=word?.[c]??(r===guesses.length?typed[c]??"":"");return <motion.div key={r+"-"+c+"-"+character} initial={{opacity:.65,rotateX:character?70:0,y:character?-3:0}} animate={{opacity:1,rotateX:0,y:0}} transition={{duration:.24,delay:word?c*.07:0}} className={"footle-cell "+colour}>{character}</motion.div>;})}</div>)}</div>
+   {end&&<motion.div className={"arc-feedback "+(win?"footle-win":"footle-over")} initial={{opacity:0,y:14,scale:.97}} animate={{opacity:1,y:0,scale:1}} transition={{duration:.28}}><b>{win?"GOAL! YOU GOT IT.":"THE WORD WAS "+target}</b><p>{win?"A proper bit of football knowledge. That's in the back of the net.":"One for the next round. Keep your streak alive."}</p>{win&&<motion.span className="footle-goal-ball" initial={{scale:0,rotate:-90}} animate={{scale:1,rotate:0}} transition={{type:"spring",stiffness:260,damping:12}}>⚽</motion.span>}{mode==="practice"&&<button className="arc-button" onClick={()=>restart("practice")}>NEXT WORD ↗</button>}</motion.div>}
+   <form className="footle-entry" onSubmit={submit}><input value={typed} onChange={e=>updateTyped(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();submitWord();}}} placeholder="TYPE A 5-LETTER NAME" maxLength={5} disabled={end}/><button className="arc-button" type="submit" disabled={typed.length!==5||end||guesses.includes(typed.toUpperCase())}>ENTER ↵</button></form>
+   {wordError&&<p className="footle-word-error" role="status">{wordError}</p>}
+   <div className="footle-keyboard" aria-label="On-screen keyboard">{keyRows.map((row,i)=><div className="footle-key-row" key={row}>{row.split("").map(letter=><button type="button" key={letter} className={keyStatus(letter)} aria-label={letter+" key"} onClick={()=>!end&&updateTyped(typed+letter)}>{letter}</button>)}{i===2&&<><button type="button" className="wide-key" onClick={submitWord} disabled={end||typed.length!==5||guesses.includes(typed.toUpperCase())}>ENTER</button><button type="button" className="wide-key" aria-label="Delete last letter" onClick={()=>updateTyped(typed.slice(0,-1))} disabled={end}>⌫</button></>}</div>)}</div>
    <div className="footle-note">GREEN = RIGHT LETTER / RIGHT PLACE · AMBER = RIGHT LETTER / WRONG PLACE · GREY = NOT IN THE WORD</div>
-   {error&&<p className="arc-muted">Archive fallback is active. The starter player list is being used until the larger surname pool is available.</p>}
+   {error&&<p className="arc-muted">The shared player archive is unavailable. The included football surname list remains playable.</p>}
   </Card>}
  </Frame>;
 }
@@ -1219,164 +1210,22 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
  </Frame>;
 }
 
-type QuizDifficulty="EASY"|"MEDIUM"|"HARD"|"EXTREME"|"STANDARD";
-type QuizQuestion={tier:Exclude<QuizDifficulty,"STANDARD">;playerId:string;question:string;answer:string;options:string[];explanation:string;source:string};
-function makeTimedQuiz(players:GamePlayer[],difficulty:QuizDifficulty,seed:number):QuizQuestion[]{
- const tiers:Exclude<QuizDifficulty,"STANDARD">[]=difficulty==="STANDARD"
-   ?["EASY","EASY","EASY","EASY","EASY","MEDIUM","MEDIUM","MEDIUM","MEDIUM","MEDIUM","HARD","HARD","HARD","HARD","HARD"]
-   :Array(15).fill(difficulty) as Exclude<QuizDifficulty,"STANDARD">[];
- const output:QuizQuestion[]=[];
- const usedPlayers=new Set<string>();
- type QuizDraft={answer:string;question:string;options:string[];explanation:string;source:string};
- type QuizTemplate=(player:GamePlayer)=>QuizDraft|null;
- const tierTemplates:Record<Exclude<QuizDifficulty,"STANDARD">,QuizTemplate[]> = {
-  EASY:[
-   (p)=>{if(p.nationality&&p.nationality!=="Unlisted")return {
-     answer:p.nationality,question:"Which nationality is recorded for "+p.name+"?",
-     options:players.map(x=>x.nationality).filter(v=>v&&v!=="Unlisted"),
-     explanation:p.name+" is listed with "+p.nationality+" nationality in the player profile.",
-     source:"OpenFootballBase player profile"
-   };return null;},
-   (p)=>{if(p.position)return {
-     answer:p.position,question:"What position group is recorded for "+p.name+"?",
-     options:players.map(x=>x.position).filter(Boolean),
-     explanation:p.name+"'s profile lists the position group "+p.position+".",
-     source:"OpenFootballBase player profile"
-   };return null;},
-   (p)=>{if(p.clubs.length)return {
-     answer:p.clubs[0],question:"Which club appears first in "+p.name+"'s recorded career history?",
-     options:players.flatMap(x=>x.clubs.slice(0,1)),
-     explanation:"The earliest listed club spell in this archive sample for "+p.name+" is "+p.clubs[0]+".",
-     source:"OpenFootballBase career history; dated club spells"
-   };return null;}
-  ],
-  MEDIUM:[
-   (p)=>{if(p.club&&p.club!=="Unknown club")return {
-     answer:p.club,question:"Which club is most recently listed in "+p.name+"'s career record?",
-     options:players.map(x=>x.club).filter(v=>v&&v!=="Unknown club"),
-     explanation:p.club+" is the latest club spell recorded for "+p.name+" in this archive.",
-     source:"OpenFootballBase career history"
-   };return null;},
-   (p)=>{if(p.clubs.length>=2)return {
-     answer:p.clubs[0],question:"Which of these clubs is recorded as "+p.name+"'s first senior club?",
-     options:players.flatMap(x=>x.clubs.slice(0,1)),
-     explanation:p.clubs[0]+" is the earliest club listed in the available career spells for "+p.name+".",
-     source:"OpenFootballBase career history; dated club spells"
-   };return null;},
-   (p)=>{if(p.clubs.length)return {
-     answer:String(p.clubs.length),question:"How many distinct club names are listed in "+p.name+"'s career record?",
-     options:players.map(x=>String(x.clubs.length)).filter(v=>v!=="0"),
-     explanation:p.name+" has "+p.clubs.length+" distinct clubs in the available archive career history.",
-     source:"OpenFootballBase career history; distinct recorded club names"
-   };return null;},
-   (p)=>{if(p.league&&p.league!=="Unlisted")return {
-     answer:p.league,question:"Which league is recorded for "+p.name+"'s latest listed club?",
-     options:players.map(x=>x.league).filter(v=>v&&v!=="Unlisted"),
-     explanation:p.club+" is associated with "+p.league+" in the available club metadata.",
-     source:"OpenFootballBase club metadata"
-   };return null;}
-  ],
-  HARD:[
-   (p)=>{if(p.leagueGoalSeasons>=2)return {
-     answer:p.leagueGoals.toLocaleString("en-GB"),
-     question:"How many league goals are recorded for "+p.name+" across the available stat rows?",
-     options:players.filter(x=>x.leagueGoalSeasons>=2).map(x=>x.leagueGoals.toLocaleString("en-GB")),
-     explanation:"The archive records "+p.leagueGoals.toLocaleString("en-GB")+" league goals for "+p.name+" across "+p.leagueGoalSeasons+" player-season rows where league goals are explicitly present.",
-     source:"OpenFootballBase club-season statistics; recorded league-goal rows only"
-   };return null;},
-   (p)=>{if(p.careerGoals>0)return {
-     answer:p.careerGoals.toLocaleString("en-GB"),
-     question:"What career-goal total is recorded in the career infobox rows for "+p.name+"?",
-     options:players.filter(x=>x.careerGoals>0).map(x=>x.careerGoals.toLocaleString("en-GB")),
-     explanation:"The sum of recorded career-spell goals in this archive is "+p.careerGoals.toLocaleString("en-GB")+". It may not represent a complete all-competition total.",
-     source:"OpenFootballBase career infobox records; coverage may be incomplete"
-   };return null;},
-   (p)=>{if(p.clubs.length>=2)return {
-     answer:String(p.clubs.length),question:"How many distinct clubs appear in "+p.name+"'s recorded career spells?",
-     options:players.map(x=>String(x.clubs.length)).filter(v=>v!=="0"),
-     explanation:p.name+" has "+p.clubs.length+" distinct club names in the available archive record.",
-     source:"OpenFootballBase career history"
-   };return null;},
-   (p)=>{if(p.caps!==null&&p.caps>0)return {
-     answer:p.caps.toLocaleString("en-GB"),
-     question:"How many international caps are recorded for "+p.name+"?",
-     options:players.filter(x=>x.caps!==null&&x.caps>0).map(x=>(x.caps??0).toLocaleString("en-GB")),
-     explanation:"The national-team table records "+p.caps+" caps for "+p.name+". International coverage can be incomplete.",
-     source:"OpenFootballBase national-team records; coverage may be incomplete"
-   };return null;}
-  ],
-  EXTREME:[
-   (p)=>{if(p.firstYear!==null)return {
-     answer:Math.floor(p.firstYear/10)*10+"s",
-     question:"Which decade does "+p.name+"'s first recorded senior career year fall in?",
-     options:players.filter(x=>x.firstYear!==null).map(x=>Math.floor((x.firstYear??0)/10)*10+"s"),
-     explanation:"The earliest career year recorded for "+p.name+" is "+p.firstYear+", which falls in the "+Math.floor(p.firstYear/10)*10+"s.",
-     source:"OpenFootballBase dated career history"
-   };return null;},
-   (p)=>{if(p.careerApps>0)return {
-     answer:p.careerApps.toLocaleString("en-GB"),
-     question:"What total of senior appearances is recorded across "+p.name+"'s career spells?",
-     options:players.filter(x=>x.careerApps>0).map(x=>x.careerApps.toLocaleString("en-GB")),
-     explanation:"The archive's career infobox rows sum to "+p.careerApps.toLocaleString("en-GB")+" appearances for "+p.name+". This is not guaranteed to be complete.",
-     source:"OpenFootballBase career infobox records; coverage may be incomplete"
-   };return null;},
-   (p)=>{if(p.internationalGoals!==null&&p.internationalGoals>0)return {
-     answer:p.internationalGoals.toLocaleString("en-GB"),
-     question:"How many international goals are recorded for "+p.name+"?",
-     options:players.filter(x=>x.internationalGoals!==null&&x.internationalGoals>0).map(x=>(x.internationalGoals??0).toLocaleString("en-GB")),
-     explanation:"The national-team table records "+p.internationalGoals+" international goals. Coverage can be incomplete.",
-     source:"OpenFootballBase national-team records; coverage may be incomplete"
-   };return null;},
-   (p)=>{if(p.lastYear!==null&&p.firstYear!==null)return {
-     answer:String(p.lastYear-p.firstYear+1),
-     question:"Across how many calendar years does "+p.name+"'s recorded career span?",
-     options:players.filter(x=>x.firstYear!==null&&x.lastYear!==null).map(x=>String((x.lastYear??0)-(x.firstYear??0)+1)),
-     explanation:"The archive's earliest and latest recorded career years for "+p.name+" are "+p.firstYear+" and "+p.lastYear+".",
-     source:"OpenFootballBase dated career history"
-   };return null;}
-  ]
- };
- const uniqueOptions=(answer:string,options:string[],salt:number)=>{
-   const wrong=[...new Set(options.filter(value=>normalise(value)!==normalise(answer)))];
-   return wrong.length>=4?shuffle([answer,...shuffle(wrong,salt).slice(0,4)],salt+17):[];
- };
- const pools:Record<Exclude<QuizDifficulty,"STANDARD">,GamePlayer[]>={
-   EASY:players.filter(p=>p.nationality!=="Unlisted"||Boolean(p.position)||p.clubs.length>0),
-   MEDIUM:players.filter(p=>p.clubs.length>0&&p.club!=="Unknown club"),
-   HARD:players.filter(p=>p.careerGoals>0||p.leagueGoalSeasons>=2||(p.caps??0)>0),
-   EXTREME:players.filter(p=>p.firstYear!==null||p.careerApps>0||(p.internationalGoals??0)>0)
- };
- tiers.forEach((tier,index)=>{
-   const ordered=shuffle(pools[tier],seed+index*47);
-   let built:QuizQuestion|null=null;
-   for(const player of ordered){
-     if(usedPlayers.has(player.archiveId))continue;
-     const templates=shuffle(tierTemplates[tier],seed+index*83+player.archiveId.length);
-     for(const template of templates){
-       const raw=template(player);if(!raw)continue;
-       const options=uniqueOptions(raw.answer,raw.options,seed+index*101+player.archiveId.length);
-       if(options.length!==5)continue;
-       built={tier,playerId:player.archiveId,question:raw.question,answer:raw.answer,options,explanation:raw.explanation,source:raw.source};
-       break;
-     }
-     if(built)break;
-   }
-   if(built){output.push(built);usedPlayers.add(built.playerId);}
- });
- return output;
+type QuizDifficulty=QuizTier;
+function makeTimedQuiz(bank: {tiers:Record<QuizTier,QuizQuestion[]>},difficulty:QuizDifficulty,seed:number,count=15):QuizQuestion[]{
+ return makeQuestionRound(bank as any,difficulty,seed,count);
 }
 function QuickQuizPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
- const [mode,setMode]=useMode();const [difficulty,setDifficulty]=useState<QuizDifficulty>("STANDARD");
+ const [mode,setMode]=useMode();const [difficulty,setDifficulty]=useState<QuizDifficulty>("EASY");
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
  const [index,setIndex]=useState(0);const [chosen,setChosen]=useState("");const [locked,setLocked]=useState(false);
  const [score,setScore]=useState(0);const [seconds,setSeconds]=useState(10);const [typed,setTyped]=useState("");const [typingDone,setTypingDone]=useState(false);const [finished,setFinished]=useState(false);
  const done=account.daily[utcDay()]?.["timed-quiz"]!==undefined;
  const seed=mode==="daily"?"QUIZ:"+utcDay()+":"+difficulty:"QUIZ:PRACTICE:"+practiceSeed+":"+difficulty;
- const {players,loading,error,retry}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,1600);
- const pool=useMemo(()=>players.map(archivePlayerToGamePlayer),[players]);
- const questions=useMemo(()=>pool.length>=20?makeTimedQuiz(pool,difficulty,hashSeed(seed)):[],[pool,difficulty,seed]);
+ const {bank,loading,error,retry}=useQuestionBank();
+ const questions=useMemo(()=>bank?makeTimedQuiz(bank,difficulty,hashSeed(seed),15):[],[bank,difficulty,seed]);
  const question=questions[index];
  const progress=question?typed.length/question.question.length:0;
+ const levels:QuizDifficulty[]=["EASY","MEDIUM","HARD","EXTREME"];
  useEffect(()=>{
    setIndex(0);setChosen("");setLocked(false);setScore(0);setSeconds(10);setTyped("");setTypingDone(false);setFinished(false);
  },[difficulty,mode,practiceSeed]);
@@ -1411,18 +1260,20 @@ function QuickQuizPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
  };
  const standardCount=questions.length;
- return <Frame account={account} game="timed-quiz" eyebrow="FIFTEEN QUESTIONS / TEN SECONDS EACH" title="THE QUICK QUIZ." description="A football question arrives like a live commentary feed. Read it, pick one of five answers before the clock runs out." number="16" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
- {done&&mode==="daily"?<Success title="FULL-TIME." detail="Today's fifteen-question quiz has been banked. Unlimited practice has fresh archive questions." button="PRACTICE QUIZ" onAgain={()=>{setMode("practice");restart("practice");}}/>:
-  loading&&pool.length===0?<Card className="quiz-loading"><motion.div animate={{scale:[1,1.08,1],rotate:[0,12,-12,0]}} transition={{duration:1.4,repeat:Infinity}}>⚽</motion.div><b>THE QUIZMASTER IS PICKING THE QUESTIONS</b><span>BUILDING FROM THE FOOTBALL PLAYER ARCHIVE…</span></Card>:
-  !questions.length?<Card className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NOT ENOUGH VERIFIED FIELDS FOR THIS DRAW"}</b><p>{error||"The current pool did not produce enough questions with five distinct answer choices. Try another difficulty or retry the archive."}</p><button className="arc-button" onClick={retry}>RETRY QUESTION BANK ↗</button></Card>:
+ return <Frame account={account} game="timed-quiz" eyebrow="FIFTEEN QUESTIONS / TEN SECONDS EACH" title="THE QUICK QUIZ." description="A football question arrives like live commentary. Choose one of five answers before the clock runs out." number="16" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
+ {done&&mode==="daily"?<Success title="FULL-TIME." detail="Today's fifteen-question quiz has been banked. Unlimited practice is ready." button="PRACTICE QUIZ" onAgain={()=>{setMode("practice");restart("practice");}}/>:
+  loading&&!bank?<Card className="quiz-loading"><motion.div animate={{scale:[1,1.08,1],rotate:[0,12,-12,0]}} transition={{duration:1.4,repeat:Infinity}}>⚽</motion.div><b>THE QUIZMASTER IS PICKING THE QUESTIONS</b><span>OPENING THE VALIDATED 3,200-QUESTION BANK…</span></Card>:
+  error||!bank?<Card className="arc-feedback"><b>QUESTION BANK UNAVAILABLE</b><p>{error||"The validated question bank could not be opened."}</p><button className="arc-button" onClick={retry}>RETRY QUESTION BANK ↗</button></Card>:
+  !questions.length?<Card className="arc-feedback"><b>NOT ENOUGH QUESTIONS FOR THIS RUN</b><p>There were not enough distinct player records to build a balanced round.</p><button className="arc-button" onClick={retry}>RETRY QUESTION BANK ↗</button></Card>:
   finished?<Success title="FULL-TIME." detail={"You scored "+score+" points across "+standardCount+" questions."} button="NEW QUIZ" onAgain={()=>restart(mode)}/>:
   <Card className="quiz-game">
-   <div className="arc-game-meta"><span>{difficulty==="STANDARD"?"5 EASY · 5 MEDIUM · 5 HARD":difficulty+" QUESTION RUN"}</span><b>QUESTION {index+1} / {questions.length}</b></div>
-   <div className="quiz-scoreboard"><div><small>YOUR SCORE</small><strong>{score}</strong></div><div><small>TIER</small><b>{question?.tier}</b></div><div><small>TIME LEFT</small><strong className={seconds<=3?"urgent":""}>{typingDone?seconds:"—"}</strong></div></div>
+   <div className="grid-difficulty">{levels.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>restart(mode,level)}>{level==="MEDIUM"?"MEDIUM / STANDARD":level}</button>)}</div>
+   <div className="arc-game-meta"><span>{bank.meta.distribution[difficulty].total} QUESTIONS / {bank.meta.distribution[difficulty].english} ENGLISH / {bank.meta.distribution[difficulty].international} OTHER LEAGUES</span><b>QUESTION {index+1} / {questions.length}</b></div>
+   <div className="quiz-scoreboard"><div><small>YOUR SCORE</small><strong>{score}</strong></div><div><small>DIFFICULTY</small><b>{difficulty==="MEDIUM"?"MEDIUM / STANDARD":difficulty}</b></div><div><small>TIME LEFT</small><strong className={seconds<=3?"urgent":""}>{typingDone?seconds:"—"}</strong></div></div>
    <div className="quiz-question"><div className="quiz-type-cursor"/><h2>{typed}{!typingDone&&<i className="quiz-caret"/>}</h2><div className="quiz-progress"><i style={{width:(progress*100)+"%"}}/></div></div>
-   {typingDone&&<motion.div className="quiz-options" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}}>{question.options.map(option=><button key={option} onClick={()=>choose(option)} disabled={locked} className={locked&&option===question.answer?"correct":locked&&option===chosen?"wrong":""}>{option}</button>)}</motion.div>}
-   {locked&&<div className="arc-feedback"><b>{chosen===question.answer?"CORRECT.":chosen?"NOT THIS TIME.":"TIME'S UP."}</b><p>{question.explanation}</p><small>{question.source}</small><button className="arc-button" onClick={next}>{index+1===questions.length?"SEE FINAL SCORE":"NEXT QUESTION ↗"}</button></div>}
-   <div className="arc-game-foot"><span>ARCHIVE-GENERATED / {question?.source}</span><span>ONE ANSWER / NO SECOND GO</span></div>
+   {typingDone&&<motion.div className="quiz-options" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}}>{question.options.map(option=><motion.button key={option} whileTap={{scale:.985}} onClick={()=>choose(option)} disabled={locked} className={locked&&option===question.answer?"correct":locked&&option===chosen?"wrong":""}>{option}</motion.button>)}</motion.div>}
+   {locked&&<motion.div className={"arc-feedback "+(chosen===question.answer?"quiz-goal":"quiz-miss")} initial={{opacity:0,y:12,scale:.98}} animate={{opacity:1,y:0,scale:1}}><b>{chosen===question.answer?"GOAL! CORRECT.":chosen?"NOT THIS TIME.":"TIME'S UP."}</b><p>{question.explanation}</p><small>{question.source}</small><button className="arc-button" onClick={next}>{index+1===questions.length?"SEE FINAL SCORE":"NEXT QUESTION ↗"}</button></motion.div>}
+   <div className="arc-game-foot"><span>{question?.category} / {question?.region==="ENGLISH"?"ENGLISH FOOTBALL":"OTHER EUROPEAN LEAGUES"}</span><span>ONE ANSWER / NO SECOND GO</span></div>
   </Card>}
  </Frame>;
 }
@@ -1525,10 +1376,10 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
        </div>
       </motion.div>)}
     </div>)}</div>
-    <div className="tournament-xi-caption"><span>FULL STARTING XI / {visibleClueCount} CLUBS MATCHED</span><span>{clueCount} CLUB CLUES REVEALED / {match.year}</span></div>
+    <div className="tournament-xi-caption"><span>FULL STARTING XI / 11 PLAYERS</span><span>{visibleClueCount} / {Math.min(clueCount,match.starters.length)} CLUBS MATCHED / {match.year}</span></div>
    </div>
    <p className="arc-muted">{positionsVerified?"Rows use the archive's broad player-position profiles; these are not confirmed match-day coordinates.":"The source supplies the starting eleven but not reliable match-day positions. The shirts use a clearly marked schematic 4-3-3 until enough profile positions are available."} Only exact player-name/year club matches are shown; missing clubs stay unrecorded.</p>
-   {!ended?<><div className="tournament-options">{options.map(team=><button key={team} onClick={()=>choose(team)}>{team}<i>↗</i></button>)}</div><div className="arc-game-foot"><span>{difficulty} · {optionCount} NATIONAL TEAMS</span><span>{clueCount} CLUB CLUES SHOWN</span></div></>:
+   {!ended?<><div className="tournament-options">{options.map(team=><button key={team} onClick={()=>choose(team)}>{team}<i>↗</i></button>)}</div><div className="arc-game-foot"><span>{difficulty} · {optionCount} NATIONAL TEAMS</span><span>{visibleClueCount} MATCHED / {Math.min(clueCount,match.starters.length)} CLUE SLOTS</span></div></>:
     <div className="arc-feedback"><b>{won?"YOU GOT THE NATION.":"THE NATION WAS "+match.team.toUpperCase()+"."}</b><p>{match.team} started against {match.opponent} at the {match.round} stage of the {match.year} World Cup.</p><button className="arc-button" onClick={()=>reset(mode)}>NEXT TOURNAMENT ↗</button></div>}
   </Card>}
  </Frame>;
@@ -1618,7 +1469,7 @@ export function ArcadeApp(){
  },[]);
  const onDaily=(game:GameId,score:number)=>setAccount(prev=>awardDaily(prev,game,score));
  const path=pageFromPath(window.location.pathname);
- if(path==="locker-room")return <AccountPage account={account} setAccount={setAccount}/>;
+ if(path==="locker-room")return <MotionConfig reducedMotion="user"><AccountPage account={account} setAccount={setAccount}/></MotionConfig>;
  const pages:Record<string,React.ReactNode>={
   "lowball":<LowballPage account={account} onDaily={onDaily}/>,
   "the-climb":<ClimbPage account={account} onDaily={onDaily}/>,
@@ -1637,5 +1488,5 @@ export function ArcadeApp(){
   "tournament-nation":<TournamentNationPage account={account} onDaily={onDaily}/>,
   "timed-quiz":<QuickQuizPage account={account} onDaily={onDaily}/>
  };
- return pages[path]??<HomePage account={account}/>;
+ return <MotionConfig reducedMotion="user">{pages[path]??<HomePage account={account}/>}</MotionConfig>;
 }
