@@ -34,6 +34,7 @@ for (const [game, keys] of Object.entries(games)) {
     matchIds.add(question.matchId);
     if (!tiers.includes(question.tier)) fail(question.id + " has an invalid difficulty");
     if (question.region !== "ENGLISH_DOMESTIC" && question.region !== "INTERNATIONAL") fail(question.id + " has an invalid region");
+    if (question.region === "INTERNATIONAL" && !/UEFA Champions League/i.test(question.category ?? "")) fail(question.id + " includes non-Champions-League international content");
     if (typeof question.question !== "string" || !question.question.trim().endsWith("?")) fail(question.id + " has an unreadable question stem");
     if (typeof question.answer !== "string" || !question.answer.trim()) fail(question.id + " has no answer");
     if (!Array.isArray(question.options) || question.options.length !== 5) fail(question.id + " must have exactly five answer options");
@@ -61,7 +62,7 @@ for (const [game, keys] of Object.entries(games)) {
   console.log(game + " available pool: " + questions.length + " unique questions; " + englishDomestic + " English-domestic (" +
     (100 * englishDomestic / questions.length).toFixed(1) + "%), " + international + " international (" +
     (100 * international / questions.length).toFixed(1) + "%).");
-  console.log("  Runtime allocation: 5-question 3/2 or 4/1; 10-question practice 7/3 or 8/2; 17-question daily 12/5 or 13/4, balanced to 75% over four seeds.");
+  console.log("  Runtime allocation: five-question rounds 4/1; ten-question practice rounds 9/1; 17-question daily Quick Quiz 15 English domestic / 2 Champions League.");
   console.log("  Tier coverage: " + tiers.map(tier => tier + " " + byTier[tier].ENGLISH_DOMESTIC + " English domestic / " +
     byTier[tier].INTERNATIONAL + " international").join("; "));
 }
