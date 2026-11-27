@@ -770,8 +770,8 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
  const done=account.daily[utcDay()]?.["football-grid"]!==undefined;
  const seed=mode==="daily"?hashSeed("GRID:"+utcDay()+":"+difficulty):hashSeed("GRID:practice:"+practiceSeed+":"+difficulty);
  useEffect(()=>{
-  let live=true;setArchiveGridLoading(true);setArchiveGridError("");
-  getArchiveGamePlayers(4000,mode==="daily"?"PLAYGROUND-GRID:"+utcDay():"PLAYGROUND-GRID:PRACTICE:"+practiceSeed)
+  let live=true;setArchiveGridLoading(true);setArchiveGridError("");setArchiveGridPlayers([]);
+  getArchiveGamePlayers(4000,mode==="daily"?"PLAYGROUND-GRID:"+utcDay()+":"+gridReload:"PLAYGROUND-GRID:PRACTICE:"+practiceSeed+":"+gridReload)
    .then(rows=>{if(live){setArchiveGridPlayers(rows.map(archiveGamePlayerToGamePlayer));setArchiveGridLoading(false)}})
    .catch(error=>{if(live){setArchiveGridError(error instanceof Error?error.message:"The career archive could not be loaded.");setArchiveGridLoading(false)}});
   return()=>{live=false};
