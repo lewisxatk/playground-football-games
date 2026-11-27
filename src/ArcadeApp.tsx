@@ -35,7 +35,7 @@ const difficultyDescription=(level:string)=>({
 } as Record<string,string>)[level]??"";
 const EMPTY_ACCOUNT: Account = { nickname:"PLAYER 01", createdAt:new Date().toISOString(), streak:0, bestStreak:0, lastDailyDate:"", daily:{}, totals:{} };
 const GAME_LINKS = [
-  {id:"lowball",title:"LOWBALL",sub:"Higher or lower. No second guesses.",tone:"lime",tag:"QUICK FIRE"},
+  {id:"lowball",title:"WHO'S GOT MORE?",sub:"Pick who has more recorded senior international goals.",tone:"lime",tag:"STAT FACE-OFF"},
   {id:"the-climb",title:"THE CLIMB",sub:"Five questions. Three lives.",tone:"orange",tag:"SURVIVAL"},
   {id:"draft-xi",title:"DRAFT XI",sub:"Build an XI inside the game budget.",tone:"blue",tag:"SQUAD BUILDER"},
   {id:"career-file",title:"CAREER FILE",sub:"Read the club journey. Find the player.",tone:"pink",tag:"MYSTERY"},
