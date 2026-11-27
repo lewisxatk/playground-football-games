@@ -1163,8 +1163,9 @@ function makeDynamicStrandsPack(players:GamePlayer[],seed:number):typeof STRANDS
  for(let groupIndex=0;groupIndex<orderedGroups.length;groupIndex++){
    const group=orderedGroups[groupIndex];
    const base=group.label.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,"");
-   const spangramCandidates=group.kind==="NATION"?[base+"PLAYERS"]:
-     [base,base.length===9?base+"FCXI":base.length===7?base+"PLAYERS":""].filter(Boolean);
+   const spangramCandidates=group.kind==="NATION"
+     ?[base+"FOOTBALL",base+"PLAYERS"]
+     :[base,base+"FOOTBALL",base+"PLAYERS",base.length===9?base+"FCXI":""].filter(Boolean);
    const spangram=spangramCandidates.find(word=>word.length===13||word.length===14);
    if(!spangram)continue;
    const target=48-spangram.length;
