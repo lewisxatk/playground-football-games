@@ -105,14 +105,14 @@ export const CAREER_FILES = [
 ];
 
 export const STRANDS_PACKS = [
-  {spangram:"VIRGILVANDIJK",words:["MESSI","SALAH","RODRI","FODEN","VARDY","KLOSE","RAMOS"],theme:"Modern Premier League names"},
-  {spangram:"KEVINDEBRUYNE",words:["HENRY","TERRY","VIDIC","PIRES","VARDY","KLOSE","RAMOS"],theme:"Premier League greats"},
-  {spangram:"ERLINGHAALAND",words:["KLOSE","RAMOS","VARDY","TERRY","VIDIC","PIRES","SALAH"],theme:"Players with famous surnames"},
-  {spangram:"STEVENGERRARD",words:["TERRY","NANI","VIDIC","PIRES","KLOSE","VARDY","RAMOS"],theme:"One-name football icons"},
-  {spangram:"EDINSONCAVANI",words:["SALAH","MESSI","KLOSE","VARDY","TERRY","VIDIC","RAMOS"],theme:"Football surnames"},
-  {spangram:"ALISSONBECKER",words:["KLOSE","VARDY","TERRY","VIDIC","SALAH","PIRES","RAMOS"],theme:"From the pitch"},
-  {spangram:"DANIELEDEROSSI",words:["TERRY","VIDIC","PIRES","SALAH","KLOSE","VARDY","NANI"],theme:"European football names"},
-  {spangram:"THOMASROSICKY",words:["HENRY","TERRY","KLOSE","VARDY","SALAH","PIRES","RAMOS"],theme:"Cult football favourites"},
-  {spangram:"PATRICKVIEIRA",words:["VARDY","KLOSE","SALAH","TERRY","VIDIC","PIRES","RAMOS"],theme:"Midfield and attack"},
-  {spangram:"VIRGILVANDIJK",words:["MESSI","NESTA","SAKA","TERRY","RODRI","MATA","SON","KAKA"],theme:"Famous football names"}
+  {spangram:"VIRGILVANDIJK",words:["MESSI","SALAH","RODRI","KANE","SAKA","MATA","KAKA","GUTI"],theme:"Modern Premier League names"},
+  {spangram:"KEVINDEBRUYNE",words:["HENRY","TERRY","VIDIC","OWEN","COLE","LAHM","KANE","NANI"],theme:"Premier League greats"},
+  {spangram:"ERLINGHAALAND",words:["KLOSE","RAMOS","VARDY","KANE","MATA","GUTI","PEPE","LAHM"],theme:"Players with famous surnames"},
+  {spangram:"STEVENGERRARD",words:["TERRY","VIDIC","PIRES","NANI","COLE","OWEN","KOKE","XAVI"],theme:"One-name football icons"},
+  {spangram:"EDINSONCAVANI",words:["SALAH","MESSI","KLOSE","MATA","KAKA","GUTI","PEPE","LAHM"],theme:"Football surnames"},
+  {spangram:"ALISSONBECKER",words:["KLOSE","VARDY","TERRY","NANI","COLE","OWEN","XAVI","PEPE"],theme:"From the pitch"},
+  {spangram:"DANIELEDEROSSI",words:["TERRY","VIDIC","NANI","COLE","OWEN","XAVI","KANE","MATA"],theme:"European football names"},
+  {spangram:"THOMASROSICKY",words:["HENRY","TERRY","KLOSE","KANE","MATA","GUTI","PEPE","LAHM"],theme:"Cult football favourites"},
+  {spangram:"PATRICKVIEIRA",words:["VARDY","KLOSE","SALAH","NANI","COLE","OWEN","XAVI","KANE"],theme:"Midfield and attack"},
+  {spangram:"VIRGILVANDIJK",words:["MESSI","NESTA","RODRI","SAKA","MATA","KAKA","GUTI","KANE"],theme:"Famous football names"}
 ];
