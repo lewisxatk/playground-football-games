@@ -482,7 +482,6 @@ def main() -> None:
         "caveats": caveats,
         "shards": shards,
     }
-    index_path = output / "index.json"
     index_path = output / "manifest.json"
     index_path.write_text(json.dumps(index, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps({
