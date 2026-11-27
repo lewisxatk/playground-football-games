@@ -1107,7 +1107,7 @@ function makeStrandsBoard(pack:typeof STRANDS_PACKS[number]){
  return {cells,paths,words,spangram:pack.spangram};
 }
 function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
- const [mode,setMode]=useMode();const [boardNo,setBoardNo]=useState(0);const [selected,setSelected]=useState<number[]>([]);const pathRef=useRef<number[]>([]);const [dragging,setDragging]=useState(false);const [found,setFound]=useState<number[]>([]);const [wrong,setWrong]=useState(0);const [nudges,setNudges]=useState(0);const [hintedWord,setHintedWord]=useState<number|null>(null);const [finished,setFinished]=useState(false);const [notice,setNotice]=useState("");const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));const done=account.daily[utcDay()]?.strands!==undefined;
+ const [mode,setMode]=useMode();const [boardNo,setBoardNo]=useState(0);const [selected,setSelected]=useState<number[]>([]);const pathRef=useRef<number[]>([]);const [dragging,setDragging]=useState(false);const [found,setFound]=useState<number[]>([]);const [wrong,setWrong]=useState(0);const [nudges,setNudges]=useState(0);const [hintedWord,setHintedWord]=useState<number|null>(null);const [bonusWords,setBonusWords]=useState<string[]>([]);const [bonusHintsUsed,setBonusHintsUsed]=useState(0);const [finished,setFinished]=useState(false);const [notice,setNotice]=useState("");const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));const done=account.daily[utcDay()]?.strands!==undefined;
  const seed=mode==="daily"?"STRANDS:"+utcDay()+":"+boardNo:"STRANDS:PRACTICE:"+practiceSeed+":"+boardNo;
  const {data:strandsData,loading,error,retry}=useFootballKnowledge("strands");
  const strandsPacks=strandsData?.packs??[];
@@ -1144,18 +1144,22 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
    const foundIndex=board.words.findIndex((w,idx)=>!solved(idx)&&(w===word||w.split("").reverse().join("")===word));
    if(foundIndex>=0){
      const next=[...found,foundIndex];setFound(next);setSelected([]);setNotice("");
-     if(next.length===board.words.length){setFinished(true);if(mode==="daily")onDaily("strands",Math.max(100,1000-nudges*100-wrong*15));}
-   }else{setWrong(v=>v+1);setNotice(path.length>1?"No footballer on that path. Try another route.":"Drag through adjacent letters to make a name.");setSelected([]);}
+     if(next.length===board.words.length){setFinished(true);if(mode==="daily")onDaily("strands",Math.max(100,1000-wrong*15));}
+   }else if(path.length>=4&&/^[A-Z]+$/.test(word)&&!bonusWords.includes(word)&&bonusWords.length<30){
+     const next=[...bonusWords,word];setBonusWords(next);setSelected([]);
+     const earned=Math.floor(next.length/3);
+     setNotice(earned>bonusHintsUsed?"BONUS WORD: "+word+" · YOU'VE EARNED A HINT.":"BONUS WORD: "+word+" · "+(next.length%3)+"/3 TOWARDS YOUR NEXT HINT.");
+   }else{setWrong(v=>v+1);setNotice(path.length>1?"Not a theme word or new bonus word. Try another route.":"Drag through adjacent letters to make a word.");setSelected([]);}
  };
  const cancelPath=()=>{pathRef.current=[];setSelected([]);setDragging(false);};
- const nextBoard=()=>{setBoardNo(v=>v+1);pathRef.current=[];setSelected([]);setFound([]);setWrong(0);setNudges(0);setHintedWord(null);setNotice("");setDragging(false);setFinished(false);};
- const hint=()=>{if(nudges>=3||finished)return;const next=board.paths.findIndex((_path,index)=>!found.includes(index)&&index!==hintedWord);if(next>=0){setHintedWord(next);setNudges(v=>v+1);}};
+ const nextBoard=()=>{setBoardNo(v=>v+1);pathRef.current=[];setSelected([]);setFound([]);setWrong(0);setNudges(0);setHintedWord(null);setBonusWords([]);setBonusHintsUsed(0);setNotice("");setDragging(false);setFinished(false);};
+ const hint=()=>{if(finished)return;if(Math.floor(bonusWords.length/3)<=bonusHintsUsed){setNotice("Find three new four-letter bonus words anywhere on the board to earn a hint.");return;}const next=board.paths.findIndex((_path,index)=>!found.includes(index)&&index!==hintedWord);if(next>=0){setHintedWord(next);setBonusHintsUsed(v=>v+1);setNudges(v=>v+1);setNotice("SCOUTING REPORT: the full letter path of one hidden theme word is circled.");}};
  const currentDone=found.length===board.words.length;
- const hintedCells=hintedWord===null?[]:(board.paths[hintedWord]?.slice(0,2)??[]);
- return <Frame account={account} game="strands" eyebrow="6 × 8 LETTER PUZZLE / DAILY THEME" title="FOOTBALL STRANDS." description="Find footballers connected by one clear club or national-team theme, then trace the spangram that names the connection." number="13" mode={mode} setMode={m=>{setMode(m);setBoardNo(0);if(m==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));pathRef.current=[];setSelected([]);setFound([]);setWrong(0);setNudges(0);setHintedWord(null);setNotice("");setDragging(false);setFinished(false);}}>
+ const hintedCells=hintedWord===null?[]:(board.paths[hintedWord]??[]);
+ return <Frame account={account} game="strands" eyebrow="6 × 8 LETTER PUZZLE / DAILY THEME" title="FOOTBALL STRANDS." description="A retro football word-search. Trace hidden player names, find bonus words anywhere on the board and earn full-path hints when you get stuck." number="13" mode={mode} setMode={m=>{setMode(m);setBoardNo(0);if(m==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));pathRef.current=[];setSelected([]);setFound([]);setWrong(0);setNudges(0);setHintedWord(null);setNotice("");setDragging(false);setFinished(false);}}>
  {done&&mode==="daily"?<Success title="DAILY BOARD CLEARED." detail="Today’s themed Strands board is complete. Fresh club and nation practice boards are available." button="PRACTICE STRANDS" onAgain={()=>{setMode("practice");setPracticeSeed(String(Math.floor(Math.random()*1e12)));nextBoard();}}/>:
   <Card className="strands-game">
-   <div className="arc-game-meta"><span>{mode==="daily"?"TODAY’S BOARD":"PRACTICE BOARD "+(boardNo+1)}</span><b>{found.length}/{board.words.length} NAMES FOUND</b></div>
+   <div className="arc-game-meta"><span>{mode==="daily"?"TODAY’S BOARD":"PRACTICE BOARD "+(boardNo+1)}</span><b>{found.length}/{board.words.length} NAMES FOUND</b></div><div className="strands-bonus-meter"><b>SCOUTING WORDS</b><span>{bonusWords.length%3}/3 TO NEXT HINT</span><small>{bonusWords.length} BONUS WORDS · {Math.max(0,Math.floor(bonusWords.length/3)-bonusHintsUsed)} HINTS READY</small></div>
    <div className="strands-theme"><small>THE THEME</small><strong>{pack.theme}</strong><span>{strandsPacks.length?"Prebuilt CC0 football name pack.":"Fallback football word board."} Select adjacent letters in any direction; diagonal links are allowed.</span></div>
    {loading&&strandsPacks.length===0&&<div className="strands-pool-note">LOADING CC0 STRANDS PACKS…</div>}
    <div className={"strands-grid "+(dragging?"is-dragging":"")} onPointerMove={handlePointerMove} onPointerUp={finishPath} onPointerCancel={cancelPath} onContextMenu={e=>e.preventDefault()}>
@@ -1170,11 +1174,11 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
         aria-label={"Row "+(Math.floor(i/6)+1)+", column "+(i%6+1)+", letter "+letter}>{letter}</motion.button>;
     })}
    </div>
-   <div className="strands-actions"><button className="arc-quiet" onClick={cancelPath}>CLEAR PATH</button><button className="arc-button" onClick={hint} disabled={nudges>=3||finished}>HINT −100 PTS ({nudges}/3)</button>{mode==="practice"&&<button className="arc-quiet" onClick={nextBoard}>SKIP / NEXT ↗</button>}</div>
+   <div className="strands-actions"><button className="arc-quiet" onClick={cancelPath}>CLEAR PATH</button><button className="arc-button" onClick={hint} disabled={Math.floor(bonusWords.length/3)<=bonusHintsUsed||finished}>USE EARNED HINT ({bonusHintsUsed}/{Math.floor(bonusWords.length/3)})</button>{mode==="practice"&&<button className="arc-quiet" onClick={nextBoard}>SKIP / NEXT ↗</button>}</div>
    {dragging&&<p className="strands-drag-live">KEEP DRAGGING · RELEASE TO CHECK</p>}
    {notice&&<div className="strands-feedback"><span>{notice}</span><button onClick={cancelPath}>DISMISS</button></div>}
-   {hintedWord!==null&&<p className="arc-muted">HINT: the first two letters ({board.words[hintedWord].slice(0,2)}) of a hidden player name are highlighted on the board. The hint costs 100 points.</p>}
-   {currentDone&&<div className="arc-feedback"><b>{mode==="daily"?"DAILY BOARD COMPLETE.":"BOARD COMPLETE."}</b><p>SPANGRAM: {board.spangram} · SCORE: {Math.max(100,1000-nudges*100-wrong*15)}</p>{mode==="practice"&&<button className="arc-button" onClick={nextBoard}>NEXT PUZZLE ↗</button>}</div>}
+   {hintedWord!==null&&<p className="arc-muted">SCOUTING REPORT: all {board.words[hintedWord].length} letters of one hidden answer are circled. Trace the connected path yourself.</p>}{bonusWords.length>0&&<p className="strands-bonus-list">BONUS WORDS FOUND: {bonusWords.join(" · ")}</p>}
+   {currentDone&&<div className="arc-feedback"><b>{mode==="daily"?"DAILY BOARD COMPLETE.":"BOARD COMPLETE."}</b><p>SPANGRAM: {board.spangram} · SCORE: {Math.max(100,1000-wrong*15)}</p>{mode==="practice"&&<button className="arc-button" onClick={nextBoard}>NEXT PUZZLE ↗</button>}</div>}
    <div className="strands-legend"><span><i className="blue"/> FOOTBALLER</span><span><i className="gold"/> SPANGRAM / FULL NAME</span></div>
    {error&&<div className="arc-feedback"><b>CC0 STRANDS SHARD UNAVAILABLE</b><p>The curated fallback board remains playable while the game pack loads.</p><button className="arc-quiet" onClick={retry}>RETRY PACKS</button></div>}
   </Card>}
