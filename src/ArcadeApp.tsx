@@ -757,13 +757,50 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  </Frame>;
 }
 
-const MISSING_LINEUP=["Edwin van der Sar","Wes Brown","Rio Ferdinand","Nemanja Vidić","Patrice Evra","Owen Hargreaves","Michael Carrick","Paul Scholes","Cristiano Ronaldo","Wayne Rooney"];
-const MISSING_OPTIONS=["Carlos Tévez","Ryan Giggs","Nani","Dimitar Berbatov"];
+type MissingSpot={name:string;number:string;role:"GK"|"DEF"|"MID"|"FWD"};
+const MISSING_FORMATION:{group:"keeper"|"defence"|"midfield"|"forwards";players:MissingSpot[]}[]=[
+ {group:"keeper",players:[{name:"Edwin van der Sar",number:"01",role:"GK"}]},
+ {group:"defence",players:[
+  {name:"Patrice Evra",number:"03",role:"DEF"},{name:"Nemanja Vidić",number:"15",role:"DEF"},
+  {name:"Rio Ferdinand",number:"05",role:"DEF"},{name:"Wes Brown",number:"06",role:"DEF"}]},
+ {group:"midfield",players:[
+  {name:"Owen Hargreaves",number:"04",role:"MID"},{name:"Michael Carrick",number:"16",role:"MID"},
+  {name:"Paul Scholes",number:"18",role:"MID"},{name:"Cristiano Ronaldo",number:"07",role:"MID"}]},
+ {group:"forwards",players:[
+  {name:"Wayne Rooney",number:"10",role:"FWD"},{name:"WHO'S MISSING?",number:"32",role:"FWD"}]}
+];
+const MISSING_OPTIONS=["Carlos Tévez","Ryan Giggs","Nani","Anderson"];
 function MissingXIPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
- const [mode,setMode]=useMode();const [chosen,setChosen]=useState("");const [end,setEnd]=useState(false);const correct="Carlos Tévez";const done=account.daily[utcDay()]?.["missing-xi"]!==undefined;
- const answer=(v:string)=>{if(end)return;setChosen(v);setEnd(true);if(mode==="daily")onDaily("missing-xi",v===correct?1000:0);};
- return <Frame account={account} game="missing-xi" eyebrow="HISTORIC LINE-UP / ONE PLAYER GONE" title="MISSING XI." description="Ten names from Manchester United's 2008 Champions League final starting team. Who completes the eleven?" number="12" mode={mode} setMode={setMode}>
- {done&&mode==="daily"?<Success title="LINE-UP COMPLETE." detail="You have named today's missing starter." button="PRACTICE" onAgain={()=>setMode("practice")}/>:<Card className="missing-game"><div className="arc-game-meta"><span>MANCHESTER UNITED / 2008 FINAL</span><b>10 / 11 SHOWN</b></div><div className="missing-pitch">{MISSING_LINEUP.map((p,i)=><div key={p}><small>{String(i+1).padStart(2,"0")}</small><b>{p}</b></div>)}<div className="missing-slot"><small>11</small><b>WHO'S MISSING?</b></div></div><div className="missing-options">{MISSING_OPTIONS.map(p=><button key={p} onClick={()=>answer(p)} disabled={end} className={end&&p===correct?"correct":end&&p===chosen?"wrong":""}>{p}</button>)}</div>{end&&<div className="arc-feedback"><b>{chosen===correct?"CORRECT.":"THE MISSING PLAYER WAS CARLOS TÉVEZ."}</b><button className="arc-button" onClick={()=>{setChosen("");setEnd(false);}}>PLAY AGAIN ↗</button></div>}</Card>}
+ const [mode,setMode]=useMode();const [chosen,setChosen]=useState("");const [attempts,setAttempts]=useState(0);const [end,setEnd]=useState(false);const [won,setWon]=useState(false);
+ const correct="Carlos Tévez";const done=account.daily[utcDay()]?.["missing-xi"]!==undefined;
+ const answer=(value:string)=>{
+   if(end)return;const next=attempts+1;setAttempts(next);setChosen(value);
+   if(normalise(value)===normalise(correct)){setWon(true);setEnd(true);if(mode==="daily")onDaily("missing-xi",Math.max(200,1000-(next-1)*250));}
+   else if(next>=3){setEnd(true);if(mode==="daily")onDaily("missing-xi",0);}
+ };
+ const restart=()=>{setChosen("");setAttempts(0);setEnd(false);setWon(false);};
+ return <Frame account={account} game="missing-xi" eyebrow="HISTORIC LINE-UP / FIND THE NUMBER 32" title="MISSING XI." description="One player has been removed from Manchester United's official 2008 Champions League final starting formation. Fill the shirt." number="12" mode={mode} setMode={m=>{setMode(m);restart();}}>
+ {done&&mode==="daily"?<Success title="LINE-UP COMPLETE." detail="Today's historical starting XI is complete. Practice is unlimited." button="PRACTICE XI" onAgain={()=>{setMode("practice");restart();}}/>:
+  <Card className="missing-game">
+   <div className="arc-game-meta"><span>21 MAY 2008 · MOSCOW</span><b>{3-attempts} ATTEMPTS LEFT</b></div>
+   <div className="missing-matchline"><div><small>FINAL</small><strong>MANCHESTER UNITED 1–1 CHELSEA</strong></div><div><small>AFTER EXTRA TIME</small><strong>UNITED WON 6–5 ON PENALTIES</strong></div></div>
+   <div className="missing-formation-pitch">
+    <div className="missing-pitch-markings"><i/><i/><i/><i/></div>
+    {MISSING_FORMATION.map(row=><div className={"formation-row "+row.group} key={row.group}>
+      {row.players.map(player=>{
+        const missing=player.name==="WHO'S MISSING?";
+        return <motion.div className={"formation-player "+(missing?"missing-player-slot":"")} key={player.number} layout>
+          <div className="formation-shirt"><b>{player.number}</b></div>
+          <div className="formation-club"><ClubBadge name="Manchester United" size={19}/><small>{missing?end?correct:"MISSING PLAYER":player.name}</small></div>
+          <span>{player.role}</span>
+        </motion.div>;
+      })}
+    </div>)}
+    <div className="formation-caption"><span>4—4—2 SHAPE / OFFICIAL STARTING XI ORDER</span><span>NO. 32 IS HIDDEN</span></div>
+   </div>
+   {!end?<><div className="missing-options">{MISSING_OPTIONS.map(name=><button key={name} onClick={()=>answer(name)}>{name}<i>↗</i></button>)}</div><p className="arc-muted">The question uses the UEFA line-up published for the final on 21 May 2008. The displayed formation is a simplified 4—4—2 layout.</p></>:
+    <div className="arc-feedback"><b>{won?"YOU FOUND THE MISSING PLAYER.":"THE MISSING PLAYER WAS CARLOS TÉVEZ."}</b><p>{won?"A proper piece of Champions League history.":"Tévez started alongside Wayne Rooney in the 2008 final."}</p><button className="arc-button" onClick={restart}>PLAY THE XI AGAIN ↗</button></div>}
+  </Card>}
  </Frame>;
 }
 
