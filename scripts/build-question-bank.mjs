@@ -109,7 +109,7 @@ if (manifest.source !== "OpenFootballBase-Data" || !Array.isArray(manifest.shard
 }
 try {
   const existing = JSON.parse(await readFile(outputPath, "utf8"));
-  if (existing.version === 3 && existing.sourceRelease === manifest.sourceRelease &&
+  if (existing.version === 4 && existing.sourceRelease === manifest.sourceRelease &&
       existing.meta?.targetPerTier === TARGET &&
       ["EASY", "MEDIUM", "HARD", "EXTREME"].every(tier =>
         existing.tiers?.[tier]?.length === TARGET &&
@@ -299,16 +299,16 @@ for (const player of players) {
   }
 
   if (hardEligible(player)) {
-    if (recordedLeagueGoals !== null && (player.leagueGoalRows ?? 0) > 0) add("HARD", player, region, "league-goals", "RECORDED STATISTICS",
+    if (recordedLeagueGoals !== null && recordedLeagueGoals > 0 && (player.leagueGoalRows ?? 0) > 0) add("HARD", player, region, "league-goals", "RECORDED STATISTICS",
       "How many league goals are recorded for " + player.name + " across the available club-season rows?", String(recordedLeagueGoals), leagueGoals,
       "The source records " + recordedLeagueGoals + " league goals across the player's available league rows; this is not guaranteed to be a complete career total.", true);
-    if (goals !== null && (player.careerGoalRows ?? player.goalRows ?? 0) > 0) add("HARD", player, region, "career-goals", "RECORDED STATISTICS",
+    if (goals !== null && goals > 0 && (player.careerGoalRows ?? player.goalRows ?? 0) > 0) add("HARD", player, region, "career-goals", "RECORDED STATISTICS",
       "What career-goal total is recorded for " + player.name + " in the source's career rows?", String(goals), careerGoals,
       "The source records " + goals + " career-spell goals for " + player.name + "; coverage is not guaranteed complete.", true);
-    if (recordedCaps !== null && (player.nationalRows ?? 0) > 0) add("HARD", player, region, "international-caps", "INTERNATIONAL RECORD",
+    if (recordedCaps !== null && recordedCaps > 0 && (player.nationalRows ?? 0) > 0) add("HARD", player, region, "international-caps", "INTERNATIONAL RECORD",
       "How many international caps are recorded for " + player.name + "?", String(recordedCaps), caps,
       "The national-team rows record " + recordedCaps + " caps for " + player.name + ". National-team coverage varies.", true);
-    if (appearances !== null && (player.careerAppearanceRows ?? player.appearanceRows ?? 0) > 0) add("HARD", player, region, "career-appearances", "RECORDED STATISTICS",
+    if (appearances !== null && appearances > 0 && (player.careerAppearanceRows ?? player.appearanceRows ?? 0) > 0) add("HARD", player, region, "career-appearances", "RECORDED STATISTICS",
       "What career-appearance total is recorded for " + player.name + " in the source's career rows?", String(appearances), careerApps,
       "The source records " + appearances + " career-spell appearances for " + player.name + "; coverage is not guaranteed complete.", true);
   }
@@ -323,7 +323,7 @@ for (const player of players) {
     if (firstYear !== null && lastYear !== null && lastYear >= firstYear) add("EXTREME", player, region, "career-span", "CAREER CHRONOLOGY",
       "Across how many calendar years does " + player.name + "'s recorded career span?", String(lastYear - firstYear + 1), careerSpans,
       "The available career record runs from " + firstYear + " to " + lastYear + ". This is a span, not necessarily continuous playing years.", true);
-    if (recordedInternationalGoals !== null && (player.nationalRows ?? 0) > 0) add("EXTREME", player, region, "international-goals", "INTERNATIONAL RECORD",
+    if (recordedInternationalGoals !== null && recordedInternationalGoals > 0 && (player.nationalRows ?? 0) > 0) add("EXTREME", player, region, "international-goals", "INTERNATIONAL RECORD",
       "How many international goals are recorded for " + player.name + "?", String(recordedInternationalGoals), internationalGoals,
       "The national-team rows record " + recordedInternationalGoals + " international goals for " + player.name + ". Coverage varies.", true);
     if (clubCount >= 2) add("EXTREME", player, region, "spell-count", "CAREER CHRONOLOGY",
@@ -352,7 +352,7 @@ for (const tier of ["EASY", "MEDIUM", "HARD", "EXTREME"]) {
 }
 
 const bank = {
-  version: 3,
+  version: 4,
   source: manifest.source,
   sourceRelease: manifest.sourceRelease,
   sourceReleaseUrl: manifest.sourceReleaseUrl ?? manifest.releaseUrl,
