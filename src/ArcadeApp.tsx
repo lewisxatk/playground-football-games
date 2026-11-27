@@ -967,109 +967,108 @@ function FiveOhOnePage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
  </Frame>;
 }
 
-type LinkDifficulty="STANDARD"|"HARD"|"EXTREME";
+type LinkDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
 type GeneratedLink={start:GamePlayer;end:GamePlayer;answer:GamePlayer;startClub:string;endClub:string;options:GamePlayer[]};
 
-function buildTeammateGraph(players:GamePlayer[]){
- const byClub=new Map<string,{player:GamePlayer;start:number;end:number;club:string}[]>();
- for(const player of players){
-   for(const spell of player.careerSpells){
-     if(!spell.club||spell.startYear===null)continue;
-     const clubKey=normalise(spell.club);
-     const group=byClub.get(clubKey)??[];
-     group.push({player,start:spell.startYear,end:spell.endYear??spell.startYear,club:spell.club});
-     byClub.set(clubKey,group);
-   }
- }
- const graph=new Map<string,Map<string,string[]>>();
- for(const group of byClub.values()){
-   const unique=new Map<string,typeof group[number][]>();
-   for(const entry of group){const bucket=unique.get(entry.player.archiveId)??[];bucket.push(entry);unique.set(entry.player.archiveId,bucket);}
-   const rows=Array.from(unique.values());
-   for(let i=0;i<rows.length;i++)for(let j=i+1;j<rows.length;j++){
-     const a=rows[i][0],b=rows[j][0];
-     const overlap=rows[i].some(one=>rows[j].some(two=>one.start<=two.end&&two.start<=one.end));
-     if(!overlap)continue;
-     const left=graph.get(a.player.archiveId)??new Map<string,string[]>();
-     const right=graph.get(b.player.archiveId)??new Map<string,string[]>();
-     const leftClubs=left.get(b.player.archiveId)??[];
-     const rightClubs=right.get(a.player.archiveId)??[];
-     if(!leftClubs.includes(a.club))leftClubs.push(a.club);
-     if(!rightClubs.includes(a.club))rightClubs.push(a.club);
-     left.set(b.player.archiveId,leftClubs);right.set(a.player.archiveId,rightClubs);
-     graph.set(a.player.archiveId,left);graph.set(b.player.archiveId,right);
-   }
- }
- return graph;
-}
-function makeLinkQuestions(players:GamePlayer[],seed:number):GeneratedLink[]{
- const graph=buildTeammateGraph(players);
- const byId=new Map(players.map(p=>[p.archiveId,p]));
- const result:GeneratedLink[]=[];
- for(const target of shuffle(players,seed)){
-   if(result.length>=24)break;
-   const links=graph.get(target.archiveId);if(!links||links.size<2)continue;
-   const teammateIds=shuffle(Array.from(links.keys()),seed+target.archiveId.length*37);
-   for(let i=0;i<teammateIds.length&&result.length<24;i++){
-     for(let j=i+1;j<teammateIds.length&&result.length<24;j++){
-       const startId=teammateIds[i],endId=teammateIds[j];
-       const start=byId.get(startId),end=byId.get(endId);
-       if(!start||!end)continue;
-       const startLinks=graph.get(startId),endLinks=graph.get(endId);
-       if(!startLinks||!endLinks)continue;
-       const common=[...startLinks.keys()].filter(id=>endLinks.has(id)&&id!==startId&&id!==endId);
-       if(common.length!==1||common[0]!==target.archiveId)continue;
-       const startClub=links.get(startId)?.[0]??"";
-       const endClub=links.get(endId)?.[0]??"";
-       const wrong=shuffle(players.filter(p=>p.archiveId!==target.archiveId&&p.archiveId!==startId&&p.archiveId!==endId),seed+i*71+j*13).slice(0,3);
-       if(wrong.length!==3)continue;
-       result.push({start,end,answer:target,startClub,endClub,options:shuffle([target,...wrong],seed+i*101+j*11)});
-     }
-   }
- }
- return result;
-}
 function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();const [difficulty,setDifficulty]=useState<LinkDifficulty>("STANDARD");
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
- const [guess,setGuess]=useState("");const [tries,setTries]=useState(0);const [end,setEnd]=useState(false);const [won,setWon]=useState(false);const done=account.daily[utcDay()]?.["link-up"]!==undefined;
+ const [index,setIndex]=useState(0);const [score,setScore]=useState(0);const [penalty,setPenalty]=useState(0);
+ const [wrongCount,setWrongCount]=useState(0);const [extraLifeUsed,setExtraLifeUsed]=useState(false);
+ const [hintCount,setHintCount]=useState(0);const [answered,setAnswered]=useState(false);const [failed,setFailed]=useState(false);
+ const [notice,setNotice]=useState("");const [finished,setFinished]=useState(false);
+ const usageKey="playground.link-up.practice.v1";
+ const [practiceUses,setPracticeUses]=useState<Record<string,number>>(()=>{
+   try{const parsed=JSON.parse(localStorage.getItem(usageKey)||"{}");return parsed&&typeof parsed==="object"?parsed:{};}catch{return {};}
+ });
+ useEffect(()=>{try{localStorage.setItem(usageKey,JSON.stringify(practiceUses));}catch{/* local practice quota is best-effort */}},[practiceUses]);
+ const practiceUsed=practiceUses[utcDay()]??0;
+ const practiceLimitReached=mode==="practice"&&practiceUsed>=10;
+ const done=account.daily[utcDay()]?.["link-up"]!==undefined;
  const seed=mode==="daily"?"LINK:"+utcDay():"LINK:PRACTICE:"+practiceSeed;
  const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,1600);
  const pool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
- const questions=useMemo(()=>pool.length>=20?makeLinkQuestions(pool,hashSeed(seed)):[],[pool,seed]);
- const idx=questions.length?hashSeed(seed+":question")%questions.length:0;
- const q=questions[idx];
- const typedMode=difficulty!=="STANDARD";
+ const questions=useMemo(()=>{
+   if(pool.length<20)return [];
+   const generated=makeLinkQuestions(pool,hashSeed(seed+":"+difficulty));
+   const unique=Array.from(new Map(generated.map(q=>[q.answer.archiveId,q])).values());
+   return unique.slice(0,10);
+ },[pool,seed,difficulty]);
+ const q=questions[index];
+ const currentPoints=Math.max(0,1000-penalty);
+ const hintValue=q?[
+   q.answer.nationality,
+   q.answer.position||"Position not recorded",
+   q.answer.firstYear!==null&&q.answer.lastYear!==null?q.answer.firstYear+"–"+q.answer.lastYear:q.answer.clubs.length+" recorded clubs"
+ ][hintCount-1]??"": "";
+ const canGuess=!answered&&!failed&&(! (wrongCount>=2&&!extraLifeUsed))&&wrongCount<3;
+ const completeQuestion=()=>{
+   setAnswered(false);setFailed(false);setWrongCount(0);setPenalty(0);setExtraLifeUsed(false);setHintCount(0);setNotice("");
+   if(index+1>=questions.length){
+     setFinished(true);
+     if(mode==="daily")onDaily("link-up",score);
+     else setPracticeUses(old=>({...old,[utcDay()]:Math.min(10,(old[utcDay()]??0)+1)}));
+   }else setIndex(v=>v+1);
+ };
  const submit=(name:string)=>{
-   if(end||!q)return;
-   setGuess(name);
-   const key=normalise(name);const correct=[q.answer.name,q.answer.surname,...q.answer.aliases].some(alias=>normalise(alias)===key);
-   const next=tries+1;setTries(next);
-   if(correct||next>= (difficulty==="EXTREME"?3:5)){
-     setWon(correct);setEnd(true);
-     if(mode==="daily")onDaily("link-up",correct?Math.max(100,1000-next*150):0);
+   if(!q||!canGuess)return;
+   const key=normalise(name);
+   const correct=[q.answer.name,q.answer.surname,...q.answer.aliases].some(alias=>normalise(alias)===key);
+   if(correct){
+     setAnswered(true);setNotice("Correct link found.");
+     setScore(old=>old+currentPoints);
+     return;
    }
+   const next=wrongCount+1;setWrongCount(next);setPenalty(old=>old+100);
+   setNotice("Not the link. −100 points. Keep looking.");
+   if(next>=3&&extraLifeUsed)setFailed(true);
+ };
+ const useHint=()=>{
+   if(!q||answered||failed||hintCount>=3)return;
+   setHintCount(v=>v+1);setPenalty(v=>v+100);
+ };
+ const buyExtraLife=()=>{
+   if(extraLifeUsed||wrongCount<2||answered||failed)return;
+   setExtraLifeUsed(true);setPenalty(v=>v+100);setNotice("Extra life added. −100 points.");
+ };
+ const skipQuestion=()=>{
+   if(!q||answered)return;
+   setFailed(true);setNotice("Question skipped. The answer stays hidden.");
  };
  const reset=(newMode:Mode=mode,newDifficulty:LinkDifficulty=difficulty)=>{
-   setDifficulty(newDifficulty);setGuess("");setTries(0);setEnd(false);setWon(false);
+   setMode(newMode);setDifficulty(newDifficulty);setIndex(0);setScore(0);setPenalty(0);
+   setWrongCount(0);setExtraLifeUsed(false);setHintCount(0);setAnswered(false);setFailed(false);setFinished(false);setNotice("");
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
  };
- return <Frame account={account} game="link-up" eyebrow="SHARED TEAM-MATES / CAREER SPELL MATCH" title="THE LINK UP." description="Two players. One missing team-mate. The answer must have a recorded club-season overlap with both endpoints." number="11" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
- {done&&mode==="daily"?<Success title="LINK MADE." detail="Today's shared-team-mate challenge is banked. Unlimited archive draws are open in practice." button="PRACTICE" onAgain={()=>{setMode("practice");reset("practice");}}/>:
-  loading&&pool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.4,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>CONNECTING CAREERS</b><span>Finding overlapping club seasons in the archive.</span></div>:
-  !q?<Card className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NO UNIQUE PLAYER BRIDGES FOUND IN THIS DRAW"}</b><p>{error||"This archive sample did not contain enough unambiguous shared-team-mate links. Draw again or change the difficulty."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY LINK ARCHIVE ↗</button></Card>:
+ return <Frame account={account} game="link-up" eyebrow="SHARED TEAM-MATES / TEN CONNECTIONS" title="THE LINK UP." description="Connect two players through one team-mate with overlapping spells at both clubs. Solve ten links, spend points carefully on hints and extra lives." number="11" mode={mode} setMode={m=>reset(m)}>
+ {done&&mode==="daily"?<Success title="TEN LINKS COMPLETE." detail="Today's ten-question Link Up challenge is banked. Ten practice runs are available each day on this device." button="PRACTICE" onAgain={()=>reset("practice")}/>:
+  loading&&pool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.4,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>CONNECTING CAREERS</b><span>Finding overlapping club spells in the archive.</span></div>:
+  error&&pool.length===0?<Card className="arc-feedback"><b>PLAYER ARCHIVE UNAVAILABLE</b><p>{error}</p><button className="arc-button" onClick={retry}>RETRY ARCHIVE ↗</button></Card>:
+  practiceLimitReached?<Card className="arc-result"><small>PRACTICE LIMIT REACHED</small><h2>THAT'S TEN RUNS.</h2><p>You have completed ten free ten-question Link Up runs today on this device. The allowance resets at 00:00 GMT.</p></Card>:
+  finished?<Success title="FULL-TIME." detail={"You scored "+score+" points across "+questions.length+" connections."+(mode==="practice"?" Practice run "+Math.min(10,practiceUsed+1)+" of 10 used today.":"")} button="NEW TEN-LINK RUN" onAgain={()=>reset(mode)}/>:
+  !q?<Card className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NOT ENOUGH VERIFIED LINKS IN THIS DRAW"}</b><p>{error||"The current player sample did not produce ten unique, unambiguous bridge players. Draw a fresh practice set or retry the archive."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY LINK ARCHIVE ↗</button></Card>:
   <Card className="link-game">
-   <div className="arc-game-meta"><span>{difficulty} · {typedMode?"TYPE THE ANSWER":"PICK THE MISSING LINK"}</span><b>{(difficulty==="EXTREME"?3:5)-tries} GUESSES LEFT</b></div>
+   {mode==="practice"&&<div className="grid-difficulty">{(["EASY","STANDARD","HARD","EXTREME"] as LinkDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{level==="MEDIUM"?"MEDIUM / STANDARD":level}</button>)}</div>}
+   <div className="arc-game-meta"><span>{mode==="daily"?"DAILY LINK":"PRACTICE · "+difficulty} · QUESTION {index+1}/10</span><b>{score.toLocaleString("en-GB")} PTS</b></div>
+   <div className="link-score-row"><span>QUESTION VALUE</span><b>{currentPoints.toLocaleString("en-GB")} / 1,000</b><span>{wrongCount} WRONG · {hintCount} HINTS</span></div>
    <div className="link-bridge">
     <div><small>START PLAYER</small><strong>{q.start.name}</strong><span className="link-club-evidence"><ClubBadge name={q.startClub} size={22}/>{q.startClub}</span></div>
     <i>↔</i>
     <div><small>END PLAYER</small><strong>{q.end.name}</strong><span className="link-club-evidence"><ClubBadge name={q.endClub} size={22}/>{q.endClub}</span></div>
    </div>
-   <div className="link-evidence"><span>THE LINK MUST HAVE OVERLAPPING SPELLS AT BOTH CLUBS.</span><b>ARCHIVE WINDOW / {q.startClub} + {q.endClub}</b></div>
-   {!end?(typedMode?<form className="arc-guess-form" onSubmit={e=>{e.preventDefault();submit(guess);}}><input value={guess} onChange={e=>setGuess(e.target.value)} placeholder="Full name or surname…"/><button className="arc-button" disabled={!guess.trim()}>CONNECT ↗</button></form>:
-    <div className="missing-options">{q.options.map(p=><button key={p.archiveId} onClick={()=>submit(p.name)}>{p.name}</button>)}</div>):
-    <div className="arc-feedback"><b>{won?"BRIDGE FOUND.":"THE ARCHIVE LINK WAS "+q.answer.name.toUpperCase()+"."}</b><p>{q.answer.name} has recorded overlapping career spells with {q.start.name} at {q.startClub}, and with {q.end.name} at {q.endClub}. These are archive career-year overlaps, not minute-level appearance proof.</p><button className="arc-button" onClick={()=>reset(mode)}>NEXT LINK ↗</button></div>}
-   <p className="arc-muted">This unique-answer test is within the current archive draw. The underlying careers dataset is incomplete and unverified, so not every real-world teammate relationship will be represented.</p>
+   <div className="link-evidence"><span>FIND THE ONE PLAYER WHO OVERLAPPED BOTH ENDPOINTS.</span><b>ARCHIVE WINDOW / {q.startClub} + {q.endClub}</b></div>
+   {!answered&&!failed&&<div className="missing-options">{q.options.map(p=><button type="button" key={p.archiveId} onClick={()=>submit(p.name)} disabled={!canGuess}>{p.name}</button>)}</div>}
+   {notice&&<p className={"link-notice "+(answered?"correct":"")}>{notice}</p>}
+   {hintCount>0&&!answered&&<div className="link-hint"><small>HINT {hintCount}/3 · −100 PTS</small><b>{["NATION","POSITION","CAREER / CLUB COUNT"][hintCount-1]}: {hintValue}</b></div>}
+   {!answered&&!failed&&<div className="link-tools">
+     <button className="arc-quiet" onClick={useHint} disabled={hintCount>=3}>HINT −100 PTS</button>
+     {wrongCount>=2&&!extraLifeUsed&&<button className="arc-button" onClick={buyExtraLife}>BUY ONE EXTRA LIFE −100</button>}
+     {wrongCount>=3&&<button className="arc-quiet" onClick={skipQuestion}>SKIP WITHOUT REVEAL</button>}
+   </div>}
+   {answered&&<div className="arc-feedback quiz-goal"><b>BRIDGE FOUND. +{currentPoints} PTS</b><p>{q.answer.name} has recorded overlapping career spells with {q.start.name} at {q.startClub}, and with {q.end.name} at {q.endClub}. This uses archive year overlap, not minute-by-minute appearance data.</p><button className="arc-button" onClick={completeQuestion}>{index===9?"FINISH DAILY RUN":"NEXT LINK ↗"}</button></div>}
+   {failed&&<div className="arc-feedback quiz-miss"><b>LINK SKIPPED · NO POINTS</b><p>The answer is not revealed. Keep your points and move on to the next connection.</p><button className="arc-button" onClick={completeQuestion}>{index===9?"FINISH RUN":"NEXT LINK ↗"}</button></div>}
+   <p className="arc-muted">A wrong guess or hint costs 100 points. After two wrong guesses you can buy one extra attempt. The correct player is revealed only after you solve the link.</p>
+   <div className="arc-game-foot"><span>{mode==="daily"?"DAILY CHALLENGE":Math.max(0,10-practiceUsed)+" PRACTICE RUNS LEFT TODAY"}</span><span>10 QUESTIONS · 1,000 STARTING PTS EACH</span></div>
   </Card>}
  </Frame>;
 }
