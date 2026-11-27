@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { motion } from "motion/react";
-import { getCandidates, getPlayer, getTransferHints, type Candidate, type LeagueCode, type Player, type Transfer } from "./careerFileData";
+import { getCandidates, getPlayer, getStatEligibleCandidates, getTransferHints, type Candidate, type LeagueCode, type Player, type Transfer } from "./careerFileData";
 import "./career-file.css";
 
 type Mode = "EASY" | "MEDIUM" | "HARD" | "CULT HERO" | "EXTREME";
@@ -9,52 +9,13 @@ type FreeNote = { id:string; label:string; value:string };
 type Hint = { id:string; label:string; cost:number; value:string; available:boolean };
 
 const MODES: { name:Mode; note:string; colour:string }[] = [
-  {name:"EASY",note:"Global stars and household names",colour:"lime"},
-  {name:"MEDIUM",note:"Big names, less obvious careers",colour:"blue"},
-  {name:"HARD",note:"For serious football watchers",colour:"orange"},
-  {name:"CULT HERO",note:"Fan favourites and cult careers",colour:"pink"},
-  {name:"EXTREME",note:"Deep cuts from all five leagues",colour:"violet"}
+  {name:"EASY",note:"High-career totals and recognisable stars",colour:"lime"},
+  {name:"MEDIUM",note:"Established players with longer club records",colour:"blue"},
+  {name:"HARD",note:"Less obvious careers and shorter records",colour:"orange"},
+  {name:"CULT HERO",note:"Journeymen, fan favourites and longer club lists",colour:"pink"},
+  {name:"EXTREME",note:"Shorter top-flight career footprints",colour:"violet"}
 ];
 
-const MODE_NAMES: Record<Exclude<Mode,"EXTREME">,string[]> = {
-  EASY: [
-    "Cristiano Ronaldo","Lionel Messi","Neymar","Kylian Mbappe","Mohamed Salah","Erling Haaland","Harry Kane",
-    "Kevin De Bruyne","Robert Lewandowski","Luka Modric","Sergio Ramos","Zlatan Ibrahimovic","Luis Suarez",
-    "Karim Benzema","Wayne Rooney","Thierry Henry","Ronaldinho","Andres Iniesta","Xavi","David Beckham",
-    "Steven Gerrard","Frank Lampard","Didier Drogba","Gareth Bale","Eden Hazard","Antoine Griezmann",
-    "Thomas Muller","Manuel Neuer","Toni Kroos","Andrea Pirlo","Francesco Totti","Zinedine Zidane",
-    "Alessandro Del Piero","Ronaldo Nazario","Rivaldo","Kaka","Luis Figo","Raul","Iker Casillas",
-    "Gianluigi Buffon","Carles Puyol","Xabi Alonso","Sergio Busquets","Sergio Aguero","Son Heung-min",
-    "Bruno Fernandes","Bukayo Saka","Phil Foden","Vinicius Junior","Jude Bellingham","Rodri"
-  ],
-  MEDIUM: [
-    "Sadio Mane","Robin van Persie","David Silva","Angel Di Maria","Edinson Cavani","Carlos Tevez",
-    "Fernando Torres","Yaya Toure","Cesc Fabregas","Mesut Ozil","Alexis Sanchez","Radamel Falcao",
-    "Gerard Pique","Ivan Rakitic","Samuel Eto'o","Miroslav Klose","Arjen Robben","Franck Ribery",
-    "Bastian Schweinsteiger","Wesley Sneijder","Diego Costa","Gonzalo Higuain","Mario Mandzukic",
-    "Dani Alves","Marcelo","Vincent Kompany","Nemanja Vidic","Patrice Evra","Edin Dzeko",
-    "Marco Reus","Mario Gotze","David Villa","Pedro Rodriguez","Diego Godin","Thiago Alcantara",
-    "Ivan Perisic","Mario Balotelli","Ciro Immobile","Miralem Pjanic","Christian Eriksen","Henrikh Mkhitaryan",
-    "Raphael Varane","Pepe","Jordi Alba","Juan Mata","Mousa Dembele"
-  ],
-  HARD: [
-    "Antonio Di Natale","Marek Hamsik","Claudio Marchisio","Ezequiel Lavezzi","Diego Milito","Jermain Defoe",
-    "Darren Bent","Dimitar Berbatov","Santi Cazorla","Samir Nasri","Juan Roman Riquelme","Diego Forlan",
-    "Mikel Arteta","Radja Nainggolan","Arda Turan","Javier Pastore","Ever Banega","Klaas-Jan Huntelaar",
-    "Mario Gomez","Kevin Gameiro","Stevan Jovetic","Claudio Pizarro","Aritz Aduriz","Obafemi Martins",
-    "Goran Pandev","Antonio Valencia","Giuseppe Rossi","Mauro Zarate","Hernan Crespo","David Trezeguet",
-    "Gaizka Mendieta","Tomas Rosicky","Maxi Rodriguez","Luis Garcia","Walter Samuel","Diego Capel",
-    "Joaquin","David Pizarro","Simone Inzaghi","Bafetimbi Gomis","Claudio Lopez"
-  ],
-  "CULT HERO": [
-    "Juninho Pernambucano","Jay-Jay Okocha","Peter Crouch","Nani","Djibril Cisse","Roque Santa Cruz",
-    "Antonio Cassano","Tuncay Sanli","Morten Gamst Pedersen","Steed Malbranque","Hossam Ghaly",
-    "Nihat Kahveci","Shunsuke Nakamura","Guti","Simao Sabrosa","Ricardo Quaresma","Juan Valeron",
-    "Javier Saviola","Elano","Kevin Kuranyi","Florent Malouda","Benjani","Yakubu","Youri Djorkaeff",
-    "Kanu","Hatem Ben Arfa","Shola Ameobi","Mido","Demba Ba","Obafemi Martins","Benoit Assou-Ekotto",
-    "Roque Santa Cruz","John Carew","Aílton","Mark Viduka","Nicolas Anelka","Niko Kranjcar","Rafael van der Vaart"
-  ]
-};
 const LEAGUES: {label:string;code:LeagueCode}[] = [
   {label:"All top five",code:"ALL"},{label:"Premier League",code:"ENG-PL"},{label:"La Liga",code:"ESP-LL"},
   {label:"Serie A",code:"ITA-SA"},{label:"Bundesliga",code:"DEU-BL"},{label:"Ligue 1",code:"FRA-L1"}
@@ -100,17 +61,14 @@ const ageOf=(p:Player)=>{
   if(now.getUTCMonth()<d.getUTCMonth()||(now.getUTCMonth()===d.getUTCMonth()&&now.getUTCDate()<d.getUTCDate()))age--;
   return String(age);
 };
-function isSamePlayerName(actual:string,curated:string){
-  const a=clean(actual),b=clean(curated);
-  if(a===b)return true;
-  // Allow a longer formal name where the curated name contains both first and last names,
-  // but never classify every player sharing a one-word name (for example, "Xavi").
-  return b.includes(" ")&&(a.startsWith(b+" ")||b.startsWith(a+" "));
-}
 function fits(c:Candidate,m:Mode){
-  const isCurated=Object.values(MODE_NAMES).some(list=>list.some(name=>isSamePlayerName(c.name,name)));
-  if(m==="EXTREME")return !isCurated;
-  return MODE_NAMES[m].some(name=>isSamePlayerName(c.name,name));
+  // Difficulty is based on career footprint, not a short hard-coded celebrity list.
+  // The archive remains the source of the career and season rows shown in each file.
+  if(m==="EASY")return c.apps>=550&&c.clubs>=3;
+  if(m==="MEDIUM")return c.apps>=220&&c.clubs>=3;
+  if(m==="HARD")return c.apps>=70&&c.clubs>=2;
+  if(m==="CULT HERO")return c.clubs>=4&&c.spells>=4&&c.apps>=55&&c.apps<=900;
+  return c.apps>=20&&c.apps<220&&c.clubs>=2;
 }
 function positionLabel(raw:string){
   const value=raw.toUpperCase();
@@ -206,30 +164,38 @@ export default function CareerFilePage(){
 
   const newPlayer=useCallback(async(deck:Candidate[],selectedMode:Mode)=>{
     const options=deck.filter(c=>fits(c,selectedMode));
-    if(!options.length)throw new Error("There are no playable "+selectedMode+" files with two complete season-stat clues in this league selection yet. Try All Top Five or another difficulty.");
+    if(!options.length)throw new Error("There are no candidate files for "+selectedMode+" in this league selection. Try All Top Five or another difficulty.");
     let available=options.filter(c=>!seen.current.has(c.id));
-    if(!available.length){seen.current.clear();available=options;setNote("The draw has cycled. Your used files are back in the mix.");}
+    if(!available.length){seen.current.clear();available=options;setNote("You've worked through this draw. The player pool has been shuffled again.");}
     const draw=[...available].sort(()=>Math.random()-.5);
     setLoadingPlayer(true);
-    let lastProblem="The player source did not contain two usable season-stat clues.";
+    let lastProblem="The archive did not return two complete club-season statistics.";
     try{
-      for(const choice of draw){
-        seen.current.add(choice.id);
-        try{
-          const record=await getPlayer(choice.id);
-          const timeline=makeRows(record);
-          if(!timeline.length){lastProblem="The player had no readable career timeline.";continue;}
-          const free=randomFreeRows(timeline);
-          if(free.length<2){lastProblem="The player had fewer than two season records that could be matched to their club career.";continue;}
-          const note=makeFreeNote(record);
-          setPlayer(record);setRows(timeline);setFreeRows(free);setRevealed(free);setFreeNote(note);
-          setOpened(note?[note.id]:[]);setRound(n=>n+1);setStatus("playing");
-          return;
-        }catch(problem){
-          lastProblem=problem instanceof Error?problem.message:"Could not read this player's career file.";
+      // Check up to 120 candidate IDs in one grouped query. This avoids fetching six
+      // profile/stat tables for every failed player on a phone.
+      for(let offset=0;offset<draw.length;offset+=120){
+        const batch=draw.slice(offset,offset+120);
+        setNote("Checking "+Math.min(offset+batch.length,draw.length).toLocaleString("en-GB")+" of "+draw.length.toLocaleString("en-GB")+" possible files…");
+        const eligible=await getStatEligibleCandidates(batch);
+        for(const choice of [...eligible].sort((a,b)=>b.statSeasons-a.statSeasons)){
+          seen.current.add(choice.id);
+          try{
+            const record=await getPlayer(choice.id);
+            const timeline=makeRows(record);
+            if(!timeline.length){lastProblem="The player had no readable career timeline.";continue;}
+            const free=randomFreeRows(timeline);
+            if(free.length<2){lastProblem="The player had fewer than two career rows that match complete season statistics.";continue;}
+            const note=makeFreeNote(record);
+            setPlayer(record);setRows(timeline);setFreeRows(free);setRevealed(free);setFreeNote(note);
+            setOpened(note?[note.id]:[]);setRound(n=>n+1);setStatus("playing");setNote("");
+            return;
+          }catch(problem){
+            lastProblem=problem instanceof Error?problem.message:"Could not read this player's career file.";
+          }
         }
+        batch.forEach(candidate=>seen.current.add(candidate.id));
       }
-      throw new Error("No complete player file could be drawn for "+selectedMode+". "+lastProblem+" Try another league or difficulty.");
+      throw new Error("No complete "+selectedMode+" player file could be opened. "+lastProblem+" Try another league or difficulty.");
     }finally{setLoadingPlayer(false);}
   },[]);
 
@@ -323,7 +289,7 @@ export default function CareerFilePage(){
       <div className="cf-mode-grid">{MODES.map((m,i)=><motion.button key={m.name}
         className={"cf-mode-card "+m.colour+(mode===m.name?" chosen":"")} onClick={()=>setMode(m.name)}
         whileHover={{y:-5,rotate:i%2?1:-1}} whileTap={{scale:.98}}>
-        <span className="cf-mode-index">0{i+1} / PG</span><strong>{m.name}</strong><small>{m.note}</small><small className="cf-mode-count">{pool.length?pool.filter(c=>fits(c,m.name)).length+" FILES IN THE DRAW":"LOADING PLAYER POOL"}</small><i>{mode===m.name?"SELECTED ✓":"SELECT ↗"}</i>
+        <span className="cf-mode-index">0{i+1} / PG</span><strong>{m.name}</strong><small>{m.note}</small><small className="cf-mode-count">{pool.length?pool.filter(c=>fits(c,m.name)).length+" FILES IN THE DRAW":"READING PLAYER POOL"}</small><i>{mode===m.name?"SELECTED ✓":"SELECT ↗"}</i>
       </motion.button>)}</div>
       <div className="cf-round-note"><span><b>{mode}</b> / {league==="ALL"?"ALL FIVE LEAGUES":LEAGUES.find(x=>x.code===league)?.label.toUpperCase()}</span><span>10 GUESSES · 1,000 STARTING POINTS · 2 FREE SEASONS</span></div>
     </section>
@@ -332,7 +298,7 @@ export default function CareerFilePage(){
         <div className="cf-round-count"><small>FILE NUMBER</small><strong>{String(round||1).padStart(3,"0")}</strong><span>NEW FILE EACH ROUND</span></div>
       </div>
       {(busy||loadingPlayer)&&<div className="cf-loading"><motion.div animate={{rotate:360}} transition={{repeat:Infinity,duration:1.6,ease:"linear"}}>✳</motion.div>
-        <b>{busy?"OPENING THE PLAYER ARCHIVE":"BUILDING THE CAREER FILE"}</b><span>Pulling the career, seasons and available statistics.</span></div>}
+        <b>{busy?"OPENING THE PLAYER ARCHIVE":"BUILDING THE CAREER FILE"}</b><span>Preparing a random file from the career archive. Season-stat coverage is checked in batches.</span></div>}
       {error&&<div className="cf-error"><strong>THE ARCHIVE HIT A SNAG</strong><p>{error}</p><button onClick={()=>window.location.reload()}>TRY AGAIN ↗</button></div>}
       {player&&!busy&&!loadingPlayer&&<div className="cf-layout">
         <section className="cf-record">
