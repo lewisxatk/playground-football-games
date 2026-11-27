@@ -387,10 +387,10 @@ function ClimbPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:n
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
  };
  const levels:QuizTier[]=["EASY","MEDIUM","HARD","EXTREME"];
- return <Frame account={account} game="the-climb" eyebrow="SURVIVAL QUIZ / FIVE QUESTIONS" title="KEEP CLIMBING." description="Five source-backed football questions. Three lives. Every round mixes English football with the other major European leagues." number="02" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
+ return <Frame account={account} game="the-climb" eyebrow="SURVIVAL QUIZ / FIVE QUESTIONS" title="KEEP CLIMBING." description="Five source-backed football questions. Three lives. Every round mixes UK national sides with historic international football." number="02" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
  {done&&mode==="daily"?<Success title="RUN COMPLETE." detail="Your daily climb is banked. Unlimited practice has fresh questions." button="PRACTICE RUN" onAgain={()=>{setMode("practice");restart("practice");}}/>:
-  loading&&bank.length===0?<Card className="climb-loading"><motion.div animate={{y:[0,-10,0],rotate:[0,180,360]}} transition={{duration:1.4,repeat:Infinity}}>⚽</motion.div><b>OPENING THE QUESTION ARCHIVE</b><span>CHECKING FOUR DIFFICULTY POOLS…</span></Card>:
-  error||bank.length===0?<Card className="arc-feedback"><b>QUESTION BANK UNAVAILABLE</b><p>{error||"The validated football question bank could not be opened."}</p><button className="arc-button" onClick={retry}>RETRY QUESTION BANK ↗</button></Card>:
+  loading&&bank.length===0?<Card className="climb-loading"><motion.div animate={{y:[0,-10,0],rotate:[0,180,360]}} transition={{duration:1.4,repeat:Infinity}}>⚽</motion.div><b>OPENING THE CC0 MATCH ARCHIVE</b><span>CHECKING FOUR HISTORIC DIFFICULTY POOLS…</span></Card>:
+  error||bank.length===0?<Card className="arc-feedback"><b>QUESTION BANK UNAVAILABLE</b><p>{error||"The CC0 international match question pool could not be opened."}</p><button className="arc-button" onClick={retry}>RETRY MATCH DATABASE ↗</button></Card>:
   <Card className="climb-play">
    <div className="arc-game-meta"><span>QUESTION {step+1} / 5</span><b>{lives} LIVES · {score} PTS</b></div>
    <div className="grid-difficulty">{levels.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>restart(mode,level)}>{difficultyLabel(level)}</button>)}</div>
