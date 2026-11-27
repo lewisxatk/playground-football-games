@@ -30,3 +30,5 @@ Cloudflare Workers with Static Assets. Connect this repository to Workers Builds
 ## Development status
 
 The persistent, item-by-item implementation tracker and session handover is in [PROJECT_CHECKLIST.md](./PROJECT_CHECKLIST.md). Update it after every development batch; it is the source of truth for completed and outstanding work.
+
+Data sources, licences and coverage limitations are documented in [DATA_SOURCES.md](./DATA_SOURCES.md). The production site is deployed to Cloudflare Pages at https://playground-football-games.pages.dev.
