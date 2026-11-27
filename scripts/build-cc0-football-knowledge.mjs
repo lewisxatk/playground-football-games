@@ -175,13 +175,15 @@ function buildInternationalQuiz(matches){
 
  const pickOptions=(answer,candidates,key)=>{
   const answerValue=String(answer);
-  if(!Array.isArray(candidates)||candidates.length<5)return null;
+  if(!Array.isArray(candidates))return null;
+  const cleanCandidates=[...new Map(candidates.map(value=>[norm(value),String(value)])).values()];
+  if(cleanCandidates.length<5)return null;
   const seed=parseInt(createHash("sha256").update(key).digest("hex").slice(0,8),16)>>>0;
-  const distractors=[];let index=seed%candidates.length;
-  for(let attempt=0;attempt<candidates.length&&distractors.length<4;attempt++){
-   const value=String(candidates[index]);
+  const distractors=[];let index=seed%cleanCandidates.length;
+  for(let attempt=0;attempt<cleanCandidates.length&&distractors.length<4;attempt++){
+   const value=String(cleanCandidates[index]);
    if(value!==answerValue&&!distractors.includes(value))distractors.push(value);
-   index=(index+1)%candidates.length;
+   index=(index+1)%cleanCandidates.length;
   }
   if(distractors.length!==4)return null;
   return [answerValue,...distractors].sort((a,b)=>createHash("sha256").update(key+a).digest("hex").localeCompare(createHash("sha256").update(key+b).digest("hex")));
@@ -192,7 +194,7 @@ function buildInternationalQuiz(matches){
   const competitionKey=[match.sourceKey??"unknown",match.competition??""].join("|");
   const competitionPool=teamsByCompetition.get(competitionKey);
   const sourcePool=teamsBySource.get(match.sourceKey);
-  const teamCandidates=[...(competitionPool?.size>=5?competitionPool:sourcePool??new Set(allTeams))];
+  const teamCandidates=[...(competitionPool??[])];
   if(selector===0){
    questionType="scoreline";answer=match.homeScore+"-"+match.awayScore;
    question="What was the final score when "+match.home+" played "+match.away+" on "+match.date+"?";
@@ -200,7 +202,7 @@ function buildInternationalQuiz(matches){
    options=pickOptions(answer,scorelines,match.id);
   }else if(selector===1){
    questionType="match-winner";answer=match.homeScore===match.awayScore?"Draw":match.homeScore>match.awayScore?match.home:match.away;
-   question=match.homeScore===match.awayScore?"Did "+match.home+" and "+match.away+" draw on "+match.date+"?":"Which team won when "+match.home+" played "+match.away+" on "+match.date+"?";
+   question=match.homeScore===match.awayScore?"Which result did "+match.home+" and "+match.away+" record on "+match.date+"?":"Which team won when "+match.home+" played "+match.away+" on "+match.date+"?";
    explanation=match.home+" "+match.homeScore+"–"+match.awayScore+" "+match.away+". "+(answer==="Draw"?"The match finished level.":answer+" recorded the win.");
    options=pickOptions(answer,[...teamCandidates,"Draw"],match.id);
   }else if(selector===2){
@@ -496,9 +498,10 @@ const careerPlayers=wikidataCareerImport.players;
 const hasMultiSeasonCareer=p=>p.spells.length>=2&&new Set(p.spells.map(spell=>spell.clubQid)).size>=2&&p.firstYear!==null&&p.lastYear!==null&&p.lastYear-p.firstYear>=1;
 const careerFileCandidates=careerPlayers.filter(hasMultiSeasonCareer);
 const cultHeroCandidates=careerPlayers.filter(hasMultiSeasonCareer);
-const englishClubNames=new Set(clubs.filter(club=>club.countries.some(country=>norm(country)==="england")).map(club=>norm(club.name)));
-const linkUpPacks=makeWikidataLinkPacks(careerPlayers,englishClubNames,750);
 const [internationalMatches,englishMatches,europeanClubMatches]=await Promise.all([parseInternationalResults(),parseEnglishMatches(),parseEuropeanClubMatches()]);
+// The English match archive is the authoritative whitelist for English clubs; do not trust broad Wikidata country labels for game eligibility.
+const englishClubNames=new Set(englishMatches.flatMap(match=>[match.home,match.away]).map(norm));
+const linkUpPacks=makeWikidataLinkPacks(careerPlayers,englishClubNames,750);
 const allMatches=[...internationalMatches,...englishMatches,...europeanClubMatches].sort((a,b)=>a.date.localeCompare(b.date));
 const internationalQuiz=buildInternationalQuiz([...englishMatches,...europeanClubMatches.filter(match=>match.competition==="UEFA Champions League")]);
 const internationalGoals=await parseInternationalGoals(players);
