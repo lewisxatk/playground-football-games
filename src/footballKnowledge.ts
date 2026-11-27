@@ -19,6 +19,10 @@ export type CC0CareerPlayer = {id:string;playerId:string;qid:string;name:string;
 export type CC0LinkUpPack = {id:string;answerPlayerId:string;startPlayerId:string;endPlayerId:string;startClub:string;startClubId:string;endClub:string;endClubId:string;optionPlayerIds:string[];explanation:string;source:{repo:string;licence:string;url:string};licence:"CC0-1.0"};
 
 type FootballKnowledgeShards = {
+ core:{players:CC0FootballPlayer[];clubs:CC0Club[]};
+ matches:{matches:CC0InternationalMatch[]};
+ "goal-events":{events:CC0InternationalGoalEvent[];scorers:Record<string,unknown>[]};
+ "world-cup":{lineups:CC0WorldCupLineup[];questions:Record<string,unknown>[];playerCards:WorldCupPlayerCard[]};
  footle:{answers:string[]};
  connections:{players:CC0FootballPlayer[];packs:CC0ConnectionsPack[];clubCountryPacks?:unknown[]};
  strands:{packs:CC0StrandsPack[]};
@@ -38,7 +42,11 @@ function validateShard<K extends FootballKnowledgeKey>(key:K,value:unknown):Foot
  if(!value||typeof value!=="object")throw new Error("The CC0 "+key+" content shard is invalid.");
  const data=value as Record<string,unknown>;
  const list=(name:string)=>Array.isArray(data[name])?data[name] as unknown[]:[];
- const count=key==="core"?list("players").length:\n  key==="matches"?list("matches").length:\n  key==="goal-events"?list("events").length:\n  key==="world-cup"?list("lineups").length:\n  key==="footle"?list("answers").length:
+ const count=key==="core"?list("players").length:
+  key==="matches"?list("matches").length:
+  key==="goal-events"?list("events").length:
+  key==="world-cup"?list("lineups").length:
+  key==="footle"?list("answers").length:
   key==="connections"?list("packs").length:
   key==="strands"?list("packs").length:
   key==="football-grid"?list("packs").length:
