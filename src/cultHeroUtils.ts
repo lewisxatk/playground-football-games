@@ -233,6 +233,46 @@ export function buildCultHeroMysteries(
   return selected.slice(0, count);
 }
 
+/** Cult Hero candidates built from the CC0 Wikidata dated club-membership shard. */
+export function buildCC0CultHeroMysteries(
+  players: ArchiveGamePlayer[],
+  seed: string,
+  count = 5
+): CultHeroMystery[] {
+  const hash = (value: string) => {
+    let result = 2166136261;
+    for (let index = 0; index < value.length; index += 1) {
+      result ^= value.charCodeAt(index);
+      result = Math.imul(result, 16777619);
+    }
+    return result >>> 0;
+  };
+  const eligible = players.flatMap(player => {
+    const career = datedCareer(player);
+    const clubs = [...new Set(career.map(spell => spell.club))];
+    if (!player.id || !player.name?.trim() || clubs.length < 3 || career.length < 3) return [];
+    const earliest = career[0], latest = career[career.length - 1];
+    const middle = clubs.find(club => club !== earliest.club && club !== latest.club);
+    if (!middle) return [];
+    const position = displayPosition(player.position ?? "");
+    const nationality = player.nationality?.trim();
+    const optionalClue = position
+      ? "The player directory lists the position group as " + position + "."
+      : nationality
+        ? "The player directory lists the nationality as " + nationality + "."
+        : "The dated club history contains " + clubs.length + " distinct clubs.";
+    const clues = [
+      "The recorded club history spans " + earliest.year + " to " + latest.year + ".",
+      optionalClue,
+      "One recorded club spell was with " + middle + ".",
+      "The earliest dated club spell in this source is " + earliest.club + " (" + earliest.year + ").",
+      "The latest dated club spell in this source is " + latest.club + " (" + latest.year + ")."
+    ];
+    return [{player,league:"CC0 CAREER ARCHIVE",clues}];
+  });
+  return eligible.sort((a,b)=>hash(seed+":"+a.player.id)-hash(seed+":"+b.player.id)).slice(0,count);
+}
+
 export function readCultHeroCollection(): CultHeroCard[] {
   if (typeof window === "undefined") return [];
   try {
