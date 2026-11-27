@@ -133,6 +133,18 @@ if (players.length !== manifest.playerCount) throw new Error("Player count does 
 
 const clubs = unique(players.flatMap(player => [...(player.clubs ?? []), player.currentClub]));
 const nationalities = unique(players.map(player => displayCountry(player.nationality)).filter(Boolean));
+const nationRegions = [
+  ["England","Wales","Scotland","Northern Ireland","Republic of Ireland","Germany","Spain","France","Italy","Netherlands","Portugal","Belgium","Croatia","Serbia","Switzerland","Denmark","Sweden","Norway","Poland","Ukraine","Czechia","Romania","Türkiye","Greece","Austria","Hungary","Slovenia","Slovakia","Finland","Iceland","Albania","Kosovo","Russia"],
+  ["Brazil","Argentina","Uruguay","Chile","Colombia","Peru","Ecuador","Paraguay","Bolivia","Mexico","United States","Canada","Costa Rica","Panama","Jamaica"],
+  ["Ivory Coast","Nigeria","Senegal","Ghana","Cameroon","Morocco","Egypt","Algeria","Tunisia","South Africa","Mali","Guinea"],
+  ["Japan","South Korea","China","Iran","Saudi Arabia","Qatar","Australia","Uzbekistan","Thailand","India"]
+].map(group => new Set(group.map(normalise)));
+const nationalityOptions = answer => {
+  const key = normalise(answer);
+  const region = nationRegions.find(group => group.has(key));
+  const close = region ? nationalities.filter(label => region.has(normalise(label))) : [];
+  return close.length >= 5 ? close : nationalities;
+};
 const leagues = unique(players.map(player => displayLeague(player.currentLeague)));
 const countries = unique(players.map(player => displayCountry(player.currentCountry)));
 const sortedNumbers = values => [...new Set(values.filter(value => value !== null).map(String))].sort((a, b) => Number(a) - Number(b));
@@ -258,7 +270,7 @@ for (const player of players) {
   if (easyEligible(player)) {
     diagnostics.easyEligible[region]++;
     if (nationality) add("EASY", player, region, "nationality", "PLAYER BASICS",
-      "Which nationality is listed for " + player.name + "?", nationality, nationalities,
+      "Which nationality is listed for " + player.name + "?", nationality, nationalityOptions(nationality),
       player.name + " is listed with " + nationality + " nationality. The question uses the archive's latest available squad record.");
     if (latestClub) add("EASY", player, region, "latest-club", "PLAYER & CLUBS",
       "Which club is listed as " + player.name + "'s latest recorded club?", latestClub, clubs,
