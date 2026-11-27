@@ -768,7 +768,7 @@ function getTeammateOverlap(a:GamePlayer,b:GamePlayer,clubKey:string):LinkYearWi
  for(const aSpell of a.careerSpells.filter(spell=>gridClubKey(spell.club)===clubKey&&spell.startYear!==null)){
   for(const bSpell of b.careerSpells.filter(spell=>gridClubKey(spell.club)===clubKey&&spell.startYear!==null)){
    const startYear=Math.max(aSpell.startYear!,bSpell.startYear!);
-   const endYear=Math.min(aSpell.endYear??new Date().getUTCFullYear(),bSpell.endYear??new Date().getUTCFullYear());
+   const endYear=Math.min(aSpell.endYear??aSpell.startYear!,bSpell.endYear??bSpell.startYear!);
    if(startYear<=endYear)return{startYear,endYear};
   }
  }
@@ -783,13 +783,13 @@ function buildArchiveLinkUpQuestions(players:GamePlayer[],index:GridClubIndex,se
   if(!canonical.has(key)||spell.startYear===null)continue;
   const list=byClub.get(key)??[];list.push({player,spell});byClub.set(key,list);
  }
- const englishPlayerIds=new Set([...byClub.values()].flatMap(entries=>entries.map(entry=>entry.player.archiveId)));
- const buildFor=(clubNames:string[],scope:string)=>{
+ const usedAnswers=new Set<string>();
+ const buildFor=(clubNames:string[],scope:string,maximum:number)=>{
   const allowed=new Set(clubNames.map(gridClubKey));
-  const ordered=shuffle(players,seed+scope.length*7919+["EASY","STANDARD","HARD","EXTREME"].indexOf(difficulty)*104729);
-  const questions:ArchiveLinkQuestion[]=[],usedAnswers=new Set<string>();
+  const ordered=shuffle(players,seed+scope.length*7919);
+  const questions:ArchiveLinkQuestion[]=[];
   for(const answer of ordered){
-   if(questions.length>=350)break;
+   if(questions.length>=maximum)break;
    if(usedAnswers.has(answer.archiveId))continue;
    const spells=answer.careerSpells.filter(spell=>allowed.has(gridClubKey(spell.club))&&spell.startYear!==null);
    let found:ArchiveLinkQuestion|null=null;
@@ -809,7 +809,7 @@ function buildArchiveLinkUpQuestions(players:GamePlayer[],index:GridClubIndex,se
      if(endEntry){pair={start:startEntry.player,end:endEntry.player};break;}
     }
     if(!pair)continue;
-    const decoys=shuffle(players.filter(player=>englishPlayerIds.has(player.archiveId)&&![answer.archiveId,pair!.start.archiveId,pair!.end.archiveId].includes(player.archiveId)),seed+hashSeed(answer.archiveId+pair.start.archiveId+pair.end.archiveId)).slice(0,5);
+    const decoys=shuffle(players.filter(player=>![answer.archiveId,pair!.start.archiveId,pair!.end.archiveId].includes(player.archiveId)),seed+hashSeed(answer.archiveId+pair.start.archiveId+pair.end.archiveId)).slice(0,5);
     if(decoys.length<5)continue;
     const startWindow=getTeammateOverlap(answer,pair.start,firstKey),endWindow=getTeammateOverlap(answer,pair.end,secondKey);
     if(!startWindow||!endWindow)continue;
@@ -820,10 +820,11 @@ function buildArchiveLinkUpQuestions(players:GamePlayer[],index:GridClubIndex,se
   }
   return questions;
  };
- const premier=buildFor(index.premierLeagueClubs,"PAST & PRESENT PREMIER LEAGUE");
- if(premier.length>=10)return premier;
- const english=buildFor(index.englishLeagueClubs,"ENGLISH LEAGUES");
- return english.length>=premier.length?english:premier;
+ const premier=buildFor(index.premierLeagueClubs,"PAST & PRESENT PREMIER LEAGUE",750);
+ const premierKeys=new Set(index.premierLeagueClubs.map(gridClubKey));
+ const lowerLeagueClubs=index.englishLeagueClubs.filter(name=>!premierKeys.has(gridClubKey(name)));
+ const lower=buildFor(lowerLeagueClubs,"ENGLISH LEAGUES",Math.max(0,750-premier.length));
+ return [...premier,...lower].slice(0,750);
 }
 function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();
@@ -846,7 +847,7 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
  const seed=mode==="daily"?hashSeed("GRID:"+utcDay()+":"+difficulty):hashSeed("GRID:practice:"+practiceSeed+":"+difficulty);
  useEffect(()=>{
   let live=true;setArchiveLoading(true);setArchiveError("");
-  getStaticArchivePlayers("ENGLISH-FOOTBALL-ARCHIVE"+(retryToken?":"+retryToken:""),3200).then(players=>{
+  getStaticArchivePlayers("ENGLISH-FOOTBALL-ARCHIVE"+(retryToken?":"+retryToken:""),6000).then(players=>{
    if(!live)return;
    if(!players?.length){setArchiveError("The season-by-season player archive could not be loaded.");setArchivePlayers([]);}
    else setArchivePlayers(players);
