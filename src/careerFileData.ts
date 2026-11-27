@@ -403,7 +403,7 @@ export async function getTransferHints(names: string[]): Promise<Transfer[]> {
   return Array.from(unique.values()).sort((a,b) => a.year.localeCompare(b.year));
 }
 
-export type HistoricalClubRecord={player:string;club:string;startYear:number|null;endYear:number|null};
+export type HistoricalClubRecord={player:string;club:string;startYear:number|null;endYear:number|null;position:string};
 const normaliseCareerName=(value:string)=>value.toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
 
 /**
@@ -418,9 +418,12 @@ export async function getCareerClubsAtYear(names:string[],year:number):Promise<M
   const archive=await careerArchive();
   const values=unique.map(()=>"(?)").join(",");
   const rows=await archive.query(
-    "WITH wanted(name_key) AS (VALUES "+values+") "+
-    "SELECT cr.player,cr.club_name,cr.start_year,cr.end_year "+
+    "WITH wanted(name_key) AS (VALUES "+values+"), profile AS ("+
+    " SELECT player_qid,any_value(position) AS position FROM player_profile GROUP BY player_qid"+
+    ") "+
+    "SELECT cr.player,cr.club_name,cr.start_year,cr.end_year,coalesce(profile.position,'') AS position "+
     "FROM career cr JOIN wanted w ON regexp_replace(strip_accents(lower(cr.player)),'[^a-z0-9]','','g')=w.name_key "+
+    "LEFT JOIN profile ON profile.player_qid=cr.player_qid "+
     "WHERE coalesce(cr.start_year,0)<=? AND coalesce(cr.end_year,cr.start_year,0)>=? "+
     "ORDER BY cr.player_qid,cr.start_year,cr.seq",
     [...unique,year,year]
@@ -429,7 +432,7 @@ export async function getCareerClubsAtYear(names:string[],year:number):Promise<M
     const player=String(row.player??"");
     const key=normaliseCareerName(player);
     const list=result.get(key)??[];
-    list.push({player,club:String(row.club_name??""),startYear:n(row.start_year),endYear:n(row.end_year)});
+    list.push({player,club:String(row.club_name??""),startYear:n(row.start_year),endYear:n(row.end_year),position:String(row.position??"")});
     result.set(key,list);
   }
   return result;
