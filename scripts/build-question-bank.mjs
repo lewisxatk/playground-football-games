@@ -75,7 +75,7 @@ const displayCountry = value => {
   if (!raw) return "";
   const stripped = raw
     .replace(/^(?:drapeau de la|drapeau de|vlag van|flag of|bandera de|flagge von|fahne von)\s+/i, "")
-    .replace(/\s+u(?:15|16|17|18|19|20|21|23)\b/ig, "")
+    .replace(/\s+u-?(?:15|16|17|18|19|20|21|23)\b/ig, "")
     .trim();
   const exact = countryLabels.get(normalise(stripped));
   if (exact) return exact;
