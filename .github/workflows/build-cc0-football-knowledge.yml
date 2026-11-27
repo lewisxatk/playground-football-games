@@ -45,11 +45,18 @@ jobs:
           repository: openfootball/clubs
           ref: ae3800227c449447b3a337fc0aac79a8f02f4c8b
           path: .sources/openfootball-clubs
+      - name: Check out pinned CC0 international results
+        uses: actions/checkout@v4
+        with:
+          repository: martj42/international_results
+          ref: ca84241bb3eed854a1956a2fab442fe4daad40dd
+          path: .sources/international-results
       - name: Verify upstream licences
         shell: bash
         run: |
           grep -q "CC0 1.0 Universal" .sources/openfootball-players/LICENSE.md
           grep -q "CC0 1.0 Universal" .sources/openfootball-clubs/LICENSE.md
+          grep -q "CC0 1.0 Universal" .sources/international-results/LICENSE
       - name: Build canonical database and game pools
         run: node scripts/build-cc0-football-knowledge.mjs
       - name: Install dependencies and verify full site build
