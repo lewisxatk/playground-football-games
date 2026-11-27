@@ -28,8 +28,8 @@ const number = value => value == null || value === "" || !Number.isFinite(Number
 const regionOf = player => {
   const country = normalise(player.currentCountry);
   const league = normalise(player.currentLeague);
-  if (country.includes("england") || country.includes("englishfootball") ||
-      league.includes("englishpremierleague") || league.includes("premierleagueengland")) return "ENGLISH";
+  if (country.includes("england") || country.includes("unitedkingdom") || country.includes("greatbritain") ||
+      league.includes("premierleague") || league.includes("englishfootball")) return "ENGLISH";
   if (["spain", "italy", "germany", "france"].some(value => country.includes(value)) ||
       ["laliga", "seriea", "bundesliga", "ligue1"].some(value => league.includes(value))) return "INTERNATIONAL";
   return null;
