@@ -50,7 +50,7 @@ const GAME_LINKS = [
   {id:"strands",title:"FOOTBALL STRANDS",sub:"Find players linked by a club or nation. Trace the theme.",tone:"orange",tag:"WORD SEARCH"},
   {id:"scout-signal",title:"SCOUT SIGNAL",sub:"Guess the footballer. Watch the attributes light up.",tone:"pink",tag:"ATTRIBUTE HUNT"},
   {id:"tournament-nation",title:"TOURNAMENT NATION",sub:"Name the country from a historic World Cup starting XI.",tone:"blue",tag:"INTERNATIONAL"},
-  {id:"timed-quiz",title:"THE QUICK QUIZ",sub:"17 mixed questions. Up to 30 seconds. No VAR.",tone:"orange",tag:"TIMED QUIZ"},
+  {id:"timed-quiz",title:"THE QUICK QUIZ",sub:"17 questions. English football first. No VAR.",tone:"orange",tag:"TIMED QUIZ"},
   {id:"cult-hero",title:"CULT HERO",sub:"Five clues. Name the player. Keep the card.",tone:"pink",tag:"PLAYER MYSTERY"}
 ] as const;
 type GameId = typeof GAME_LINKS[number]["id"];
@@ -388,10 +388,10 @@ function ClimbPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:n
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
  };
  const levels:QuizTier[]=["EASY","MEDIUM","HARD","EXTREME"];
- return <Frame account={account} game="the-climb" eyebrow="SURVIVAL QUIZ / FIVE QUESTIONS" title="KEEP CLIMBING." description="Five source-backed football questions. Three lives. Every round mixes UK national sides with historic international football." number="02" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
+ return <Frame account={account} game="the-climb" eyebrow="SURVIVAL QUIZ / FIVE QUESTIONS" title="KEEP CLIMBING." description="Five source-backed questions: four from English domestic football and one international. Three lives." number="02" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
  {done&&mode==="daily"?<Success title="RUN COMPLETE." detail="Your daily climb is banked. Unlimited practice has fresh questions." button="PRACTICE RUN" onAgain={()=>{setMode("practice");restart("practice");}}/>:
   loading&&bank.length===0?<Card className="climb-loading"><motion.div animate={{y:[0,-10,0],rotate:[0,180,360]}} transition={{duration:1.4,repeat:Infinity}}>⚽</motion.div><b>OPENING THE CC0 MATCH ARCHIVE</b><span>CHECKING FOUR HISTORIC DIFFICULTY POOLS…</span></Card>:
-  error||bank.length===0?<Card className="arc-feedback"><b>QUESTION BANK UNAVAILABLE</b><p>{error||"The CC0 international match question pool could not be opened."}</p><button className="arc-button" onClick={retry}>RETRY MATCH DATABASE ↗</button></Card>:
+  error||bank.length===0?<Card className="arc-feedback"><b>QUESTION BANK UNAVAILABLE</b><p>{error||"The CC0 football question pool could not be opened."}</p><button className="arc-button" onClick={retry}>RETRY MATCH DATABASE ↗</button></Card>:
   <Card className="climb-play">
    <div className="arc-game-meta"><span>QUESTION {step+1} / 5</span><b>{lives} LIVES · {score} PTS</b></div>
    <div className="grid-difficulty">{levels.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>restart(mode,level)}>{difficultyLabel(level)}</button>)}</div>
@@ -1226,8 +1226,8 @@ function QuickQuizPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
    setDifficulty(newDifficulty);setIndex(0);setChosen("");setLocked(false);setScore(0);setSeconds(15);setTyped("");setTypingDone(false);setFinished(false);
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
  };
- return <Frame account={account} game="timed-quiz" eyebrow="17 DAILY QUESTIONS / MIXED DIFFICULTY" title="THE QUICK QUIZ." description="Five Easy, five Medium, five Hard and two Extreme questions. Faster rounds reward quick thinking; tougher questions are worth more." number="16" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
- {done&&mode==="daily"?<Success title="FULL-TIME." detail="Today's 17-question mixed quiz has been banked. Practice runs are ten questions each." button="PRACTICE QUIZ" onAgain={()=>{setMode("practice");restart("practice");}}/>:
+ return <Frame account={account} game="timed-quiz" eyebrow="17 DAILY QUESTIONS / ENGLISH FOOTBALL FIRST" title="THE QUICK QUIZ." description="Thirteen English domestic questions and four international questions. Five Easy, five Medium, five Hard and two Extreme. Faster answers earn more points." number="16" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
+ {done&&mode==="daily"?<Success title="FULL-TIME." detail="Today's 17-question English-first quiz has been banked. Practice runs are ten questions each." button="PRACTICE QUIZ" onAgain={()=>{setMode("practice");restart("practice");}}/>:
   loading&&!bank?<Card className="quiz-loading"><motion.div animate={{scale:[1,1.08,1],rotate:[0,12,-12,0]}} transition={{duration:1.4,repeat:Infinity}}>⚽</motion.div><b>THE QUIZMASTER IS PICKING THE QUESTIONS</b><span>OPENING THE VALIDATED FOOTBALL QUESTION BANK…</span></Card>:
   error||bank.length===0?<Card className="arc-feedback"><b>QUESTION BANK UNAVAILABLE</b><p>{error||"The validated football question bank could not be opened."}</p><button className="arc-button" onClick={retry}>RETRY QUESTION BANK ↗</button></Card>:
   !questions.length?<Card className="arc-feedback"><b>NOT ENOUGH QUESTIONS FOR THIS RUN</b><p>The bank did not contain enough distinct player records for this round.</p><button className="arc-button" onClick={retry}>RETRY QUESTION BANK ↗</button></Card>:
