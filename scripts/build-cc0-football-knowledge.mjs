@@ -503,7 +503,7 @@ function makeEnglishLeagueStrandsPacks(careerPlayers,englishClubNames,target=500
   if(!words)continue;
   const signature=spangram+"|"+words.slice().sort().join(",");
   if(seen.has(signature))continue;seen.add(signature);
-  packs.push({id:id("strands-english-leagues",signature),spangram,words,theme:"PLAYERS FROM THE ENGLISH LEAGUES",source:SOURCES.wikidata.repo,licence:"CC0-1.0"});
+  packs.push({id:id("strands-english-leagues",signature),spangram,words,theme:"A MATCHDAY ROLL CALL",source:SOURCES.wikidata.repo,licence:"CC0-1.0"});
  }
  return packs;
 }
