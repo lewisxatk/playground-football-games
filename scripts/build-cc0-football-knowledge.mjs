@@ -3,7 +3,7 @@ import { readdir, readFile, writeFile, mkdir } from "node:fs/promises";
 import { resolve, relative } from "node:path";
 const ROOT=process.cwd(), P=resolve(ROOT,".sources/openfootball-players"), C=resolve(ROOT,".sources/openfootball-clubs"), IR=resolve(ROOT,".sources/international-results");
 const TODAY=new Date().toISOString().slice(0,10), OUT=resolve(ROOT,"public/data");
-const SOURCES={players:{repo:"openfootball/players",commit:"125d20f7cc06cac7e758b40df535a7695632680a",licence:"CC0-1.0",url:"https://github.com/openfootball/players"},clubs:{repo:"openfootball/clubs",commit:"ae3800227c449447b3a337fc0aac79a8f02f4c8b",licence:"CC0-1.0",url:"https://github.com/openfootball/clubs"},worldCup:{repo:"openfootball/worldcup.json",licence:"CC0-1.0",url:"https://github.com/openfootball/worldcup.json",file:"public/data/worldcup-lineups.json"},internationalResults:{repo:"martj42/international_results",commit:"ca84241bb3eed854a1956a2fab442fe4daad40dd",licence:"CC0-1.0",url:"https://github.com/martj42/international_results"}};
+const SOURCES={players:{repo:"openfootball/players",commit:"125d20f7cc06cac7e758b40df535a7695632680a",licence:"CC0-1.0",url:"https://github.com/openfootball/players"},clubs:{repo:"openfootball/clubs",commit:"ae3800227c449447b3a337fc0aac79a8f02f4c8b",licence:"CC0-1.0",url:"https://github.com/openfootball/clubs"},worldCup:{repo:"openfootball/worldcup.json",licence:"CC0-1.0",url:"https://github.com/openfootball/worldcup.json",file:"public/data/worldcup-lineups.json"},internationalResults:{repo:"martj42/international_results",commit:"ca84241bb3eed854a1956a2fab442fe4daad40dd",licence:"CC0-1.0",url:"https://github.com/martj42/international_results"},wikidata:{repo:"Wikidata",licence:"CC0-1.0",url:"https://www.wikidata.org/wiki/Wikidata:Licensing",endpoint:"https://query-next.wikidata.org/sparql",retrievedAt:TODAY}};
 const norm=s=>String(s??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/&/g," and ").replace(/[^a-z0-9]+/g," ").trim().replace(/\s+/g," ");
 const id=(kind,value)=>kind+"_"+createHash("sha256").update(norm(value)).digest("hex").slice(0,16);
 const walk=async dir=>{let out=[];let entries=[];try{entries=await readdir(dir,{withFileTypes:true})}catch{return out}for(const e of entries){const p=resolve(dir,e.name);if(e.isDirectory())out.push(...await walk(p));else if(e.isFile()&&e.name.endsWith(".txt"))out.push(p)}return out};
@@ -96,6 +96,165 @@ function buildInternationalQuiz(matches){
 
 async function parsePlayers(){const files=(await walk(P)).filter(p=>/(?:players|\.up)\.txt$/i.test(p));const map=new Map();for(const path of files){const text=await readFile(path,"utf8");let nation=relative(P,path).split(/[\\/]/)[0].replace(/[-_]/g," ");for(const raw of text.split(/\r?\n/)){const line=raw.trim();if(!line)continue;if(/^=\s*/.test(line)){nation=country(line);continue}if(excluded(line))continue;const body=line.split("##")[0].trim(),parts=body.includes("|")?body.split("|").map(x=>x.trim()).filter(Boolean):body.split(",").map(x=>x.trim()).filter(Boolean);const name=parts[0]?.replace(/\s*,?\s*b\.\s*(?:\d{1,2}\s+[A-Za-z]{3}\s+)?\d{4}.*$/i,"").trim();if(!name||name.length<3||name.length>70)continue;const key=norm(name),birth=body.match(/\bb\.\s*(?:\d{1,2}\s+[A-Za-z]{3}\s+)?(\d{4})\b/i);const position=parts.length>1&&/^(?:G|GK|D|DF|M|MF|F|FW)(?:\s*\|\s*(?:G|GK|D|DF|M|MF|F|FW))*$/i.test(parts[1])?parts[1].split("|").map(x=>x.trim().toUpperCase()):[];const row=map.get(key)||{id:id("player",key),name,aliases:[],nationalities:[],birthYears:[],positions:[],source:SOURCES.players.repo,sourceCommit:SOURCES.players.commit,licence:"CC0-1.0"};for(const a of parts.slice(1)){const alias=a.replace(/\s*,?\s*b\.\s*(?:\d{1,2}\s+[A-Za-z]{3}\s+)?\d{4}.*$/i,"").trim();if(alias&&norm(alias)!==key&&!/^(?:G|GK|D|DF|M|MF|F|FW)$/.test(alias.toUpperCase())&&!row.aliases.some(x=>norm(x)===norm(alias)))row.aliases.push(alias)}if(nation&&!row.nationalities.some(x=>norm(x)===norm(nation)))row.nationalities.push(nation);if(birth&&!row.birthYears.includes(+birth[1]))row.birthYears.push(+birth[1]);for(const p of position)if(!row.positions.includes(p))row.positions.push(p);map.set(key,row)}}return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name))}
 async function parseClubs(){const files=(await walk(C)).filter(p=>/clubs\.wiki\.txt$/i.test(p));const map=new Map();for(const path of files){const text=await readFile(path,"utf8");let nation=relative(C,path).split(/[\\/]/)[0].replace(/[-_]/g," ");for(const raw of text.split(/\r?\n/)){const line=raw.trim();if(!line)continue;if(/^=\s*/.test(line)){nation=country(line);continue}if(excluded(line)||line.length<3||line.length>100||line.includes("|")||/^(?:club|team|name|country)/i.test(line))continue;const name=line.replace(/\s+#.*$/,"").trim(),key=norm(name);if(!key)continue;const row=map.get(key)||{id:id("club",key),name,countries:[],source:SOURCES.clubs.repo,sourceCommit:SOURCES.clubs.commit,licence:"CC0-1.0"};if(nation&&!row.countries.some(x=>norm(x)===norm(nation)))row.countries.push(nation);map.set(key,row)}}return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name))}
+
+async function fetchWikidataCareers(players){
+ const query=\`SELECT ?player ?playerLabel ?statement ?club ?clubLabel ?start ?end WHERE {
+  ?player wdt:P106 wd:Q937857; p:P54 ?statement.
+  ?statement ps:P54 ?club; pq:P580 ?start.
+  OPTIONAL { ?statement pq:P582 ?end. }
+  ?club wdt:P31/wdt:P279* wd:Q476028.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+ } LIMIT 30000\`;
+ const meta={status:"not-run",endpoint:SOURCES.wikidata.endpoint,retrievedAt:TODAY,rawRows:0,acceptedSpells:0,players:0,eligibleCareerFile:0,eligibleCultHero:0,error:null};
+ let bindings=[];
+ try{
+  const url=new URL(SOURCES.wikidata.endpoint);
+  url.searchParams.set("query",query);
+  url.searchParams.set("format","json");
+  url.searchParams.set("timeout","50s");
+  const response=await fetch(url,{headers:{
+   "Accept":"application/sparql-results+json",
+   "User-Agent":"PLAYGROUND-Football-Games/0.1 (https://github.com/lewisxatk/playground-football-games)"
+  },signal:AbortSignal.timeout(55000)});
+  if(!response.ok)throw new Error("Wikidata Query Service returned HTTP "+response.status);
+  const payload=await response.json();
+  bindings=payload?.results?.bindings??[];
+  if(!Array.isArray(bindings))throw new Error("Wikidata returned an unexpected SPARQL result shape.");
+  meta.status="success";meta.rawRows=bindings.length;
+ }catch(error){
+  meta.status="unavailable";meta.error=error instanceof Error?error.message:String(error);
+  console.warn("Wikidata career import unavailable; non-career CC0 games remain buildable:",meta.error);
+  return {players:[],meta};
+ }
+ const byName=new Map();
+ for(const player of players){const key=norm(player.name);if(!key)continue;const list=byName.get(key)||[];list.push(player);byName.set(key,list)}
+ const profiles=new Map(),spellsSeen=new Set();
+ const dateYear=value=>{
+  const match=String(value??"").match(/(?:\+|-)?(\d{4})-/);
+  if(!match)return null;const year=Number(match[1]);
+  return Number.isInteger(year)&&year>=1800&&year<=2100?year:null;
+ };
+ for(const row of bindings){
+  const qid=String(row.player?.value??"").split("/").at(-1)||"";
+  const playerName=String(row.playerLabel?.value??"").trim();
+  const clubQid=String(row.club?.value??"").split("/").at(-1)||"";
+  const club=String(row.clubLabel?.value??"").trim();
+  const statement=String(row.statement?.value??"").split("/").at(-1)||"";
+  const startYear=dateYear(row.start?.value);
+  const endYear=row.end?.value?dateYear(row.end.value):null;
+  if(!/^Q\d+$/.test(qid)||!/^Q\d+$/.test(clubQid)||!statement||!playerName||!club||startYear===null)continue;
+  if(endYear!==null&&endYear<startYear)continue;
+  const spellKey=qid+"|"+statement;if(spellsSeen.has(spellKey))continue;spellsSeen.add(spellKey);
+  let profile=profiles.get(qid);
+  if(!profile){
+   const matches=byName.get(norm(playerName))??[];
+   let entity=matches.length===1&&!matches[0].wikidataId?matches[0]:null;
+   if(!entity){
+    entity={id:"wikidata-player_"+qid,name:playerName,aliases:[],nationalities:[],birthYears:[],positions:[],
+     source:SOURCES.wikidata.repo,sourceCommit:"live-query-snapshot-"+TODAY,licence:"CC0-1.0"};
+    players.push(entity);const list=byName.get(norm(playerName))||[];list.push(entity);byName.set(norm(playerName),list);
+   }else entity.wikidataId=qid;
+   profile={
+    id:"wikidata-career_"+qid,playerId:entity.id,qid,name:playerName,fullName:playerName,
+    nationality:entity.nationalities?.[0]??"",position:entity.positions?.[0]??"",
+    aliases:[playerName,...(entity.aliases??[])],birthYears:entity.birthYears??[],
+    spells:[],source:SOURCES.wikidata.repo,licence:"CC0-1.0",sourceItemUrl:"https://www.wikidata.org/wiki/"+qid,
+    sourceRetrievedAt:TODAY
+   };
+   profiles.set(qid,profile);
+  }
+  profile.spells.push({
+   id:id("wikidata-spell",spellKey),statementId:statement,clubId:"wikidata-club_"+clubQid,
+   clubQid,club,startYear,endYear,years:startYear+"–"+(endYear??"?"),
+   source:"Wikidata P54 with P580/P582 qualifiers",licence:"CC0-1.0"
+  });
+  meta.acceptedSpells++;
+ }
+ const careerPlayers=[...profiles.values()].map(profile=>{
+  const seen=new Set(),spells=profile.spells.filter(spell=>{
+   const key=spell.clubQid+"|"+spell.startYear+"|"+(spell.endYear??"");
+   if(seen.has(key))return false;seen.add(key);return true;
+  }).sort((a,b)=>a.startYear-b.startYear||a.club.localeCompare(b.club)||a.id.localeCompare(b.id));
+  return {...profile,spells,clubs:[...new Set(spells.map(spell=>spell.club))],
+   firstYear:spells.length?spells[0].startYear:null,lastYear:spells.length?Math.max(...spells.map(spell=>spell.endYear??spell.startYear)):null};
+ }).filter(profile=>profile.spells.length>=2&&new Set(profile.spells.map(spell=>spell.clubQid)).size>=2)
+  .sort((a,b)=>a.id.localeCompare(b.id));
+ meta.players=careerPlayers.length;
+ meta.eligibleCareerFile=careerPlayers.filter(p=>p.spells.length>=3&&new Set(p.spells.map(s=>s.clubQid)).size>=3).length;
+ meta.eligibleCultHero=meta.eligibleCareerFile;
+ return {players:careerPlayers,meta};
+}
+function makeWikidataLinkPacks(careerPlayers,target=750){
+ const byClub=new Map();
+ for(const player of careerPlayers)for(const spell of player.spells){
+  const key=spell.clubQid,list=byClub.get(key)||[];
+  if(spell.startYear!==null)list.push({player,spell});
+  byClub.set(key,list);
+ }
+ const overlaps=(a,b)=>{
+  const aStart=a.startYear,aEnd=a.endYear??a.startYear,bStart=b.startYear,bEnd=b.endYear??b.startYear;
+  return Math.max(aStart,bStart)<=Math.min(aEnd,bEnd);
+ };
+ const uniqueBridge=(start,end,startSpell,endSpell,answer)=>{
+  const possible=new Set();
+  const startClub=byClub.get(startSpell.clubQid)||[],endClub=byClub.get(endSpell.clubQid)||[];
+  const starts=startClub.filter(x=>x.player.id===start.id&&overlaps(startSpell,x.spell));
+  const ends=endClub.filter(x=>x.player.id===end.id&&overlaps(endSpell,x.spell));
+  if(!starts.length||!ends.length)return false;
+  for(const a of startClub)if(a.player.id!==start.id&&overlaps(a.spell,startSpell)){
+   for(const b of endClub)if(b.player.id!==end.id&&b.player.id!==a.player.id&&overlaps(b.spell,endSpell)){
+    possible.add(a.player.id+"|"+b.player.id);
+   }
+  }
+  // A third player is the only bridge when that same player has overlapping spells at both endpoint clubs.
+  const bridgePlayers=new Set();
+  for(const candidate of careerPlayers){
+   if(candidate.id===start.id||candidate.id===end.id)continue;
+   const hasFirst=candidate.spells.some(spell=>spell.clubQid===startSpell.clubQid&&overlaps(spell,startSpell));
+   const hasSecond=candidate.spells.some(spell=>spell.clubQid===endSpell.clubQid&&overlaps(spell,endSpell));
+   if(hasFirst&&hasSecond)bridgePlayers.add(candidate.id);
+  }
+  return bridgePlayers.size===1&&bridgePlayers.has(answer.id);
+ };
+ const ordered=seededShuffle(careerPlayers,20261127),packs=[],usedAnswers=new Set(),usedSignatures=new Set();
+ for(const answer of ordered){
+  if(packs.length>=target)break;
+  if(usedAnswers.has(answer.id))continue;
+  const spells=answer.spells.filter(spell=>spell.clubQid&&spell.startYear!==null);
+  let found=null;
+  for(let i=0;i<spells.length&&!found;i++)for(let j=i+1;j<spells.length&&!found;j++){
+   const first=spells[i],second=spells[j];
+   if(first.clubQid===second.clubQid)continue;
+   const startCandidates=(byClub.get(first.clubQid)||[]).filter(x=>x.player.id!==answer.id&&overlaps(first,x.spell));
+   const endCandidates=(byClub.get(second.clubQid)||[]).filter(x=>x.player.id!==answer.id&&overlaps(second,x.spell));
+   const pairs=seededShuffle(startCandidates,hashCode(answer.id+first.id)).flatMap(a=>
+    seededShuffle(endCandidates,hashCode(answer.id+second.id+a.player.id))
+     .filter(b=>b.player.id!==a.player.id).map(b=>({a,b}))
+   );
+   for(const pair of pairs){
+    if(!uniqueBridge(pair.a.player,pair.b.player,first,second,answer))continue;
+    const decoys=seededShuffle(careerPlayers.filter(p=>p.id!==answer.id&&p.id!==pair.a.player.id&&p.id!==pair.b.player.id),hashCode(answer.id+pair.a.player.id+pair.b.player.id)).slice(0,5);
+    if(decoys.length<5)continue;
+    const signature=[answer.id,pair.a.player.id,pair.b.player.id,first.clubQid,second.clubQid].join("|");
+    if(usedSignatures.has(signature))continue;
+    usedSignatures.add(signature);
+    found={
+     id:id("link-up-puzzle",signature),answerPlayerId:answer.id,
+     startPlayerId:pair.a.player.id,endPlayerId:pair.b.player.id,
+     startClub:first.club,startClubId:first.clubQid,endClub:second.club,endClubId:second.clubQid,
+     optionPlayerIds:seededShuffle([answer,...decoys],hashCode(signature)).map(p=>p.id),
+     explanation:"The connecting player has overlapping dated membership records at both clubs. The periods are recorded in Wikidata statements, not match-by-match appearance records.",
+     source:SOURCES.wikidata,licence:"CC0-1.0"
+    };
+    found=found;break;
+   }
+  }
+  if(found){packs.push(found);usedAnswers.add(answer.id);}
+ }
+ return packs;
+}
+function hashCode(value){return parseInt(createHash("sha256").update(String(value)).digest("hex").slice(0,8),16)>>>0;}
+
 function makeConnections(clubs){const byCountry=new Map();for(const club of clubs)for(const c of club.countries){const k=norm(c),g=byCountry.get(k)||{label:c,clubs:[]};g.clubs.push(club.name);byCountry.set(k,g)}const groups=[...byCountry.values()].map(g=>({...g,clubs:[...new Set(g.clubs)].sort()})).filter(g=>g.clubs.length>=4).sort((a,b)=>a.label.localeCompare(b.label));const packs=[],seen=new Set();for(let seed=0;packs.length<500&&seed<15000&&groups.length>=4;seed++){const chosen=[];for(let j=0;j<4;j++){const g=groups[(seed*7+j*Math.max(1,Math.floor(groups.length/4)))%groups.length];if(!chosen.some(x=>norm(x.label)===norm(g.label)))chosen.push(g)}for(const g of groups)if(chosen.length<4&&!chosen.includes(g))chosen.push(g);if(chosen.length!==4)continue;const categories=chosen.map((g,j)=>{const start=(seed*(j+3)*5)%g.clubs.length;return{label:g.label,members:Array.from({length:4},(_,n)=>g.clubs[(start+n)%g.clubs.length])}});const all=categories.flatMap(g=>g.members);if(new Set(all.map(norm)).size!==16)continue;const sig=categories.map(g=>g.members.map(norm).sort().join(",")).sort().join("|");if(seen.has(sig))continue;seen.add(sig);packs.push({id:id("connections",sig),source:SOURCES.clubs.repo,licence:"CC0-1.0",groups:categories})}return packs}
 
 function seededShuffle(items,seed){const copy=[...items];let state=seed>>>0;const random=()=>{state=(state+0x6D2B79F5)>>>0;let t=state;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296};for(let i=copy.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[copy[i],copy[j]]=[copy[j],copy[i]]}return copy}
@@ -149,6 +308,11 @@ function makeStrandsPacks(players){
 }
 
 const players=await parsePlayers(),clubs=await parseClubs();
+const wikidataCareerImport=await fetchWikidataCareers(players);
+const careerPlayers=wikidataCareerImport.players;
+const careerFileCandidates=careerPlayers.filter(p=>p.spells.length>=3&&new Set(p.spells.map(spell=>spell.clubQid)).size>=3);
+const cultHeroCandidates=careerFileCandidates;
+const linkUpPacks=makeWikidataLinkPacks(careerPlayers,750);
 const internationalMatches=await parseInternationalResults();
 const internationalQuiz=buildInternationalQuiz(internationalMatches);
 const internationalGoals=await parseInternationalGoals(players);
@@ -176,8 +340,8 @@ const clubConnections=makeConnections(clubs);
 const playerConnections=makePlayerConnections(players);
 const gridPacks=makeGridPacks(players);
 const strands=makeStrandsPacks(players);
-const report={generatedAt:TODAY,policy:"CC0-only pinned source whitelist; licence does not guarantee factual accuracy",counts:{players:players.length,clubs:clubs.length,footlePlayerRecords:footle.length,footleAnswers:uniqueFootleAnswers.length,worldCupLineups:lineups.length,worldCupPlayerCards:cards.size,worldCupQuestions:validQuiz.length,internationalMatches:internationalMatches.length,internationalGoalEvents:internationalGoals.meta.acceptedGoalEvents,internationalGoalScorers:internationalGoals.meta.uniqueScorers,internationalScorersForGames:internationalGoals.meta.eligibleScorers,lowballPacks:internationalGoalPacks.lowball.length,ladderPacks:internationalGoalPacks.ladder.length,football501Packs:internationalGoalPacks.football501.length,climbQuestions:internationalQuiz.climb.length,timedQuizQuestions:internationalQuiz.timed.length,connectionsPacks:playerConnections.length,gridPacks:gridPacks.length,strandsPacks:strands.length,clubCountryPacks:clubConnections.length},games:{footle:{unit:"unique five-letter surname",count:uniqueFootleAnswers.length,ready:uniqueFootleAnswers.length>=500,integrated:true},"the-climb":{unit:"question",count:internationalQuiz.climb.length,ready:internationalQuiz.climb.length>=500,integrated:true},"timed-quiz":{unit:"question",count:internationalQuiz.timed.length,ready:internationalQuiz.timed.length>=500,integrated:true},connections:{unit:"puzzle-pack",count:playerConnections.length,ready:playerConnections.length>=500,integrated:true},"missing-xi":{unit:"puzzle-pack",count:lineups.length,ready:lineups.length>=500,integrated:true},"tournament-nation":{unit:"puzzle-pack",count:lineups.length,ready:lineups.length>=500,integrated:true},"the-reveal":{unit:"player-card",count:cards.size,ready:cards.size>=500,integrated:true},"link-up":{unit:"puzzle-pack",count:0,ready:false,integrated:false,reason:"needs verified shared-career connections"},strands:{unit:"puzzle-pack",count:strands.length,ready:strands.length>=500,integrated:true},"football-grid":{unit:"puzzle-pack",count:gridPacks.length,ready:gridPacks.length>=500,integrated:true,format:"position × nationality"},lowball:{unit:"challenge-pack",count:internationalGoalPacks.lowball.length,ready:internationalGoalPacks.lowball.length>=500,integrated:true,metric:"recorded senior international goals"},ladder:{unit:"challenge-pack",count:internationalGoalPacks.ladder.length,ready:internationalGoalPacks.ladder.length>=500,integrated:true,metric:"recorded senior international goals"},"football-501":{unit:"challenge-pack",count:internationalGoalPacks.football501.length,ready:internationalGoalPacks.football501.length>=500,integrated:true,metric:"recorded senior international goals"},"draft-xi":{unit:"candidate-player",count:positionPlayers.length,ready:positionPlayers.length>=500,integrated:true,metric:"position, international goals and World Cup starts; draft credits are game values"},"career-file":{unit:"player-card",count:0,ready:false,integrated:false,reason:"needs dated career spells"},"cult-hero":{unit:"player-card",count:0,ready:false,integrated:false,reason:"needs dated club-spell histories"},"scout-signal":{unit:"player-card",count:positionPlayers.length,ready:positionPlayers.length>=500,integrated:true,metric:"position, nation, age band, international goals and World Cup starts"}}};
+const report={generatedAt:TODAY,policy:"CC0-only source whitelist; Wikidata career snapshot is live-query data with retrieved timestamp",wikidataCareerImport:wikidataCareerImport.meta,counts:{players:players.length,clubs:clubs.length,wikidataCareerRows:wikidataCareerImport.meta.rawRows,wikidataCareerPlayers:careerPlayers.length,careerFileCandidates:careerFileCandidates.length,cultHeroCandidates:cultHeroCandidates.length,linkUpPacks:linkUpPacks.length,footlePlayerRecords:footle.length,footleAnswers:uniqueFootleAnswers.length,worldCupLineups:lineups.length,worldCupPlayerCards:cards.size,worldCupQuestions:validQuiz.length,internationalMatches:internationalMatches.length,internationalGoalEvents:internationalGoals.meta.acceptedGoalEvents,internationalGoalScorers:internationalGoals.meta.uniqueScorers,internationalScorersForGames:internationalGoals.meta.eligibleScorers,lowballPacks:internationalGoalPacks.lowball.length,ladderPacks:internationalGoalPacks.ladder.length,football501Packs:internationalGoalPacks.football501.length,climbQuestions:internationalQuiz.climb.length,timedQuizQuestions:internationalQuiz.timed.length,connectionsPacks:playerConnections.length,gridPacks:gridPacks.length,strandsPacks:strands.length,clubCountryPacks:clubConnections.length},games:{footle:{unit:"unique five-letter surname",count:uniqueFootleAnswers.length,ready:uniqueFootleAnswers.length>=500,integrated:true},"the-climb":{unit:"question",count:internationalQuiz.climb.length,ready:internationalQuiz.climb.length>=500,integrated:true},"timed-quiz":{unit:"question",count:internationalQuiz.timed.length,ready:internationalQuiz.timed.length>=500,integrated:true},connections:{unit:"puzzle-pack",count:playerConnections.length,ready:playerConnections.length>=500,integrated:true},"missing-xi":{unit:"puzzle-pack",count:lineups.length,ready:lineups.length>=500,integrated:true},"tournament-nation":{unit:"puzzle-pack",count:lineups.length,ready:lineups.length>=500,integrated:true},"the-reveal":{unit:"player-card",count:cards.size,ready:cards.size>=500,integrated:true},"link-up":{unit:"puzzle-pack",count:linkUpPacks.length,ready:linkUpPacks.length>=500,integrated:false,reason:"unique overlapping club-membership bridges from Wikidata P54/P580/P582; UI converter pending"}, "career-file":{unit:"player-card",count:careerFileCandidates.length,ready:careerFileCandidates.length>=500,integrated:false,reason:"dated CC0 club-membership spells; UI converter pending"}, "cult-hero":{unit:"player-card",count:cultHeroCandidates.length,ready:cultHeroCandidates.length>=500,integrated:false,reason:"dated CC0 club-membership clues; UI converter pending"},strands:{unit:"puzzle-pack",count:strands.length,ready:strands.length>=500,integrated:true},"football-grid":{unit:"puzzle-pack",count:gridPacks.length,ready:gridPacks.length>=500,integrated:true,format:"position × nationality"},lowball:{unit:"challenge-pack",count:internationalGoalPacks.lowball.length,ready:internationalGoalPacks.lowball.length>=500,integrated:true,metric:"recorded senior international goals"},ladder:{unit:"challenge-pack",count:internationalGoalPacks.ladder.length,ready:internationalGoalPacks.ladder.length>=500,integrated:true,metric:"recorded senior international goals"},"football-501":{unit:"challenge-pack",count:internationalGoalPacks.football501.length,ready:internationalGoalPacks.football501.length>=500,integrated:true,metric:"recorded senior international goals"},"draft-xi":{unit:"candidate-player",count:positionPlayers.length,ready:positionPlayers.length>=500,integrated:true,metric:"position, international goals and World Cup starts; draft credits are game values"},"career-file":{unit:"player-card",count:0,ready:false,integrated:false,reason:"needs dated career spells"},"cult-hero":{unit:"player-card",count:0,ready:false,integrated:false,reason:"needs dated club-spell histories"},"scout-signal":{unit:"player-card",count:positionPlayers.length,ready:positionPlayers.length>=500,integrated:true,metric:"position, nation, age band, international goals and World Cup starts"}}};
 for(const [k,n] of [["players",players.length],["Footle answers",uniqueFootleAnswers.length],["World Cup lineups",lineups.length],["World Cup player cards",cards.size],["World Cup questions",validQuiz.length],["The Climb questions",internationalQuiz.climb.length],["Timed Quiz questions",internationalQuiz.timed.length],["International goal scorers",goalPlayers.length],["Positioned stat players",positionPlayers.length],["Connections packs",playerConnections.length],["Football Grid packs",gridPacks.length],["Strands packs",strands.length],["Lowball packs",internationalGoalPacks.lowball.length],["Ladder packs",internationalGoalPacks.ladder.length],["Football 501 packs",internationalGoalPacks.football501.length]])if(n<500)throw new Error(k+" below 500: "+n);
 const quizFactIds=[...internationalQuiz.climb,...internationalQuiz.timed].map(q=>q.factId);if(new Set(quizFactIds).size!==quizFactIds.length)throw new Error("The Climb and Timed Quiz share duplicate match facts.");
-const database={schemaVersion:1,generatedAt:TODAY,idPolicy:"Stable SHA-256-derived IDs from normalised canonical names and source-scoped fact keys.",sourceRegistry:SOURCES,licencePolicy:"Only source repositories whose data licence is CC0-1.0 are imported. No club crest or portrait rights are included.",accuracyWarning:"CC0 is a reuse status, not a factual accuracy warranty. Review source data before publication.",report,players,clubs,worldCup:{lineups,playerCards:[...cards.values()]},internationalResults:{matches:internationalMatches,scorers:internationalGoals.scorers,scorerMeta:internationalGoals.meta},games:{"football-grid":{packs:gridPacks},footle:{answers:uniqueFootleAnswers.map(answer=>({id:id("footle-answer",answer),answer,source:SOURCES.players.repo,licence:"CC0-1.0"}))},quiz:{questions:validQuiz}, "the-climb":{questions:internationalQuiz.climb}, "timed-quiz":{questions:internationalQuiz.timed},"draft-xi":{players:positionPlayers.map(p=>({id:p.id,name:p.name,aliases:p.aliases||[],positions:p.positions,nationalities:p.nationalities,birthYears:p.birthYears,worldCupYears:p.worldCupYears||[],internationalGoalsRecorded:p.internationalGoalsRecorded??0,worldCupStarts:p.worldCupStarts??0,source:p.source}))},"scout-signal":{players:positionPlayers.map(p=>({id:p.id,name:p.name,aliases:p.aliases||[],positions:p.positions,nationalities:p.nationalities,birthYears:p.birthYears,worldCupYears:p.worldCupYears||[],internationalGoalsRecorded:p.internationalGoalsRecorded??0,worldCupStarts:p.worldCupStarts??0,source:p.source}))},connections:{packs:playerConnections,clubCountryPacks:clubConnections},strands:{packs:strands},lowball:{pairs:internationalGoalPacks.lowball},ladder:{packs:internationalGoalPacks.ladder},"football-501":{packs:internationalGoalPacks.football501},"missing-xi":{packs:lineups},"tournament-nation":{packs:lineups},"the-reveal":{cards:[...cards.values()]},"link-up":{packs:lineups.map(m=>({id:id("link-up",m.id),matchId:m.id,team:m.team,opponent:m.opponent,year:m.year,players:m.starters}))}}};
+const database={schemaVersion:1,generatedAt:TODAY,idPolicy:"Stable SHA-256-derived IDs from normalised canonical names and source-scoped fact keys; Wikidata QIDs and statement IDs are retained for dated club spells.",sourceRegistry:SOURCES,licencePolicy:"Only source repositories whose data licence is CC0-1.0 are imported. No club crest or portrait rights are included.",accuracyWarning:"CC0 is a reuse status, not a factual accuracy warranty. Wikidata career entries only include stated player-club memberships with dates; incomplete or missing dates are not guessed.",report,players,clubs,careerHistory:{source:SOURCES.wikidata,players:careerPlayers,meta:wikidataCareerImport.meta},worldCup:{lineups,playerCards:[...cards.values()]},internationalResults:{matches:internationalMatches,scorers:internationalGoals.scorers,scorerMeta:internationalGoals.meta},games:{"football-grid":{packs:gridPacks},footle:{answers:uniqueFootleAnswers.map(answer=>({id:id("footle-answer",answer),answer,source:SOURCES.players.repo,licence:"CC0-1.0"}))},quiz:{questions:validQuiz}, "the-climb":{questions:internationalQuiz.climb}, "timed-quiz":{questions:internationalQuiz.timed},"draft-xi":{players:positionPlayers.map(p=>({id:p.id,name:p.name,aliases:p.aliases||[],positions:p.positions,nationalities:p.nationalities,birthYears:p.birthYears,worldCupYears:p.worldCupYears||[],internationalGoalsRecorded:p.internationalGoalsRecorded??0,worldCupStarts:p.worldCupStarts??0,source:p.source}))},"scout-signal":{players:positionPlayers.map(p=>({id:p.id,name:p.name,aliases:p.aliases||[],positions:p.positions,nationalities:p.nationalities,birthYears:p.birthYears,worldCupYears:p.worldCupYears||[],internationalGoalsRecorded:p.internationalGoalsRecorded??0,worldCupStarts:p.worldCupStarts??0,source:p.source}))},connections:{packs:playerConnections,clubCountryPacks:clubConnections},strands:{packs:strands},lowball:{pairs:internationalGoalPacks.lowball},ladder:{packs:internationalGoalPacks.ladder},"football-501":{packs:internationalGoalPacks.football501},"missing-xi":{packs:lineups},"tournament-nation":{packs:lineups},"the-reveal":{cards:[...cards.values()]},"link-up":{packs:linkUpPacks},"career-file":{players:careerFileCandidates},"cult-hero":{players:cultHeroCandidates}}};
 await mkdir(OUT,{recursive:true});await writeFile(resolve(OUT,"football-knowledge.cc0.json"),JSON.stringify(database));await writeFile(resolve(OUT,"football-knowledge-report.json"),JSON.stringify(report,null,2)+"\n");console.log(JSON.stringify(report,null,2));
