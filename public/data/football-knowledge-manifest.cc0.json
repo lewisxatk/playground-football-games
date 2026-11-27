@@ -54,8 +54,8 @@
   "shards": {
     "core": {
       "file": "/data/football-knowledge-core.cc0.json",
-      "bytes": 18799747,
-      "sha256": "50e7a150f1a2c1237b989c258df471e1bf11451e59902bdecd6e7224397c4a95",
+      "bytes": 18799740,
+      "sha256": "50fa5341e518f3883bce4cd4cd2a8e72a94f7e530ed54f7ef2763da106881b97",
       "recordCounts": {
         "players": 75224,
         "clubs": 560
@@ -137,12 +137,20 @@
         "packs": 500
       }
     },
-    "the-climb-easy": {
-      "file": "/data/football-knowledge-the-climb-easy.cc0.json",
-      "bytes": 29049522,
-      "sha256": "bf38e65b16d6aa0b084f2767a60fc0e552fac2ce55235f541d8579cefde19c86",
+    "the-climb-easy-1": {
+      "file": "/data/football-knowledge-the-climb-easy-1.cc0.json",
+      "bytes": 14476748,
+      "sha256": "96708b4e9cc76c59da875731677b2e0930e6f9687f295d7919d332ead9757d60",
       "recordCounts": {
-        "questions": 42482
+        "questions": 21241
+      }
+    },
+    "the-climb-easy-2": {
+      "file": "/data/football-knowledge-the-climb-easy-2.cc0.json",
+      "bytes": 14574436,
+      "sha256": "d49c8b51a11e800d05d9d8510f57bd9a4e4d4ede2f06da9c07a6f73a768064c4",
+      "recordCounts": {
+        "questions": 21241
       }
     },
     "the-climb-medium": {
@@ -169,12 +177,20 @@
         "questions": 1844
       }
     },
-    "timed-quiz-easy": {
-      "file": "/data/football-knowledge-timed-quiz-easy.cc0.json",
-      "bytes": 28944605,
-      "sha256": "583900a971c40cb71684a4b0b1712b9f35597251a042b462bdd6c839c1eb3fbe",
+    "timed-quiz-easy-1": {
+      "file": "/data/football-knowledge-timed-quiz-easy-1.cc0.json",
+      "bytes": 14441527,
+      "sha256": "5860053b79abedb1898dccd0164d0279b9213030acec85bff611166fe8621f3d",
       "recordCounts": {
-        "questions": 42302
+        "questions": 21151
+      }
+    },
+    "timed-quiz-easy-2": {
+      "file": "/data/football-knowledge-timed-quiz-easy-2.cc0.json",
+      "bytes": 14504740,
+      "sha256": "ed0c1a9ad46a5077d17db05a09911b80e470489bf162b59c80daaab6ae10fd73",
+      "recordCounts": {
+        "questions": 21151
       }
     },
     "timed-quiz-medium": {
