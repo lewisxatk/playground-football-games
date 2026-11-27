@@ -16,7 +16,7 @@ Pinned inputs:
 | [OpenFootball players](https://github.com/openfootball/players) | `125d20f7cc06cac7e758b40df535a7695632680a` | Player names, aliases, nationality, birth year and broad position where present |
 | [OpenFootball clubs](https://github.com/openfootball/clubs) | `ae3800227c449447b3a337fc0aac79a8f02f4c8b` | Club identity, aliases, country and stadium metadata |
 | [Mart Jürisoo international results](https://github.com/martj42/international_results) | `ca84241bb3eed854a1956a2fab442fe4daad40dd` | Men's senior international match results and recorded goalscorers |
-| World Cup starting-line-up source | `public/data/worldcup-lineups.json` | Tournament line-ups and player appearance clues; the source file is retained in-repo |
+| [OpenFootball World Cup](https://github.com/openfootball/worldcup.json) | `516d3825c3bd23fdc298c4014e84bde78f2d4965` | Source for the retained 1982–2022 starting-line-up snapshot in `public/data/worldcup-lineups.json` |
 
 The international-results source is a men's senior full-international dataset. It is not a domestic-league database and does not represent every international appearance or goal in every player's career.
 
@@ -31,7 +31,7 @@ The international-results source is a men's senior full-international dataset. I
 
 ## Accuracy and QA
 
-The build checks source licences, stable IDs, duplicate keys, minimum pool sizes, answer-choice uniqueness, pack structure, and required fields. A green build means the data is structurally valid; it does not mean every underlying historical fact has been independently fact-checked.
+The build checks pinned source licences, stable IDs, duplicate keys, minimum pool sizes, answer-choice uniqueness, pack structure, and required fields. It also runs the full TypeScript/Vite production build before publishing generated shards. A green build means the data is structurally valid; it does not mean every underlying historical fact has been independently fact-checked.
 
 Important scope labels:
 
@@ -42,7 +42,7 @@ Important scope labels:
 
 ## Game coverage
 
-The generated report records the exact count, unit, readiness and live-integration status for each game. At this stage the CC0 pools are integrated into:
+The generated report records the exact count, unit, readiness and live-integration status for each game. The current CC0 pools are integrated into:
 
 - Footle — unique five-letter surnames
 - The Climb and Timed Quiz — source-backed international match questions
@@ -52,8 +52,10 @@ The generated report records the exact count, unit, readiness and live-integrati
 - The Reveal — World Cup player cards and tournament clues
 - Lowball, The Ladder and Football 501 — recorded senior international-goal packs
 - Draft XI and Scout Signal — positioned player records with sourced international/World Cup stats
+- Career File and Cult Hero — dated player-club membership records from Wikidata
+- Link Up — unique bridge puzzles based on overlapping dated membership records
 
-Career File, Cult Hero and Link Up are deliberately not marked ready in the report yet. They need reliable dated player-club spell histories or verified shared-career links. The old mixed-provenance archive is not silently counted as CC0 content, and no made-up club spells are generated to fill those gaps.
+Career File and Cult Hero now use a separate Wikidata CC0 snapshot of dated player-club membership statements. Link Up uses only overlapping dated membership statements and generates bridge-player options from that same snapshot. The live Wikidata query is recorded with its endpoint, retrieval date, row count and accepted-spell count; the build report marks each game ready only when it reaches 500 unique candidates or packs. These records are not match appearances, and they must never be described as season statistics. The old mixed-provenance archive is not silently counted as CC0 content.
 
 ## Build and test
 

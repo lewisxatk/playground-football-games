@@ -60,4 +60,4 @@ See [the 27 November 2026 content and data audit](./docs/CONTENT_AND_DATA_AUDIT_
 
 ## Football knowledge database
 
-The CC0-only football knowledge pipeline, source pins, duplicate policy, accuracy limits and per-game coverage are documented in [CC0 Football Knowledge Engine](docs/CC0_FOOTBALL_KNOWLEDGE_ENGINE.md). Generated data and its QA report are published under `public/data/football-knowledge*`. Career File, Cult Hero and Link Up remain explicitly unready until dated club-career data is verified.
+The CC0-only football knowledge pipeline, source pins, duplicate policy, accuracy limits and per-game coverage are documented in [CC0 Football Knowledge Engine](docs/CC0_FOOTBALL_KNOWLEDGE_ENGINE.md). Generated data and its QA report are published under `public/data/football-knowledge*`. Career File and Cult Hero now use dated CC0 Wikidata club-membership statements; Link Up uses overlapping dated memberships. See the live per-game counts and caveats in the generated QA report.

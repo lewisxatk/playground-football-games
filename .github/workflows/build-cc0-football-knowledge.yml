@@ -51,12 +51,19 @@ jobs:
           repository: martj42/international_results
           ref: ca84241bb3eed854a1956a2fab442fe4daad40dd
           path: .sources/international-results
+      - name: Check out pinned CC0 World Cup source
+        uses: actions/checkout@v4
+        with:
+          repository: openfootball/worldcup.json
+          ref: 516d3825c3bd23fdc298c4014e84bde78f2d4965
+          path: .sources/openfootball-worldcup
       - name: Verify upstream licences
         shell: bash
         run: |
           grep -q "CC0 1.0 Universal" .sources/openfootball-players/LICENSE.md
           grep -q "CC0 1.0 Universal" .sources/openfootball-clubs/LICENSE.md
           grep -q "CC0 1.0 Universal" .sources/international-results/LICENSE
+          grep -q "CC0 1.0 Universal" .sources/openfootball-worldcup/LICENSE.md
       - name: Build canonical database and game pools
         run: node scripts/build-cc0-football-knowledge.mjs
       - name: Install dependencies and verify full site build
