@@ -34,7 +34,7 @@ for (const [game, keys] of Object.entries(games)) {
     matchIds.add(question.matchId);
     if (!tiers.includes(question.tier)) fail(question.id + " has an invalid difficulty");
     if (question.region !== "ENGLISH_DOMESTIC" && question.region !== "INTERNATIONAL") fail(question.id + " has an invalid region");
-    if (question.region === "INTERNATIONAL" && !/UEFA Champions League/i.test(question.category ?? "")) fail(question.id + " includes non-Champions-League international content");
+    if (question.region === "INTERNATIONAL" && !/(?:UEFA Champions League|FIFA World Cup)/i.test(question.category ?? "")) fail(question.id + " includes unsupported international content");
     if (typeof question.question !== "string" || !question.question.trim().endsWith("?")) fail(question.id + " has an unreadable question stem");
     if (typeof question.answer !== "string" || !question.answer.trim()) fail(question.id + " has no answer");
     if (!Array.isArray(question.options) || question.options.length !== 5) fail(question.id + " must have exactly five answer options");
