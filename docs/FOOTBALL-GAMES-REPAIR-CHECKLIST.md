@@ -10,16 +10,20 @@ Rule: after every successful GitHub commit, update this checklist in the next co
 - [x] Build Link Up eligible-club list from clubs appearing in the English domestic match archive.
 - [x] Import the 34,637-entry English dictionary from `outparse/english-dictionary-dataset` (CC0 1.0) to `public/data/english-wordlist.cc0.txt`.
 
-## In progress
-- [ ] Strands: load the CC0 English dictionary and accept only valid bonus words.
-- [ ] Strands: improve tile contrast, size, selected/found states and mobile usability.
-- [ ] Verify the Strands pointer/touch path logic and hint progression.
+## Implemented and committed — verification still required
+- [x] Strands: load the CC0 English dictionary and accept only valid bonus words. Commit: `94420320cc`.
+- [x] Strands: improve tile contrast, size, selected/found states and mobile usability. Commit: `2b9ef09dd9`.
+- [x] Strands: use randomized serpentine paths so answers are genuinely hidden. Commit: `4f9824f19e`.
+- [x] Footle: accept any valid five-letter guess and improve progressive letter hints. Commit: `efb520401a`.
+- [x] Football Grid: rebuild around unique English club × national flag intersections; add actual flags and consistent sizing. Commits: `599d72dc76`, `30bcb621f8`, `7716f6421e`.
+- [x] Link Up: use English-club alias matching and exact overlap-window clues. Commits: `32baeeda0a`, `259f5a9a20`, `c510c76f0c`.
+- [x] Career File: Premier League-only eligibility with a two-season minimum, appearance clues and unlockable identity hints. Commits: `41d97fce33`, `cb49370295`.
 
-## To do — game repairs
-- [ ] Footle: inspect answer selection, guess validation, keyboard feedback, hint system and scoring; add useful progressive hints without making the answer trivial.
-- [ ] Football Grid: verify all 16 intersections, unique-player enforcement, input handling, retry behaviour and mobile layout.
-- [ ] Link Up: validate all ten questions are unique and bridge players genuinely overlap at both English clubs; review hints, lives and scoring.
-- [ ] Career File: verify clue accuracy, timeline, answer aliases, reveal/hint costs and source provenance.
+## To do — game repairs and verification
+- [ ] Footle: audit answer selection, keyboard feedback, hint costs, scoring and mobile behaviour.
+- [ ] Football Grid: verify all 16 intersections, unique-player enforcement, answer acceptance, retry behaviour and mobile layout.
+- [ ] Link Up: validate ten unique questions; confirm each bridge player genuinely overlaps at both English clubs; review hints, lives and scoring.
+- [ ] Career File: verify clue accuracy, timeline, aliases, reveal/hint costs and source provenance.
 - [ ] Review Quick Quiz / The Climb pools and daily/practice allocations against the user's English-domestic preference.
 - [ ] Audit all game pages for empty states, loading/error states, responsive layout, scoring and daily completion.
 
@@ -41,5 +45,13 @@ Latest completed commits:
 - `b75aa050150c6c2756e36e8a85e6d90479c0d1e7` — English-first quiz allocation.
 - `f83b0d6ec52b405a55f20f1ddaa5b93bd01c4500` — competition-safe distractors and English-club Link Up filter.
 - `44166c4223b7292ca5e210060a8aa5ac5d595d00` — CC0 English dictionary import.
+- `94420320cc` — Strands dictionary validation.
+- `2b9ef09dd9` — Strands arcade visual redesign.
+- `efb520401a` — Footle guess and hint improvements.
+- `599d72dc76` — Football Grid unique intersection rebuild.
+- `41d97fce33` — Career File eligibility and appearance clues.
 
-Next action: implement and commit Strands dictionary validation and visual improvements, then immediately tick the corresponding items above.
+Latest branch head observed: `d99d59ea3f545c41a2d7558654a406587cfa4fec`.
+Latest GitHub Actions runs for that head: database build and football-content validation both in progress at last check; prior commits' build jobs were cancelled by newer pushes. Do not call the build verified until a non-cancelled successful run is observed.
+
+Next action: poll the latest GitHub Actions runs, fix any failures, then audit each implemented game and run the full typecheck/build/validation suite.
