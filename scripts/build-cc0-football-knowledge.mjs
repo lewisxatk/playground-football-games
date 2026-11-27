@@ -54,9 +54,9 @@ async function parseEnglishMatches(){
    const day=line.match(/^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+([A-Za-z]{3})\s+(\d{1,2})(?:\s+(\d{4}))?$/);
    if(day){const month=monthMap[day[1]];if(!month)continue;const year=day[3]?Number(day[3]):month>=7?seasonStart:seasonEnd;currentDate=year+"-"+String(month).padStart(2,"0")+"-"+String(Number(day[2])).padStart(2,"0");continue;}
    if(!currentDate)continue;
-   const match=line.match(/^(?:\d{1,2}:\d{2}\s+)?(.+?)\s+v\s+(.+?)\s+(\d+)-(\d+)(?:\s+\([^)]*\))?(?:\s+(?:aet|pens?|penalties))?\s*$/i);
+   const match=line.match(/^(?:\d{1,2}:\d{2}\s+)?(.+?)\s+(\d+)-(\d+)(?:\s+\([^)]*\))?\s+(.+?)\s*$/i);
    if(!match)continue;const cleanTeam=value=>value.trim().replace(/\s+FC$/i,"");
-   const home=cleanTeam(match[1]),away=cleanTeam(match[2]),homeScore=Number(match[3]),awayScore=Number(match[4]);
+   const home=cleanTeam(match[1]),homeScore=Number(match[2]),awayScore=Number(match[3]),away=cleanTeam(match[4]);
    if(!home||!away||homeScore>30||awayScore>30)continue;
    const key=[competition,seasonStart,currentDate,norm(home),norm(away)].join("|");if(records.has(key))continue;
    const sourceRow=rel+":"+String(lineIndex+1);
