@@ -38,7 +38,7 @@ export async function loadQuestionBank(force = false): Promise<QuestionBank> {
       if (!response.ok) throw new Error("The curated question bank is unavailable (" + response.status + ").");
       const bank = await response.json() as QuestionBank;
       const tiers: QuizTier[] = ["EASY", "MEDIUM", "HARD", "EXTREME"];
-      if (bank.version !== 3 || bank.source !== "OpenFootballBase-Data" ||
+      if (bank.version !== 4 || bank.source !== "OpenFootballBase-Data" ||
           !bank.meta || bank.meta.targetPerTier < 750 || !bank.tiers ||
           tiers.some(tier => {
             const questions = bank.tiers[tier];
