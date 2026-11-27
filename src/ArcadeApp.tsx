@@ -1058,10 +1058,10 @@ function makeDynamicStrandsPack(players:GamePlayer[],seed:number):typeof STRANDS
 
 function makeStrandsBoard(pack:typeof STRANDS_PACKS[number]){
  const cells=Array(48).fill("");const paths:number[][]=[];
- // The 13-letter spanagram runs up the left touchline and across the bottom.
- // One 14-letter full name adds the bottom-right return cell.
+ // Both spangram lengths start on the top edge and finish on the bottom edge.
+ // The 14-letter route adds a top-edge entry cell, preserving the same terminal.
  const baseSpine=[0,8,16,24,32,40,41,42,43,44,45,46,47];
- const spine=pack.spangram.length===14?[...baseSpine,39]:baseSpine;
+ const spine=pack.spangram.length===14?[1,...baseSpine]:baseSpine;
  const spineSet=new Set(spine);
  const rest:number[]=[];
  for(let r=0;r<5;r++){const cols=Array.from({length:7},(_,i)=>i+1);if(r%2)cols.reverse();for(const c of cols){const cell=r*8+c;if(!spineSet.has(cell))rest.push(cell);}}
@@ -1090,7 +1090,7 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
  const beginPath=(cell:number,event:React.PointerEvent<HTMLButtonElement>)=>{
    if(finished||isBlocked(cell))return;
    event.preventDefault();
-   try{event.currentTarget.setPointerCapture(event.pointerId);}catch{/* synthetic pointer events may not support capture */}
+   // Avoid pointer capture on the first tile: cross-tile pointerenter is needed for drag selection.
    pathRef.current=[cell];setSelected([cell]);setDragging(true);setNotice("");
  };
  const extendPath=(cell:number)=>{
