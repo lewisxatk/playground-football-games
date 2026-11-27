@@ -111,7 +111,7 @@ export const STRANDS_PACKS = [
   {spangram:"STEVENGERRARD",words:["TOTTI","NANI","PIRES","OWEN","KOKE","MATA","HENRY","SAKA"],theme:"One-name football icons"},
   {spangram:"EDINSONCAVANI",words:["SALAH","MESSI","KAKA","GUTI","COLE","LAHM","ROBBEN","SON"],theme:"Football surnames"},
   {spangram:"ALISSONBECKER",words:["KANE","FODEN","VARDY","XAVI","PEPE","KLOSE","SON","SALAH"],theme:"From the pitch"},
-  {spangram:"DANIELEDEROSSI",words:["TERRY","NESTA","COLE","VIDIC","MATA","PIRES","SON","KANE"],theme:"European football names"},
+  {spangram:"DANIELEDEROSSI",words:["TERRY","NANI","COLE","VIDIC","MATA","PIRES","SON","KANE"],theme:"European football names"},
   {spangram:"THOMASROSICKY",words:["HENRY","TOTTI","OWEN","KAKA","KANE","RICE","SALAH","PEPE"],theme:"Cult football favourites"},
   {spangram:"PATRICKVIEIRA",words:["VARDY","KLOSE","KANE","MESSI","SALAH","COLE","NANI","SON"],theme:"Midfield and attack"},
   {spangram:"VIRGILVANDIJK",words:["MESSI","NESTA","SAKA","TERRY","RODRI","MATA","SON","KAKA"],theme:"Famous football names"}
