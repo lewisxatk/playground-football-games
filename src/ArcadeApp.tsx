@@ -593,7 +593,6 @@ function FiveOhOnePage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
    return shuffle(source,hashSeed(seed+":"+remaining+":"+turnPicks.length+":"+difficulty+":"+metric)).slice(0,6);
  },[pool,used,maxValue,seed,remaining,turnPicks.length,difficulty,metric]);
  const currentVisitTotal=turnPicks.reduce((n,p)=>n+p.value,0);
- const safeRemaining=remaining;
  const visitEnded=turnPicks.length===3;
  const score=remaining===0?1000:Math.max(0,1000-remaining*2-busts*100);
  const pick=(p:CheckoutPlayer)=>{
@@ -643,16 +642,7 @@ function FiveOhOnePage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
 
 type LinkDifficulty="STANDARD"|"HARD"|"EXTREME";
 type GeneratedLink={start:GamePlayer;end:GamePlayer;answer:GamePlayer;startClub:string;endClub:string;options:GamePlayer[]};
-function sharedCareerSpells(a:GamePlayer,b:GamePlayer):string[]{
- const matches:string[]=[];
- for(const one of a.careerSpells)for(const two of b.careerSpells){
-   if(normalise(one.club)!==normalise(two.club))continue;
-   if(one.startYear===null||two.startYear===null)continue;
-   const oneEnd=one.endYear??one.startYear,twoEnd=two.endYear??two.startYear;
-   if(one.startYear<=twoEnd&&two.startYear<=oneEnd)matches.push(one.club);
- }
- return [...new Set(matches)];
-}
+
 function buildTeammateGraph(players:GamePlayer[]){
  const byClub=new Map<string,{player:GamePlayer;start:number;end:number;club:string}[]>();
  for(const player of players){
