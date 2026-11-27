@@ -16,11 +16,12 @@ Pinned inputs:
 | [OpenFootball players](https://github.com/openfootball/players) | `125d20f7cc06cac7e758b40df535a7695632680a` | Player names, aliases, nationality, birth year and broad position where present |
 | [OpenFootball clubs](https://github.com/openfootball/clubs) | `ae3800227c449447b3a337fc0aac79a8f02f4c8b` | Club identity, aliases, country and stadium metadata |
 | [Mart Jürisoo international results](https://github.com/martj42/international_results) | `ca84241bb3eed854a1956a2fab442fe4daad40dd` | Men's senior international match results and recorded goalscorers |
-| [OpenFootball World Cup](https://github.com/openfootball/worldcup.json) | `516d3825c3bd23fdc298c4014e84bde78f2d4965` | Source for the retained 1982–2026 starting-line-up snapshot in `public/data/worldcup-lineups.json` |
+| [OpenFootball World Cup](https://github.com/openfootball/worldcup.json) | `516d3825c3bd23fdc298c4014e84bde78f2d4965` | 1982–2022 retained starting-line-up snapshot plus 2026 line-ups from the pinned `2026/worldcup-full.json` source |
 | [OpenFootball Champions League](https://github.com/openfootball/champions-league) | `abfaeddc2ee3d14f99ecc163c9ddb46cb4d67cef` | UEFA Champions League, Europa League and Conference League match results and qualifiers |
+| [Wikidata](https://www.wikidata.org/wiki/Wikidata:Licensing) | Live CC0 snapshot; endpoint and retrieval date recorded in each build | Dated player-club membership statements for Career File, Cult Hero and Link Up |
 | [OpenFootball England](https://github.com/openfootball/england) | `9ee7a0c351805c99cc334478a9bf04b7d0432fec` | Premier League, English top-four divisions and domestic cup match results |
 
-The international-results source is a men's senior full-international dataset. OpenFootball England covers the Premier League, English top-four tiers, plus FA Cup/EFL Cup seasons available in the pinned repository. These are match-result datasets, not complete player performance statistics.
+The international-results source is a men's senior full-international dataset. OpenFootball England covers the Premier League, English top-four tiers, plus FA Cup/EFL Cup seasons available in the pinned repository. The UEFA source adds Champions League, Europa League and Conference League results. These are match-result datasets, not complete player performance statistics.
 
 ## Identity and duplicate policy
 
@@ -47,10 +48,10 @@ Important scope labels:
 The generated report records the exact count, unit, readiness and live-integration status for each game. The current CC0 pools are integrated into:
 
 - Footle — unique five-letter surnames
-- The Climb and Timed Quiz — source-backed international match questions
+- The Climb and Timed Quiz — UK domestic, UEFA club and international match questions
 - Connections and Strands — player-identity puzzle packs
 - Football Grid — position × nationality intersections
-- Missing XI and Tournament Nation — World Cup line-ups
+- Missing XI and Tournament Nation — World Cup line-ups through 2026
 - The Reveal — World Cup player cards and tournament clues
 - Lowball, The Ladder and Football 501 — recorded senior international-goal packs
 - Draft XI and Scout Signal — positioned player records with sourced international/World Cup stats
