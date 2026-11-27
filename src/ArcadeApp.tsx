@@ -953,10 +953,11 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
 
 
 type QuizDifficulty="EASY"|"MEDIUM"|"HARD"|"EXTREME"|"STANDARD";
-type QuizQuestion={tier:Exclude<QuizDifficulty,"STANDARD">;question:string;answer:string;options:string[];explanation:string;source:string};
+type QuizQuestion={tier:Exclude<QuizDifficulty,"STANDARD">;playerId:string;question:string;answer:string;options:string[];explanation:string;source:string};
 function makeTimedQuiz(players:GamePlayer[],difficulty:QuizDifficulty,seed:number):QuizQuestion[]{
  const tiers:Exclude<QuizDifficulty,"STANDARD">[]=difficulty==="STANDARD"?["EASY","EASY","EASY","EASY","EASY","MEDIUM","MEDIUM","MEDIUM","MEDIUM","MEDIUM","HARD","HARD","HARD","HARD","HARD"]:Array(15).fill(difficulty) as Exclude<QuizDifficulty,"STANDARD">[];
  const output:QuizQuestion[]=[];
+ const usedPlayers=new Set<string>();
  const make=(tier:Exclude<QuizDifficulty,"STANDARD">,player:GamePlayer,index:number):QuizQuestion|null=>{
    let answer="",question="",source="OpenFootballBase player profile / career archive";
    let fieldPool:string[]=[];
@@ -990,7 +991,7 @@ function makeTimedQuiz(players:GamePlayer[],difficulty:QuizDifficulty,seed:numbe
    const wrong=[...new Set(fieldPool.filter(value=>normalise(value)!==normalise(answer)))];
    if(wrong.length<4)return null;
    const options=shuffle([answer,...shuffle(wrong,seed+index*31).slice(0,4)],seed+index*101);
-   return {tier,question,answer,options,explanation,source};
+   return {tier,playerId:player.archiveId,question,answer,options,explanation,source};
  };
  const pools:Record<Exclude<QuizDifficulty,"STANDARD">,GamePlayer[]>={
    EASY:players.filter(p=>p.nationality!=="Unlisted"),
@@ -1002,11 +1003,12 @@ function makeTimedQuiz(players:GamePlayer[],difficulty:QuizDifficulty,seed:numbe
    const sorted=pools[tier];
    const ordered=shuffle(sorted,seed+index*47);
    let built:QuizQuestion|null=null;
-   for(const p of ordered.slice(0,80)){
+   for(const p of ordered){
+     if(usedPlayers.has(p.archiveId))continue;
      built=make(tier,p,index);
      if(built)break;
    }
-   if(built)output.push(built);
+   if(built){output.push(built);usedPlayers.add(built.playerId);}
  });
  return output;
 }
