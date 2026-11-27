@@ -1211,15 +1211,8 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
  const seed=mode==="daily"?"STRANDS:"+utcDay()+":"+boardNo:"STRANDS:PRACTICE:"+practiceSeed+":"+boardNo;
  const {data:strandsData,loading,error,retry}=useFootballKnowledge("strands");
  const strandsPacks=strandsData?.packs??[];
- const staticPool=useMemo(()=>PLAYER_DATABASE.map(p=>({
-   ...p,archiveId:p.name,careerSpells:[],seasonStats:[],careerAppsRecorded:false,careerGoalsRecorded:false,leagueAppsRecorded:false,leagueGoalsRecorded:false,
-   careerApps:0,careerGoals:0,leagueApps:0,leagueGoals:0,leagueGoalSeasons:0,leagueAssists:0,leagueAssistSeasons:0,
-   statSeasons:0,firstYear:null,lastYear:null,caps:null,internationalGoals:null,birthDate:"",currentCountry:"",currentDivision:null
- } as GamePlayer)),[]);
-
- const dynamicPack=useMemo(()=>makeDynamicStrandsPack(pool,hashSeed(seed))??makeDynamicStrandsPack(staticPool,hashSeed(seed+1)),[pool,staticPool,seed]);
  const staticOrder=useMemo(()=>shuffle(STRANDS_PACKS,hashSeed("STRANDS:"+utcDay())),[]);
- const pack=strandsPacks.length?strandsPacks[hashSeed(seed)%strandsPacks.length]:dynamicPack??(mode==="daily"?staticOrder[boardNo%staticOrder.length]:STRANDS_PACKS[hashSeed(seed)%STRANDS_PACKS.length]);
+ const pack=strandsPacks.length?strandsPacks[hashSeed(seed)%strandsPacks.length]:(mode==="daily"?staticOrder[boardNo%staticOrder.length]:STRANDS_PACKS[hashSeed(seed)%STRANDS_PACKS.length]);
  const board=useMemo(()=>makeStrandsBoard(pack),[pack]);
  const solved=(index:number)=>found.includes(index);
  const isBlocked=(cell:number)=>board.paths.some((path,idx)=>solved(idx)&&path.includes(cell));
