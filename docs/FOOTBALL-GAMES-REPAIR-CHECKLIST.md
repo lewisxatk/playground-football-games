@@ -25,6 +25,8 @@ Rule: after every successful GitHub commit, update this checklist in the next co
 - [ ] Footle: audit answer selection, keyboard feedback, hint costs, scoring and mobile behaviour.
 - [ ] Football Grid: verify all 16 intersections, unique-player enforcement, answer acceptance, retry behaviour and mobile layout (unique-solution feasibility fix committed).
 - [x] Diagnose and fix Football Grid club-name matching for dotted abbreviations such as “F.C.” / “A.F.C.”, which had reduced eligible English clubs to two. Commit: `6de5c53f6e4e3f1e418020bf136a543239927f1d`.
+- [x] Add archive-backed historic Premier League player pool for Grid so all clubs/seasons are available beyond the limited Wikidata career snapshot. Commit: `eea008d3bf59c9daf18b968ceb525974301fd4ba`.
+- [x] Fix the Grid retry button to reload the archive data instead of calling a stale, undefined retry handler. Commit: `f7d6f36f0e09949347ece76749a2660a68f0322b`.
 - [ ] Re-run CC0 database generation and confirm the corrected club match produces at least 500 valid Football Grid packs; previous run failed with zero packs.
 - [ ] Link Up: validate ten unique questions; confirm each bridge player genuinely overlaps at both English clubs; review hints, lives and scoring (attempt/extra-life flow fix committed).
 - [ ] Career File: verify clue accuracy, timeline, aliases, reveal/hint costs and source provenance.
@@ -41,7 +43,7 @@ Rule: after every successful GitHub commit, update this checklist in the next co
 ## Final verification
 - [ ] Run `npm run validate:data`.
 - [ ] Run `npm run validate:football-content` (latest run `46084112601` passed on prior head `d99d59ea3f`; rerun after subsequent Link Up fix).
-- [ ] Run `npm run typecheck` and `npm run build`.
+- [ ] Run `npm run typecheck` and `npm run build` (the archive-backed Grid retry handler was fixed before this check).
 - [ ] Review GitHub Actions results and fix failures.
 - [ ] Report exact changed files, commits, checks passed/failed and anything still needing live browser testing.
 
@@ -56,7 +58,7 @@ Latest completed commits:
 - `599d72dc76` — Football Grid unique intersection rebuild.
 - `41d97fce33` — Career File eligibility and appearance clues.
 
-Latest relevant implementation commits: `6de5c53f6e4e3f1e418020bf136a543239927f1d` (club suffix normalisation fix). `199a453e743fc5af6eda18d97fed2cfc99a56250` (Link Up attempt/extra-life flow); `61c7a1f4d03dd02a743d5718ffd9396852c268d6` (Football Grid unique-solution feasibility).
+Latest relevant implementation commits: `eea008d3bf59c9daf18b968ceb525974301fd4ba` (archive-backed Premier League Grid player pool); `f7d6f36f0e09949347ece76749a2660a68f0322b` (Grid retry handler). `6de5c53f6e4e3f1e418020bf136a543239927f1d` (club suffix normalisation fix). `199a453e743fc5af6eda18d97fed2cfc99a56250` (Link Up attempt/extra-life flow); `61c7a1f4d03dd02a743d5718ffd9396852c268d6` (Football Grid unique-solution feasibility).
 Latest completed football-content validation: success on `d99d59ea3f545c41a2d7558654a406587cfa4fec`; rerun after the Link Up fix.
 The full CC0 database build previously failed at canonical generation with `Football Grid packs below 500: 0`. A diagnostic/wider-club-search patch is committed as `3fa6e5da15`; a run for a newer head is pending. Several database-build runs were cancelled by newer pushes, so do not call the build verified until a non-cancelled successful run is observed.
 
