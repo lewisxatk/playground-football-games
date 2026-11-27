@@ -48,9 +48,9 @@ Collected cards currently live in browser localStorage. They are not account-syn
 
 The feature branch adds reusable CSS/Motion interactions for the homepage hero, game cards, route entrances, feedback states, daily progress and collection-card reveals. Each game page keeps the shared editorial PLAYGROUND identity with its own accent colour and the home tiles have distinct visual treatments. The implementation respects reduced-motion preferences and does not add a 3D renderer or another animation framework.
 
-## CULT HERO — Big Five recognition pool
+## CULT HERO — CC0 career membership pool
 
-CULT HERO now starts from a curated recognisable-player roster covering the Premier League, La Liga, Bundesliga, Serie A and Ligue 1. A daily five tries to include one eligible player from each league. A player is only used when the existing archive has nationality, position and three distinct dated club records; missing source details are not fabricated. The roster is a first curated batch, not an exhaustive current squad database.
+CULT HERO now draws from the dated CC0 Wikidata career snapshot. Each mystery uses recorded club-membership statements and clearly labels the data as club-history evidence, not match appearances or season statistics. The source is broad football rather than a claimed Big Five-only roster; no missing career data is invented.
 
 
 ## Content and data audit
