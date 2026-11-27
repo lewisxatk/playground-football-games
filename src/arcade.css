@@ -187,3 +187,41 @@
  .ladder-control-row select{font-size:16px!important;max-width:100%;width:100%}
  .ladder-item .ladder-grab{font-size:7px}
 }
+
+/* Tournament Nation: floodlit stadium palette, paper fixture strip and shirt-number pitch. */
+.arc-tournament-nation{--ap:#e0eaf0;--ai:#152638;--ag:#a6d8ee;--ao:#ff825f;background:radial-gradient(ellipse at 78% 0%,#c9dce7 0%,var(--ap) 48%);font-family:'Space Grotesk',sans-serif}
+.arc-tournament-nation .arc-heading-line h1{font-family:'Russo One',sans-serif;letter-spacing:-.065em}
+.arc-tournament-nation .arc-card{background:#f4f7f6}
+.tournament-match{display:grid;grid-template-columns:1.2fr 1.2fr 1fr 1fr;gap:6px;margin:14px 0}
+.tournament-match>div{display:flex;flex-direction:column;gap:5px;padding:10px;background:#e3edf2;border-bottom:2px solid #7eabc7;min-width:0}
+.tournament-match small{font-size:7px;font-weight:900;letter-spacing:.13em;color:#668096}
+.tournament-match b{font-size:9px;line-height:1.2;overflow-wrap:anywhere}
+.tournament-pitch{position:relative;overflow:hidden;padding:20px 12px 10px;background:repeating-linear-gradient(90deg,#39744f 0 12.5%,#326947 12.5% 25%);border:1px solid #173c2c;box-shadow:inset 0 0 0 9px #ffffff0c}
+.tournament-pitch:before{content:"";position:absolute;inset:13px;border:1px solid #ffffff70;pointer-events:none}
+.tournament-pitch-lines{position:absolute;left:50%;top:13px;bottom:13px;width:1px;background:#ffffff72}
+.tournament-pitch-lines i:nth-child(1){position:absolute;width:76px;height:76px;border:1px solid #ffffff72;border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}
+.tournament-pitch-lines i:nth-child(2),.tournament-pitch-lines i:nth-child(3){position:absolute;width:40px;height:84px;border:1px solid #ffffff72;top:50%;transform:translateY(-50%)}
+.tournament-pitch-lines i:nth-child(2){right:calc(50% + 190px)}
+.tournament-pitch-lines i:nth-child(3){left:calc(50% + 190px)}
+.tournament-xi-grid{position:relative;z-index:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px 8px;align-items:center;justify-items:center}
+.tournament-shirt{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0;width:100%;animation:tournamentShirtIn .42s cubic-bezier(.2,.75,.25,1) both}
+.shirt-shape{width:43px;height:47px;display:grid;place-items:center;clip-path:polygon(20% 0,37% 12%,63% 12%,80% 0,100% 18%,86% 37%,79% 30%,79% 100%,21% 100%,21% 30%,14% 37%,0 18%);background:linear-gradient(135deg,#e7f2fa,#a9d1e5 60%,#719fbd);border:1px solid #17374b;filter:drop-shadow(2px 3px 0 #102b3d55)}
+.shirt-shape b{font:900 13px 'Barlow Condensed',sans-serif;color:#143148}
+.shirt-club{min-height:37px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;max-width:100%}
+.shirt-club small{font-size:7px;line-height:1.05;text-align:center;font-weight:900;color:#f4f8f0;text-shadow:0 1px 2px #163c2a;overflow-wrap:anywhere}
+.tournament-xi-caption{display:flex;justify-content:space-between;gap:10px;margin-top:15px;padding-top:10px;border-top:1px solid #ffffff65;color:#e7f0e9;font-size:7px;font-weight:900;letter-spacing:.11em}
+.tournament-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:18px}
+.tournament-options button{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px;border:1px solid var(--ai);background:#e6eff4;color:var(--ai);font-size:11px;font-weight:900;cursor:pointer;transition:transform .16s,background .16s}
+.tournament-options button:hover{background:var(--ag);transform:translateY(-2px)}
+.tournament-options i{font-style:normal;color:#7b8d9b}
+@keyframes tournamentShirtIn{from{opacity:0;transform:translateY(13px) scale(.92)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:620px){
+ .tournament-match{grid-template-columns:1fr 1fr}
+ .tournament-match b{font-size:9px}
+ .tournament-pitch{padding:13px 7px 8px}
+ .tournament-xi-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:11px 4px}
+ .shirt-shape{width:37px;height:41px}
+ .shirt-club small{font-size:6px}
+ .tournament-xi-caption{font-size:6px}
+ .tournament-options{grid-template-columns:1fr}
+}
