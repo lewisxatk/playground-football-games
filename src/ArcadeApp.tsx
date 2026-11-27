@@ -7,6 +7,7 @@ import {
 import { ClubBadge, CountryFlag } from "./ClubBadge";
 import { useArchivePlayers } from "./useArchivePlayers";
 
+import { cc0CareerToArchiveGamePlayer } from "./cc0CareerAdapter";
 import { getWorldCupLineups } from "./tournamentNationData";
 import type { ArchiveGamePlayer, ArchiveCareerSpell, ArchiveGameStat } from "./careerFileData";
 import CareerFilePage from "./CareerFilePage";
@@ -976,20 +977,22 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const practiceLimitReached=mode==="practice"&&practiceUsed>=10;
  const done=account.daily[utcDay()]?.["link-up"]!==undefined;
  const seed=mode==="daily"?"LINK:"+utcDay():"LINK:PRACTICE:"+practiceSeed;
- const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,1600);
- const pool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
+ const {data:careerData,loading,error,retry}=useFootballKnowledge("career-history");
+ const pool=useMemo(()=> (careerData?.players??[]).map(profile=>archivePlayerToGamePlayer(cc0CareerToArchiveGamePlayer(profile))),[careerData]);
  const questions=useMemo(()=>{
-   if(pool.length<20)return [];
-   const generated=makeLinkQuestions(pool,hashSeed(seed+":"+difficulty),difficulty);
-   const familiar=new Set(PLAYER_DATABASE.map(player=>normalise(player.name)));
-   const easyCandidates=generated.filter(q=>familiar.has(normalise(q.answer.name))&&familiar.has(normalise(q.start.name))&&familiar.has(normalise(q.end.name)));
-   const careerFloor=difficulty==="EXTREME"?5:difficulty==="HARD"?3:difficulty==="STANDARD"?2:0;
-   const byCareerDepth=generated.filter(q=>q.answer.careerSpells.length>=careerFloor);
-   const selected=difficulty==="EASY"&&easyCandidates.length>=10?easyCandidates:
-     difficulty!=="EASY"&&byCareerDepth.length>=10?byCareerDepth:generated;
-   const unique=Array.from(new Map(selected.map(q=>[q.answer.archiveId,q])).values());
+   if(!careerData?.linkUpPacks?.length)return [];
+   const byId=new Map(careerData.players.map(profile=>[profile.id,archivePlayerToGamePlayer(cc0CareerToArchiveGamePlayer(profile))]));
+   const eligible=careerData.linkUpPacks.flatMap(pack=>{
+     const start=byId.get(pack.startPlayerId),end=byId.get(pack.endPlayerId),answer=byId.get(pack.answerPlayerId);
+     const options=pack.optionPlayerIds.flatMap(id=>{const player=byId.get(id);return player?[player]:[];});
+     return start&&end&&answer&&options.length===pack.optionPlayerIds.length&&options.some(player=>player.archiveId===answer.archiveId)
+       ?[{start,end,answer,startClub:pack.startClub,endClub:pack.endClub,options}]
+       :[];
+   });
+   const ordered=shuffle(eligible,hashSeed(seed+":"+difficulty));
+   const unique=Array.from(new Map(ordered.map(question=>[question.answer.archiveId,question])).values());
    return unique.slice(0,10);
- },[pool,seed,difficulty]);
+ },[careerData,seed,difficulty]);
  const q=questions[index];
  const currentPoints=Math.max(0,1000-penalty);
  const hintValue=q?[
@@ -1036,13 +1039,13 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
    setWrongCount(0);setExtraLifeUsed(false);setHintCount(0);setAnswered(false);setFailed(false);setFinished(false);setNotice("");
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
  };
- return <Frame account={account} game="link-up" eyebrow="SHARED TEAM-MATES / TEN CONNECTIONS" title="THE LINK UP." description="Connect two players through one team-mate with overlapping spells at both clubs. Solve ten links, spend points carefully on hints and extra lives." number="11" mode={mode} setMode={m=>reset(m)}>
+ return <Frame account={account} game="link-up" eyebrow="SHARED TEAM-MATES / TEN CONNECTIONS" title="THE LINK UP." description="Connect two players through one team-mate with overlapping dated club-membership records at both clubs. Solve ten links, spend points carefully on hints and extra lives." number="11" mode={mode} setMode={m=>reset(m)}>
  {done&&mode==="daily"?<Success title="TEN LINKS COMPLETE." detail="Today's ten-question Link Up challenge is banked. Ten practice runs are available each day on this device." button="PRACTICE" onAgain={()=>reset("practice")}/>:
-  loading&&pool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.4,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>CONNECTING CAREERS</b><span>Finding overlapping club spells in the archive.</span></div>:
-  error&&pool.length===0?<Card className="arc-feedback"><b>PLAYER ARCHIVE UNAVAILABLE</b><p>{error}</p><button className="arc-button" onClick={retry}>RETRY ARCHIVE ↗</button></Card>:
+  loading&&pool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.4,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>CONNECTING CAREERS</b><span>Finding verified overlapping club-membership records in the CC0 career archive.</span></div>:
+  error&&pool.length===0?<Card className="arc-feedback"><b>CC0 CAREER ARCHIVE UNAVAILABLE</b><p>{error}</p><button className="arc-button" onClick={retry}>RETRY CC0 ARCHIVE ↗</button></Card>:
   practiceLimitReached?<Card className="arc-result"><small>PRACTICE LIMIT REACHED</small><h2>THAT'S TEN RUNS.</h2><p>You have completed ten free ten-question Link Up runs today on this device. The allowance resets at 00:00 GMT.</p></Card>:
   finished?<Success title="FULL-TIME." detail={"You scored "+score+" points across "+questions.length+" connections."+(mode==="practice"?" Practice run "+practiceUsed+" of 10 used today.":"")} button="NEW TEN-LINK RUN" onAgain={()=>reset(mode)}/>:
-  questions.length!==10||!q?<Card className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NOT ENOUGH VERIFIED LINKS FOR A FULL TEN-QUESTION RUN"}</b><p>{error||"The current player sample did not produce ten unique, unambiguous bridge players. Draw a fresh practice set or retry the archive."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY LINK ARCHIVE ↗</button></Card>:
+  questions.length!==10||!q?<Card className="arc-feedback"><b>{error?"CC0 CAREER ARCHIVE UNAVAILABLE":"NOT ENOUGH VERIFIED CC0 LINKS FOR A FULL TEN-QUESTION RUN"}</b><p>{error||"The CC0 career snapshot did not produce ten unique, unambiguous bridge players. Retry the source or return when the next snapshot is available."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY LINK ARCHIVE ↗</button></Card>:
   <Card className="link-game">
    {mode==="practice"&&<div className="grid-difficulty">{(["EASY","STANDARD","HARD","EXTREME"] as LinkDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{level==="STANDARD"?"MEDIUM / STANDARD":level}</button>)}</div>}
    <div className="arc-game-meta"><span>{mode==="daily"?"DAILY LINK":"PRACTICE · "+difficulty} · QUESTION {index+1}/10</span><b><ScoreTicker value={score} suffix=" PTS"/></b></div>
