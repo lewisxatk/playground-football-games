@@ -6,9 +6,9 @@
     "Master source-backed factual question bank for PLAYGROUND's quiz-first content rollout.",
     "Questions are newly written from researched football facts; source pages verify facts and are not copied quiz text.",
     "Difficulty is editorially assigned using recognisability, specificity and historical depth.",
-    "Every record retains its competition/statistical scope, valid-as-of date, source URL and review status.",
+    "Every record retains competition/statistical scope, valid-as-of date, source URL and review status.",
     "These are question records for Timed Quiz and The Climb. Other games need purpose-built puzzle-pack converters.",
-    "Records are a development batch and are not yet connected to live gameplay."
+    "Records are a development bank and are not yet connected to live gameplay."
   ],
   "facts": [
     {
@@ -1930,35 +1930,686 @@
         "timed-quiz",
         "the-climb"
       ]
+    },
+    {
+      "id": "pl-manager-most-titles-ferguson",
+      "topic": "premier-league",
+      "category": "managers",
+      "difficulty": "easy",
+      "difficultyReason": "A widely recognisable milestone, famous player or foundational competition fact.",
+      "question": "Which manager has won the most Premier League titles, with 13?",
+      "answer": "Sir Alex Ferguson",
+      "acceptedAnswers": [
+        "Sir Alex Ferguson"
+      ],
+      "choices": [
+        "Sir Alex Ferguson",
+        "Pep Guardiola",
+        "Arsène Wenger",
+        "José Mourinho"
+      ],
+      "explanation": "Ferguson won 13 Premier League titles with Manchester United between 1992/93 and 2012/13.",
+      "competition": "Premier League",
+      "scope": "Most Premier League titles won by a manager, 13",
+      "validAsOf": "2026-11-27",
+      "source": {
+        "name": "Premier League Records: Managers",
+        "url": "https://www.premierleague.com/en/news/662065",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-four-consecutive-city",
+      "topic": "premier-league",
+      "category": "clubs",
+      "difficulty": "easy",
+      "difficultyReason": "A widely recognisable milestone, famous player or foundational competition fact.",
+      "question": "Which club became the first to win four consecutive Premier League titles?",
+      "answer": "Manchester City",
+      "acceptedAnswers": [
+        "Manchester City"
+      ],
+      "choices": [
+        "Manchester City",
+        "Manchester United",
+        "Liverpool",
+        "Chelsea"
+      ],
+      "explanation": "Manchester City won the Premier League in four successive seasons from 2020/21 to 2023/24.",
+      "competition": "Premier League",
+      "scope": "Most consecutive Premier League titles, four",
+      "validAsOf": "2024-05-19",
+      "source": {
+        "name": "Premier League Club, Manager & Player Records",
+        "url": "https://www.premierleague.com/en/stats/records",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "euro-first-winners-ussr",
+      "topic": "euros",
+      "category": "history",
+      "difficulty": "easy",
+      "difficultyReason": "A widely recognisable milestone, famous player or foundational competition fact.",
+      "question": "Which country won the first UEFA European Championship in 1960?",
+      "answer": "Soviet Union",
+      "acceptedAnswers": [
+        "Soviet Union"
+      ],
+      "choices": [
+        "Soviet Union",
+        "Yugoslavia",
+        "Spain",
+        "West Germany"
+      ],
+      "explanation": "The Soviet Union beat Yugoslavia 2-1 after extra time in the inaugural 1960 final.",
+      "competition": "UEFA European Championship",
+      "scope": "Winner of inaugural men's EURO in 1960",
+      "validAsOf": "1960-07-10",
+      "source": {
+        "name": "UEFA EURO History",
+        "url": "https://www.uefa.com/uefaeuro/history/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "wc-fastest-goal-sukur",
+      "topic": "world-cup",
+      "category": "records",
+      "difficulty": "easy",
+      "difficultyReason": "A widely recognisable milestone, famous player or foundational competition fact.",
+      "question": "Who scored the fastest goal in men's FIFA World Cup history, after 11 seconds in 2002?",
+      "answer": "Hakan Şükür",
+      "acceptedAnswers": [
+        "Hakan Şükür"
+      ],
+      "choices": [
+        "Hakan Şükür",
+        "Václav Mašek",
+        "Bryan Robson",
+        "Clint Dempsey"
+      ],
+      "explanation": "Şükür scored for Türkiye against Korea Republic after 11 seconds in the 2002 third-place play-off.",
+      "competition": "FIFA World Cup",
+      "scope": "Fastest goal in men's World Cup history, 11 seconds",
+      "validAsOf": "2002-06-29",
+      "source": {
+        "name": "Fastest goals in FIFA World Cup history",
+        "url": "https://www.fifa.com/en/articles/quickest-fastest-goals",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "wc-youngest-hattrick-pele",
+      "topic": "world-cup",
+      "category": "records",
+      "difficulty": "easy",
+      "difficultyReason": "A widely recognisable milestone, famous player or foundational competition fact.",
+      "question": "Who is the youngest player to score a hat-trick at a men's FIFA World Cup?",
+      "answer": "Pelé",
+      "acceptedAnswers": [
+        "Pelé"
+      ],
+      "choices": [
+        "Pelé",
+        "Edmund Conen",
+        "Gonçalo Ramos",
+        "Florian Albert"
+      ],
+      "explanation": "Pelé scored a hat-trick for Brazil against France in the 1958 semi-final aged 17 years and 244 days.",
+      "competition": "FIFA World Cup",
+      "scope": "Youngest World Cup hat-trick scorer, 17 years 244 days",
+      "validAsOf": "1958-06-24",
+      "source": {
+        "name": "Youngest hat-trick scorers in FIFA World Cup history",
+        "url": "https://www.fifa.com/en/articles/youngest-hat-trick-goalscorers",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-wenger-most-matches",
+      "topic": "premier-league",
+      "category": "managers",
+      "difficulty": "medium",
+      "difficultyReason": "A recognisable subject with a more specific statistic, fixture or season detail.",
+      "question": "Who has managed the most Premier League matches, with 828?",
+      "answer": "Arsène Wenger",
+      "acceptedAnswers": [
+        "Arsène Wenger"
+      ],
+      "choices": [
+        "Arsène Wenger",
+        "Sir Alex Ferguson",
+        "Harry Redknapp",
+        "David Moyes"
+      ],
+      "explanation": "Wenger managed Arsenal in 828 Premier League matches between 1996/97 and 2017/18.",
+      "competition": "Premier League",
+      "scope": "Most Premier League matches managed, 828",
+      "validAsOf": "2018-05-13",
+      "source": {
+        "name": "Wenger's incredible stats as he enters Hall of Fame",
+        "url": "https://www.premierleague.com/en/news/3123413",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-ferguson-most-wins",
+      "topic": "premier-league",
+      "category": "managers",
+      "difficulty": "medium",
+      "difficultyReason": "A recognisable subject with a more specific statistic, fixture or season detail.",
+      "question": "Who has recorded the most Premier League wins as a manager, with 410?",
+      "answer": "Sir Alex Ferguson",
+      "acceptedAnswers": [
+        "Sir Alex Ferguson"
+      ],
+      "choices": [
+        "Sir Alex Ferguson",
+        "Arsène Wenger",
+        "Pep Guardiola",
+        "José Mourinho"
+      ],
+      "explanation": "Ferguson won 410 of his 528 Premier League matches in charge of Manchester United.",
+      "competition": "Premier League",
+      "scope": "Most Premier League managerial wins, 410",
+      "validAsOf": "2013-05-19",
+      "source": {
+        "name": "Premier League Records: Managers",
+        "url": "https://www.premierleague.com/en/news/662065",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-allardyce-nine-clubs",
+      "topic": "premier-league",
+      "category": "managers",
+      "difficulty": "medium",
+      "difficultyReason": "A recognisable subject with a more specific statistic, fixture or season detail.",
+      "question": "Which manager has taken charge of the most different Premier League clubs, with nine?",
+      "answer": "Sam Allardyce",
+      "acceptedAnswers": [
+        "Sam Allardyce"
+      ],
+      "choices": [
+        "Sam Allardyce",
+        "Harry Redknapp",
+        "Roy Hodgson",
+        "Alan Curbishley"
+      ],
+      "explanation": "Allardyce managed nine different Premier League clubs between 2001/02 and 2022/23.",
+      "competition": "Premier League",
+      "scope": "Most different Premier League clubs managed, nine",
+      "validAsOf": "2023-05-28",
+      "source": {
+        "name": "Premier League Records: Managers",
+        "url": "https://www.premierleague.com/en/news/662065",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-attendance-record-venue",
+      "topic": "premier-league",
+      "category": "stadiums",
+      "difficulty": "medium",
+      "difficultyReason": "A recognisable subject with a more specific statistic, fixture or season detail.",
+      "question": "Which stadium hosted the record Premier League attendance of 83,222 for Tottenham v Arsenal in 2018?",
+      "answer": "Wembley Stadium",
+      "acceptedAnswers": [
+        "Wembley Stadium"
+      ],
+      "choices": [
+        "Wembley Stadium",
+        "Old Trafford",
+        "Emirates Stadium",
+        "Stadium of Light"
+      ],
+      "explanation": "Wembley hosted 83,222 fans for Tottenham Hotspur's 1-0 win over Arsenal on 10 February 2018.",
+      "competition": "Premier League",
+      "scope": "Highest single-match attendance, 83,222, Tottenham v Arsenal",
+      "validAsOf": "2018-02-10",
+      "source": {
+        "name": "Premier League Records: Clubs",
+        "url": "https://www.premierleague.com/en/news/662062",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "efl-highest-aggregate-tranmere",
+      "topic": "efl",
+      "category": "matches",
+      "difficulty": "medium",
+      "difficultyReason": "A recognisable subject with a more specific statistic, fixture or season detail.",
+      "question": "Which match holds the EFL record for the highest aggregate score, finishing 13-4?",
+      "answer": "Tranmere Rovers v Oldham Athletic",
+      "acceptedAnswers": [
+        "Tranmere Rovers v Oldham Athletic"
+      ],
+      "choices": [
+        "Tranmere Rovers v Oldham Athletic",
+        "Stockport County v Halifax Town",
+        "Newcastle United v Newport County",
+        "Port Vale v Sheffield United"
+      ],
+      "explanation": "Tranmere Rovers beat Oldham Athletic 13-4 on Boxing Day 1935, a 17-goal match and the EFL record aggregate score.",
+      "competition": "English Football League",
+      "scope": "Highest aggregate score in an EFL match, Tranmere Rovers 13-4 Oldham Athletic",
+      "validAsOf": "1935-12-26",
+      "source": {
+        "name": "EFL Records",
+        "url": "https://www.efl.com/about-the-efl/history/records/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-wenger-unbeaten-49",
+      "topic": "premier-league",
+      "category": "managers",
+      "difficulty": "hard",
+      "difficultyReason": "A specialist record or historical detail requiring precise football knowledge.",
+      "question": "How many consecutive Premier League matches did Arsène Wenger's Arsenal go unbeaten for between 2003 and 2004?",
+      "answer": "49",
+      "acceptedAnswers": [
+        "49"
+      ],
+      "choices": [
+        "42",
+        "46",
+        "49",
+        "52"
+      ],
+      "explanation": "Arsenal's 49-match unbeaten Premier League run began in May 2003 and ended against Manchester United in October 2004.",
+      "competition": "Premier League",
+      "scope": "Longest unbeaten run by a manager's team in Premier League history, 49 matches",
+      "validAsOf": "2004-10-24",
+      "source": {
+        "name": "Wenger's incredible stats as he enters Hall of Fame",
+        "url": "https://www.premierleague.com/en/news/3123413",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "efl-everiss-manager-years",
+      "topic": "efl",
+      "category": "managers",
+      "difficulty": "hard",
+      "difficultyReason": "A specialist record or historical detail requiring precise football knowledge.",
+      "question": "Which manager spent 46 years in charge of West Bromwich Albion, the EFL record for longest service at one club?",
+      "answer": "Fred Everiss",
+      "acceptedAnswers": [
+        "Fred Everiss"
+      ],
+      "choices": [
+        "Fred Everiss",
+        "W. G. Richardson",
+        "Alex Ferguson",
+        "Dario Gradi"
+      ],
+      "explanation": "Fred Everiss managed West Bromwich Albion from 1902 to 1948, a 46-year tenure.",
+      "competition": "English Football League",
+      "scope": "Longest-serving manager at one club, 46 years",
+      "validAsOf": "1948-06-30",
+      "source": {
+        "name": "EFL Records",
+        "url": "https://www.efl.com/about-the-efl/history/records/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "ucl-single-season-goals-ronaldo",
+      "topic": "champions-league",
+      "category": "records",
+      "difficulty": "hard",
+      "difficultyReason": "A specialist record or historical detail requiring precise football knowledge.",
+      "question": "Who holds the record for the most goals in a single UEFA Champions League season, scoring 17 in 2013/14?",
+      "answer": "Cristiano Ronaldo",
+      "acceptedAnswers": [
+        "Cristiano Ronaldo"
+      ],
+      "choices": [
+        "Cristiano Ronaldo",
+        "Lionel Messi",
+        "Robert Lewandowski",
+        "Karim Benzema"
+      ],
+      "explanation": "Ronaldo scored 17 goals for Real Madrid in the 2013/14 Champions League campaign.",
+      "competition": "UEFA Champions League",
+      "scope": "Most goals in one Champions League season, 17",
+      "validAsOf": "2014-05-24",
+      "source": {
+        "name": "Cristiano Ronaldo in the Champions League: Records and stats",
+        "url": "https://www.uefa.com/uefachampionsleague/news/02a7-2136b8f054ea-76a61b3f9d24-1000--cristiano-ronaldo-in-the-champions-league-records-stats-wh/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "ucl-scored-in-three-finals-ronaldo",
+      "topic": "champions-league",
+      "category": "records",
+      "difficulty": "hard",
+      "difficultyReason": "A specialist record or historical detail requiring precise football knowledge.",
+      "question": "Which player is the only one to have scored in three separate UEFA Champions League finals?",
+      "answer": "Cristiano Ronaldo",
+      "acceptedAnswers": [
+        "Cristiano Ronaldo"
+      ],
+      "choices": [
+        "Cristiano Ronaldo",
+        "Lionel Messi",
+        "Karim Benzema",
+        "Gareth Bale"
+      ],
+      "explanation": "Ronaldo scored in the 2008, 2014 and 2017 Champions League finals.",
+      "competition": "UEFA Champions League",
+      "scope": "Only player to score in three separate Champions League finals",
+      "validAsOf": "2017-06-03",
+      "source": {
+        "name": "Cristiano Ronaldo in the Champions League: Records and stats",
+        "url": "https://www.uefa.com/uefachampionsleague/news/02a7-2136b8f054ea-76a61b3f9d24-1000--cristiano-ronaldo-in-the-champions-league-records-stats-wh/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "bundesliga-unbeaten-run-53",
+      "topic": "bundesliga",
+      "category": "records",
+      "difficulty": "hard",
+      "difficultyReason": "A specialist record or historical detail requiring precise football knowledge.",
+      "question": "Which club went 53 consecutive Bundesliga matches without defeat between 2012 and 2014?",
+      "answer": "Bayern Munich",
+      "acceptedAnswers": [
+        "Bayern Munich"
+      ],
+      "choices": [
+        "Bayern Munich",
+        "Borussia Dortmund",
+        "Bayer Leverkusen",
+        "Borussia Mönchengladbach"
+      ],
+      "explanation": "Bayern Munich's unbeaten Bundesliga run lasted 53 matches from November 2012 to April 2014.",
+      "competition": "Bundesliga",
+      "scope": "Longest unbeaten run in Bundesliga history, 53 matches",
+      "validAsOf": "2014-04-05",
+      "source": {
+        "name": "Bundesliga records: goals, titles, attendances for players and clubs",
+        "url": "https://www.bundesliga.com/en/bundesliga/news/bundesliga-records-goals-titles-attendances-for-players-and-clubs-10555",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "wc-oldest-scorer-age-milla",
+      "topic": "world-cup",
+      "category": "records",
+      "difficulty": "extreme",
+      "difficultyReason": "An obscure record, exact edge case or highly specific piece of football history.",
+      "question": "How old was Roger Milla when he scored against Russia at the 1994 World Cup?",
+      "answer": "42 years and 39 days",
+      "acceptedAnswers": [
+        "42 years and 39 days"
+      ],
+      "choices": [
+        "40 years and 12 days",
+        "41 years and 27 days",
+        "42 years and 39 days",
+        "43 years and 18 days"
+      ],
+      "explanation": "Milla was 42 years and 39 days old when he scored for Cameroon against Russia at USA 1994.",
+      "competition": "FIFA World Cup",
+      "scope": "Age of oldest World Cup goalscorer, 42 years 39 days",
+      "validAsOf": "1994-06-28",
+      "source": {
+        "name": "Roger Milla: oldest World Cup goalscorer",
+        "url": "https://www.fifa.com/en/articles/roger-milla-goal-cameroon-russia-record",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "ucl-longest-scoring-streak-ronaldo",
+      "topic": "champions-league",
+      "category": "records",
+      "difficulty": "extreme",
+      "difficultyReason": "An obscure record, exact edge case or highly specific piece of football history.",
+      "question": "What is the record number of consecutive UEFA Champions League matches in which Cristiano Ronaldo scored?",
+      "answer": "11",
+      "acceptedAnswers": [
+        "11"
+      ],
+      "choices": [
+        "8",
+        "9",
+        "10",
+        "11"
+      ],
+      "explanation": "Ronaldo scored in 11 successive Champions League matches between June 2017 and April 2018.",
+      "competition": "UEFA Champions League",
+      "scope": "Longest scoring streak by matches in Champions League history, 11",
+      "validAsOf": "2018-04-11",
+      "source": {
+        "name": "Cristiano Ronaldo in the Champions League: Records and stats",
+        "url": "https://www.uefa.com/uefachampionsleague/news/02a7-2136b8f054ea-76a61b3f9d24-1000--cristiano-ronaldo-in-the-champions-league-records-stats-wh/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "efl-clean-sheet-season-record",
+      "topic": "efl",
+      "category": "records",
+      "difficulty": "extreme",
+      "difficultyReason": "An obscure record, exact edge case or highly specific piece of football history.",
+      "question": "Which two clubs share the EFL record of 30 clean sheets in a single league season?",
+      "answer": "Port Vale and Burnley",
+      "acceptedAnswers": [
+        "Port Vale and Burnley"
+      ],
+      "choices": [
+        "Port Vale and Burnley",
+        "Burnley and Leeds United",
+        "Port Vale and Sunderland",
+        "Sheffield United and Newcastle United"
+      ],
+      "explanation": "Port Vale recorded 30 clean sheets in 1953/54 and Burnley matched the mark in 2024/25.",
+      "competition": "English Football League",
+      "scope": "Most clean sheets in an EFL league season, 30",
+      "validAsOf": "2025-05-03",
+      "source": {
+        "name": "EFL Records",
+        "url": "https://www.efl.com/about-the-efl/history/records/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-lowest-attendance-fixture",
+      "topic": "premier-league",
+      "category": "stadiums",
+      "difficulty": "extreme",
+      "difficultyReason": "An obscure record, exact edge case or highly specific piece of football history.",
+      "question": "Which fixture holds the lowest single-match Premier League attendance, with 3,039 spectators?",
+      "answer": "Wimbledon v Everton",
+      "acceptedAnswers": [
+        "Wimbledon v Everton"
+      ],
+      "choices": [
+        "Wimbledon v Everton",
+        "Wimbledon v Coventry City",
+        "QPR v Wimbledon",
+        "Swindon Town v Newcastle United"
+      ],
+      "explanation": "Wimbledon and Everton drew 1-1 at Selhurst Park on 26 January 1993 in front of 3,039 spectators.",
+      "competition": "Premier League",
+      "scope": "Lowest single-match attendance, 3,039 at Selhurst Park",
+      "validAsOf": "1993-01-26",
+      "source": {
+        "name": "Premier League Records: Clubs",
+        "url": "https://www.premierleague.com/en/news/662062",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "bundesliga-least-likely-goal-union",
+      "topic": "bundesliga",
+      "category": "records",
+      "difficulty": "extreme",
+      "difficultyReason": "An obscure record, exact edge case or highly specific piece of football history.",
+      "question": "Which club's Leopold Querfeld scored a Bundesliga goal assigned a probability of just 1.2%, the league's least-likely goal since that metric began?",
+      "answer": "Union Berlin",
+      "acceptedAnswers": [
+        "Union Berlin"
+      ],
+      "choices": [
+        "Union Berlin",
+        "VfB Stuttgart",
+        "Mainz 05",
+        "RB Leipzig"
+      ],
+      "explanation": "Union Berlin's Leopold Querfeld scored in a 4-4 draw with Stuttgart; the goal was given a 1.2% probability.",
+      "competition": "Bundesliga",
+      "scope": "Lowest goal probability since the metric was introduced, 1.2%",
+      "validAsOf": "2026-11-01",
+      "source": {
+        "name": "Bundesliga records: goals, titles, attendances for players and clubs",
+        "url": "https://www.bundesliga.com/en/bundesliga/news/bundesliga-records-goals-titles-attendances-for-players-and-clubs-10555",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
     }
   ],
   "batch": {
-    "id": "uk-football-question-batch-001",
-    "targetTotal": 60,
-    "actualTotal": 60,
+    "id": "uk-football-question-batch-002",
+    "targetTotal": 20,
+    "actualTotal": 20,
     "difficultyTargets": {
-      "easy": 15,
-      "medium": 15,
-      "hard": 15,
-      "extreme": 15
-    },
-    "contentMixTargetPercent": {
-      "premierLeague": 40,
-      "eflAndEnglishCups": 20,
-      "championsLeagueAndEuropeanCups": 15,
-      "worldCupAndEuros": 15,
-      "otherBigFiveLeagues": 10
+      "easy": 5,
+      "medium": 5,
+      "hard": 5,
+      "extreme": 5
     },
     "sourceFamilies": [
       "Premier League",
-      "English Football League",
-      "The FA",
-      "UEFA",
+      "EFL",
       "FIFA",
-      "Bundesliga",
-      "Ligue 1",
-      "Lega Serie A",
-      "La Liga"
+      "UEFA",
+      "Bundesliga"
     ]
-  }
+  },
+  "batches": [
+    {
+      "id": "uk-football-question-batch-001",
+      "actualTotal": 60,
+      "difficultyTargets": {
+        "easy": 15,
+        "medium": 15,
+        "hard": 15,
+        "extreme": 15
+      }
+    },
+    {
+      "id": "uk-football-question-batch-002",
+      "actualTotal": 20,
+      "difficultyTargets": {
+        "easy": 5,
+        "medium": 5,
+        "hard": 5,
+        "extreme": 5
+      }
+    }
+  ]
 }
