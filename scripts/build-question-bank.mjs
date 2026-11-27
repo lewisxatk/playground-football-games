@@ -75,30 +75,65 @@ const clubs = unique(players.flatMap(player => [...(player.clubs ?? []), player.
 const nationalities = unique(players.map(player => player.nationality));
 const leagues = unique(players.map(player => player.currentLeague));
 const countries = unique(players.map(player => player.currentCountry));
-const careerApps = players.map(player => number(player.appearances)).filter(value => value !== null).map(String);
-const careerGoals = players.map(player => number(player.goals)).filter(value => value !== null).map(String);
-const leagueGoals = players.map(player => number(player.leagueGoals)).filter(value => value !== null).map(String);
-const caps = players.map(player => number(player.caps)).filter(value => value !== null).map(String);
-const internationalGoals = players.map(player => number(player.internationalGoals)).filter(value => value !== null).map(String);
-const careerYears = players.flatMap(player => [number(player.firstYear), number(player.lastYear)]).filter(value => value !== null).map(String);
-const careerSpans = players.map(player => {
+const sortedNumbers = values => [...new Set(values.filter(value => value !== null).map(String))].sort((a, b) => Number(a) - Number(b));
+const careerApps = sortedNumbers(players.map(player => number(player.appearances)));
+const careerGoals = sortedNumbers(players.map(player => number(player.goals)));
+const leagueGoals = sortedNumbers(players.map(player => number(player.leagueGoals)));
+const caps = sortedNumbers(players.map(player => number(player.caps)));
+const internationalGoals = sortedNumbers(players.map(player => number(player.internationalGoals)));
+const careerYears = sortedNumbers(players.flatMap(player => [number(player.firstYear), number(player.lastYear)]));
+const careerSpans = sortedNumbers(players.map(player => {
   const first = number(player.firstYear), last = number(player.lastYear);
-  return first !== null && last !== null && last >= first ? String(last - first + 1) : null;
-}).filter(Boolean);
-const clubCounts = players.map(player => String(unique(player.clubs ?? []).length));
-const spellCounts = players.map(player => (player.spells ?? []).length).filter(value => value > 0).map(String);
+  return first !== null && last !== null && last >= first ? last - first + 1 : null;
+}));
+const clubCounts = sortedNumbers(players.map(player => unique(player.clubs ?? []).length));
+const spellCounts = sortedNumbers(players.map(player => (player.spells ?? []).length).filter(value => value > 0));
 
 const pools = Object.fromEntries(["EASY", "MEDIUM", "HARD", "EXTREME"].map(tier => [tier, { ENGLISH: [], INTERNATIONAL: [] }]));
 const add = (tier, player, region, idSuffix, category, question, answer, optionsSource, explanation, numeric = false) => {
-  if (!answer || !player?.id || !player?.name) return;
+  if (!answer || !player?.id || !player?.name || !Array.isArray(optionsSource) || !optionsSource.length) return;
   const answerText = String(answer).trim();
-  const candidates = unique(optionsSource).filter(value => normalise(value) !== normalise(answerText));
-  let distractors;
+  const answerKey = normalise(answerText);
+  let distractors = [];
   if (numeric) {
     const target = Number(answerText);
-    distractors = candidates.sort((a, b) => Math.abs(Number(a) - target) - Math.abs(Number(b) - target) || a.localeCompare(b)).slice(0, 4);
+    let low = 0, high = optionsSource.length;
+    while (low < high) {
+      const middle = (low + high) >>> 1;
+      if (Number(optionsSource[middle]) < target) low = middle + 1;
+      else high = middle;
+    }
+    let left = low - 1, right = low;
+    const used = new Set([answerKey]);
+    while (distractors.length < 4 && (left >= 0 || right < optionsSource.length)) {
+      const leftValue = left >= 0 ? optionsSource[left] : null;
+      const rightValue = right < optionsSource.length ? optionsSource[right] : null;
+      const takeLeft = leftValue !== null && (rightValue === null ||
+        Math.abs(Number(leftValue) - target) <= Math.abs(Number(rightValue) - target));
+      const candidate = String(takeLeft ? leftValue : rightValue);
+      if (takeLeft) left--; else right++;
+      const key = normalise(candidate);
+      if (key && !used.has(key)) { used.add(key); distractors.push(candidate); }
+    }
   } else {
-    distractors = shuffled(candidates, player.id + ":" + idSuffix).slice(0, 4);
+    let state = stableNumber(player.id + ":" + idSuffix) || 1;
+    const used = new Set([answerKey]);
+    let attempts = 0;
+    while (distractors.length < 4 && attempts < Math.min(128, optionsSource.length * 2)) {
+      state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+      const candidate = String(optionsSource[state % optionsSource.length] ?? "").trim();
+      const key = normalise(candidate);
+      if (key && !used.has(key)) { used.add(key); distractors.push(candidate); }
+      attempts++;
+    }
+    if (distractors.length < 4) {
+      for (const raw of optionsSource) {
+        const candidate = String(raw ?? "").trim();
+        const key = normalise(candidate);
+        if (key && !used.has(key)) { used.add(key); distractors.push(candidate); }
+        if (distractors.length === 4) break;
+      }
+    }
   }
   if (distractors.length < 4) return;
   const options = shuffled([answerText, ...distractors], player.id + ":" + idSuffix + ":choices");
