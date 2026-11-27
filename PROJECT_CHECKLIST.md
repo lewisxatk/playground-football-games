@@ -510,3 +510,9 @@ This section records the separate gameplay-rework branch so work is not confused
 - [ ] Build CC0 source ingestion, pinned snapshots, canonical fact ledger, deterministic fact/question generation, source-row recomputation and game-specific QA before claiming 500+ approved playable items per game.
 
 **Next content acceptance gate:** only count an item after its underlying fact is reproducible from an approved CC0 source row, its answer and distractors pass scope checks, it is unique at fact level, and its target game's complete playable unit passes its own validator.
+
+
+- [x] Normalised the 100-question seed's date semantics: 76 historical event dates moved into `eventDate`; all `validAsOf` values now match source check date 2026-11-27.
+- [x] Strengthened static/runtime validators for date semantics, HTTPS sources, fact/scope duplicates and answer aliases in multiple-choice options.
+- [x] Rechecked structural invariants across the 100-question seed: 100 unique IDs, question stems and fact/scope keys; 76 explicit event dates; no schema errors.
+- [!] Factual QA remains separate: the validators cannot prove the statement true or guarantee distractors false. A current Premier League spot check confirmed Nwaneri remains youngest player appearance record and Max Dowman is youngest goalscorer; preserve the distinction and do not treat the Premier League website as a bulk-licensed data source.
