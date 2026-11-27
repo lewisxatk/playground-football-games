@@ -1109,6 +1109,10 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const [wrongCount,setWrongCount]=useState(0);const [extraLifeUsed,setExtraLifeUsed]=useState(false);
  const [hintCount,setHintCount]=useState(0);const [answered,setAnswered]=useState(false);const [failed,setFailed]=useState(false);
  const [notice,setNotice]=useState("");const [finished,setFinished]=useState(false);
+ const [archivePlayers,setArchivePlayers]=useState<ArchiveGamePlayer[]>([]);
+ const [archiveLoading,setArchiveLoading]=useState(true);const [archiveError,setArchiveError]=useState("");
+ const [clubIndex,setClubIndex]=useState<GridClubIndex|null>(null);const [clubIndexLoading,setClubIndexLoading]=useState(true);const [clubIndexError,setClubIndexError]=useState("");
+ const [retryToken,setRetryToken]=useState(0);
  const usageKey="playground.link-up.practice.v1";
  const [practiceUses,setPracticeUses]=useState<Record<string,number>>(()=>{
    try{const parsed=JSON.parse(localStorage.getItem(usageKey)||"{}");return parsed&&typeof parsed==="object"?parsed:{};}catch{return {};}
@@ -1118,30 +1122,49 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const practiceLimitReached=mode==="practice"&&practiceUsed>=10;
  const done=account.daily[utcDay()]?.["link-up"]!==undefined;
  const seed=mode==="daily"?"LINK:"+utcDay():"LINK:PRACTICE:"+practiceSeed;
- const {data:careerData,loading,error,retry}=useFootballKnowledge("career-history");
- const pool=useMemo(()=> (careerData?.players??[]).map(profile=>archivePlayerToGamePlayer(cc0CareerToArchiveGamePlayer(profile))),[careerData]);
+ useEffect(()=>{
+  let live=true;setArchiveLoading(true);setArchiveError("");
+  getStaticArchivePlayers("LINK-UP-ARCHIVE:"+retryToken,3200).then(players=>{
+   if(!live)return;
+   if(!players?.length){setArchiveError("The season-by-season player archive could not be loaded.");setArchivePlayers([]);}
+   else setArchivePlayers(players);
+  }).catch(error=>{if(live)setArchiveError(error instanceof Error?error.message:"The player archive could not be loaded.");})
+   .finally(()=>{if(live)setArchiveLoading(false);});
+  return()=>{live=false;};
+ },[retryToken]);
+ useEffect(()=>{
+  let live=true;setClubIndexLoading(true);setClubIndexError("");
+  fetch("/data/football-knowledge-football-grid-clubs.cc0.json",{cache:"force-cache"}).then(response=>{
+   if(!response.ok)throw new Error("The English club index is unavailable ("+response.status+").");
+   return response.json();
+  }).then(data=>{
+   if(live&&Array.isArray(data.premierLeagueClubs)&&Array.isArray(data.englishLeagueClubs))setClubIndex({premierLeagueClubs:data.premierLeagueClubs,englishLeagueClubs:data.englishLeagueClubs});
+   else if(live)throw new Error("The English club index is incomplete.");
+  }).catch(error=>{if(live)setClubIndexError(error instanceof Error?error.message:"The English club index could not be loaded.");})
+   .finally(()=>{if(live)setClubIndexLoading(false);});
+  return()=>{live=false;};
+ },[retryToken]);
+ const pool=useMemo(()=>archivePlayers.map(archivePlayerToGridPlayer),[archivePlayers]);
+ const candidateQuestions=useMemo(()=>clubIndex&&pool.length?buildArchiveLinkUpQuestions(pool,clubIndex,hashSeed(seed+":"+difficulty),difficulty):[],[clubIndex,pool,seed,difficulty]);
  const questions=useMemo(()=>{
-   if(!careerData?.linkUpPacks?.length)return [];
-   const byId=new Map(careerData.players.map(profile=>[profile.id,archivePlayerToGamePlayer(cc0CareerToArchiveGamePlayer(profile))]));
-   const eligible=careerData.linkUpPacks.flatMap(pack=>{
-     const start=byId.get(pack.startPlayerId),end=byId.get(pack.endPlayerId),answer=byId.get(pack.answerPlayerId);
-     const options=pack.optionPlayerIds.flatMap(id=>{const player=byId.get(id);return player?[player]:[];});
-     return start&&end&&answer&&options.length===pack.optionPlayerIds.length&&options.some(player=>player.archiveId===answer.archiveId)
-       ?[{start,end,answer,startClub:pack.startClub,endClub:pack.endClub,options}]
-       :[];
-   });
-   const ordered=shuffle(eligible,hashSeed(seed+":"+difficulty));
-   const unique=Array.from(new Map(ordered.map(question=>[question.answer.archiveId,question])).values());
-   return unique.slice(0,10);
- },[careerData,seed,difficulty]);
+  const ordered=shuffle(candidateQuestions,hashSeed(seed+":"+difficulty+":ten-links"));
+  const selected:ArchiveLinkQuestion[]=[],answers=new Set<string>();
+  for(const question of ordered){
+   if(answers.has(question.answer.archiveId))continue;
+   answers.add(question.answer.archiveId);selected.push(question);
+   if(selected.length===10)break;
+  }
+  return selected;
+ },[candidateQuestions,seed,difficulty]);
  const q=questions[index];
+ const loading=archiveLoading||clubIndexLoading;
+ const error=archiveError||clubIndexError;
  const currentPoints=Math.max(0,1000-penalty);
- const answerSpell=(club:string)=>q?.answer.careerSpells.find(spell=>normalise(spell.club)===normalise(club));
- const spellWindow=(club:string)=>{const spell=answerSpell(club);return spell?spell.startYear+"–"+(spell.endYear??"end date not recorded"):"membership dates not recorded";};
+ const spellWindow=(window:LinkYearWindow)=>window.startYear+"–"+window.endYear;
  const hintValue=q?[
    q.answer.nationality||"Nationality not recorded",
    q.answer.position||"Position not recorded",
-   q.startClub+": "+spellWindow(q.startClub)+" · "+q.endClub+": "+spellWindow(q.endClub),
+   q.startClub+": "+spellWindow(q.startWindow)+" · "+q.endClub+": "+spellWindow(q.endWindow),
    q.answer.firstYear!==null&&q.answer.lastYear!==null?q.answer.firstYear+"–"+q.answer.lastYear:"Career span not recorded"
  ][hintCount-1]??"": "";
  const canGuess=!answered&&!failed&&wrongCount<(extraLifeUsed?4:3);
@@ -1183,13 +1206,14 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
    setWrongCount(0);setExtraLifeUsed(false);setHintCount(0);setAnswered(false);setFailed(false);setFinished(false);setNotice("");
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
  };
- return <Frame account={account} game="link-up" eyebrow="SHARED TEAM-MATES / TEN CONNECTIONS" title="THE LINK UP." description="Connect two players through one team-mate with overlapping spells at English clubs. Every link is English-football based, with four progressive hints if you get stuck." number="11" mode={mode} setMode={m=>reset(m)}>
+ const retry=()=>{setRetryToken(value=>value+1);reset(mode,difficulty);};
+ return <Frame account={account} game="link-up" eyebrow="SHARED TEAM-MATES / TEN CONNECTIONS" title="THE LINK UP." description="Connect two players through one team-mate with overlapping spells at English clubs. Premier League clubs are prioritised, with other English leagues used when needed. Four progressive hints help you through." number="11" mode={mode} setMode={m=>reset(m)}>
  {done&&mode==="daily"?<Success title="TEN LINKS COMPLETE." detail="Today's ten-question Link Up challenge is banked. Ten practice runs are available each day on this device." button="PRACTICE" onAgain={()=>reset("practice")}/>:
-  loading&&pool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.4,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>CONNECTING CAREERS</b><span>Finding verified overlapping club-membership records in the CC0 career archive.</span></div>:
-  error&&pool.length===0?<Card className="arc-feedback"><b>CC0 CAREER ARCHIVE UNAVAILABLE</b><p>{error}</p><button className="arc-button" onClick={retry}>RETRY CC0 ARCHIVE ↗</button></Card>:
+  loading&&pool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.4,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>CONNECTING ENGLISH CAREERS</b><span>Loading dated player-club spells from the season-by-season archive. First load may take a moment.</span></div>:
+  error&&pool.length===0?<Card className="arc-feedback"><b>ENGLISH PLAYER ARCHIVE UNAVAILABLE</b><p>{error}</p><button className="arc-button" onClick={retry}>RETRY PLAYER ARCHIVE ↗</button></Card>:
   practiceLimitReached?<Card className="arc-result"><small>PRACTICE LIMIT REACHED</small><h2>THAT'S TEN RUNS.</h2><p>You have completed ten free ten-question Link Up runs today on this device. The allowance resets at 00:00 GMT.</p></Card>:
   finished?<Success title="FULL-TIME." detail={"You scored "+score+" points across "+questions.length+" connections."+(mode==="practice"?" Practice run "+practiceUsed+" of 10 used today.":"")} button="NEW TEN-LINK RUN" onAgain={()=>reset(mode)}/>:
-  questions.length!==10||!q?<Card className="arc-feedback"><b>{error?"CC0 CAREER ARCHIVE UNAVAILABLE":"NOT ENOUGH VERIFIED CC0 LINKS FOR A FULL TEN-QUESTION RUN"}</b><p>{error||"The English-club career snapshot did not produce ten unique, unambiguous bridge players. Retry the source or return when the next snapshot is available."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY LINK ARCHIVE ↗</button></Card>:
+  questions.length!==10||!q?<Card className="arc-feedback"><b>{error?"ENGLISH PLAYER ARCHIVE UNAVAILABLE":"NOT ENOUGH VERIFIED ENGLISH LINKS FOR A FULL TEN-QUESTION RUN"}</b><p>{error||"The season-by-season archive did not produce ten unique, unambiguous teammate links. Retry to rotate the player sample or try another difficulty."}</p><button className="arc-button" onClick={retry}>RETRY LINK ARCHIVE ↗</button></Card>:
   <Card className="link-game">
    {mode==="practice"&&<div className="grid-difficulty">{(["EASY","STANDARD","HARD","EXTREME"] as LinkDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{level==="STANDARD"?"MEDIUM / STANDARD":level}</button>)}</div>}
    <div className="arc-game-meta"><span>{mode==="daily"?"DAILY LINK":"PRACTICE · "+difficulty} · QUESTION {index+1}/10</span><b><ScoreTicker value={score} suffix=" PTS"/></b></div>
@@ -1199,18 +1223,18 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
     <i>↔</i>
     <div><small>END PLAYER</small><strong>{q.end.name}</strong><span className="link-club-evidence"><ClubBadge name={q.endClub} size={22}/>{q.endClub}</span></div>
    </div>
-   <div className="link-evidence"><span>FIND THE ONE PLAYER WHO OVERLAPPED BOTH ENDPOINTS. · {q.options.length} OPTIONS</span><b>ARCHIVE WINDOW / {q.startClub} + {q.endClub}</b></div>
+   <div className="link-evidence"><span>FIND THE ONE PLAYER WHO WAS A TEAM-MATE OF BOTH. · {q.options.length} OPTIONS</span><b>ARCHIVE WINDOW / {q.startClub} + {q.endClub}</b></div>
    {!answered&&!failed&&<div className="missing-options">{q.options.map(p=><button type="button" key={p.archiveId} onClick={()=>submit(p.name)} disabled={!canGuess}>{p.name}</button>)}</div>}
    {notice&&<p className={"link-notice "+(answered?"correct":"")}>{notice}</p>}
-   {hintCount>0&&!answered&&<div className="link-hint"><small>HINT {hintCount}/4 · −100 PTS</small><b>{["NATION","POSITION","ENGLISH CLUB SPELL WINDOWS","CAREER SPAN"][hintCount-1]}: {hintValue}</b></div>}
+   {hintCount>0&&!answered&&<div className="link-hint"><small>HINT {hintCount}/4 · −100 PTS</small><b>{["NATION","POSITION","TEAM-MATE WINDOWS","CAREER SPAN"][hintCount-1]}: {hintValue}</b></div>}
    {!answered&&!failed&&<div className="link-tools">
      <button className="arc-quiet" onClick={useHint} disabled={hintCount>=4}>HINT −100 PTS</button>
      {wrongCount>=2&&!extraLifeUsed&&<button className="arc-button" onClick={buyExtraLife}>BUY ONE EXTRA LIFE −100</button>}
      {wrongCount>=3&&<button className="arc-quiet" onClick={skipQuestion}>SKIP WITHOUT REVEAL</button>}
    </div>}
-   {answered&&<div className="arc-feedback quiz-goal"><b>BRIDGE FOUND. +{currentPoints} PTS</b><p>{q.answer.name} has recorded overlapping career spells with {q.start.name} at {q.startClub}, and with {q.end.name} at {q.endClub}. This uses archive year overlap, not minute-by-minute appearance data.</p><button className="arc-button" onClick={completeQuestion}>{index===9?"FINISH DAILY RUN":"NEXT LINK ↗"}</button></div>}
+   {answered&&<div className="arc-feedback quiz-goal"><b>BRIDGE FOUND. +{currentPoints} PTS</b><p>{q.answer.name} shared overlapping spells with {q.start.name} at {q.startClub} ({spellWindow(q.startWindow)}), and with {q.end.name} at {q.endClub} ({spellWindow(q.endWindow)}). This uses year-level archive overlap, not minute-by-minute appearance data.</p><button className="arc-button" onClick={completeQuestion}>{index===9?"FINISH DAILY RUN":"NEXT LINK ↗"}</button></div>}
    {failed&&<div className="arc-feedback quiz-miss"><b>LINK SKIPPED · NO POINTS</b><p>The answer is not revealed. Keep your points and move on to the next connection.</p><button className="arc-button" onClick={completeQuestion}>{index===9?"FINISH RUN":"NEXT LINK ↗"}</button></div>}
-   <p className="arc-muted">A wrong guess or hint costs 100 points. After two wrong guesses you can buy one extra attempt. The correct player is revealed only after you solve the link.</p>
+   <p className="arc-muted">A wrong guess or hint costs 100 points. After two wrong guesses you can buy one extra attempt. The correct player is revealed only after you solve the link. Player archive: OpenFootballBase-Data, CC BY-SA 4.0.</p>
    <div className="arc-game-foot"><span>{mode==="daily"?"DAILY CHALLENGE":Math.max(0,10-practiceUsed)+" PRACTICE RUNS LEFT TODAY"}</span><span>10 QUESTIONS · 1,000 STARTING PTS EACH</span></div>
   </Card>}
  </Frame>;
