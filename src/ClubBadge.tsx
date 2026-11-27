@@ -117,17 +117,17 @@ const FLAG_CODE:Record<string,string>={
  Albania:"al",Algeria:"dz",Andorra:"ad",Angola:"ao",Argentina:"ar",Armenia:"am",Australia:"au",Austria:"at",Azerbaijan:"az",
  Bahrain:"bh",Belarus:"by",Belgium:"be",Benin:"bj",Bolivia:"bo",Bosnia:"ba",Brazil:"br",Bulgaria:"bg",BurkinaFaso:"bf",Burundi:"bi",
  Cameroon:"cm",Canada:"ca",Chile:"cl",China:"cn",Colombia:"co",Comoros:"km",Congo:"cg",CostaRica:"cr",Croatia:"hr",Curacao:"cw",Cyprus:"cy",Czechia:"cz",
- Denmark:"dk",DRCongo:"cd",Ecuador:"ec",Egypt:"eg",ElSalvador:"sv",England:"gb",Estonia:"ee",Ethiopia:"et",
+ Denmark:"dk",DRCongo:"cd",Ecuador:"ec",Egypt:"eg",ElSalvador:"sv",England:"gb-eng",Estonia:"ee",Ethiopia:"et",
  Finland:"fi",France:"fr",Gabon:"ga",Georgia:"ge",Germany:"de",Ghana:"gh",Greece:"gr",Guinea:"gn",GuineaBissau:"gw",
  Haiti:"ht",Honduras:"hn",Hungary:"hu",Iceland:"is",India:"in",Indonesia:"id",Iran:"ir",Iraq:"iq",Ireland:"ie",Israel:"il",Italy:"it",
  IvoryCoast:"ci",Jamaica:"jm",Japan:"jp",Jordan:"jo",Kazakhstan:"kz",Kenya:"ke",Kosovo:"xk",Latvia:"lv",Lebanon:"lb",Liberia:"lr",Libya:"ly",Lithuania:"lt",
  Luxembourg:"lu",Madagascar:"mg",Malawi:"mw",Malaysia:"my",Mali:"ml",Malta:"mt",Mexico:"mx",Moldova:"md",Montenegro:"me",Morocco:"ma",Mozambique:"mz",
- Namibia:"na",Nepal:"np",Netherlands:"nl",NewZealand:"nz",Nicaragua:"ni",Niger:"ne",Nigeria:"ng",NorthMacedonia:"mk",NorthernIreland:"gb",Norway:"no",
+ Namibia:"na",Nepal:"np",Netherlands:"nl",NewZealand:"nz",Nicaragua:"ni",Niger:"ne",Nigeria:"ng",NorthMacedonia:"mk",NorthernIreland:"gb-nir",Norway:"no",
  Oman:"om",Pakistan:"pk",Palestine:"ps",Panama:"pa",Paraguay:"py",Peru:"pe",Philippines:"ph",Poland:"pl",Portugal:"pt",Qatar:"qa",
- Romania:"ro",Russia:"ru",Rwanda:"rw",SaudiArabia:"sa",Scotland:"gb",Senegal:"sn",Serbia:"rs",SierraLeone:"sl",Slovakia:"sk",Slovenia:"si",
+ Romania:"ro",Russia:"ru",Rwanda:"rw",SaudiArabia:"sa",Scotland:"gb-sct",Senegal:"sn",Serbia:"rs",SierraLeone:"sl",Slovakia:"sk",Slovenia:"si",
  Somalia:"so",SouthAfrica:"za",SouthKorea:"kr",Spain:"es",SriLanka:"lk",Sudan:"sd",Suriname:"sr",Sweden:"se",Switzerland:"ch",Syria:"sy",
  Tanzania:"tz",Thailand:"th",Togo:"tg",TrinidadTobago:"tt",Tunisia:"tn",Turkey:"tr",Türkiye:"tr",Uganda:"ug",Ukraine:"ua",UnitedArabEmirates:"ae",
- UnitedStates:"us",Uruguay:"uy",Uzbekistan:"uz",Venezuela:"ve",Vietnam:"vn",Wales:"gb",Zambia:"zm",Zimbabwe:"zw"
+ UnitedStates:"us",Uruguay:"uy",Uzbekistan:"uz",Venezuela:"ve",Vietnam:"vn",Wales:"gb-wls",Zambia:"zm",Zimbabwe:"zw"
 };
 export function CountryFlag({ name, className = "" }:{name:string;className?:string}) {
   const key=name.toLowerCase().replace(/[^a-z]/g,"");
