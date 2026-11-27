@@ -56,3 +56,8 @@ CULT HERO now starts from a curated recognisable-player roster covering the Prem
 ## Content and data audit
 
 See [the 27 November 2026 content and data audit](./docs/CONTENT_AND_DATA_AUDIT_2026-11-27.md) for the split between the 100-question development seed and 3,200 archive-derived prompts, current QA limitations, and the CC0-only source policy.
+
+
+## Football knowledge database
+
+The CC0-only football knowledge pipeline, source pins, duplicate policy, accuracy limits and per-game coverage are documented in [CC0 Football Knowledge Engine](docs/CC0_FOOTBALL_KNOWLEDGE_ENGINE.md). Generated data and its QA report are published under `public/data/football-knowledge*`. Career File, Cult Hero and Link Up remain explicitly unready until dated club-career data is verified.

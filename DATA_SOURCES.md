@@ -71,3 +71,10 @@ The 100-question factual seed is a development-only bank and is not the live sou
 ### Useful but not CC0: optional English history expansion
 
 [England Football League Data](https://github.com/seanelvidge/England-football-results) reported 212,910 English league matches from 1888 through 26 November 2026 across the top four tiers, with results, league divisions, historical club names, active periods and point deductions. Its author's original contributions are CC BY 4.0 (attribution required), and the author explicitly reserves third-party source rights and logo rights. This is a very strong EFL/history candidate if the project later accepts a simple attribution credit; it is deliberately **not** part of the strict CC0-only ingestion whitelist.
+
+
+## Strict CC0 build whitelist
+
+The current runtime knowledge engine uses only pinned CC0-1.0 data: OpenFootball player identities (`125d20f7cc06cac7e758b40df535a7695632680a`), OpenFootball clubs (`ae3800227c449447b3a337fc0aac79a8f02f4c8b`), and Mart Jürisoo men's senior international results (`ca84241bb3eed854a1956a2fab442fe4daad40dd`), plus the in-repository World Cup starting-line-up source. The exact policy, source scope and accuracy caveats are in [CC0 Football Knowledge Engine](docs/CC0_FOOTBALL_KNOWLEDGE_ENGINE.md).
+
+The legacy mixed-provenance OpenFootballBase question-bank generator and runtime question-bank module have been retired from the build. CC BY-SA or unknown-rights data is not silently imported into the CC0 engine. Club crests, player photographs and third-party logos are not included.

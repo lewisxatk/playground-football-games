@@ -521,3 +521,17 @@ This section records the separate gameplay-rework branch so work is not confused
 - [x] Tightened Les Ferdinand's 149-goal statistic to say "non-penalty goals", avoiding the impression that he never scored a penalty.
 - [x] Corrected Geoff Hurst's World Cup final hat-trick scope from "only" to "first", noting Mbappé later matched the feat in 2022.
 - [x] Confirmed Ethan Nwaneri remains the youngest Premier League appearance-maker; Max Dowman holds the separate youngest-goalscorer record.
+
+
+## CC0 knowledge engine — current state
+
+- [x] Pin and verify CC0 player, club and international-results sources
+- [x] Build stable player/match IDs, aliases, source provenance and source-scoped deduplication
+- [x] Generate and validate 500+ game-specific pools for 14 games
+- [x] Remove the legacy mixed-provenance question-bank generator/module from the production build path
+- [x] Integrate CC0 pools into the 14 game pages listed in `docs/CC0_FOOTBALL_KNOWLEDGE_ENGINE.md`
+- [ ] Replace legacy career data in Career File with verified dated club spells
+- [ ] Build 500+ Cult Hero packs from source-backed career/appearance facts
+- [ ] Build 500+ Link Up shared-career puzzles with a unique valid answer
+- [ ] Split/lazy-load large database shards and measure first-load performance on mobile
+- [ ] Manually spot-check factual accuracy and answer ambiguity across every game before public release

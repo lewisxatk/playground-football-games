@@ -101,3 +101,10 @@ See [CONTENT_AND_DATA_AUDIT_2026-11-27.md](./CONTENT_AND_DATA_AUDIT_2026-11-27.m
 ## Follow-up data hygiene
 
 The 100-record seed now separates `eventDate` (the date of a historic match/milestone) from `validAsOf` (the date the record was checked). Historical dates previously stored in `validAsOf` were migrated into `eventDate`. The validators now check source/date formats, fact/scope duplicates and accepted aliases in multiple-choice options, but factual and rights verification still require source-row recomputation and a documented CC0 source.
+
+
+## CC0 knowledge-engine implementation
+
+The CC0 engine now supplies distinct, game-specific pools for Footle, The Climb, Timed Quiz, Connections, Strands, Football Grid, Missing XI, Tournament Nation, The Reveal, Lowball, The Ladder, Football 501, Draft XI and Scout Signal. The machine-readable report at `public/data/football-knowledge-report.json` is the source of truth for counts and readiness; do not count a pool as live merely because a file exists.
+
+Career File, Cult Hero and Link Up are held back until we have dated, source-backed club spells and reliable shared-career relationships. Do not fabricate a transfer timeline or use an unlicensed/scraped dataset to fill those slots. See [CC0 Football Knowledge Engine](CC0_FOOTBALL_KNOWLEDGE_ENGINE.md).
