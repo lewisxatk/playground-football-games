@@ -215,7 +215,7 @@ function buildInternationalQuiz(matches){
    options=pickOptions(answer,margins,match.id);
   }
   if(!options)return null;
-  const tier=match.year>=2000?"EASY":match.year>=1980?"MEDIUM":match.year>=1950?"HARD":"EXTREME";
+  const tier=match.sourceKey==="england"?(match.year>=2015?"EASY":match.year>=2005?"MEDIUM":match.year>=1995?"HARD":"EXTREME"):(match.year>=2000?"EASY":match.year>=1980?"MEDIUM":match.year>=1950?"HARD":"EXTREME");
   const region=match.region??"INTERNATIONAL";
   const source=match.sourceKey==="england"?SOURCES.england:match.sourceKey==="championsLeague"?SOURCES.championsLeague:SOURCES.internationalResults;
   return{id:id("international-question",match.id),factId:match.id,playerId:match.id,tier,region,category:match.tournament,questionType,question,answer,options,explanation,source:source.url+"/blob/"+source.commit+"/"+(match.sourceFile??"results.csv"),matchId:match.id,eventDate:match.date};
