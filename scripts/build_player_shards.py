@@ -146,6 +146,12 @@ def clean_number(value: Any, default: int = 0) -> int:
     return int(value)
 
 
+def clean_optional_number(value: Any) -> int | float | None:
+    if value is None:
+        return None
+    return clean(value)
+
+
 def build_rows(manifest: dict[str, Any], files: dict[str, Any]) -> list[dict[str, Any]]:
     import duckdb  # installed by the GitHub Actions workflow
 
@@ -198,7 +204,6 @@ def build_rows(manifest: dict[str, Any], files: dict[str, Any]) -> list[dict[str
         any_value(source_revid) AS career_source_revision
       FROM career_base
       GROUP BY player_id
-      HAVING coalesce(sum(apps),0) >= 10
     ),
     stat_base AS (
       SELECT CASE WHEN coalesce(trim(player_qid),'') <> '' THEN player_qid
@@ -304,7 +309,6 @@ def build_rows(manifest: dict[str, Any], files: dict[str, Any]) -> list[dict[str
     LEFT JOIN national_rollup nt ON nt.player_id=c.player_id
     LEFT JOIN club_rollup cl ON cl.wikidata_qid=c.current_club_qid
     LEFT JOIN stat_source_rollup ss ON ss.player_qid=c.player_id
-    WHERE c.appearances >= 20
     ORDER BY hash(c.player_id), c.player_id
     """
     cursor = conn.execute(query)
@@ -313,7 +317,11 @@ def build_rows(manifest: dict[str, Any], files: dict[str, Any]) -> list[dict[str
     for raw in cursor.fetchall():
         row = dict(zip(columns, raw))
         spells = json_list(row.get("spells_json"))
-        clubs = json_list(row.get("clubs_json"))
+        clubs = []
+        for spell in spells:
+            club_name = spell.get("club") if isinstance(spell, dict) else None
+            if club_name and club_name not in clubs:
+                clubs.append(str(club_name))
         teams = json_list(row.get("teams_json"))
         rows.append({
             "id": str(row.get("player_id") or ""),
@@ -321,22 +329,24 @@ def build_rows(manifest: dict[str, Any], files: dict[str, Any]) -> list[dict[str
             "fullName": str(row.get("full_name") or row.get("name") or "Unknown player"),
             "nationality": str(row.get("nationality") or row.get("senior_team") or ""),
             "position": str(row.get("position") or ""),
-            "clubs": [str(c) for c in clubs if c],
+            "clubs": clubs,
             "spells": spells,
             "currentClub": str(row.get("current_club") or ""),
-            "appearances": clean_number(row.get("appearances")),
-            "goals": clean_number(row.get("goals")),
+            "appearances": clean_optional_number(row.get("appearances")),
+            "goals": clean_optional_number(row.get("goals")),
+            "appearanceRows": clean_number(row.get("appearance_rows")),
+            "goalRows": clean_number(row.get("goal_rows")),
             "careerAppearanceRows": clean_number(row.get("appearance_rows")),
             "careerGoalRows": clean_number(row.get("goal_rows")),
-            "leagueAppearances": clean_number(row.get("league_appearances")),
-            "leagueGoals": clean_number(row.get("league_goals")),
+            "leagueAppearances": clean_optional_number(row.get("league_appearances")),
+            "leagueGoals": clean_optional_number(row.get("league_goals")),
             "leagueGoalSeasons": clean_number(row.get("league_goal_seasons")),
             "leagueAppearanceRows": clean_number(row.get("league_appearance_rows")),
             "leagueGoalRows": clean_number(row.get("league_goal_rows")),
             "leagueAssists": clean_number(row.get("league_assists")),
             "leagueAssistSeasons": clean_number(row.get("league_assist_seasons")),
             "seasons": clean_number(row.get("seasons")),
-            "seasonStats": json_list(row.get("season_stats_json")),
+            "stats": json_list(row.get("season_stats_json")),
             "firstYear": row.get("first_year"),
             "lastYear": row.get("last_year"),
             "caps": row.get("caps"),
@@ -444,7 +454,7 @@ def main() -> None:
     index_path = output / "manifest.json"
     index_path.write_text(json.dumps(index, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps({
-        "sourceRelease": index["sourceRelease"],
+        "sourceRelease": index["releaseTag"],
         "playerCount": len(rows),
         "shardCount": len(shards),
         "manifest": str(index_path),
