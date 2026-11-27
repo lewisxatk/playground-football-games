@@ -1058,7 +1058,7 @@ function MissingXIPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
    setDifficulty(newDifficulty);setAttempts(0);setEnd(false);setWon(false);
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
  };
- return <Frame account={account} game="missing-xi" eyebrow="HISTORIC STARTING XI / ONE NAME REMOVED" title="MISSING XI." description="A real World Cup starting line-up from 1982–2022. Ten names remain on the pitch. Find the missing starter." number="12" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
+ return <Frame account={account} game="missing-xi" eyebrow="HISTORIC STARTING XI / ONE NAME REMOVED" title="MISSING XI." description="A real World Cup starting line-up from 1982–2026. Ten names remain on the pitch. Find the missing starter." number="12" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
  {done&&mode==="daily"?<Success title="LINE-UP COMPLETE." detail="Today's starting XI has been solved. Unlimited random World Cup practice is open." button="PRACTICE XI" onAgain={()=>{setMode("practice");reset("practice");}}/>:
   error?<Card className="arc-feedback"><b>WORLD CUP DATA UNAVAILABLE</b><p>{error}</p><button className="arc-button" onClick={retry}>RETRY LINE-UPS ↗</button></Card>:
   loading||!match?<Card className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>OPENING THE WORLD CUP ARCHIVE</b><span>LOADING MATCHES AND STARTING ELEVENS…</span></Card>:
@@ -1266,7 +1266,7 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
 
  const match=useMemo(()=>{
    if(!worldCupData?.lineups.length)return null;
-   const eligible=worldCupData.lineups.filter(item=>item.year>=1982&&item.year<=2022&&item.starters.length===11);
+   const eligible=worldCupData.lineups.filter(item=>item.year>=1982&&item.year<=2026&&item.starters.length===11);
    return eligible.length?eligible[hashSeed(seed+":match")%eligible.length]??null:null;
  },[worldCupData,seed]);
  const teams=useMemo(()=>worldCupData?[...new Set(worldCupData.lineups.map(item=>item.team).filter(Boolean))]:[],[worldCupData]);
