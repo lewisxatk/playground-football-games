@@ -452,3 +452,18 @@ This section records the separate gameplay-rework branch so work is not confused
 - [!] The 3,200 question bank remains generated from source archive records, not individually hand-researched general football trivia. Easy recognisability still needs human QA.
 
 **Next actions:** open a draft PR to run the full CI pipeline; resolve any type/build/data-validation failures; then test Grid, Footle, Quick Quiz, Tournament Nation, Link Up and Strands on iPhone Safari before promoting the branch to production.
+
+
+## 17. CULT HERO initial implementation (2026-11-27)
+
+- [x] Created isolated branch `feat/cult-hero-mystery-pack-opening` from the latest gameplay-rework branch; production `main` and earlier work were not overwritten.
+- [x] Added CULT HERO as the 17th arcade game tile and registered `/cult-hero` in the existing application router.
+- [x] Implemented a five-player Daily Five run and unlimited Practice mode. Daily player selection uses a stable UTC-date seed against the shared archive sample; practice uses a fresh seed.
+- [x] Built clues only from player profile and dated career-spell fields available in the archive. Eligibility requires a recorded position, nationality, and at least three distinct dated clubs; wording explicitly describes the archive record rather than claiming full career completeness.
+- [x] Added five guesses, progressive clues, surname matching only when unique in that day's five, clue-based scoring, per-run results, and daily score callback into the existing local Locker Room record.
+- [x] Correctly identified players are saved to a deduplicated local CULT HERO collection. Storage is browser-local and is not cloud-synced.
+- [x] Added `/cult-hero-collection` with a one-card pack opening, card emergence, reveal state, and local collection cabinet. The animation uses original CSS/React only and respects reduced-motion preferences; no third-party animation dependency was added.
+- [x] Added editorial styling consistent with PLAYGROUND's warm paper, ink, olive and orange design direction. No FIFA-style walkout, cartoon effects, paid currency or random paid packs.
+- [!] Player cards are typography-led. Real player portraits, club crests and other third-party art are not used in the pack prototype until suitable image rights/asset sources are cleared.
+- [!] The collection and daily scores remain local-browser features; server-authoritative scoring, cloud save, account sync, trading and shared online leaderboards are not implemented.
+- [!] Human playtesting on iPhone Safari and desktop is outstanding. Build/CI validation is recorded below after the branch workflow completes.
