@@ -29,6 +29,16 @@ function shuffleCandidates<T>(items:T[],limit:number):T[]{
   for(let i=copy.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[copy[i],copy[j]]=[copy[j],copy[i]];}
   return copy.slice(0,limit);
 }
+const RECENT_PLAYER_KEY="playground.career-file.recent.v1";
+function loadRecentCareerIds():Set<string>{
+  try{
+    const value=JSON.parse(localStorage.getItem(RECENT_PLAYER_KEY)||"[]");
+    return new Set(Array.isArray(value)?value.filter((id):id is string=>typeof id==="string").slice(-600):[]);
+  }catch{return new Set();}
+}
+function persistRecentCareerIds(ids:Set<string>){
+  try{localStorage.setItem(RECENT_PLAYER_KEY,JSON.stringify(Array.from(ids).slice(-600)));}catch{/* private browsing may disable storage */}
+}
 function makeRows(p:Player):Row[]{
   const rows:Row[]=[];
   for(const spell of ordered(p)){
@@ -165,14 +175,14 @@ export default function CareerFilePage(){
   const [round,setRound]=useState(0);
   const [note,setNote]=useState("");
   const [copied,setCopied]=useState(false);
-  const seen=useRef<Set<string>>(new Set());
+  const seen=useRef<Set<string>>(loadRecentCareerIds());
 
   const newPlayer=useCallback(async(deck:Candidate[],selectedMode:Mode)=>{
     const options=deck.filter(c=>fits(c,selectedMode));
     if(!options.length)throw new Error("There are no candidate files for "+selectedMode+" in this league selection. Try All Top Five or another difficulty.");
     const unused=options.filter(c=>!seen.current.has(c.id));
     const source=unused.length?unused:options;
-    if(!unused.length){seen.current.clear();setNote("The draw has cycled. Previously used files are back in the mix.");}
+    if(!unused.length){seen.current.clear();persistRecentCareerIds(seen.current);setNote("You have worked through this difficulty and league pool. The player draw has restarted.");}
     // Keep the phone draw bounded: one small eligibility query and at most six
     // full player lookups. The previous loop could walk thousands of records
     // before showing a single playable file.
@@ -184,7 +194,7 @@ export default function CareerFilePage(){
       const ranked=[...eligible].sort((a,b)=>b.statSeasons-a.statSeasons);
       let lastProblem="No candidate in this draw had two complete season-stat rows.";
       for(const choice of ranked.slice(0,6)){
-        seen.current.add(choice.id);
+        seen.current.add(choice.id);persistRecentCareerIds(seen.current);
         try{
           const record=await getPlayer(choice.id);
           const timeline=makeRows(record);
@@ -203,7 +213,7 @@ export default function CareerFilePage(){
   },[]);
 
   useEffect(()=>{
-    let live=true;seen.current.clear();setBusy(true);setError("");
+    let live=true;setBusy(true);setError("");
     setPlayer(null);setRows([]);setOpened([]);setRevealed([]);setFreeRows([]);setFreeNote(null);setTransfers(null);setFeesError("");
     setGuess("");setAttempts(0);setScore(1000);setStatus("playing");setNote("");
     getCandidates(league).then(async list=>{if(!live)return;setPool(list);await newPlayer(list,mode);})
