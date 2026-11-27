@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&display=swap');
-.cf-page{--i:#111b1a;--p:#f3f0e7;--g:#d1f15b;--o:#ff7252;--b:#7bc5d8;--v:#c8b4ee;--line:rgba(17,27,26,.25);position:relative;min-height:100vh;overflow:hidden;background:var(--p);color:var(--i);font-family:'Cabinet Grotesk',Arial,sans-serif}
+.cf-page{--i:#111b1a;--p:#f3f0e7;--g:#d1f15b;--o:#ff7252;--b:#7bc5d8;--v:#c8b4ee;--line:rgba(17,27,26,.25);position:relative;min-height:100vh;overflow:hidden;background:var(--p);color:var(--i);font-family:'Space Grotesk',Arial,sans-serif}
 .cf-grain{pointer-events:none;position:absolute;inset:0;z-index:0;opacity:.1;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.28'/%3E%3C/svg%3E")}
 .cf-page>*:not(.cf-grain){position:relative;z-index:1}.cf-topbar{height:76px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 5.4%}
 .cf-brand{font-size:27px;font-weight:900;letter-spacing:-.09em}.cf-brand span{font-weight:500}.cf-brand b{font-size:9px;vertical-align:top;margin-left:3px}.cf-toplinks,.cf-topright{font-size:9px;font-weight:900;letter-spacing:.15em}.cf-toplinks span{opacity:.4;margin:0 12px}.cf-toplinks strong{color:#6e8739}.cf-topright{display:flex;align-items:center;gap:9px}.cf-live{width:7px;height:7px;background:#91bd37;display:inline-block;border-radius:50%;box-shadow:0 0 0 4px rgba(145,189,55,.15);animation:cfPulse 1.8s infinite}
@@ -61,3 +61,16 @@
 @media(max-width:620px){.cf-free-brief{align-items:flex-start;flex-direction:column}.cf-free-tag{align-self:flex-start}.cf-mode-count{font-size:6px!important}}
 
 .cf-daily-complete{position:relative;z-index:2;max-width:1120px;margin:14px auto;padding:12px 16px;background:#ddecbe;border:1px solid #6c8541;color:#2b3b25;font-size:9px;font-weight:900;letter-spacing:.12em;text-align:center}
+
+/* iPhone readability and Safari focus-zoom guard for the separate Career File screen. */
+@media(max-width:620px){
+ .cf-page input,.cf-page select,.cf-page textarea{font-size:16px!important}
+ .cf-record-head,.cf-table th,.cf-reveal-row,.cf-record-foot,.cf-spell-total,
+ .cf-mode-count,.cf-guess-rules,.cf-side-actions span,.cf-free-tag,
+ .cf-hint-head>span:last-child,.cf-hint-row button,.cf-outcome span,.cf-outcome button{font-size:8px!important}
+ .cf-source-note,.cf-message,.cf-hint-row p,.cf-outcome p,.cf-source-credits p{font-size:11px}
+ .cf-guess-panel label{font-size:10px}
+ .cf-guess-panel form button{font-size:9px}
+ .cf-mode-title>span:last-child{font-size:9px}
+ .cf-footer span{font-size:8px}
+}
