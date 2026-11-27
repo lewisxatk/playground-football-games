@@ -902,7 +902,7 @@ function RevealPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  </Frame>;
 }
 
-type CheckoutMetric="leagueGoals"|"caps";
+type CheckoutMetric="internationalGoals";
 type CheckoutDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
 type CheckoutPlayer={id:string;name:string;value:number;label:string};
 function FiveOhOnePage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
@@ -914,17 +914,13 @@ function FiveOhOnePage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
  const [busts,setBusts]=useState(0);const [bust,setBust]=useState(false);const [finish,setFinish]=useState(false);const [runBanked,setRunBanked]=useState(false);
  const done=account.daily[utcDay()]?.["football-501"]!==undefined;
  const seed=mode==="daily"?"501:"+utcDay():"501:PRACTICE:"+practiceSeed;
- const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,1600);
+ const {football501Packs,loading,error,retry}=useFootballKnowledge();
  const pool=useMemo(()=>{
-   const mapped=archivePlayers.map(archivePlayerToGamePlayer).map(p=>({
-     id:p.archiveId,name:p.name,
-     value:metric==="leagueGoals"?p.leagueGoals:(p.caps??-1),
-     label:metric==="leagueGoals"?"RECORDED LEAGUE GOALS":"INTERNATIONAL CAPS",
-     coverage:metric==="leagueGoals"?p.leagueGoalSeasons:(p.caps??0)
-   })).filter(p=>p.value>0&&(metric!=="leagueGoals"||p.coverage>=2));
-   return mapped.length>=8?mapped:LEAGUE_GOALS.map(p=>({id:p.name,name:p.name,value:p.value,label:"PREMIER LEAGUE GOALS",coverage:1}));
- },[archivePlayers,metric]);
- const maxValue=difficulty==="EASY"?300:difficulty==="STANDARD"?220:difficulty==="HARD"?130:80;
+   const unique=new Map<string,CheckoutPlayer>();
+   for(const pack of football501Packs)for(const player of pack.players){const value=player.value??player.goals??0;if(value>0&&!unique.has(player.id))unique.set(player.id,{id:player.id,name:player.name,value,label:player.label??"RECORDED SENIOR INTERNATIONAL GOALS"})}
+   return [...unique.values()];
+ },[football501Packs]);
+ const maxValue=difficulty==="EASY"?100:difficulty==="STANDARD"?60:difficulty==="HARD"?35:20;
  const options=useMemo(()=>{
    const valid=pool.filter(p=>!used.includes(p.id)&&p.value<=maxValue);
    const source=valid.length>=6?valid:pool.filter(p=>!used.includes(p.id));
@@ -956,24 +952,24 @@ function FiveOhOnePage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
    setDifficulty(newDifficulty);setMetric(newMetric);setRemaining(501);setTurnStart(501);setTurnPicks([]);setUsed([]);setBusts(0);setBust(false);setFinish(false);setRunBanked(false);
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
  };
- return <Frame account={account} game="football-501" eyebrow="THREE DARTS / ONE CHECKOUT" title="FOOTBALL 501." description="Choose player-stat darts to work down from 501. Three picks make a visit. Busting below zero wipes the visit." number="10" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
+ return <Frame account={account} game="football-501" eyebrow="THREE DARTS / ONE CHECKOUT" title="FOOTBALL 501." description="Use recorded senior international goal totals as darts to work down from 501. Three picks make a visit. Busting below zero wipes the visit." number="10" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
  {done&&mode==="daily"?<Success title="CHECKOUT BANKED." detail="Today's 501 challenge is complete. Practice is unlimited." button="PRACTICE" onAgain={()=>{setMode("practice");reset("practice");}}/>:
   <Card className="checkout-game">
-   <div className="arc-game-meta"><span>VISIT / {Math.floor(used.length/3)+1}</span><b>{difficulty} · {metric==="leagueGoals"?"LEAGUE GOALS":"INTERNATIONAL CAPS"}</b></div>
+   <div className="arc-game-meta"><span>VISIT / {Math.floor(used.length/3)+1}</span><b>{difficulty} · {"INTERNATIONAL GOALS RECORDED"}</b></div>
    <div className="grid-difficulty">{(["EASY","STANDARD","HARD","EXTREME"] as CheckoutDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level,metric)}>{difficultyLabel(level)}</button>)}</div>
    <div className="checkout-scoreboard">
     <div className="checkout-target"><span>REMAINING</span><strong key={remaining}>{remaining}</strong><small>{remaining===0?"CHECKOUT!":remaining<=170?"ON THE FINISH":"301 / 501 CLUBHOUSE"}</small></div>
     <div className="checkout-dartboard"><div className="dart-ring ring-one"/><div className="dart-ring ring-two"/><div className="dart-ring ring-three"/><div className="dart-bull"/><motion.div className="dart-flight" animate={{x:[-30,6,0],y:[-26,4,0],rotate:[-35,8,0],opacity:[0,1,1]}} transition={{duration:.48,repeat:Infinity,repeatDelay:1.8}}/></div>
    </div>
    <div className="checkout-turn"><div><small>THIS VISIT</small><b>{turnPicks.length} / 3 DARTS</b></div><div className="checkout-dart-slots">{[0,1,2].map(i=><div className={turnPicks[i]?"hit":""} key={i}><small>DART {i+1}</small><b>{turnPicks[i]?turnPicks[i].value:"—"}</b></div>)}</div><div className="checkout-turn-total"><small>VISIT TOTAL</small><strong>{currentVisitTotal}</strong></div></div>
-   {loading&&pool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.4,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>SCOUTING THE DARTS POOL</b><span>Collecting players with recorded statistics.</span></div>:
+   {loading&&pool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.4,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>SCOUTING THE CC0 DARTS POOL</b><span>Collecting source-backed international goal records.</span></div>:
     <><div className="arc-game-meta"><span>CHOOSE A PLAYER AS YOUR NEXT DART</span><b>{options.length} OPTIONS</b></div><div className="checkout-cards">{options.map(p=><button key={p.id} disabled={turnPicks.length===3||finish||runBanked||bust} onClick={()=>pick(p)}><small>{p.name}</small><b>{p.value.toLocaleString("en-GB")}</b><i>{p.label}</i></button>)}</div></>}
    {bust&&<div className="arc-feedback"><b>BUST — VISIT WIPED.</b><p>Your total stays at {turnStart}. The three darts in that visit score zero.</p><button className="arc-button" onClick={()=>setBust(false)}>RESET DARTS ↗</button></div>}
    {visitEnded&&!finish&&<div className="arc-feedback"><b>VISIT COMPLETE · {currentVisitTotal} POINTS</b><p>You are now on {remaining}. Start the next visit when you're ready.</p><button className="arc-button" onClick={nextVisit}>NEXT VISIT ↗</button></div>}
    {(finish||runBanked)&&<div className="arc-feedback"><b>{remaining===0?"CHECKOUT!":"RUN BANKED."} · {score}/1000</b><p>{remaining===0?"Exactly zero — perfect finish.":"You finished "+remaining+" away from zero after "+busts+" busts."}</p><button className="arc-button" onClick={()=>reset(mode)}>ANOTHER RUN ↗</button></div>}
    <div className="arc-game-foot"><span>{used.length} PLAYERS USED · {busts} BUSTS</span><button className="arc-button" disabled={used.length===0||finish||runBanked} onClick={bankRun}>BANK SCORE ↗</button><button className="arc-quiet" onClick={()=>reset(mode)}>RESET</button></div>
-   <p className="arc-muted">{metric==="leagueGoals"?"Recorded league-goal rows are incomplete for some players; only player totals with at least two recorded seasons are eligible.":"International caps are aggregated from the career archive and may be incomplete."} This is a custom player-stat darts mode, not official PDC scoring.</p>
-   {error&&<div className="arc-feedback"><b>ARCHIVE FALLBACK</b><p>The player-stat archive is unavailable. The starter Premier League goal list is active.</p><button className="arc-quiet" onClick={retry}>RETRY DATABASE</button></div>}
+   <p className="arc-muted">Recorded senior international goals from the CC0 source are not guaranteed complete career totals. This is a custom player-stat darts mode, not official PDC scoring.</p>
+   {error&&<div className="arc-feedback"><b>CC0 STAT DATABASE UNAVAILABLE</b><p>The international goal-record pool could not be loaded.</p><button className="arc-quiet" onClick={retry}>RETRY DATABASE</button></div>}
   </Card>}
  </Frame>;
 }
