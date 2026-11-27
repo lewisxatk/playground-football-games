@@ -108,3 +108,10 @@ The 100-record seed now separates `eventDate` (the date of a historic match/mile
 The CC0 engine now supplies distinct, game-specific pools for Footle, The Climb, Timed Quiz, Connections, Strands, Football Grid, Missing XI, Tournament Nation, The Reveal, Lowball, The Ladder, Football 501, Draft XI and Scout Signal. The machine-readable report at `public/data/football-knowledge-report.json` is the source of truth for counts and readiness; do not count a pool as live merely because a file exists.
 
 Career File, Cult Hero and Link Up are held back until we have dated, source-backed club spells and reliable shared-career relationships. Do not fabricate a transfer timeline or use an unlicensed/scraped dataset to fill those slots. See [CC0 Football Knowledge Engine](CC0_FOOTBALL_KNOWLEDGE_ENGINE.md).
+
+
+## CC0 knowledge engine — 27 November 2026
+
+The 100 curated question seed remains a separate editorial/development set. The live game pools are now built by `scripts/build-cc0-football-knowledge.mjs` from pinned CC0 OpenFootball player/club data, pinned CC0 men's senior international results, the pinned CC0 World Cup line-up snapshot, and a dated Wikidata CC0 membership snapshot. Each game lazily loads its own shard from `public/data/football-knowledge-*.cc0.json`.
+
+The generated QA report at `public/data/football-knowledge-report.json` is the source of truth for each game's count and readiness. It counts unique game units (answers, questions, player cards, or puzzle packs), not just raw database rows. Career File, Cult Hero and Link Up use dated club-membership evidence only; they do not display invented match statistics. The Climb and Timed Quiz partition match facts so a single match is not repeated across both question banks. The old mixed-provenance Wikipedia/Wikidata archive is not silently counted as CC0 content.

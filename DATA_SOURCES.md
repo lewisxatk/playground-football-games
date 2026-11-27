@@ -21,6 +21,12 @@ The World Cup data file in `public/data/worldcup-lineups.json` is derived from [
 
 The source includes match context and eleven starters. It does not provide reliable on-pitch coordinates or a consistently verified position for every historical player. PLAYGROUND therefore shows a full schematic pitch; where its career archive has a unique player profile position it can group shirts by broad role, but it does not claim to reproduce the historical match formation. Year-matched clubs are shown only when an exact player-name/year career-spell match exists.
 
+## CC0 dated player-club membership snapshot
+
+Career File, Cult Hero and Link Up use a separate build-time Wikidata snapshot. The query selects association-football-player entities (P106), dated team-membership statements (P54 with P580 start dates and optional P582 end dates), and club entities typed as association-football clubs. The import stores Wikidata QIDs, statement IDs, club QIDs, start/end years, the query endpoint and retrieval date. The build report records raw rows, accepted statements and eligible player counts.
+
+This is **membership evidence**, not a complete playing career: it does not prove appearances, starts, exact transfer dates, loan status or season-by-season statistics. An open-ended membership statement is not treated as proof that a player remains at the club today. These clues are worded as recorded dated club memberships and are not converted into fabricated apps/goals. Wikidata structured data is CC0; its community-maintained records can be incomplete or wrong, so the UI and report retain those scope warnings.
+
 ## Club and national badges
 
 The badge path index in `public/data/club-badges-index.json` is built from [JoseArroyave/football-logos](https://github.com/JoseArroyave/football-logos), which lists 4,700+ SVG paths and provides direct raw GitHub URLs. The upstream repository describes its code repository under MIT and its README says the logos are free to use for personal and commercial projects.
