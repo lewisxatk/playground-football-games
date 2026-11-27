@@ -108,7 +108,6 @@ function isSamePlayerName(actual:string,curated:string){
   return b.includes(" ")&&(a.startsWith(b+" ")||b.startsWith(a+" "));
 }
 function fits(c:Candidate,m:Mode){
-  if(c.statSeasons<2)return false;
   const isCurated=Object.values(MODE_NAMES).some(list=>list.some(name=>isSamePlayerName(c.name,name)));
   if(m==="EXTREME")return !isCurated;
   return MODE_NAMES[m].some(name=>isSamePlayerName(c.name,name));
