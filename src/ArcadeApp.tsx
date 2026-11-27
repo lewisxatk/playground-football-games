@@ -1160,7 +1160,7 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
  const seed=mode==="daily"?"STRANDS:"+utcDay()+":"+boardNo:"STRANDS:PRACTICE:"+practiceSeed+":"+boardNo;
  const {data:strandsData,loading,error,retry}=useFootballKnowledge("strands");
  const strandsPacks=strandsData?.packs??[];
- const englishLeaguePacks=useMemo(()=>strandsPacks.filter(pack=>pack.theme==="PLAYERS FROM THE ENGLISH LEAGUES"),[strandsPacks]);
+ const englishLeaguePacks=useMemo(()=>strandsPacks.filter(pack=>pack.theme==="A MATCHDAY ROLL CALL"),[strandsPacks]);
  const useEnglishLeaguePack=englishLeaguePacks.length>0&&hashSeed(seed+":english-leagues")%100<80;
  const preferredStrandsPacks=useEnglishLeaguePack?englishLeaguePacks:strandsPacks;
  const staticOrder=useMemo(()=>shuffle(STRANDS_PACKS,hashSeed("STRANDS:"+utcDay())),[]);
@@ -1193,11 +1193,12 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
    if(!dragging)return;
    setDragging(false);const path=[...pathRef.current];pathRef.current=[];setSelected(path);
    const word=path.map(cell=>board.cells[cell]).join("");
+   const isThemeWord=board.words.some(w=>w===word||w.split("").reverse().join("")===word);
    const foundIndex=board.words.findIndex((w,idx)=>!solved(idx)&&(w===word||w.split("").reverse().join("")===word));
    if(foundIndex>=0){
      const next=[...found,foundIndex];setFound(next);setSelected([]);setNotice("");
      if(next.length===board.words.length){setFinished(true);if(mode==="daily")onDaily("strands",1000);}
-   }else if(path.length>=4&&/^[A-Z]+$/.test(word)&&!bonusWords.includes(word)&&bonusWords.length<60&&bonusDictionary.has(word.toLowerCase())){
+   }else if(!isThemeWord&&path.length>=4&&/^[A-Z]+$/.test(word)&&!bonusWords.includes(word)&&bonusWords.length<60&&bonusDictionary.has(word.toLowerCase())){
      const next=[...bonusWords,word];setBonusWords(next);setSelected([]);
      const earned=Math.floor(next.length/3);
      setNotice(earned>bonusHintsUsed?"BONUS WORD: "+word+" · HINT UNLOCKED.":"BONUS WORD: "+word+" · "+(next.length%3)+"/3 TOWARDS YOUR NEXT HINT.");
@@ -1230,7 +1231,7 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
    {dragging&&<p className="strands-drag-live">KEEP DRAGGING · RELEASE TO CHECK</p>}
    {notice&&<div className="strands-feedback"><span>{notice}</span><button onClick={cancelPath}>DISMISS</button></div>}
    {hintedWord!==null&&<p className="arc-muted">SCOUTING REPORT: all {board.words[hintedWord].length} letters of one hidden answer are circled. Trace the connected path yourself.</p>}{bonusWords.length>0&&<p className="strands-bonus-list">BONUS WORDS FOUND: {bonusWords.join(" · ")}</p>}
-   {currentDone&&<div className="arc-feedback"><b>{mode==="daily"?"DAILY BOARD COMPLETE.":"BOARD COMPLETE."}</b><p>SPANGRAM: {board.spangram} · SCORE: {Math.max(100,1000-wrong*15)}</p>{mode==="practice"&&<button className="arc-button" onClick={nextBoard}>NEXT PUZZLE ↗</button>}</div>}
+   {currentDone&&<div className="arc-feedback"><b>{mode==="daily"?"DAILY BOARD COMPLETE.":"BOARD COMPLETE."}</b><p>SPANGRAM: {board.spangram} · SCORE: 1,000 PTS</p>{mode==="practice"&&<button className="arc-button" onClick={nextBoard}>NEXT PUZZLE ↗</button>}</div>}
    <div className="strands-legend"><span><i className="blue"/> FOOTBALLER</span><span><i className="gold"/> SPANGRAM / FULL NAME</span></div>
    {error&&<div className="arc-feedback"><b>CC0 STRANDS SHARD UNAVAILABLE</b><p>The curated fallback board remains playable while the game pack loads.</p><button className="arc-quiet" onClick={retry}>RETRY PACKS</button></div>}
   </Card>}
