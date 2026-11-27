@@ -233,7 +233,7 @@ async function parsePlayers(){const files=(await walk(P)).filter(p=>/(?:players|
 async function parseClubs(){const files=(await walk(C)).filter(p=>/clubs\.wiki\.txt$/i.test(p));const map=new Map();for(const path of files){const text=await readFile(path,"utf8");let nation=relative(C,path).split(/[\\/]/)[0].replace(/[-_]/g," ");for(const raw of text.split(/\r?\n/)){const line=raw.trim();if(!line)continue;if(/^=\s*/.test(line)){nation=country(line);continue}if(excluded(line)||line.length<3||line.length>100||line.includes("|")||/^(?:club|team|name|country)/i.test(line))continue;const name=line.replace(/\s+#.*$/,"").trim(),key=norm(name);if(!key)continue;const row=map.get(key)||{id:id("club",key),name,countries:[],source:SOURCES.clubs.repo,sourceCommit:SOURCES.clubs.commit,licence:"CC0-1.0"};if(nation&&!row.countries.some(x=>norm(x)===norm(nation)))row.countries.push(nation);map.set(key,row)}}return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name))}
 
 async function fetchWikidataCareers(players){
- const query=`SELECT ?player ?playerLabel ?statement ?club ?clubLabel ?start ?end
+ const queryBase=`SELECT ?player ?playerLabel ?statement ?club ?clubLabel ?start ?end
   (GROUP_CONCAT(DISTINCT ?nationalityLabel; separator="|") AS ?nationalities) WHERE {
   ?player wdt:P106 wd:Q937857; p:P54 ?statement.
   ?statement ps:P54 ?club; pq:P580 ?start.
@@ -241,26 +241,35 @@ async function fetchWikidataCareers(players){
   OPTIONAL { ?player wdt:P27 ?nationality. }
   ?club wdt:P31/wdt:P279* wd:Q476028.
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
- } GROUP BY ?player ?playerLabel ?statement ?club ?clubLabel ?start ?end LIMIT 50000`;
+ } GROUP BY ?player ?playerLabel ?statement ?club ?clubLabel ?start ?end`;
  const meta={status:"not-run",endpoint:SOURCES.wikidata.endpoint,retrievedAt:TODAY,rawRows:0,acceptedSpells:0,players:0,eligibleCareerFile:0,eligibleCultHero:0,error:null};
  let bindings=[];
  const endpoints=[SOURCES.wikidata.endpoint,"https://query.wikidata.org/sparql"];
  let lastError=null;
  for(const endpoint of endpoints){
   try{
-   const url=new URL(endpoint);
-   url.searchParams.set("query",query);
-   url.searchParams.set("format","json");
-   url.searchParams.set("timeout","60s");
-   const response=await fetch(url,{headers:{
-    "Accept":"application/sparql-results+json",
-    "User-Agent":"PLAYGROUND-Football-Games/0.1 (https://github.com/lewisxatk/playground-football-games)"
-   },signal:AbortSignal.timeout(65000)});
-   if(!response.ok)throw new Error(endpoint+" returned HTTP "+response.status);
-   const payload=await response.json();
-   const rows=payload?.results?.bindings??[];
-   if(!Array.isArray(rows))throw new Error(endpoint+" returned an unexpected SPARQL result shape.");
-   bindings=rows;meta.status="success";meta.endpoint=endpoint;meta.rawRows=rows.length;lastError=null;break;
+   const pageSize=50000,maxPages=4,collected=[];
+   for(let page=0;page<maxPages;page++){
+    const url=new URL(endpoint);
+    const query=queryBase+" ORDER BY ?player ?statement LIMIT "+pageSize+" OFFSET "+(page*pageSize);
+    url.searchParams.set("query",query);
+    url.searchParams.set("format","json");
+    url.searchParams.set("timeout","60s");
+    const response=await fetch(url,{headers:{
+     "Accept":"application/sparql-results+json",
+     "User-Agent":"PLAYGROUND-Football-Games/0.1 (https://github.com/lewisxatk/playground-football-games)"
+    },signal:AbortSignal.timeout(65000)});
+    if(!response.ok)throw new Error(endpoint+" page "+(page+1)+" returned HTTP "+response.status);
+    const payload=await response.json();
+    const rows=payload?.results?.bindings??[];
+    if(!Array.isArray(rows))throw new Error(endpoint+" page "+(page+1)+" returned an unexpected SPARQL result shape.");
+    if(!rows.length)break;
+    collected.push(...rows);
+    console.log("Wikidata career page "+(page+1)+": "+rows.length+" statement rows.");
+    if(rows.length<pageSize)break;
+   }
+   if(!collected.length)throw new Error(endpoint+" returned no career statements.");
+   bindings=collected;meta.status="success";meta.endpoint=endpoint;meta.rawRows=collected.length;lastError=null;break;
   }catch(error){lastError=error instanceof Error?error.message:String(error);console.warn("Wikidata endpoint failed:",lastError)}
  }
  if(lastError){meta.status="unavailable";meta.error=lastError;console.warn("Wikidata career import unavailable; other CC0 game pools remain buildable.");return {players:[],meta};}
