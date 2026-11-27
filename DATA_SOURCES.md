@@ -6,7 +6,7 @@ Last reviewed: 27 November 2026.
 
 PLAYGROUND reads a sample from [OpenFootballBase-Data](https://github.com/florentfougeres/OpenFootballBase-Data) via its published Parquet files and manifest. The upstream project describes its source material as Wikipedia and Wikidata, with career and caps figures transcribed from player infoboxes and marked unverified.
 
-The upstream project reports, as of 14 November 2026, approximately 85,099 players, 479,110 career rows, 44,970 club records and 152 competitions. These figures describe the upstream project, not the PLAYGROUND client-side sample. This describes a legacy mixed-provenance archive, not the current live content pipeline. Current games load the separate CC0-only knowledge shards; the old archive is not counted as CC0 content or used to pad the new game pools.
+The upstream project reports, as of 14 November 2026, approximately 85,099 players, 479,110 career rows, 44,970 club records and 152 competitions. These figures describe the upstream project, not the PLAYGROUND client-side sample. This remains a separate mixed-provenance archive. Career File and Football Grid use it for dated club spells and season-level appearance/goal records; the other factual games use the separate CC0-only knowledge shards. The archive is not counted as CC0 content or used to pad those CC0 game pools.
 
 - Wikipedia text-derived data: CC BY-SA 4.0. Attribution to Wikipedia contributors and links/revision provenance should be retained wherever the upstream records provide it.
 - Wikidata data: CC0.
@@ -40,6 +40,10 @@ This is **membership evidence**, not a complete playing career: it does not prov
 The badge path index in `public/data/club-badges-index.json` is built from [JoseArroyave/football-logos](https://github.com/JoseArroyave/football-logos), which lists 4,700+ SVG paths and provides direct raw GitHub URLs. The upstream repository describes its code repository under MIT and its README says the logos are free to use for personal and commercial projects.
 
 That repository-level licence is not a blanket clearance of every underlying club or national-team crest. Crests can remain trademarks or have separate rights. PLAYGROUND uses remote badge assets for identification/illustration, provides a text fallback when a path cannot be resolved, and does not imply club endorsement. Verify specific asset rights before any commercial advertising or merchandise use.
+
+## Strands bonus-word dictionary
+
+The Strands bonus-word checker uses `public/data/english-wordlist.cc0.txt`, filtered from [outparse/english-dictionary-dataset](https://github.com/outparse/english-dictionary-dataset) at its pinned source snapshot. The upstream repository includes a CC0 1.0 Universal licence. Words are used only to validate bonus guesses; the hidden football-player answers remain sourced from the football player/career datasets.
 
 ## Animation and UI assets
 
@@ -89,7 +93,7 @@ The 100-question factual seed is a development-only bank and is not the live sou
 
 ## Strict CC0 build whitelist
 
-The current runtime knowledge engine uses a strict CC0-only whitelist: OpenFootball players (`125d20f7cc06cac7e758b40df535a7695632680a`), OpenFootball clubs (`ae3800227c449447b3a337fc0aac79a8f02f4c8b`), OpenFootball England (`9ee7a0c351805c99cc334478a9bf04b7d0432fec`), OpenFootball Champions League (`abfaeddc2ee3d14f99ecc163c9ddb46cb4d67cef`), OpenFootball World Cup (`516d3825c3bd23fdc298c4014e84bde78f2d4965`), and Mart Jürisoo men's senior international results (`ca84241bb3eed854a1956a2fab442fe4daad40dd`). Career history uses a dated Wikidata CC0 snapshot; its endpoint and retrieval date are recorded per build. The exact policy, source scope and accuracy caveats are in [CC0 Football Knowledge Engine](docs/CC0_FOOTBALL_KNOWLEDGE_ENGINE.md).
+The current factual knowledge engine uses a strict CC0-only whitelist for its generated quiz, match, World Cup and player-name shards: OpenFootball players (`125d20f7cc06cac7e758b40df535a7695632680a`), OpenFootball clubs (`ae3800227c449447b3a337fc0aac79a8f02f4c8b`), OpenFootball England (`9ee7a0c351805c99cc334478a9bf04b7d0432fec`), OpenFootball Champions League (`abfaeddc2ee3d14f99ecc163c9ddb46cb4d67cef`), OpenFootball World Cup (`516d3825c3bd23fdc298c4014e84bde78f2d4965`), and Mart Jürisoo men's senior international results (`ca84241bb3eed854a1956a2fab442fe4daad40dd`). Career history uses a dated Wikidata CC0 snapshot; its endpoint and retrieval date are recorded per build. The exact policy, source scope and accuracy caveats are in [CC0 Football Knowledge Engine](docs/CC0_FOOTBALL_KNOWLEDGE_ENGINE.md). Career File and Football Grid are explicit exceptions: they use the separate OpenFootballBase-Data archive under its documented CC BY-SA/Wikidata provenance, with source credits shown in the Career File and Grid UI. They are not counted as CC0-only shards.
 
 The legacy mixed-provenance OpenFootballBase question-bank generator and runtime question-bank module have been retired from the build. CC BY-SA or unknown-rights data is not silently imported into the CC0 engine. Club crests, player photographs and third-party logos are not included.
 
