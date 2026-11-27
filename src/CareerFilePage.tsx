@@ -259,8 +259,8 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
       const international=source.filter(candidate=>candidate.region==="INTERNATIONAL");
       if(english.length>=54&&international.length>=18){
         return [
-          ...shuffleCandidates(english,54,dailyDraw?dailySeed+":EN":dailySeed+":EN"),
-          ...shuffleCandidates(international,18,dailyDraw?dailySeed+":INT":dailySeed+":INT")
+          ...shuffleCandidates(english,54,dailyDraw?dailySeed+":EN":undefined),
+          ...shuffleCandidates(international,18,dailyDraw?dailySeed+":INT":undefined)
         ];
       }
       return source;
@@ -279,7 +279,12 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
           return Boolean(cached&&randomFreeRows(makeRows(cached),dailyDraw?dailySeed+":"+candidate.id:undefined).length>=2);
         })
         :await getStatEligibleCandidates(draw);
-      const ranked=[...eligible].sort((a,b)=>b.statSeasons-a.statSeasons||a.id.localeCompare(b.id));
+      const rankByCoverage=(items:Candidate[])=>[...items].sort((a,b)=>b.statSeasons-a.statSeasons||a.id.localeCompare(b.id));
+      const englishEligible=rankByCoverage(eligible.filter(candidate=>candidate.region==="ENGLISH"));
+      const internationalEligible=rankByCoverage(eligible.filter(candidate=>candidate.region==="INTERNATIONAL"));
+      const ranked=league==="ALL"&&englishEligible.length>=27&&internationalEligible.length>=9
+        ?[...englishEligible.slice(0,27),...internationalEligible.slice(0,9)]
+        :rankByCoverage(eligible);
       let lastProblem="No candidate in this draw had two complete season-stat rows.";
       for(const choice of ranked.slice(0,staticPlayers.current.size?36:6)){
         seen.current.add(choice.id);persistRecentCareerIds(seen.current);
