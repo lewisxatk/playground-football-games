@@ -5,21 +5,15 @@
   "notes": [
     "Initial source-backed seed facts for the shared UK-first content system.",
     "Records are current as of the checked date and must be refreshed before being used as live records.",
-    "Question records may be adapted into each game's mechanics, but must retain their competition scope and source."
+    "Question records may be adapted into each game's mechanics, but must retain their competition scope and source.",
+    "Player-facing content uses plain question, answer and optional multiple-choice choices. Source, scope and review metadata remain internal."
   ],
   "facts": [
     {
       "id": "pl-shearer-goals",
       "topic": "premier-league",
-      "prompt": "Who holds the Premier League all-time goalscoring record?",
-      "answer": {
-        "canonical": "Alan Shearer",
-        "accepted": [
-          "Alan Shearer",
-          "Alan Shearer"
-        ]
-      },
-      "explanation": "Alan Shearer is listed as the record holder by Premier League Club, Manager & Player Records. Scope: Premier League goals scored across the competition's history.",
+      "answer": "Alan Shearer",
+      "explanation": "Premier League Club, Manager & Player Records. Premier League goals scored across the competition's history.",
       "competition": "Premier League",
       "scope": "Premier League goals scored across the competition's history",
       "validAsOf": "2026-11-27",
@@ -47,20 +41,23 @@
         "tournament-nation",
         "timed-quiz",
         "cult-hero"
+      ],
+      "question": "Who holds the Premier League all-time goalscoring record?",
+      "acceptedAnswers": [
+        "Alan Shearer"
+      ],
+      "choices": [
+        "Alan Shearer",
+        "Wayne Rooney",
+        "Harry Kane",
+        "Sergio Agüero"
       ]
     },
     {
       "id": "pl-milner-appearances",
       "topic": "premier-league",
-      "prompt": "Who holds the record for the most Premier League appearances?",
-      "answer": {
-        "canonical": "James Milner",
-        "accepted": [
-          "James Milner",
-          "James Milner"
-        ]
-      },
-      "explanation": "James Milner is listed as the record holder by Premier League Club, Manager & Player Records. Scope: Premier League appearances.",
+      "answer": "James Milner",
+      "explanation": "Premier League Club, Manager & Player Records. Premier League appearances.",
       "competition": "Premier League",
       "scope": "Premier League appearances",
       "validAsOf": "2026-11-27",
@@ -88,20 +85,23 @@
         "tournament-nation",
         "timed-quiz",
         "cult-hero"
+      ],
+      "question": "Who holds the record for the most Premier League appearances?",
+      "acceptedAnswers": [
+        "James Milner"
+      ],
+      "choices": [
+        "James Milner",
+        "Gareth Barry",
+        "Ryan Giggs",
+        "Frank Lampard"
       ]
     },
     {
       "id": "pl-giggs-assists",
       "topic": "premier-league",
-      "prompt": "Who has the most assists in Premier League history?",
-      "answer": {
-        "canonical": "Ryan Giggs",
-        "accepted": [
-          "Ryan Giggs",
-          "Ryan Giggs"
-        ]
-      },
-      "explanation": "Ryan Giggs is listed as the record holder by Premier League Club, Manager & Player Records. Scope: Premier League assists.",
+      "answer": "Ryan Giggs",
+      "explanation": "Premier League Club, Manager & Player Records. Premier League assists.",
       "competition": "Premier League",
       "scope": "Premier League assists",
       "validAsOf": "2026-11-27",
@@ -129,20 +129,23 @@
         "tournament-nation",
         "timed-quiz",
         "cult-hero"
+      ],
+      "question": "Who has the most assists in Premier League history?",
+      "acceptedAnswers": [
+        "Ryan Giggs"
+      ],
+      "choices": [
+        "Ryan Giggs",
+        "Cesc Fàbregas",
+        "Wayne Rooney",
+        "Kevin De Bruyne"
       ]
     },
     {
       "id": "pl-cech-cleansheets",
       "topic": "premier-league",
-      "prompt": "Who holds the Premier League record for most clean sheets?",
-      "answer": {
-        "canonical": "Petr Cech",
-        "accepted": [
-          "Petr Cech",
-          "Petr Čech"
-        ]
-      },
-      "explanation": "Petr Cech is listed as the record holder by Premier League Club, Manager & Player Records. Scope: Premier League goalkeeper clean sheets.",
+      "answer": "Petr Cech",
+      "explanation": "Premier League Club, Manager & Player Records. Premier League goalkeeper clean sheets.",
       "competition": "Premier League",
       "scope": "Premier League goalkeeper clean sheets",
       "validAsOf": "2026-11-27",
@@ -170,20 +173,24 @@
         "tournament-nation",
         "timed-quiz",
         "cult-hero"
+      ],
+      "question": "Who holds the Premier League record for most clean sheets?",
+      "acceptedAnswers": [
+        "Petr Cech",
+        "Petr Čech"
+      ],
+      "choices": [
+        "Petr Čech",
+        "David James",
+        "Edwin van der Sar",
+        "Joe Hart"
       ]
     },
     {
       "id": "pl-man-utd-titles",
       "topic": "premier-league",
-      "prompt": "Which club has won the most Premier League titles?",
-      "answer": {
-        "canonical": "Manchester United",
-        "accepted": [
-          "Manchester United",
-          "Manchester United"
-        ]
-      },
-      "explanation": "Manchester United is listed as the record holder by Premier League Club, Manager & Player Records. Scope: Premier League titles since 1992/93.",
+      "answer": "Manchester United",
+      "explanation": "Premier League Club, Manager & Player Records. Premier League titles since 1992/93.",
       "competition": "Premier League",
       "scope": "Premier League titles since 1992/93",
       "validAsOf": "2026-11-27",
@@ -211,20 +218,23 @@
         "tournament-nation",
         "timed-quiz",
         "cult-hero"
+      ],
+      "question": "Which club has won the most Premier League titles?",
+      "acceptedAnswers": [
+        "Manchester United"
+      ],
+      "choices": [
+        "Manchester United",
+        "Manchester City",
+        "Chelsea",
+        "Arsenal"
       ]
     },
     {
       "id": "ucl-real-madrid-titles",
       "topic": "champions-league",
-      "prompt": "Which club has won the most European Cup/UEFA Champions League titles?",
-      "answer": {
-        "canonical": "Real Madrid",
-        "accepted": [
-          "Real Madrid",
-          "Real Madrid"
-        ]
-      },
-      "explanation": "Real Madrid is listed as the record holder by UEFA Champions League all-time stats & rankings. Scope: All-time competition titles, including the European Cup era.",
+      "answer": "Real Madrid",
+      "explanation": "UEFA Champions League all-time stats & rankings. All-time competition titles, including the European Cup era.",
       "competition": "European Cup / UEFA Champions League",
       "scope": "All-time competition titles, including the European Cup era",
       "validAsOf": "2026-11-27",
@@ -252,20 +262,23 @@
         "tournament-nation",
         "timed-quiz",
         "cult-hero"
+      ],
+      "question": "Which club has won the most European Cup/UEFA Champions League titles?",
+      "acceptedAnswers": [
+        "Real Madrid"
+      ],
+      "choices": [
+        "Real Madrid",
+        "AC Milan",
+        "Bayern Munich",
+        "Liverpool"
       ]
     },
     {
       "id": "ucl-ronaldo-goals",
       "topic": "champions-league",
-      "prompt": "Who is the UEFA Champions League all-time leading goalscorer?",
-      "answer": {
-        "canonical": "Cristiano Ronaldo",
-        "accepted": [
-          "Cristiano Ronaldo",
-          "Cristiano Ronaldo"
-        ]
-      },
-      "explanation": "Cristiano Ronaldo is listed as the record holder by UEFA Champions League history. Scope: UEFA Champions League goals, not all UEFA club competitions.",
+      "answer": "Cristiano Ronaldo",
+      "explanation": "UEFA Champions League history. UEFA Champions League goals, not all UEFA club competitions.",
       "competition": "UEFA Champions League",
       "scope": "UEFA Champions League goals, not all UEFA club competitions",
       "validAsOf": "2026-11-27",
@@ -293,20 +306,23 @@
         "tournament-nation",
         "timed-quiz",
         "cult-hero"
+      ],
+      "question": "Who is the UEFA Champions League all-time leading goalscorer?",
+      "acceptedAnswers": [
+        "Cristiano Ronaldo"
+      ],
+      "choices": [
+        "Cristiano Ronaldo",
+        "Lionel Messi",
+        "Robert Lewandowski",
+        "Karim Benzema"
       ]
     },
     {
       "id": "ucl-ronaldo-appearances",
       "topic": "champions-league",
-      "prompt": "Who has made the most appearances in the UEFA Champions League?",
-      "answer": {
-        "canonical": "Cristiano Ronaldo",
-        "accepted": [
-          "Cristiano Ronaldo",
-          "Cristiano Ronaldo"
-        ]
-      },
-      "explanation": "Cristiano Ronaldo is listed as the record holder by UEFA Champions League history. Scope: UEFA Champions League appearances.",
+      "answer": "Cristiano Ronaldo",
+      "explanation": "UEFA Champions League history. UEFA Champions League appearances.",
       "competition": "UEFA Champions League",
       "scope": "UEFA Champions League appearances",
       "validAsOf": "2026-11-27",
@@ -334,20 +350,23 @@
         "tournament-nation",
         "timed-quiz",
         "cult-hero"
+      ],
+      "question": "Who has made the most appearances in the UEFA Champions League?",
+      "acceptedAnswers": [
+        "Cristiano Ronaldo"
+      ],
+      "choices": [
+        "Cristiano Ronaldo",
+        "Lionel Messi",
+        "Iker Casillas",
+        "Xavi"
       ]
     },
     {
       "id": "euros-spain-titles",
       "topic": "euros",
-      "prompt": "Which nation has won the most UEFA European Championship titles?",
-      "answer": {
-        "canonical": "Spain",
-        "accepted": [
-          "Spain",
-          "Spain"
-        ]
-      },
-      "explanation": "Spain is listed as the record holder by UEFA EURO history. Scope: Men's EURO final tournament titles.",
+      "answer": "Spain",
+      "explanation": "UEFA EURO history. Men's EURO final tournament titles.",
       "competition": "UEFA European Championship",
       "scope": "Men's EURO final tournament titles",
       "validAsOf": "2026-11-27",
@@ -375,20 +394,23 @@
         "tournament-nation",
         "timed-quiz",
         "cult-hero"
+      ],
+      "question": "Which nation has won the most UEFA European Championship titles?",
+      "acceptedAnswers": [
+        "Spain"
+      ],
+      "choices": [
+        "Spain",
+        "Germany",
+        "France",
+        "Italy"
       ]
     },
     {
       "id": "euros-ronaldo-goals",
       "topic": "euros",
-      "prompt": "Who is the men's EURO final tournament all-time leading goalscorer?",
-      "answer": {
-        "canonical": "Cristiano Ronaldo",
-        "accepted": [
-          "Cristiano Ronaldo",
-          "Cristiano Ronaldo"
-        ]
-      },
-      "explanation": "Cristiano Ronaldo is listed as the record holder by UEFA EURO history. Scope: Men's EURO final tournament goals only; excludes qualifying.",
+      "answer": "Cristiano Ronaldo",
+      "explanation": "UEFA EURO history. Men's EURO final tournament goals only; excludes qualifying.",
       "competition": "UEFA European Championship",
       "scope": "Men's EURO final tournament goals only; excludes qualifying",
       "validAsOf": "2026-11-27",
@@ -416,20 +438,23 @@
         "tournament-nation",
         "timed-quiz",
         "cult-hero"
+      ],
+      "question": "Who is the men's EURO final tournament all-time leading goalscorer?",
+      "acceptedAnswers": [
+        "Cristiano Ronaldo"
+      ],
+      "choices": [
+        "Cristiano Ronaldo",
+        "Michel Platini",
+        "Antoine Griezmann",
+        "Alan Shearer"
       ]
     },
     {
       "id": "euros-ronaldo-appearances",
       "topic": "euros",
-      "prompt": "Who holds the record for most appearances at men's EURO final tournaments?",
-      "answer": {
-        "canonical": "Cristiano Ronaldo",
-        "accepted": [
-          "Cristiano Ronaldo",
-          "Cristiano Ronaldo"
-        ]
-      },
-      "explanation": "Cristiano Ronaldo is listed as the record holder by UEFA EURO history. Scope: Men's EURO final tournament appearances only; excludes qualifying.",
+      "answer": "Cristiano Ronaldo",
+      "explanation": "UEFA EURO history. Men's EURO final tournament appearances only; excludes qualifying.",
       "competition": "UEFA European Championship",
       "scope": "Men's EURO final tournament appearances only; excludes qualifying",
       "validAsOf": "2026-11-27",
@@ -457,20 +482,23 @@
         "tournament-nation",
         "timed-quiz",
         "cult-hero"
+      ],
+      "question": "Who holds the record for most appearances at men's EURO final tournaments?",
+      "acceptedAnswers": [
+        "Cristiano Ronaldo"
+      ],
+      "choices": [
+        "Cristiano Ronaldo",
+        "Gianluigi Buffon",
+        "Luka Modrić",
+        "Sergio Ramos"
       ]
     },
     {
       "id": "wc-mbappe-goals",
       "topic": "world-cup",
-      "prompt": "Who is the men's FIFA World Cup all-time leading goalscorer?",
-      "answer": {
-        "canonical": "Kylian Mbappe",
-        "accepted": [
-          "Kylian Mbappe",
-          "Kylian Mbappé"
-        ]
-      },
-      "explanation": "Kylian Mbappe is listed as the record holder by FIFA World Cup all-time leading scorers. Scope: Men's FIFA World Cup final tournament goals.",
+      "answer": "Kylian Mbappe",
+      "explanation": "FIFA World Cup all-time leading scorers. Men's FIFA World Cup final tournament goals.",
       "competition": "FIFA World Cup",
       "scope": "Men's FIFA World Cup final tournament goals",
       "validAsOf": "2026-11-27",
@@ -498,20 +526,24 @@
         "tournament-nation",
         "timed-quiz",
         "cult-hero"
+      ],
+      "question": "Who is the men's FIFA World Cup all-time leading goalscorer?",
+      "acceptedAnswers": [
+        "Kylian Mbappe",
+        "Kylian Mbappé"
+      ],
+      "choices": [
+        "Kylian Mbappé",
+        "Miroslav Klose",
+        "Ronaldo Nazário",
+        "Lionel Messi"
       ]
     },
     {
       "id": "wc-messi-appearances",
       "topic": "world-cup",
-      "prompt": "Who has made the most appearances in men's FIFA World Cup history?",
-      "answer": {
-        "canonical": "Lionel Messi",
-        "accepted": [
-          "Lionel Messi",
-          "Lionel Messi"
-        ]
-      },
-      "explanation": "Lionel Messi is listed as the record holder by Players with the most FIFA World Cup appearances. Scope: Men's FIFA World Cup final tournament appearances.",
+      "answer": "Lionel Messi",
+      "explanation": "Players with the most FIFA World Cup appearances. Men's FIFA World Cup final tournament appearances.",
       "competition": "FIFA World Cup",
       "scope": "Men's FIFA World Cup final tournament appearances",
       "validAsOf": "2026-11-27",
@@ -539,20 +571,23 @@
         "tournament-nation",
         "timed-quiz",
         "cult-hero"
+      ],
+      "question": "Who has made the most appearances in men's FIFA World Cup history?",
+      "acceptedAnswers": [
+        "Lionel Messi"
+      ],
+      "choices": [
+        "Lionel Messi",
+        "Lothar Matthäus",
+        "Miroslav Klose",
+        "Cristiano Ronaldo"
       ]
     },
     {
       "id": "wc-messi-wins",
       "topic": "world-cup",
-      "prompt": "Who holds the record for the most wins by a player at the men's FIFA World Cup?",
-      "answer": {
-        "canonical": "Lionel Messi",
-        "accepted": [
-          "Lionel Messi",
-          "Lionel Messi"
-        ]
-      },
-      "explanation": "Lionel Messi is listed as the record holder by Players with most victories. Scope: Men's FIFA World Cup match victories.",
+      "answer": "Lionel Messi",
+      "explanation": "Players with most victories. Men's FIFA World Cup match victories.",
       "competition": "FIFA World Cup",
       "scope": "Men's FIFA World Cup match victories",
       "validAsOf": "2026-11-27",
@@ -580,6 +615,16 @@
         "tournament-nation",
         "timed-quiz",
         "cult-hero"
+      ],
+      "question": "Who holds the record for the most wins by a player at the men's FIFA World Cup?",
+      "acceptedAnswers": [
+        "Lionel Messi"
+      ],
+      "choices": [
+        "Lionel Messi",
+        "Cafu",
+        "Miroslav Klose",
+        "Pelé"
       ]
     }
   ]
