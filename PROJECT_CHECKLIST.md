@@ -14,9 +14,9 @@
 
 ## 0. Current verified baseline
 
-- [x] Fourteen individual game routes exist, with a top-right game menu and home arcade directory.
+- [x] Sixteen individual game routes exist, with a top-right game menu and home arcade directory.
 - [x] The four original game routes remain: Lowball, The Climb, Draft XI and Career File.
-- [x] Ten added routes remain: Footle, Connections, Football Grid, Ladder, The Reveal, Football 501, Link Up, Missing XI, Strands and Scout Signal.
+- [x] Twelve added routes now exist: Footle, Connections, Football Grid, Ladder, The Reveal, Football 501, Link Up, Missing XI, Strands, Scout Signal, Tournament Nation and The Quick Quiz.
 - [x] A local Locker Room profile exists: nickname, current/best streak, daily scores and game history stored in browser localStorage.
 - [x] Career File recent-player exclusions now persist in localStorage across refreshes (capped at 600 IDs); full-pool diversity still needs testing.
 - [x] Daily score/streak date uses UTC day boundaries (00:00 UTC, equivalent to GMT midnight; UK BST is one hour ahead).
@@ -28,16 +28,16 @@
 - [x] Lowball hides the two goal totals until a selection is made.
 - [x] Footle has Wordle-style green/yellow/grey tile states, and its practice selection is random from the current small word list.
 - [x] The latest production commit verified in this audit is `a2eed0d506059a82c1533bc4ae281f7fa3cada79` (“Fix duplicate club badge aliases blocking production builds”). GitHub Actions passed and Cloudflare Pages reported a successful deploy.
-- [!] **Important:** the archive player pool function and hook are not yet wired into all the game pages. Most games still read the small hand-curated `src/playerData.ts` arrays. The 1,600-player query is not a 1,600-player live game experience yet.
-- [!] **Important:** the current small player list, question lists and game examples contain hand-seeded records. They are not a massive audited database and must not be described as one.
+- [~] **Important:** ten data-driven game routes now share one seeded 1,600-player archive pool through `useArchivePlayers` and a seven-day IndexedDB cache. It is a sample of a much larger source, not the whole 85k archive; The Climb and Draft XI still use small curated starter banks.
+- [!] **Important:** the shared pool is still only up to 1,600 sampled players and source coverage is incomplete. The Climb, Draft XI, static Strands packs and some legacy examples remain small/curated; do not describe PLAYGROUND as having a complete or fully audited world-football database.
 - [!] **Important:** no head-to-head room system exists yet.
 - [!] **Important:** no persistent server account exists. Locker Room is device/browser-local and can be lost if browser data is cleared.
 
 ## 1. Master football data platform
 
 ### 1.1 Player identity and shared archive
-- [ ] Build a single shared, reusable player database for all games; stop maintaining separate tiny hard-coded lists in each game.
-- [ ] Connect the archive-backed pool to Footle, Scout Signal, Career File, Lowball, Connections, Grid, Ladder, Link Up, Missing XI and both new games.
+- [~] Shared archive player pool is now implemented for ten data-driven games. A build-time/edge-generated canonical master dataset and connection for the remaining curated games is still outstanding.
+- [~] Archive pool is connected to Footle, Scout Signal, Lowball, Connections, Grid, Ladder, Reveal, Football 501, Link Up and Quick Quiz. Career File and tournament games use their archive-specific lookups/data paths; Missing XI/Tournament Nation use a verified 1982–2022 World Cup XI dataset. The Climb and Draft XI are not yet archive-generated.
 - [ ] Build a stable canonical identity layer (Wikidata QID where available; careful name fallback where it is not).
 - [ ] Store full name, display name, surname, known aliases, nationality, position, date of birth/age precision, current/last known club, league, career clubs, career years and international teams.
 - [ ] Store appearances/goals at club and season level wherever the source actually supplies them; keep league, domestic cup, continental and all-competition scope separate.
@@ -49,7 +49,7 @@
 - [ ] Add a visible data coverage/source note to relevant games.
 
 ### 1.2 Transfer histories and fees
-- [ ] Integrate the transfer dataset into the shared data model rather than downloading and parsing the full CSV on a mobile device for each clue.
+- [~] Career File can request transfer hints through a Cloudflare Pages Function proxy and streams the CSV into a name index on demand. It is not yet merged into the common archive model and has not had full coverage/name-match QA.
 - [ ] Match records to canonical player and club identities, retaining unmatched rows separately for review.
 - [ ] Display transfer year, origin, destination, raw fee and cleaned fee; preserve “undisclosed”/unknown rather than inventing a price.
 - [ ] Distinguish reported nominal fee from adjusted/estimated value; never mix market value with transfer fee.
@@ -60,18 +60,18 @@
 - [ ] Move heavy archive scanning away from the initial iPhone page load.
 - [ ] Pick and document the delivery architecture: cached Cloudflare Worker/Durable Object query API, generated compact JSON shards, or a hybrid.
 - [ ] Do not ship DuckDB/WASM plus large Parquet scans to every visitor just to start a quick game.
-- [ ] Generate/cache shared player indexes and per-game question pools; use compression, cache headers, deterministic daily seeds and lazy loading.
+- [~] One seeded archive pool is shared by ten game components and cached in memory/IndexedDB for seven days; lazy loading and deterministic daily seeds exist. A compressed build-time/edge data export and shared generated question shards remain outstanding.
 - [ ] Keep player-pool refresh and daily puzzle generation server-side or build-time where possible.
-- [ ] Add loading progress, retry, timeout, offline/error states and telemetry that does not collect unnecessary personal data.
-- [ ] Verify actual iPhone Safari load time, memory use, repeated game rounds and cache behaviour.
+- [~] Loading, retry and error/fallback states exist in the archive-backed games; offline behaviour, explicit timeout handling and privacy-preserving telemetry are not complete.
+- [ ] Manual iPhone Safari performance/interaction testing is still required. Automated CI does not prove device performance.
 
 ## 2. Badges, flags and visual data
 
 - [x] Badge path index and `ClubBadge` component exist, with initials fallback.
 - [~] Check actual asset path resolution for a representative set of English, Spanish, Italian, German, French and other-world clubs. Some manual aliases may not match the indexed SVG paths.
-- [ ] Add badge imagery to Scout Signal’s matching club/current-club cells. A match must turn green and show the correct club badge plus club name, not only a tick.
-- [ ] Use country flags for nationality matches and position/league icons or clear labels for the other attributes.
-- [ ] Add national-team crests and tournament badges for the international tournament game.
+- [x] Scout Signal matching cells turn green and show a club crest/name for shared and latest club matches; nationality cells show flags. Representative crest path QA and rights/attribution review remain [~].
+- [x] Scout Signal uses nationality flags and explicit position/league/age labels in its comparison columns.
+- [~] Tournament Nation uses the club badge resolver for dated club clues; country flags are available, but a separate verified national-team crest/tournament-badge set is not yet complete.
 - [ ] Lazy-load images, cache results, reserve fixed image dimensions and use readable initials when a crest is unavailable.
 - [ ] Review logo repository terms and underlying crest/trademark rights; maintain attribution and do not imply that a club endorses PLAYGROUND.
 - [ ] Add a logo source/licensing note in the project.
@@ -92,16 +92,16 @@
 
 ### 3.2 Who’s Got More? / Lowball
 - [x] Hide totals until the player chooses; reveal the correct answer after the choice.
-- [ ] Add Easy, Standard, Hard and Extreme difficulty options.
-- [ ] Add an endless survival/practice streak: one wrong answer ends the streak; increase difficulty after each five correct answers.
-- [ ] Generate random matchups from the shared archive, using only comparable statistics and clearly naming the statistic/competition/season.
+- [x] Lowball now escalates through Easy, Standard, Hard and Extreme tiers after five consecutive correct answers.
+- [x] Lowball has an endless practice streak and difficulty increases every five right answers; daily is a fixed ten-duel run.
+- [~] Lowball now draws from recorded league-goal rows with at least two goal-stat seasons and hides totals until chosen. Current archive sample and stat-scope caveat remain.
 - [ ] Build a large pool (thousands where source coverage supports it) rather than repeating ten fixed names.
-- [ ] Show a proper end-of-run score, longest streak and shareable result.
+- [~] Lowball has score and run-result feedback; persisted longest streak and shareable result card remain outstanding.
 - [ ] Ensure daily challenge is deterministic/shared, while unlimited practice gets random fresh matchups.
 
 ### 3.3 Scout Signal
 - [~] Six attribute comparisons exist in the current small local player list (nation, shared club, current club, position, league, age band).
-- [ ] Switch target and guesses to the shared archive-backed player pool.
+- [x] Scout Signal target and guess list are drawn from the shared archive pool, with starter fallback on archive error.
 - [ ] Show each attribute independently; only matching attribute cells turn green.
 - [ ] For club matches, show the actual club crest and name; for nation matches, show flag/name.
 - [ ] Add helpful labels for current-club match versus shared-career-club match.
@@ -110,102 +110,102 @@
 
 ### 3.4 Footle (football Wordle)
 - [x] Green/yellow/grey Wordle tile evaluation exists and the answer is hidden until completion.
-- [ ] Expand to a large vetted surname pool from the player database; include names with an appropriate Wordle length and unambiguous accepted spellings.
-- [ ] Randomize unlimited practice with no immediate repeats; keep a deterministic shared daily answer.
-- [ ] Verify grey letters remain grey in the on-screen keyboard as well as the guess grid, without disabling their use.
-- [ ] Add a proper on-screen keyboard, coloured-key priority (green over yellow over grey), animations, accessible labels and share grid.
+- [~] Footle builds a five-letter surname bank from the shared archive, with a small fallback bank. The bank is not yet independently vetted for ambiguous or duplicate surnames.
+- [x] Daily Footle answer is deterministic by UTC date; practice seed randomizes its archive bank/target.
+- [x] Footle keyboard tracks green/yellow/grey priority; grey keys remain tappable.
+- [~] On-screen QWERTY keyboard, colour priority, accessible labels and simple feedback are implemented; share-grid result is not yet implemented.
 - [ ] Ensure full-name/surname aliases do not create duplicate or unfair answers.
 
 ### 3.5 Football Strands
 - [~] A 6×8 (48-cell) board and ten starter packs exist; current selection is tap-based, not real drag-to-connect.
-- [ ] Implement pointer/touch drag selection following adjacent cells, with live highlighted path, release-to-submit, cancel/undo and no accidental page scrolling.
+- [x] Strands now uses touch/pointer drag over adjacent letter cells, releases to submit, allows cancel/clear, disables touch scrolling on the grid and displays an animated SVG path trail.
 - [ ] Keep the NYT-style 6×8 footprint and circular letter cells; make it responsive without changing the board dimensions.
 - [ ] Verify every pack has exactly 48 letters, valid non-overlapping paths, full-name spangram joining opposite sides, and all footballer names are valid.
-- [ ] Generate many unique boards from the shared player database while maintaining solvable paths and valid word lengths; avoid nonsensical arbitrary letter placement.
+- [ ] Strands still uses ten curated static packs; procedural archive-generated boards are not implemented.
 - [ ] Add Strands-style hint progression, found-word colours, animated path tracing and end-of-board completion.
 - [ ] 10 daily boards; unlimited randomly generated practice boards.
 
 ### 3.6 Fill the Grid
-- [ ] Rebuild as a 4×4 grid (16 answers), not the current 3×3 Premier-League-only grid.
-- [ ] Add selectable Easy, Standard, Hard and Extreme difficulties.
+- [x] Fill the Grid is now a generated 4×4 club × nationality board with sixteen cells and archive-backed valid answers.
+- [x] Fill the Grid offers Easy, Standard, Hard and Extreme difficulty levels.
 - [ ] Easy: broadly famous players/simple club-country intersections.
 - [ ] Standard: top-five leagues and senior national teams.
 - [ ] Hard: broader European/global clubs, historical players and less obvious intersections.
 - [ ] Extreme: historic and global club/national combinations where source coverage is strong.
-- [ ] Use club crests and national flags in row/column clues.
-- [ ] Accept valid aliases and any qualifying player, not one hard-coded answer only.
+- [x] Grid row headers show club crests and column headers show nationality flags.
+- [x] Fill the Grid accepts any matching player in the current archive sample through normalized name/surname lookup; its data sample is not exhaustive.
 - [ ] Add optional limited guesses/hints, completed-cell animations and a daily/unlimited split.
 
 ### 3.7 The Connection
-- [~] A 16-tile/4-groups game exists, but only four hand-made groups currently power it.
-- [ ] Generate large numbers of valid combinations from the shared player data.
-- [ ] Add Easy, Standard, Hard and Extreme categories (clubs, nationalities, positions, teammates, competitions, career overlaps, eras, honours when verifiable).
+- [x] Connections generates sixteen unique player tiles and four groups from the archive-backed pool.
+- [~] Connections generates fresh combinations dynamically from the shared pool; it currently selects one grouping dimension per board and cannot promise thousands of globally unique boards.
+- [~] Connections offers Easy/Standard/Hard/Extreme and grouping dimensions for nationality, position, latest league and career-start decade. Club/team-mate/honour groups remain outstanding.
 - [ ] Use constraint-based generation so each tile has one intended group and accidental multiple valid groupings are checked.
 - [ ] Unlimited practice should draw a fresh board, avoid repeats and show category explanations after solve.
 - [ ] Preserve a deterministic daily board per UTC date.
 
 ### 3.8 The Ladder
-- [~] Basic up/down arrow reordering and a small fixed Premier League goals list exist.
+- [x] Ladder now uses archive-backed player statistics, multiple metrics/difficulty levels and Motion drag-and-drop reordering; up/down controls remain as fallback.
 - [ ] Add true touch-friendly drag-and-drop reordering with Motion layout animation; keep arrow buttons as accessible fallback.
-- [ ] Add selectable difficulty and a larger archive-backed set of statistics (league goals, appearances, assists, international caps, transfer fees when comparable, etc.).
+- [~] Ladder offers difficulty and archive-backed league goals, career appearances/goals and international caps. Assists/transfer-fee metrics are not yet included.
 - [ ] Clearly label statistic scope, season/timeframe and units.
 - [ ] Build fresh random five-player sets, no immediate repeats, unlimited practice and a shared daily puzzle.
 - [ ] Animate order changes and result reveal.
 
 ### 3.9 Football 501
-- [~] A basic countdown from 501 exists but currently uses a tiny fixed goals list and needs clearer gameplay.
+- [x] Football 501 now has three-dart visits, player-stat values, a bust rule, exact checkout, bank-score option, difficulty, stat selection and an animated darts board.
 - [ ] Research and settle scoring rules: selecting a player subtracts their stat; bust means crossing below zero; exact zero is best, with a clear bank/closest-finish scoring system if enabled.
-- [ ] Add Easy/Standard/Hard/Extreme pools and more usable statistics/modes.
-- [ ] Add a clear darts-style scoreboard, animated dartboard/flight/checkout feedback and haptics-safe mobile interactions.
+- [x] Football 501 offers Easy/Standard/Hard/Extreme and league goals/international caps when available.
+- [x] Custom dartboard, animated dart flight, three dart slots, visit totals and checkout/bust feedback are in the interface. Real haptics not implemented.
 - [ ] Randomize player choices from the shared database and prevent duplicate player picks within a run.
 - [ ] Add daily challenge and unlimited practice.
 
 ### 3.10 The Link Up
-- [~] Four hand-written examples exist; the current version is a typed-name answer.
-- [ ] Standard mode: multiple choice with one unambiguous correct link.
+- [~] Link Up dynamically builds a teammate-overlap graph from dated career spells, uses multiple-choice Standard and typed Hard/Extreme, and only emits candidate pairs with a single shared teammate within the current sample. Archive completeness and manual answer QA remain.
+- [x] Link Up Standard mode is multiple-choice; graph generation checks for a unique common teammate in the sample.
 - [ ] Hard/Extreme: typed surname/full-name response, or a single clear player from verified teammate intersection.
-- [ ] Derive candidates from overlapping club spells/seasons where possible; a broad shared-club career without season overlap is not sufficient proof of being teammates.
+- [x] Link Up now requires overlapping dated club spells rather than simply any club overlap; it still cannot prove the exact same matchday appearance.
 - [ ] Provide the two endpoints, sensible hints, explanation and evidence source.
 - [ ] Generate thousands of combinations from archive relationships, test uniqueness and exclude ambiguous questions.
 - [ ] Unlimited mode and difficulty selector.
 
 ### 3.11 Missing XI
-- [~] A fixed ten-player example and four options exist, but not a proper pitch formation.
+- [x] Missing XI is now randomized from verified World Cup starting-lineup records and shown on a schematic animated pitch with a hidden shirt. The displayed arrangement is explicitly not an exact historical formation.
 - [ ] Render a responsive 2D pitch with formation positions and numbered player markers.
-- [ ] Use verified historical starting elevens and competitions/matches.
-- [ ] Support multiple formations and missing positions; answer by selecting an option or typing.
-- [ ] Add difficulty, random match archive, badges, match/tournament context and unlimited practice.
+- [x] Missing XI and Tournament Nation use a 1,312-entry OpenFootball World Cup line-up dataset for editions 1982–2022; CI asserts eleven unique starters per record.
+- [~] Missing XI hides a random starter and has four difficulty-controlled choice counts. Pitch layout is schematic; position/formation-specific historical placement is not available from current source.
+- [~] Missing XI and Tournament Nation have daily/unlimited modes, difficulty, tournament context and badges where club matches exist. Dedicated national-team crests and a genuine formation-aware layout remain.
 - [ ] Do not use a “starting XI” example unless the listed ten plus the answer truly match the starting lineup.
 
 ## 4. New games requested
 
 ### 4.1 Tournament Nation
-- [ ] Add a new standalone route and menu entry.
+- [x] Tournament Nation has its own route and menu entry.
 - [ ] Show a major tournament and year (World Cup / Euros first; extend when data is sound), with a full 11-position layout.
 - [ ] Each position reveals the player's club from that tournament's squad; user guesses the national team.
 - [ ] Start at the 1980s and go forward; avoid tournaments before 1980.
-- [ ] Use verified tournament squads/starting XIs, player positions and the club they represented at that time.
+- [~] Tournament Nation uses sourced starting XIs and attempts exact archive club lookup at tournament year. Source does not provide reliable positional coordinates and club coverage is partial.
 - [ ] Add progressive hints, difficulty, badges, daily and unlimited modes.
 
 ### 4.2 Timed Football Quiz
-- [ ] Add a standalone route and menu entry.
-- [ ] Standard format: 15 questions (5 Easy, 5 Medium, 5 Hard), five answer options each, 10 seconds per answer.
-- [ ] Add a typewriter question reveal ending at the question mark; only then reveal the answer options and start the timer.
+- [x] The Quick Quiz has its own route and menu entry.
+- [x] Standard Quick Quiz attempts 15 questions (5 each tier), with five options and a ten-second clock. If source coverage cannot produce a valid question, the page shows an error/retry state rather than fabricating a question.
+- [x] Typewriter question reveals first; the answer options and ten-second timer begin after the question finishes typing.
 - [ ] At time-out or answer selection, lock the answer, show correct answer and a short source-backed explanation, then continue.
 - [ ] End screen shows score, correct answers, missed answers and shareable result.
-- [ ] Add a separate difficulty selector for Easy / Medium / Hard / Extreme-only runs.
-- [ ] Build a large validated question bank and/or generate safe questions from sourced structured data; randomize with no immediate repeats.
+- [x] Quick Quiz offers Easy, Medium, Hard and Extreme-only runs in addition to Standard mixed difficulty.
+- [~] Quick Quiz generates varied templates from structured archive fields and uses fifteen unique player IDs per run; this is not yet a separately versioned, fully audited question bank and answer option distinctness depends on archive coverage.
 - [ ] Do not generate factual questions from missing or uncertain fields. Store answer, distractors, explanation, source and difficulty with every authored question.
 
 ## 5. Visual design, accessibility and motion
 
-- [~] PLAYGROUND identity, multiple accent colours, game cards, animated pitch and a few Motion/CSS transitions exist.
+- [~] PLAYGROUND now has per-game palettes, bespoke heading fonts, Strands drag trails, Ladder reorder motion, animated dartboard/flight, quiz typewriter/clock, pitch-shirt reveals and badge/flag cells. A full component-level bespoke art-direction audit across every screen remains.
 - [x] Every current game route now has its own background palette and distinct display heading typeface. Further game-specific layout/illustration work remains.
 - [ ] Keep a consistent navigation/interaction system so each page is still easy to learn.
 - [ ] Improve readability across all games: stronger contrast, minimum comfortable mobile font sizes, clear hierarchy, larger tap targets and no pale grey microcopy for essential instructions.
 - [x] Mobile game input/textarea/select font-size is forced to at least 16px to prevent iOS Safari focus-zoom. Real-device visual verification remains.
-- [ ] Add Motion for React layout/reorder animation, drag feedback, typewriter text, score counters, reveal transitions, goal/ball/crest motion and Strands path trails.
-- [ ] Honour prefers-reduced-motion and keep animations lightweight on mobile.
+- [~] Motion/reorder, Strands SVG trails, typewriter, shirt reveals, animated ball/dartboard and reveal effects are present; a full motion pass and animation QA remains.
+- [x] Shared arcade CSS disables transitions/animations for `prefers-reduced-motion`; further device profiling remains.
 - [ ] Use custom CSS/SVG and original vector pitch/ball/scoreboard graphics where practical; avoid generic giant emoji-like artwork and unlicensed third-party motion clips.
 - [ ] Test every interaction at narrow iPhone widths and desktop widths.
 
@@ -318,3 +318,39 @@ At the end of every implementation update:
 5. Implement actual pointer/touch drag paths in Strands (not tap-to-select).
 6. Build Tournament Nation and Timed Football Quiz using source-backed tournament/question records.
 7. Only then add private head-to-head rooms with server-authoritative state.
+
+## 13. Verified implementation batch (2026-11-27, latest)
+
+- [x] Shared archive pool now uses one constant seed across all ten archive-driven game components; 1,600-player sample is reused via seven-day IndexedDB caching. This improves repeated navigation but does not remove the initial DuckDB archive cost.
+- [x] Lowball now uses archive-backed league-goal player records with at least two explicit league-goal seasons, hides the totals pre-guess, supports a ten-duel daily challenge and endless escalating practice streak (difficulty rises every five correct answers).
+- [x] Scout Signal uses the shared pool, shows actual club badges/names and nationality flags in green matching cells, and shows position/league/age matches.
+- [x] Footle builds a five-letter surname pool from archive names, daily deterministic answer, unlimited practice, six guesses and green/yellow/grey keyboard states. Its pool is not yet independently curated for duplicate or ambiguous surnames.
+- [x] Connections generates four unique dynamic groups from nationality, position, latest league or career-start decade, with Easy/Standard/Hard/Extreme and unlimited practice. Groups are generated on demand, not a huge static authored question library.
+- [x] Fill the Grid is 4×4, archive-generated, difficulty-selectable, and uses club crests/nationality flags. Its generator pre-indexes club/country intersections to avoid scanning all players for every random candidate.
+- [x] Ladder uses archive player statistics (league goals, career appearances, career goals, international caps), difficulty tiers and Motion drag/reorder plus accessible arrow controls.
+- [x] Reveal uses archive-backed player targets and career clues rather than the initial tiny hard-coded player rotation.
+- [x] Football 501 uses the archive, supports league-goal/international-cap values, three-dart visits, bust, bank and checkout scoring, difficulty and a custom animated dartboard/flight.
+- [x] Link Up generates unique teammate bridges from overlapping dated club spells, offers Standard multiple choice and Hard/Extreme typed input.
+- [x] Missing XI draws randomized historic World Cup starting-XI records (1982–2022) and displays a schematic pitch with one hidden shirt, difficulty and unlimited practice.
+- [x] Tournament Nation has its own route, sourced tournament year/round/opponent, club clues when exact year/name matches exist, multiple-choice difficulty and daily/practice.
+- [x] The Quick Quiz has its own route, typewriter questions, 10-second timer, five answer options, Standard mixed tiers and Easy/Medium/Hard/Extreme modes. Templates cover nationality, position, club history, league, recorded goals/apps, caps and career dates; fifteen distinct players are used per run.
+- [x] Career File daily first dossier is now deterministic by UTC day/difficulty/league; later files become random practice and don't bank another daily result. Current commit: `8e2661a33c90beaff94c7e78d90a3f63b8e682f3`.
+- [x] Missing XI / Tournament Nation source file has 1,312 World Cup team line-ups, 11 unique starters per record, 11 editions from 1982–2022. Automated validation checks it alongside the 4,700+ badge index.
+- [x] CI now runs `npm run validate:data` before `npm run build`.
+- [x] Latest code build and data validation passed on commit `8e2661a33c90beaff94c7e78d90a3f63b8e682f3`: [GitHub Actions run 45931865447](https://github.com/lewisxatk/playground-football-games/actions/runs/45931865447).
+- [x] Cloudflare Pages deployment for that commit succeeded: deployment `f1d9a2b9-b587-4eb9-b978-284710ccdfd0`, preview URL https://f1d9a2b9.playground-football-games.pages.dev; production alias resolves to latest successful production build.
+- [!] No full browser/real-iPhone manual QA tool has been used in this batch. User must test the live pages and report layout/interaction issues.
+- [!] A build-time compact/sharded export from the entire OpenFootballBase archive has not been created; initial first-load still uses browser-side remote DuckDB/Parquet. Shared IndexedDB caching improves repeat visits, but does not equal a complete edge-cached database.
+- [!] Transfer CSV is proxied and streamed into the Career File transfer-hint index on demand; it has not been merged into the shared player model or fully audited for player name/fee coverage.
+- [!] Head-to-head Rooms are still not implemented. Durable Objects + WebSockets are technically suitable; a separate Worker, room code flow, server-authoritative game state, reconnect and two-device QA remain to be built.
+- [!] The Climb still uses a small curated question array; Draft XI still uses a small static player list; Strands still has ten curated fixed boards rather than a procedural archive-generated daily/practice board bank.
+- [!] Cloud Locker Room account sync, real player portraits, complete national-team crest library, national league/global club coverage and full human QA remain outstanding.
+
+**Next work order:**
+1. Build-time compressed player-data shards (or cached Worker endpoint) so the first iPhone visit no longer has to query remote Parquet in the browser; preserve source and missing-stat metadata.
+2. Expand The Climb and Draft XI onto the shared data pool and add difficulty/roster variety.
+3. Procedural Strands board generation with guaranteed 6×8 paths and a valid spangram.
+4. Import/normalise transfer dataset into compact player-linked fee hints; audit unmatched and ambiguous names.
+5. Make the daily/unlimited system and local recent-history semantics consistent across every game; add save export/restore and later cloud sync.
+6. Finish premium component-level art direction, readability and motion QA on actual iPhone and desktop.
+7. Head-to-head Games Room: create a separate Cloudflare Worker + Durable Object rooms service; then join code/lobby/game-picker, server-authoritative rounds, reconnect, room expiry and private 2-device testing.
