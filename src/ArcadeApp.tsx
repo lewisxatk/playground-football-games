@@ -785,7 +785,7 @@ function buildArchiveLinkUpQuestions(players:GamePlayer[],index:GridClubIndex,se
  }
  const buildFor=(clubNames:string[],scope:string)=>{
   const allowed=new Set(clubNames.map(gridClubKey));
-  const ordered=shuffle(players,seed+scope.length*7919);
+  const ordered=shuffle(players,seed+scope.length*7919+["EASY","STANDARD","HARD","EXTREME"].indexOf(difficulty)*104729);
   const questions:ArchiveLinkQuestion[]=[],usedAnswers=new Set<string>();
   for(const answer of ordered){
    if(questions.length>=350)break;
