@@ -440,17 +440,18 @@ function makeGridPacks(players){
  return packs;
 }
 
+const clubKey=value=>norm(value).replace(/\\b(?:association football club|football club|fc|afc)\\b/g," ").replace(/\\s+/g," ").trim();
 function makeClubNationGridPacks(careerPlayers,englishClubNames,target=500){
  const buckets=new Map(),clubNationCounts=new Map();
  for(const player of careerPlayers){
   const nation=player.nationality?.trim();if(!nation)continue;
   for(const spell of player.spells){
-   const clubKey=norm(spell.club);if(!englishClubNames.has(clubKey))continue;
-   const key=clubKey+":"+norm(nation),list=buckets.get(key)||[];
+   const keyClub=clubKey(spell.club);if(!englishClubNames.has(keyClub))continue;
+   const key=keyClub+":"+norm(nation),list=buckets.get(key)||[];
    if(!list.some(item=>item.id===player.id))list.push({id:player.id,name:player.name});
    buckets.set(key,list);
-   const club=clubNationCounts.get(clubKey)||{name:spell.club,nations:new Set()};
-   club.nations.add(norm(nation));clubNationCounts.set(clubKey,club);
+   const club=clubNationCounts.get(keyClub)||{name:spell.club,nations:new Set()};
+   club.nations.add(norm(nation));clubNationCounts.set(keyClub,club);
   }
  }
  const eligible=[...clubNationCounts.values()].filter(club=>club.nations.size>=4).sort((a,b)=>b.nations.size-a.nations.size).slice(0,36);
@@ -460,7 +461,7 @@ function makeClubNationGridPacks(careerPlayers,englishClubNames,target=500){
   const clubs=seededShuffle(eligible,seed*7919).slice(0,4);
   if(new Set(clubs.map(club=>norm(club.name))).size!==4)continue;
   const commonNations=[...new Set(clubs.flatMap(club=>[...club.nations]))]
-   .filter(nation=>clubs.every(club=>(buckets.get(norm(club.name)+":"+nation)||[]).length>0));
+   .filter(nation=>clubs.every(club=>(buckets.get(clubKey(club.name)+":"+nation)||[]).length>0));
   if(commonNations.length<4)continue;
   const nations=seededShuffle(commonNations,seed*104729).slice(0,4);
   const used=new Set(),answers=[];
@@ -500,7 +501,7 @@ const careerFileCandidates=careerPlayers.filter(hasMultiSeasonCareer);
 const cultHeroCandidates=careerPlayers.filter(hasMultiSeasonCareer);
 const [internationalMatches,englishMatches,europeanClubMatches]=await Promise.all([parseInternationalResults(),parseEnglishMatches(),parseEuropeanClubMatches()]);
 // The English match archive is the authoritative whitelist for English clubs; do not trust broad Wikidata country labels for game eligibility.
-const englishClubNames=new Set(englishMatches.flatMap(match=>[match.home,match.away]).map(norm));
+const englishClubNames=new Set([...clubs.filter(club=>club.countries.some(country=>norm(country)==="england")).map(club=>club.name),...englishMatches.flatMap(match=>[match.home,match.away])].map(clubKey));
 const linkUpPacks=makeWikidataLinkPacks(careerPlayers,englishClubNames,750);
 const allMatches=[...internationalMatches,...englishMatches,...europeanClubMatches].sort((a,b)=>a.date.localeCompare(b.date));
 const internationalQuiz=buildInternationalQuiz([...englishMatches,...europeanClubMatches.filter(match=>match.competition==="UEFA Champions League")]);
