@@ -9,7 +9,8 @@
     "preview": "vite preview --host 0.0.0.0",
     "typecheck": "tsc -b",
     "validate:data": "node scripts/validate-data.mjs",
-    "build:questions": "node scripts/build-question-bank.mjs"
+    "build:questions": "node scripts/build-question-bank.mjs",
+    "validate:football-content": "node scripts/validate-football-content.mjs"
   },
   "dependencies": {
     "react": "^19.1.0",
