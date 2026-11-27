@@ -27,7 +27,7 @@ async function parseEnglishMatches(){
  const files=(await walk(ENGLAND)).filter(path=>{
   const rel=relative(ENGLAND,path).split(String.fromCharCode(92)).join("/");
   if(rel.startsWith("rsssf/")||rel.includes("/squads/")||/-full\.txt$/i.test(rel))return false;
-  return /(?:^|\/)(?:[1-4]-(?:premierleague|championship|league1|league2|division1|division2|division3)|eflcup|facup)\.txt$/i.test(rel);
+  return /(?:^|\/)(?:[1-4]-(?:premierleague|championship|league1|league2|division1|division2|division3|division4)|eflcup|facup)\.txt$/i.test(rel);
  });
  const monthMap={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
  const records=new Map();
@@ -43,6 +43,7 @@ async function parseEnglishMatches(){
   else if(/division1/i.test(filename))competition="First Division";
   else if(/division2/i.test(filename))competition="Second Division";
   else if(/division3/i.test(filename))competition="Third Division";
+  else if(/division4/i.test(filename))competition="Fourth Division";
   else if(/league1/i.test(filename))competition="League One";
   else if(/league2/i.test(filename))competition="League Two";
   else if(/eflcup/i.test(filename))competition="EFL Cup";
