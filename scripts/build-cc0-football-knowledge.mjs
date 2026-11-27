@@ -440,7 +440,7 @@ function makeGridPacks(players){
  return packs;
 }
 
-const clubKey=value=>norm(value).replace(/\b(?:association football club|football club|fc|afc)\b/g," ").replace(/\s+/g," ").trim();
+const clubKey=value=>norm(value).replace(/\b(?:association football club|football club|a f c|afc|f c|fc)\b/g," ").replace(/\s+/g," ").trim();
 function makeClubNationGridPacks(careerPlayers,englishClubNames,target=500,preferredClubNames=new Set()){
  const buckets=new Map(),clubNationCounts=new Map();
  for(const player of careerPlayers){
