@@ -747,7 +747,7 @@ function buildArchiveFootballGrid(players:GamePlayer[],index:GridClubIndex,seed:
    });
    const answers=chosen.map((club,row)=>countries.map((country,col)=>{
     const key=club.key+"|"+normalise(country);
-    return shuffle(buckets.get(key)??[],seed+attempt*15485863+row*97+col*193).slice(0,40);
+    return shuffle(buckets.get(key)??[],seed+attempt*15485863+row*97+col*193);
    }));
    if(answers.some(row=>row.some(cell=>cell.length<minimumCellAnswers))||!hasUniqueGridAssignment(answers))continue;
    return {clubs:chosen.map(club=>club.name),countries,answers,scope};
