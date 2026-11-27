@@ -442,27 +442,75 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
 }
 
 function ScoutSignalPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
- const [mode,setMode]=useMode();const dailyPool=PLAYER_DATABASE.filter(p=>Boolean(p.club&&p.nationality));
- const [target,setTarget]=useState<Player>(dailyPool[hashSeed("SCOUT"+utcDay())%dailyPool.length]);const [guess,setGuess]=useState("");const [history,setHistory]=useState<Player[]>([]);const [end,setEnd]=useState(false);const [won,setWon]=useState(false);const done=account.daily[utcDay()]?.["scout-signal"]!==undefined;
- type SignalKey="nationality"|"careerClub"|"currentClub"|"position"|"league"|"ageBand";
- const matchingClubs=(g:Player)=>g.clubs.filter(c=>target.clubs.includes(c));
- const category=(key:SignalKey,g:Player)=>key==="careerClub"?matchingClubs(g).length>0:key==="currentClub"?g.club===target.club:key==="nationality"?g.nationality===target.nationality:key==="position"?g.position===target.position:key==="league"?g.league===target.league:key==="ageBand"?g.ageBand===target.ageBand:false;
- const attrs:[SignalKey,string][]=[["nationality","NATION"],["careerClub","SHARED CLUB"],["currentClub","CURRENT CLUB"],["position","POSITION"],["league","LEAGUE"],["ageBand","AGE BAND"]];
- const signalValue=(key:SignalKey,g:Player)=>{
-   if(key==="nationality")return <span className="scout-value"><CountryFlag name={g.nationality}/><small>{g.nationality}</small></span>;
-   if(key==="careerClub"){
-     const common=matchingClubs(g);
-     return common.length?<span className="scout-value"><ClubBadge name={common[0]} size={19}/><small>{common[0]}</small>{common.length>1&&<i>+{common.length-1}</i>}</span>:<small className="scout-no-match">NO MATCH</small>;
-   }
-   if(key==="currentClub")return <span className="scout-value"><ClubBadge name={g.club} size={19}/><small>{g.club}</small></span>;
-   if(key==="position")return <small>{g.position}</small>;
-   if(key==="league")return <small>{g.league}</small>;
-   return <small>{g.ageBand}</small>;
+ const [mode,setMode]=useMode();
+ const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
+ const [guess,setGuess]=useState("");
+ const [history,setHistory]=useState<GamePlayer[]>([]);
+ const [end,setEnd]=useState(false);
+ const [won,setWon]=useState(false);
+ const seed=mode==="daily"?"SCOUT:"+utcDay():"SCOUT:PRACTICE:"+practiceSeed;
+ const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,seed,1600);
+ const done=account.daily[utcDay()]?.["scout-signal"]!==undefined;
+ const archived=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer)
+   .filter(p=>p.nationality!=="Unlisted"&&p.club!=="Unknown club"&&p.clubs.length>0),[archivePlayers]);
+ const staticPool=useMemo(()=>PLAYER_DATABASE.map(p=>({
+   ...p,archiveId:p.name,careerApps:0,careerGoals:0,leagueApps:0,leagueGoals:0,leagueGoalSeasons:0,
+   statSeasons:0,firstYear:null,lastYear:null,caps:null,internationalGoals:null,birthDate:"",
+   currentCountry:"",currentDivision:null
+ } as GamePlayer)),[]);
+ const pool=archived.length>=2?archived:staticPool;
+ const target=pool[hashSeed(seed+":target")%pool.length];
+ type SignalKey="nationality"|"careerClub"|"latestClub"|"position"|"league"|"ageBand";
+ const sharedClubs=(p:GamePlayer)=>p.clubs.filter(c=>target.clubs.some(t=>normalise(t)===normalise(c)));
+ const category=(key:SignalKey,p:GamePlayer)=>{
+   if(key==="nationality")return p.nationality===target.nationality;
+   if(key==="careerClub")return sharedClubs(p).length>0;
+   if(key==="latestClub")return normalise(p.club)===normalise(target.club);
+   if(key==="position")return p.position===target.position;
+   if(key==="league")return p.league===target.league;
+   return p.ageBand===target.ageBand&&p.ageBand!=="Unknown";
  };
- const submit=(e:FormEvent)=>{e.preventDefault();const p=playerByName(guess);if(!p||history.some(x=>x.name===p.name)||end)return;const next=[...history,p];setHistory(next);setGuess("");if(p.name===target.name){setWon(true);setEnd(true);if(mode==="daily")onDaily("scout-signal",Math.max(100,1000-(next.length-1)*90));}else if(next.length>=10){setEnd(true);if(mode==="daily")onDaily("scout-signal",0);}};
- const reset=()=>{setTarget(mode==="daily"?dailyPool[hashSeed("SCOUT"+utcDay())%dailyPool.length]:dailyPool[Math.floor(Math.random()*dailyPool.length)]);setGuess("");setHistory([]);setEnd(false);setWon(false);};
- return <Frame account={account} game="scout-signal" eyebrow="ATTRIBUTE DEDUCTION / PLAYER HUNT" title="SCOUT SIGNAL." description="Guess a footballer. Each guess tests nation, shared club, position, league and age band. Green means you've found a match." number="14" mode={mode} setMode={m=>{setMode(m);setTarget(m==="daily"?dailyPool[hashSeed("SCOUT"+utcDay())%dailyPool.length]:dailyPool[Math.floor(Math.random()*dailyPool.length)]);setGuess("");setHistory([]);setEnd(false);setWon(false);}}> 
- {done&&mode==="daily"?<Success title="SCOUTING REPORT COMPLETE." detail="Today's mystery is done. Take a new one in practice." button="PRACTICE" onAgain={()=>setMode("practice")}/>:<Card className="scout-game"><div className="arc-game-meta"><span>{10-history.length} GUESSES LEFT</span><b>{Math.max(0,1000-history.length*90)} PTS AVAILABLE</b></div><div className="scout-column-head"><span>YOUR GUESS</span>{attrs.map(([,label])=><span key={label}>{label}</span>)}</div><div className="scout-rows">{history.map(p=><motion.div className="scout-row" layout key={p.name} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}}><b>{p.name}</b>{attrs.map(([key,label])=><span key={label} className={category(key,p)?"lit":"scout-cell"} title={label+": "+(key==="careerClub"?matchingClubs(p).join(", ")||"No shared club":key==="currentClub"?p.club:key==="nationality"?p.nationality:key==="position"?p.position:key==="league"?p.league:p.ageBand)}>{signalValue(key,p)}</span>)}</motion.div>)}</div><form className="arc-guess-form" onSubmit={submit}><input list="scout-players" value={guess} onChange={e=>setGuess(e.target.value)} placeholder="Try a player name…"/><datalist id="scout-players">{PLAYER_DATABASE.map(p=><option key={p.name} value={p.name}/>)}</datalist><button className="arc-button" disabled={!playerByName(guess)||end}>SCAN PLAYER ↗</button></form><p className="arc-muted">You can guess from the local player pool. Shared club means both players have that club in their listed career path.</p>{end&&<div className="arc-feedback"><b>{won?"TARGET FOUND":"THE PLAYER WAS "+target.name}</b><p>{target.nationality} · {target.position} · {target.clubs.join(" → ")}</p><button className="arc-button" onClick={reset}>NEXT SCOUT REPORT ↗</button></div>}</Card>}
+ const attrs:[SignalKey,string][]=[["nationality","NATION"],["careerClub","SHARED CLUB"],["latestClub","LATEST CLUB"],["position","POSITION"],["league","LEAGUE"],["ageBand","AGE BAND"]];
+ const valueFor=(key:SignalKey,p:GamePlayer)=>{
+   if(key==="nationality")return <span className="scout-value"><CountryFlag name={p.nationality}/><small>{p.nationality}</small></span>;
+   if(key==="careerClub"){
+     const common=sharedClubs(p);
+     return common.length?<span className="scout-value"><ClubBadge name={common[0]} size={21}/><small>{common[0]}</small>{common.length>1&&<i>+{common.length-1}</i>}</span>:<small className="scout-no-match">NO MATCH</small>;
+   }
+   if(key==="latestClub")return <span className="scout-value"><ClubBadge name={p.club} size={21}/><small>{p.club}</small></span>;
+   if(key==="position")return <small>{p.position}</small>;
+   if(key==="league")return <small>{p.league}</small>;
+   return <small>{p.ageBand}</small>;
+ };
+ const submit=(e:FormEvent)=>{
+   e.preventDefault();
+   const p=archiveGuess(guess,pool);
+   if(!p||history.some(x=>x.archiveId===p.archiveId)||end)return;
+   const next=[...history,p];setHistory(next);setGuess("");
+   if(p.archiveId===target.archiveId){setWon(true);setEnd(true);if(mode==="daily")onDaily("scout-signal",Math.max(100,1000-(next.length-1)*90));}
+   else if(next.length>=10){setEnd(true);if(mode==="daily")onDaily("scout-signal",0);}
+ };
+ const reset=()=>{
+   if(mode==="daily"){setMode("practice");setPracticeSeed(String(Math.floor(Math.random()*1e12)));}
+   else setPracticeSeed(String(Math.floor(Math.random()*1e12)));
+   setGuess("");setHistory([]);setEnd(false);setWon(false);
+ };
+ const targetReady=archivePlayers.length>=2||Boolean(error);
+ return <Frame account={account} game="scout-signal" eyebrow="ATTRIBUTE DEDUCTION / PLAYER HUNT" title="SCOUT SIGNAL." description="Guess the mystery player. Each guess lights up any matching football attributes, including club badges and nationality flags." number="14" mode={mode} setMode={m=>{setMode(m);setGuess("");setHistory([]);setEnd(false);setWon(false);if(m==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));}}>
+ {done&&mode==="daily"?<Success title="SCOUTING REPORT COMPLETE." detail="Today's mystery is done. Unlimited practice is open." button="PRACTICE" onAgain={()=>{setMode("practice");setPracticeSeed(String(Math.floor(Math.random()*1e12)));}}/>:
+  !targetReady&&loading?<Card className="scout-loading"><motion.div animate={{rotate:360}} transition={{duration:1.6,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>OPENING THE SCOUTING DATABASE</b><p>Loading a fresh player pool with career clubs, nationalities and recorded details.</p><span>THIS PLAYER POOL IS CACHED ON YOUR DEVICE FOR REPEAT VISITS.</span></Card>:
+  <Card className="scout-game">
+   <div className="arc-game-meta"><span>{10-history.length} GUESSES LEFT</span><b>{Math.max(0,1000-history.length*90)} PTS AVAILABLE</b></div>
+   <div className="scout-target-note"><span>SCOUTING TARGET</span><b>IDENTITY HIDDEN</b><small>{archived.length>=2?archived.length.toLocaleString("en-GB")+" ARCHIVE PLAYERS IN THIS DRAW":"STARTER PLAYER LIST / ARCHIVE UNAVAILABLE"}</small></div>
+   <div className="scout-column-head"><span>YOUR GUESS</span>{attrs.map(([,label])=><span key={label}>{label}</span>)}</div>
+   <div className="scout-rows">{history.map(p=><motion.div className="scout-row" layout key={p.archiveId} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}}>
+     <b>{p.name}</b>{attrs.map(([key,label])=><span key={label} className={category(key,p)?"lit":"scout-cell"} title={label+": "+(key==="careerClub"?sharedClubs(p).join(", ")||"No shared club":key==="latestClub"?p.club:key==="nationality"?p.nationality:key==="position"?p.position:key==="league"?p.league:p.ageBand)}>{valueFor(key,p)}</span>)}
+   </motion.div>)}</div>
+   <form className="arc-guess-form" onSubmit={submit}><input list="scout-players" value={guess} onChange={e=>setGuess(e.target.value)} placeholder="Try a full name or surname…"/><datalist id="scout-players">{pool.map(p=><option key={p.archiveId} value={p.name}/>)}</datalist><button className="arc-button" disabled={!archiveGuess(guess,pool)||end}>SCAN PLAYER ↗</button></form>
+   <p className="arc-muted">A shared club is a club listed in both careers. Latest club uses the archive's latest listed career spell; it is not a live transfer feed.</p>
+   {error&&<div className="arc-feedback"><b>ARCHIVE FALLBACK</b><p>The large archive could not be reached, so the starter list is active instead.</p><button className="arc-quiet" onClick={retry}>RETRY DATABASE</button></div>}
+   {end&&<div className="arc-feedback"><b>{won?"TARGET FOUND":"THE PLAYER WAS "+target.name}</b><p>{target.nationality} · {target.position} · {target.clubs.join(" → ")}</p><button className="arc-button" onClick={reset}>NEXT SCOUT REPORT ↗</button></div>}
+  </Card>}
  </Frame>;
 }
 
