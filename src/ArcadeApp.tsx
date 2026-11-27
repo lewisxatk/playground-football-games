@@ -9,7 +9,7 @@ import { ClubBadge, CountryFlag } from "./ClubBadge";
 import { cc0CareerToArchiveGamePlayer } from "./cc0CareerAdapter";
 import type { ArchiveGamePlayer, ArchiveCareerSpell, ArchiveGameStat } from "./careerFileData";
 import CareerFilePage from "./CareerFilePage";
-import { getStaticArchivePlayers, useArchivePlayers } from "./useArchivePlayers";
+import { getStaticArchivePlayers } from "./useArchivePlayers";
 import CultHeroPage from "./CultHeroPage";
 import CultHeroCollectionPage from "./CultHeroCollectionPage";
 import { useFootballKnowledge, useFootballQuizKnowledge, makeCC0QuizRound, makeCC0DailyQuizRound, type CC0QuizTier as QuizTier } from "./footballKnowledge";
