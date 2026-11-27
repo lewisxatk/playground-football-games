@@ -27,7 +27,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
  const [round,setRound]=useState(0);
  const day=new Date().toISOString().slice(0,10);
  const seed=playMode==="daily"?"CAREER-FILE:"+day+":"+mode:"CAREER-FILE:PRACTICE:"+practiceSeed+":"+mode;
- const pool=useMemo(()=>data?.careerFileCandidates??[],[data]);
+ const pool=useMemo(()=>data?.careerFileCandidates??data?.players??[],[data]);
  const candidates=useMemo(()=>pool.filter(player=>modeEligible(player,mode)),[pool,mode]);
  const recent=useMemo(()=>{try{const value=JSON.parse(localStorage.getItem(recentKey)||"[]");return new Set(Array.isArray(value)?value.filter((x):x is string=>typeof x==="string"):[])}catch{return new Set<string>()}},[round,practiceSeed]);
  const target=useMemo(()=>{
