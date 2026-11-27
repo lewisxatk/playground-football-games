@@ -858,7 +858,7 @@
       "category": "records",
       "difficulty": "hard",
       "difficultyReason": "A specialist scoring split with a narrow statistical definition.",
-      "question": "Who has scored the most Premier League goals without scoring a penalty?",
+      "question": "Which player holds the record for the most non-penalty goals in Premier League history, with 149?",
       "answer": "Les Ferdinand",
       "acceptedAnswers": [
         "Les Ferdinand"
@@ -869,9 +869,9 @@
         "Wayne Rooney",
         "Sergio Agüero"
       ],
-      "explanation": "Les Ferdinand scored 149 Premier League goals without scoring a penalty, the record for this category.",
+      "explanation": "Les Ferdinand scored 149 Premier League goals excluding penalties, the competition's record for non-penalty goals.",
       "competition": "Premier League",
-      "scope": "Most goals without a penalty, 149",
+      "scope": "Most non-penalty Premier League goals, 149",
       "validAsOf": "2026-11-27",
       "source": {
         "name": "Premier League Club, Manager & Player Records",
@@ -2713,7 +2713,7 @@
       ],
       "explanation": "Geoff Hurst scored three times for England against West Germany in 1966, becoming the first player to score a hat-trick in a men's World Cup final. Kylian Mbappé later matched the feat in 2022.",
       "competition": "FIFA World Cup",
-      "scope": "Only hat-trick scorer in a men's World Cup final",
+      "scope": "First player to score a hat-trick in a men's FIFA World Cup final; Kylian Mbappé later matched the feat in 2022",
       "validAsOf": "2026-11-27",
       "source": {
         "name": "FIFA: Hurst hammers his way into history",
