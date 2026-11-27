@@ -955,7 +955,7 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
    q.startClub+": "+spellWindow(q.startClub)+" · "+q.endClub+": "+spellWindow(q.endClub),
    q.answer.firstYear!==null&&q.answer.lastYear!==null?q.answer.firstYear+"–"+q.answer.lastYear:"Career span not recorded"
  ][hintCount-1]??"": "";
- const canGuess=!answered&&!failed&&(! (wrongCount>=2&&!extraLifeUsed))&&wrongCount<3;
+ const canGuess=!answered&&!failed&&wrongCount<(extraLifeUsed?4:3);
  const completeQuestion=()=>{
    setAnswered(false);setFailed(false);setWrongCount(0);setPenalty(0);setExtraLifeUsed(false);setHintCount(0);setNotice("");
    if(index+1>=questions.length){
@@ -975,7 +975,7 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
    }
    const next=wrongCount+1;setWrongCount(next);setPenalty(old=>old+100);
    setNotice("Not the link. −100 points. Keep looking.");
-   if(next>=3&&extraLifeUsed)setFailed(true);
+   if(next>=4&&extraLifeUsed)setFailed(true);
  };
  const useHint=()=>{
    if(!q||answered||failed||hintCount>=4)return;
