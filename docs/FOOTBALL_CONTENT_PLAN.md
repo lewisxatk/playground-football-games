@@ -6,7 +6,7 @@ Every game should draw from one broad football knowledge universe. The first aud
 
 ## Shared content balance
 
-| Topic | Target share |
+| Topic | Long-run target |
 |---|---:|
 | Premier League (current and historic) | 40% |
 | EFL, FA Cup, League Cup and other English football | 20% |
@@ -23,39 +23,48 @@ These are long-run targets, not quotas for every short daily round.
 - **Hard:** specialist statistics, older history, less familiar competitions, or precise recall.
 - **Extreme:** obscure historical details, exact milestone records, unusual edge cases or facts that even regular fans may need to think hard about.
 
-Difficulty is an editorial estimate of recall difficulty, not a judgement about the player. It should be reviewed using actual play data later. We start with equal tier counts so all four levels have content; later balancing should reflect play-test performance.
+Difficulty is an editorial estimate of recall difficulty, not a judgement about the player. It should be reviewed using actual play data later. The bank currently keeps equal numbers in each tier so all four levels have usable depth.
 
 ## Master question bank
 
-The master factual database lives in public/data/football-facts.seed.json while it is being expanded. Each record contains a stable ID, broad topic, specific category, difficulty and rationale, natural-language question, canonical answer, four answer choices, accepted spellings, reveal explanation, competition scope, valid-as-of date, source URL, checked date, review status and native game-mode mapping.
+The master factual database lives in public/data/football-facts.seed.json while it is being expanded. Each record contains a stable ID, broad topic, specific category, difficulty and rationale, natural-language question, canonical answer, exactly four answer choices, accepted spellings, reveal explanation, competition scope, valid-as-of date, source URL, source checked date, review status and native game-mode mapping.
 
-Question wording is written for PLAYGROUND. Sources are used to discover and verify facts; the project does not copy third-party quiz packs or question wording.
+Question wording is written originally for PLAYGROUND. Sources are used to discover and verify facts; the project does not copy third-party quiz packs or question wording.
 
 ## Source policy
 
-Prefer primary or competition-authority sources: Premier League, EFL, The FA, UEFA, FIFA, Bundesliga, Ligue 1, Lega Serie A and La Liga. Secondary reporting can help discover facts, but an item should not be marked verified until the detail can be checked against a reliable source.
+Prefer primary or competition-authority sources: Premier League, EFL, The FA, UEFA, FIFA, Bundesliga, Ligue 1, Lega Serie A and La Liga. Secondary reporting can help discover facts, but an item should not be marked verified until the underlying detail can be checked against a reliable source.
 
 Be explicit about scope: Premier League rather than all English top-flight history; EURO finals rather than qualifying; European Cup/Champions League continuity only where the record is genuinely shared; league goals rather than all-competition goals. Never turn player nationality into proof of a national-team appearance.
 
 ## Current development bank
 
-The current bank contains **80 question records** across two researched batches, with **20 questions each in Easy, Medium, Hard and Extreme**.
+The current bank contains **100 question records** with this difficulty balance:
 
-| Topic | Current records |
+| Difficulty | Questions |
 |---|---:|
-| Premier League | 31 |
-| EFL and English cups | 15 |
-| Champions League / European Cup | 13 |
-| World Cup and EURO | 13 |
-| Other Big Five leagues | 8 |
+| Easy | 25 |
+| Medium | 25 |
+| Hard | 25 |
+| Extreme | 25 |
 
-The bank includes headline quiz facts alongside distinctive questions: the first live televised Premier League goal, Portsmouth 7-4 Reading, the 1993 Wimbledon attendance record, a Barnsley play-off final moment, the first FA Cup final's scorer and playing alias, historic EFL records, unusual UEFA finals records and modern Bundesliga statistics.
+| Topic group | Current records | Current share |
+|---|---:|---:|
+| Premier League | 37 | 37% |
+| EFL and English cups | 20 | 20% |
+| Champions League / European Cup | 17 | 17% |
+| World Cup and EURO | 16 | 16% |
+| Other Big Five leagues | 10 | 10% |
 
-The database currently draws from 37 distinct source URLs. Each question retains its own source URL and the date that source was checked.
+The database currently contains 39 distinct source URLs. Every record retains its own source URL and the date it was checked.
+
+The bank includes straightforward entry questions alongside more distinctive details: early Premier League milestone goals, Portsmouth 7-4 Reading, the 1993 Wimbledon attendance record, a Barnsley play-off final moment, the first FA Cup final's scorer and playing alias, the 2005 Champions League final comeback, and unusual EFL/Bundesliga records.
+
+Question categories now include: clubs, firsts, history, managers, matches, milestones, players, records, stadiums, transfers, trophies.
 
 ## How games consume the bank
 
-The current 80 records are factual question units. They are natively mapped to Timed Quiz and The Climb only. Other games should use purpose-built converters:
+The current 100 records are factual question units. They are natively mapped to Timed Quiz and The Climb only. Other games should use purpose-built converters:
 
 - Footle needs a recognisable, deduplicated player answer pool with aliases and useful letter hints.
 - Connections and Strands need complete packs tested for one unique solution.
@@ -70,6 +79,6 @@ A fact appearing in the master bank does not automatically count as a playable p
 
 ## Quality gates
 
-The validator rejects missing difficulty/category, duplicate IDs or question text, duplicate accepted answers after accent normalisation, incomplete questions, unverified items, missing sources or scope, invalid choices, multiple correct options and accidental mapping of a basic quiz question to a game that requires a converted puzzle pack.
+The validator rejects missing or duplicate IDs/question stems, incomplete questions, missing canonical answers or aliases, repeated aliases after accent normalisation, missing category/topic/difficulty, missing difficulty rationale, missing explanations, missing competition scope or dates, missing source provenance, unverified items, invalid game mappings, and missing/duplicate answer options or a correct answer that appears other than once.
 
-Do not claim the database is complete at 500–1,000 questions. The 80-question bank is a foundation, not the final content volume. Continue in researched batches, then connect the validated bank to gameplay and measure which difficulty levels are actually too easy or too hard.
+Do not claim the database is complete at 500–1,000 questions. The 100-question bank is a growing foundation, not the finished content volume. Continue in researched batches, then connect validated records to game-specific data models and measure which difficulty levels are actually too easy or too hard.
