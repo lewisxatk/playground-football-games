@@ -1451,7 +1451,7 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
    else if(tries>=maxGuesses){setWon(false);setEnded(true);setPracticeRunActive(false);if(mode==="daily")onDaily("tournament-nation",0);}
  };
  const reset=(newMode:Mode=mode,newDifficulty:TournamentDifficulty=difficulty)=>{
-   setDifficulty(newDifficulty);setAttempts(0);setEnded(false);setWon(false);
+   setDifficulty(newDifficulty);setAttempts(0);setEnded(false);setWon(false);setPracticeRunActive(false);
    if(newMode==="practice"&&(practicePlays[utcDay()]??0)<5){setPracticePlays(old=>({...old,[utcDay()]:Math.min(5,(old[utcDay()]??0)+1)}));setPracticeRunActive(true);setPracticeSeed(String(Math.floor(Math.random()*1e12)));}
  };
  return <Frame account={account} game="tournament-nation" eyebrow="WORLD CUP ARCHIVE / STARTING XI" title="TOURNAMENT NATION." description="Identify the country from a full historic World Cup starting XI. Each shirt gives you a club clue from that tournament year." number="15" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
