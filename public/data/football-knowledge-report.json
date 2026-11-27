@@ -1,23 +1,47 @@
 {
   "generatedAt": "2026-11-27",
-  "policy": "CC0-only pinned source whitelist; licence does not guarantee factual accuracy",
+  "policy": "CC0-only source whitelist; Wikidata career snapshot is live-query data with retrieved timestamp",
+  "wikidataCareerImport": {
+    "status": "success",
+    "endpoint": "https://query-next.wikidata.org/sparql",
+    "retrievedAt": "2026-11-27",
+    "rawRows": 50000,
+    "acceptedSpells": 49618,
+    "players": 7168,
+    "eligibleCareerFile": 7168,
+    "eligibleCultHero": 7168,
+    "error": null
+  },
   "counts": {
-    "players": 44978,
+    "players": 75224,
     "clubs": 560,
-    "footlePlayerRecords": 43478,
-    "footleAnswers": 4798,
-    "worldCupLineups": 1312,
-    "worldCupPlayerCards": 3722,
-    "worldCupQuestions": 1312,
+    "wikidataCareerRows": 50000,
+    "wikidataCareerPlayers": 7168,
+    "careerFileCandidates": 7168,
+    "cultHeroCandidates": 7168,
+    "linkUpPacks": 750,
+    "footlePlayerRecords": 71802,
+    "footleAnswers": 6868,
+    "worldCupLineups": 1520,
+    "worldCupPlayerCards": 4294,
+    "worldCupQuestions": 760,
     "internationalMatches": 50092,
-    "internationalGoalEvents": 46899,
+    "englishMatches": 60626,
+    "europeanClubMatches": 4091,
+    "totalMatchFacts": 114809,
+    "ukMatchFacts": 60626,
+    "internationalMatchFacts": 54183,
+    "internationalGoalEvents": 47835,
+    "eligibleScoringEvents": 46899,
+    "ownGoalsExcluded": 936,
+    "duplicateGoalRows": 79,
     "internationalGoalScorers": 14839,
     "internationalScorersForGames": 7946,
     "lowballPacks": 750,
     "ladderPacks": 750,
     "football501Packs": 750,
-    "climbQuestions": 25045,
-    "timedQuizQuestions": 25047,
+    "climbQuestions": 57404,
+    "timedQuizQuestions": 57405,
     "connectionsPacks": 500,
     "gridPacks": 500,
     "strandsPacks": 500,
@@ -26,19 +50,19 @@
   "games": {
     "footle": {
       "unit": "unique five-letter surname",
-      "count": 4798,
+      "count": 6868,
       "ready": true,
       "integrated": true
     },
     "the-climb": {
       "unit": "question",
-      "count": 25045,
+      "count": 57404,
       "ready": true,
       "integrated": true
     },
     "timed-quiz": {
       "unit": "question",
-      "count": 25047,
+      "count": 57405,
       "ready": true,
       "integrated": true
     },
@@ -50,28 +74,39 @@
     },
     "missing-xi": {
       "unit": "puzzle-pack",
-      "count": 1312,
+      "count": 1520,
       "ready": true,
       "integrated": true
     },
     "tournament-nation": {
       "unit": "puzzle-pack",
-      "count": 1312,
+      "count": 1520,
       "ready": true,
       "integrated": true
     },
     "the-reveal": {
       "unit": "player-card",
-      "count": 3722,
+      "count": 4294,
       "ready": true,
       "integrated": true
     },
     "link-up": {
       "unit": "puzzle-pack",
-      "count": 0,
-      "ready": false,
-      "integrated": false,
-      "reason": "needs verified shared-career connections"
+      "count": 750,
+      "ready": true,
+      "integrated": true
+    },
+    "career-file": {
+      "unit": "player-card",
+      "count": 7168,
+      "ready": true,
+      "integrated": true
+    },
+    "cult-hero": {
+      "unit": "player-card",
+      "count": 7168,
+      "ready": true,
+      "integrated": true
     },
     "strands": {
       "unit": "puzzle-pack",
@@ -109,28 +144,14 @@
     },
     "draft-xi": {
       "unit": "candidate-player",
-      "count": 3613,
+      "count": 3715,
       "ready": true,
       "integrated": true,
       "metric": "position, international goals and World Cup starts; draft credits are game values"
     },
-    "career-file": {
-      "unit": "player-card",
-      "count": 0,
-      "ready": false,
-      "integrated": false,
-      "reason": "needs dated career spells"
-    },
-    "cult-hero": {
-      "unit": "player-card",
-      "count": 0,
-      "ready": false,
-      "integrated": false,
-      "reason": "needs dated club-spell histories"
-    },
     "scout-signal": {
       "unit": "player-card",
-      "count": 3613,
+      "count": 3715,
       "ready": true,
       "integrated": true,
       "metric": "position, nation, age band, international goals and World Cup starts"

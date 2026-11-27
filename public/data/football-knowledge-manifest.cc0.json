@@ -1,0 +1,192 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-11-27",
+  "idPolicy": "Stable SHA-256-derived IDs from canonicalised names or source-scoped fact keys; source IDs retained where supplied.",
+  "licencePolicy": "CC0-1.0 data only; no third-party crests, photographs, portraits or copied quiz wording.",
+  "accuracyWarning": "CC0 does not guarantee completeness or factual accuracy. Career records are dated membership statements, not appearances; international goals are recorded source events, not guaranteed career totals.",
+  "sourceRegistry": {
+    "players": {
+      "repo": "openfootball/players",
+      "commit": "125d20f7cc06cac7e758b40df535a7695632680a",
+      "licence": "CC0-1.0",
+      "url": "https://github.com/openfootball/players"
+    },
+    "clubs": {
+      "repo": "openfootball/clubs",
+      "commit": "ae3800227c449447b3a337fc0aac79a8f02f4c8b",
+      "licence": "CC0-1.0",
+      "url": "https://github.com/openfootball/clubs"
+    },
+    "worldCup": {
+      "repo": "openfootball/worldcup.json",
+      "commit": "516d3825c3bd23fdc298c4014e84bde78f2d4965",
+      "licence": "CC0-1.0",
+      "url": "https://github.com/openfootball/worldcup.json",
+      "file": "public/data/worldcup-lineups.json"
+    },
+    "internationalResults": {
+      "repo": "martj42/international_results",
+      "commit": "ca84241bb3eed854a1956a2fab442fe4daad40dd",
+      "licence": "CC0-1.0",
+      "url": "https://github.com/martj42/international_results",
+      "file": "results.csv"
+    },
+    "england": {
+      "repo": "openfootball/england",
+      "commit": "9ee7a0c351805c99cc334478a9bf04b7d0432fec",
+      "licence": "CC0-1.0",
+      "url": "https://github.com/openfootball/england"
+    },
+    "championsLeague": {
+      "repo": "openfootball/champions-league",
+      "commit": "abfaeddc2ee3d14f99ecc163c9ddb46cb4d67cef",
+      "licence": "CC0-1.0",
+      "url": "https://github.com/openfootball/champions-league"
+    },
+    "wikidata": {
+      "repo": "Wikidata",
+      "licence": "CC0-1.0",
+      "url": "https://www.wikidata.org/wiki/Wikidata:Licensing",
+      "endpoint": "https://query-next.wikidata.org/sparql",
+      "retrievedAt": "2026-11-27"
+    }
+  },
+  "shards": {
+    "core": {
+      "file": "/data/football-knowledge-core.cc0.json",
+      "bytes": 18799758,
+      "sha256": "25ac427cd4b0ac49707d8afedb6fb865746e771cf00446e46d223bbb3f3123cc",
+      "recordCounts": {
+        "players": 75224,
+        "clubs": 560
+      }
+    },
+    "matches": {
+      "file": "/data/football-knowledge-matches.cc0.json",
+      "bytes": 14647904,
+      "sha256": "fc7e77d9304b4eb0985c626dc4b99cbb914eed56f4af55b3193e7e96faad2b44",
+      "recordCounts": {
+        "matches": 50092
+      }
+    },
+    "english-matches": {
+      "file": "/data/football-knowledge-english-matches.cc0.json",
+      "bytes": 22341196,
+      "sha256": "fc7775c761dc2538ac10e04da567bd661ff7107c251632f00eba5d1cd6ca6c4a",
+      "recordCounts": {
+        "matches": 60626
+      }
+    },
+    "european-club-matches": {
+      "file": "/data/football-knowledge-european-club-matches.cc0.json",
+      "bytes": 1605894,
+      "sha256": "d90ffd3e33826fb4d941272a84a2344bbb8f622d880b4752550522f289a03d39",
+      "recordCounts": {
+        "matches": 4091
+      }
+    },
+    "goal-events": {
+      "file": "/data/football-knowledge-goal-events.cc0.json",
+      "bytes": 20526588,
+      "sha256": "924ebb714583273d36c2b45aa0633915f100a5ff67108005f80f4c35f36ba766",
+      "recordCounts": {
+        "events": 47835,
+        "scorers": 14839
+      }
+    },
+    "world-cup": {
+      "file": "/data/football-knowledge-world-cup.cc0.json",
+      "bytes": 708918,
+      "sha256": "ccd53255f799edec588a2837ad26f222d2b7da1a4d0a3e30b0f60dfda21e11df",
+      "recordCounts": {
+        "lineups": 1520
+      }
+    },
+    "footle": {
+      "file": "/data/football-knowledge-footle.cc0.json",
+      "bytes": 1203578,
+      "sha256": "ba53118033dcd83132cb54f82ee37c8be392a37b68fbac69ff1d7e8586d609cc",
+      "recordCounts": {
+        "answers": 6868,
+        "answerRecords": 6868
+      }
+    },
+    "connections": {
+      "file": "/data/football-knowledge-connections.cc0.json",
+      "bytes": 1872228,
+      "sha256": "34e80c6f253d9960b1c673b10a2313e4842b4fa1cbcce9ca6b5a742f684a8810",
+      "recordCounts": {
+        "players": 5043,
+        "packs": 500
+      }
+    },
+    "strands": {
+      "file": "/data/football-knowledge-strands.cc0.json",
+      "bytes": 110298,
+      "sha256": "184b75f2d22250c0067891ea954a4145bad9861030a372c8b1f342147545a826",
+      "recordCounts": {
+        "packs": 500
+      }
+    },
+    "football-grid": {
+      "file": "/data/football-knowledge-football-grid.cc0.json",
+      "bytes": 2856368,
+      "sha256": "0b88753395451bd7a90f37fa13e9d3e4d5e4d0481a501db9398f86d9283e64be",
+      "recordCounts": {
+        "players": 7130,
+        "packs": 500
+      }
+    },
+    "the-climb": {
+      "file": "/data/football-knowledge-the-climb.cc0.json",
+      "bytes": 37843278,
+      "sha256": "93ef8652a72ffd08d10153039d37b677c011e7eb32086e82cd13b44c64cc8e18",
+      "recordCounts": {
+        "questions": 57404
+      }
+    },
+    "timed-quiz": {
+      "file": "/data/football-knowledge-timed-quiz.cc0.json",
+      "bytes": 37845231,
+      "sha256": "90b73ccb6bb4619262ffbb5cb2d9645e43253f1a681137658e6bde5bf22ea12f",
+      "recordCounts": {
+        "questions": 57405
+      }
+    },
+    "the-reveal": {
+      "file": "/data/football-knowledge-the-reveal.cc0.json",
+      "bytes": 849265,
+      "sha256": "6b606241d213fae719a0c9432c54a399deca1102d409214247f2c4f50d44f4ce",
+      "recordCounts": {
+        "playerCards": 4294
+      }
+    },
+    "goal-packs": {
+      "file": "/data/football-knowledge-goal-packs.cc0.json",
+      "bytes": 2038413,
+      "sha256": "52c0d5e09ffd6a38f6acc0dcb08c675d5a1c87101770798b7d69487a60c7019b",
+      "recordCounts": {
+        "lowballPairs": 750,
+        "ladderPacks": 750,
+        "football501Packs": 750
+      }
+    },
+    "player-stats": {
+      "file": "/data/football-knowledge-player-stats.cc0.json",
+      "bytes": 901573,
+      "sha256": "5038f7fe32d3b8e4f95eb2e44631e81da74d8bf7675cb20a688416c2ef503230",
+      "recordCounts": {
+        "players": 3715
+      }
+    },
+    "career-history": {
+      "file": "/data/football-knowledge-career-history.cc0.json",
+      "bytes": 9320176,
+      "sha256": "f3baf24ae3fd6cce2c442676c1a9dbf9f10415dbe89026cf2af7aa5367a97089",
+      "recordCounts": {
+        "players": 7168,
+        "linkUpPacks": 750
+      }
+    }
+  }
+}
