@@ -57,9 +57,10 @@ function archivePlayerCandidate(player:Player,raw:ArchiveGamePlayer):Candidate{
  const country=clean(raw.currentCountry??"");
  const league=clean(raw.currentLeague??"");
  const englishLeague=["premierleague","championship","leagueone","leaguetwo","nationalleague","englishfootball","efl","fa"].some(value=>league.replace(/[^a-z]/g,"").includes(value));
- const region:Candidate["region"]=country.includes("england")||englishLeague?"ENGLISH":
-   country.includes("united kingdom")||country.includes("great britain")||country==="uk"||country==="gb"||
-   Boolean(country||league)?"INTERNATIONAL":undefined;
+ const region:Candidate["region"]=country.includes("england")?"ENGLISH":
+   country.includes("united kingdom")||country.includes("great britain")||country==="uk"||country==="gb"? (englishLeague?"ENGLISH":"INTERNATIONAL"):
+   country?"INTERNATIONAL":league.replace(/[^a-z]/g,"").startsWith("eng")||league.includes("englishfootball")?"ENGLISH":
+   league?"INTERNATIONAL":undefined;
  return {
    id:player.id,
    name:player.name,
