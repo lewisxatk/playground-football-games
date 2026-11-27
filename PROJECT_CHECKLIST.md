@@ -516,3 +516,8 @@ This section records the separate gameplay-rework branch so work is not confused
 - [x] Strengthened static/runtime validators for date semantics, HTTPS sources, fact/scope duplicates and answer aliases in multiple-choice options.
 - [x] Rechecked structural invariants across the 100-question seed: 100 unique IDs, question stems and fact/scope keys; 76 explicit event dates; no schema errors.
 - [!] Factual QA remains separate: the validators cannot prove the statement true or guarantee distractors false. A current Premier League spot check confirmed Nwaneri remains youngest player appearance record and Max Dowman is youngest goalscorer; preserve the distinction and do not treat the Premier League website as a bulk-licensed data source.
+
+
+- [x] Tightened Les Ferdinand's 149-goal statistic to say "non-penalty goals", avoiding the impression that he never scored a penalty.
+- [x] Corrected Geoff Hurst's World Cup final hat-trick scope from "only" to "first", noting Mbappé later matched the feat in 2022.
+- [x] Confirmed Ethan Nwaneri remains the youngest Premier League appearance-maker; Max Dowman holds the separate youngest-goalscorer record.
