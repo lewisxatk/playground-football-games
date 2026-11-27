@@ -26,7 +26,7 @@ for (const f of data.facts) {
   if (!difficulties.includes(f.difficulty)) errors.push(id + ": invalid/missing difficulty");
   if (!f.difficultyReason?.trim()) errors.push(id + ": missing difficulty rationale");
   if (!f.competition?.trim() || !f.scope?.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(f.validAsOf ?? "")) errors.push(id + ": missing competition, scope or valid date");
-  if (!f.source?.name || !/^https?:\/\//.test(f.source?.url ?? "") || !f.source?.checkedAt) errors.push(id + ": missing source provenance");
+  if (!f.source?.name || !/^https?:\/\//.test(f.source?.url ?? "") || !/^\d{4}-\d{2}-\d{2}$/.test(f.source?.checkedAt ?? "")) errors.push(id + ": missing or invalid source provenance");
   if (f.reviewStatus !== "verified") errors.push(id + ": not approved for live use");
   if (!Array.isArray(f.gameModes) || !f.gameModes.length) errors.push(id + ": no native quiz mode mapping");
   if (f.gameModes?.some(mode => !["timed-quiz","the-climb"].includes(mode))) errors.push(id + ": basic factual question mapped to a non-quiz mode");
