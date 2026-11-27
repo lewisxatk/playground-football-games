@@ -326,12 +326,81 @@ function FootlePage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  </Frame>;
 }
 
+type ConnectionsDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
+type DynamicGroup={name:string;color:string;members:GamePlayer[]};
+function buildConnectionsGroups(players:GamePlayer[],difficulty:ConnectionsDifficulty,seed:number):DynamicGroup[]{
+ const byCountry=new Map<string,GamePlayer[]>();
+ for(const p of players){
+   if(!p.nationality||p.nationality==="Unlisted")continue;
+   const list=byCountry.get(p.nationality)??[];
+   if(!list.some(x=>x.archiveId===p.archiveId))list.push(p);
+   byCountry.set(p.nationality,list);
+ }
+ const limits:{min:number;max:number}={
+   EASY:{min:55,max:Number.POSITIVE_INFINITY},
+   STANDARD:{min:22,max:65},
+   HARD:{min:8,max:30},
+   EXTREME:{min:4,max:14}
+ }[difficulty];
+ let nations=Array.from(byCountry.entries()).filter(([,items])=>items.length>=limits.min&&items.length<=limits.max);
+ if(nations.length<4)nations=Array.from(byCountry.entries()).filter(([,items])=>items.length>=4);
+ if(nations.length<4)return [];
+ const chosen=shuffle(nations,seed).slice(0,4);
+ const colors=["gold","blue","pink","green"];
+ const groups=chosen.map(([country,members],i)=>({
+   name:"NATIONALITY · "+country.toUpperCase(),
+   color:colors[i],
+   members:shuffle(members,seed+i*97).slice(0,4)
+ }));
+ const unique=groups.flatMap(g=>g.members).map(p=>p.archiveId);
+ if(unique.length!==16||new Set(unique).size!==16)return [];
+ return groups;
+}
 function ConnectionsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
- const [mode,setMode]=useMode();const [selected,setSelected]=useState<string[]>([]);const [found,setFound]=useState<number[]>([]);const [mistakes,setMistakes]=useState(0);const [finished,setFinished]=useState(false);const done=account.daily[utcDay()]?.connections!==undefined;
- const groups=FOOTBALL_GROUPS;const all=groups.flatMap(g=>g.members);const tiles=useMemo(()=>shuffle(all,mode==="daily"?hashSeed("CONNECTIONS"+utcDay()):Date.now()),[mode]);
- const submit=()=>{if(selected.length!==4||finished)return;const group=groups.findIndex(g=>selected.every(name=>g.members.includes(name)));if(group>=0&&!found.includes(group)){const next=[...found,group];setFound(next);setSelected([]);if(next.length===4){setFinished(true);if(mode==="daily")onDaily("connections",1000-mistakes*150);}}else{setMistakes(v=>v+1);setSelected([]);if(mistakes>=3){setFinished(true);if(mode==="daily")onDaily("connections",0);}}};
- return <Frame account={account} game="connections" eyebrow="SORT THE TOUCHLINE / 16 TILES" title="FIND THE CONNECTION." description="Four hidden football groups. Select four names that belong together. Four mistakes and the board is revealed." number="06" mode={mode} setMode={m=>{setMode(m);setSelected([]);setFound([]);setMistakes(0);setFinished(false);}}>
- {done&&mode==="daily"?<Success title="GROUPS FOUND." detail="Today's Connections board is complete. Go again in practice." button="PRACTICE" onAgain={()=>setMode("practice")}/>:<Card className="connections-game"><div className="arc-game-meta"><span>GROUPS FOUND {found.length}/4</span><b>MISTAKES {mistakes}/4</b></div><div className="connections-found">{found.map(i=><div key={i} className={groups[i].color}><small>{groups[i].name}</small><b>{groups[i].members.join(" · ")}</b></div>)}</div><div className="connections-grid">{tiles.filter(n=>!groups.some((g,i)=>found.includes(i)&&g.members.includes(n))).map(name=><button key={name} onClick={()=>setSelected(v=>v.includes(name)?v.filter(x=>x!==name):v.length<4?[...v,name]:v)} className={selected.includes(name)?"selected":""}>{name}</button>)}</div><div className="arc-game-foot"><span>{selected.length} / 4 SELECTED</span><button className="arc-button" onClick={submit} disabled={selected.length!==4||finished}>SUBMIT GROUP ↗</button><button className="arc-quiet" onClick={()=>setSelected([])}>CLEAR</button></div>{finished&&<div className="arc-feedback"><b>BOARD REVEALED</b>{groups.map(g=><p key={g.name}>{g.name}: {g.members.join(", ")}</p>)}</div>}</Card>}
+ const [mode,setMode]=useMode();const [difficulty,setDifficulty]=useState<ConnectionsDifficulty>("STANDARD");
+ const [selected,setSelected]=useState<string[]>([]);const [found,setFound]=useState<number[]>([]);
+ const [mistakes,setMistakes]=useState(0);const [finished,setFinished]=useState(false);
+ const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
+ const [notice,setNotice]=useState("");const done=account.daily[utcDay()]?.connections!==undefined;
+ const seed=mode==="daily"?"CONNECTIONS:"+utcDay():"CONNECTIONS:PRACTICE:"+practiceSeed;
+ const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,seed,1600);
+ const pool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
+ const groups=useMemo(()=>pool.length>=32?buildConnectionsGroups(pool,difficulty,hashSeed(seed+":"+difficulty)):[],[pool,difficulty,seed]);
+ const all=useMemo(()=>groups.flatMap(g=>g.members.map(p=>p.archiveId)),[groups]);
+ const tilePlayers=useMemo(()=>shuffle(groups.flatMap(g=>g.members),hashSeed(seed+":TILES:"+difficulty)),[groups,seed,difficulty]);
+ const tileById=useMemo(()=>new Map(tilePlayers.map(p=>[p.archiveId,p])),[tilePlayers]);
+ const selectedGroup=()=>groups.findIndex(g=>selected.length===4&&selected.every(id=>g.members.some(p=>p.archiveId===id)));
+ const submit=()=>{
+   if(selected.length!==4||finished)return;
+   const group=selectedGroup();
+   if(group>=0&&!found.includes(group)){
+     const next=[...found,group];setFound(next);setSelected([]);setNotice("");
+     if(next.length===4){setFinished(true);if(mode==="daily")onDaily("connections",1000-mistakes*150);}
+   }else{
+     const nextMistakes=mistakes+1;setMistakes(nextMistakes);setSelected([]);setNotice("Not quite — those four names do not share one nationality group.");
+     if(nextMistakes>=4){setFinished(true);if(mode==="daily")onDaily("connections",0);}
+   }
+ };
+ const reset=(newMode:Mode=mode,newDifficulty:ConnectionsDifficulty=difficulty)=>{
+   setDifficulty(newDifficulty);setSelected([]);setFound([]);setMistakes(0);setFinished(false);setNotice("");
+   if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
+ };
+ return <Frame account={account} game="connections" eyebrow="SORT THE TOUCHLINE / 16 TILES" title="FIND THE CONNECTION." description="Sixteen footballers. Four hidden nationality groups. Find all four sets, with unlimited new archive draws in practice." number="06" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
+ {done&&mode==="daily"?<Success title="GROUPS FOUND." detail="Today's Connections board is complete. Go again in unlimited practice." button="PRACTICE" onAgain={()=>{setMode("practice");reset("practice");}}/>:
+  <Card className="connections-game">
+   <div className="arc-game-meta"><span>GROUPS FOUND {found.length}/4</span><b>MISTAKES {mistakes}/4</b></div>
+   <div className="grid-difficulty">{(["EASY","STANDARD","HARD","EXTREME"] as ConnectionsDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{level}</button>)}</div>
+   {loading&&groups.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>BUILDING CONNECTIONS</b><span>Finding four distinct nationality groups in the archive.</span></div>:
+    groups.length!==4?<div className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NOT ENOUGH MATCHING PLAYERS"}</b><p>{error||"The current data draw doesn't contain four groups at this difficulty. Try another level or draw again."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY DATABASE ↗</button></div>:
+    <>
+     <div className="connections-found">{found.map(i=><motion.div layout key={i} className={groups[i].color}><small>{groups[i].name}</small><b>{groups[i].members.map(p=>p.name).join(" · ")}</b></motion.div>)}</div>
+     <div className="connections-grid">{tilePlayers.filter(p=>!found.some(i=>groups[i].members.some(g=>g.archiveId===p.archiveId))).map(p=><motion.button layout key={p.archiveId} onClick={()=>setSelected(v=>v.includes(p.archiveId)?v.filter(x=>x!==p.archiveId):v.length<4?[...v,p.archiveId]:v)} className={selected.includes(p.archiveId)?"selected":""} whileTap={{scale:.96}}>{p.name}</motion.button>)}</div>
+     <div className="arc-game-foot"><span>{selected.length} / 4 SELECTED</span><button className="arc-button" onClick={submit} disabled={selected.length!==4||finished}>SUBMIT GROUP ↗</button><button className="arc-quiet" onClick={()=>setSelected([])}>CLEAR</button></div>
+     {notice&&<div className="arc-feedback"><b>KEEP THINKING.</b><p>{notice}</p></div>}
+     {finished&&<div className="arc-feedback"><b>BOARD REVEALED</b>{groups.map(g=><p key={g.name}>{g.name}: {g.members.map(p=>p.name).join(", ")}</p>)}<button className="arc-button" onClick={()=>reset(mode)}>NEW BOARD ↗</button></div>}
+     <p className="arc-muted">Group logic uses the archive's recorded nationality field. The player names are drawn afresh from the shared data pool; different practice rounds produce new combinations.</p>
+    </>}
+  </Card>}
  </Frame>;
 }
 
