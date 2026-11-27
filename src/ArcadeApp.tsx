@@ -289,7 +289,8 @@ function LowballPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
  const done=account.daily[utcDay()]?.lowball!==undefined;
  const seed=mode==="daily"?"LOWBALL:"+utcDay():"LOWBALL:PRACTICE:"+practiceSeed;
- const {lowballPairs,loading:poolLoading,error:poolError,retry}=useFootballKnowledge();
+ const {data:goalData,loading:poolLoading,error:poolError,retry}=useFootballKnowledge("goal-packs");
+ const lowballPairs=goalData?.lowballPairs??[];
  type DuelStatPlayer={name:string;value:number;club:string;seasons:number;id:string};
  const fallbackPool:DuelStatPlayer[]=LEAGUE_GOALS.map(p=>({name:p.name,value:p.value,club:"Starter list",seasons:1,id:p.name}));
  const sourcePool=useMemo(()=>{
@@ -370,7 +371,8 @@ function ClimbPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:n
  const [step,setStep]=useState(0);const [lives,setLives]=useState(3);const [score,setScore]=useState(0);const [answer,setAnswer]=useState("");const [ended,setEnded]=useState(false);
  const done=account.daily[utcDay()]?.["the-climb"]!==undefined;
  const seed=mode==="daily"?"CLIMB:"+utcDay()+":"+difficulty:"CLIMB:PRACTICE:"+practiceSeed+":"+difficulty;
- const {climbQuestions:bank,loading,error,retry}=useFootballKnowledge();
+ const {data:climbData,loading,error,retry}=useFootballKnowledge("the-climb");
+ const bank=climbData?.questions??[];
  const questions=useMemo(()=>bank.length?makeCC0QuizRound(bank,difficulty,hashSeed(seed),5):[],[bank,difficulty,seed]);
  const question=questions[step];
  const choose=(value:string)=>{
@@ -427,7 +429,8 @@ function DraftPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:n
  const [picked,setPicked]=useState<string[]>([]);const [locked,setLocked]=useState(false);
  const done=account.daily[utcDay()]?.["draft-xi"]!==undefined;
  const seed=mode==="daily"?"DRAFT:"+utcDay()+":"+difficulty:"DRAFT:PRACTICE:"+practiceSeed+":"+difficulty;
- const {draftPlayers,loading,error,retry}=useFootballKnowledge();
+ const {data:playerStatsData,loading,error,retry}=useFootballKnowledge("player-stats");
+ const draftPlayers=playerStatsData?.players??[];
  const cc0Pool=useMemo(()=>draftPlayers.map(cc0PlayerToGamePlayer)
    .filter(p=>["GK","DEF","MID","FWD"].includes(p.position)&&p.nationality!=="Unlisted")
    .map(p=>({...p,cost:draftCost(p),rating:Math.min(99,Math.round(35+Math.sqrt(Math.max(0,p.careerApps))*2+Math.sqrt(Math.max(0,p.careerGoals))*1.5))} as DraftCandidate)),[draftPlayers]);
@@ -493,10 +496,10 @@ function FootlePage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const [typed,setTyped]=useState("");const [guesses,setGuesses]=useState<string[]>([]);const [end,setEnd]=useState(false);const [wordError,setWordError]=useState("");const [hinted,setHinted]=useState<number[]>([]);
  const done=account.daily[utcDay()]?.footle!==undefined;
  const seed=mode==="daily"?"FOOTLE:"+utcDay():"FOOTLE:PRACTICE:"+practiceSeed;
- const {players:cc0Players,loading,error}=useFootballKnowledge();
- const bank=useMemo(()=>{
-   const names=[...cc0Players.map(p=>p.name),...cc0Players.flatMap(p=>p.aliases??[])];
-   const surnames=names.map(value=>{
+ const {data:footleData,loading,error}=useFootballKnowledge("footle");
+ const bank=footleData?.answers??[];
+ /* legacy name parsing is intentionally replaced by the precomputed unique answer shard */
+ const legacyBank=useMemo(()=>{const names:string[]=[];const surnames=names.map(value=>{
      const parts=value.trim().split(/\s+/).filter(Boolean);
      return (parts.at(-1)??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,"");
    }).filter(name=>name.length===5);
@@ -639,7 +642,9 @@ function ConnectionsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
  const [notice,setNotice]=useState("");const done=account.daily[utcDay()]?.connections!==undefined;
  const seed=mode==="daily"?"CONNECTIONS:"+utcDay():"CONNECTIONS:PRACTICE:"+practiceSeed;
- const {players:cc0Players,connectionsPacks,loading,error,retry}=useFootballKnowledge();
+ const {data:connectionData,loading,error,retry}=useFootballKnowledge("connections");
+ const cc0Players=connectionData?.players??[];
+ const connectionsPacks=connectionData?.packs??[];
  const pool=useMemo(()=>cc0Players.map(cc0PlayerToGamePlayer),[cc0Players]);
  const groups=useMemo(()=>{
    const pack=connectionsPacks.length?connectionsPacks[hashSeed(seed+":"+difficulty)%connectionsPacks.length]:null;
@@ -698,7 +703,9 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
  const [gridNotice,setGridNotice]=useState("");
  const done=account.daily[utcDay()]?.["football-grid"]!==undefined;
  const seed=mode==="daily"?hashSeed("GRID:"+utcDay()+":"+difficulty):hashSeed("GRID:practice:"+practiceSeed+":"+difficulty);
- const {players:cc0Players,gridPacks,loading,error,retry}=useFootballKnowledge();
+ const {data:gridData,loading,error,retry}=useFootballKnowledge("football-grid");
+ const cc0Players=gridData?.players??[];
+ const gridPacks=gridData?.packs??[];
  const playerPool=useMemo(()=>cc0Players.map(cc0PlayerToGamePlayer),[cc0Players]);
  const puzzle=useMemo(()=>{
    if(!gridPacks.length)return null;
@@ -750,7 +757,8 @@ function LadderPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const [submitted,setSubmitted]=useState(false);
  const done=account.daily[utcDay()]?.ladder!==undefined;
  const seed=mode==="daily"?"LADDER:"+utcDay():"LADDER:PRACTICE:"+practiceSeed;
- const {ladderPacks,loading,error,retry}=useFootballKnowledge();
+ const {data:goalData,loading,error,retry}=useFootballKnowledge("goal-packs");
+ const ladderPacks=goalData?.ladderPacks??[];
  const generated=useMemo(()=>{
    const candidates=ladderPacks.filter(pack=>{const values=pack.players.map(p=>p.value??0),range=(Math.max(...values)-Math.min(...values))/Math.max(1,Math.max(...values));return difficulty==="EASY"?range>=.45:difficulty==="STANDARD"?range>=.22&&range<.6:difficulty==="HARD"?range>=.08&&range<.32:range<.16});
    const source=candidates.length?candidates:ladderPacks;
@@ -796,7 +804,8 @@ function RevealPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const [reveal,setReveal]=useState(0);const [guess,setGuess]=useState("");const [tries,setTries]=useState(0);const [end,setEnd]=useState(false);const [won,setWon]=useState(false);const [guessFeedback,setGuessFeedback]=useState("");
  const done=account.daily[utcDay()]?.["the-reveal"]!==undefined;
  const seed=mode==="daily"?"REVEAL:"+utcDay():"REVEAL:PRACTICE:"+practiceSeed;
- const {playerCards,loading,error,retry}=useFootballKnowledge();
+ const {data:revealData,loading,error,retry}=useFootballKnowledge("the-reveal");
+ const playerCards=revealData?.playerCards??[];
  const target=playerCards.length?playerCards[hashSeed(seed+":target")%playerCards.length]:null;
  const years=target?[...target.worldCups].sort((a,b)=>a-b):[];
  const clues=target?[
@@ -850,7 +859,8 @@ function FiveOhOnePage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
  const [busts,setBusts]=useState(0);const [bust,setBust]=useState(false);const [finish,setFinish]=useState(false);const [runBanked,setRunBanked]=useState(false);
  const done=account.daily[utcDay()]?.["football-501"]!==undefined;
  const seed=mode==="daily"?"501:"+utcDay():"501:PRACTICE:"+practiceSeed;
- const {football501Packs,loading,error,retry}=useFootballKnowledge();
+ const {data:goalData,loading,error,retry}=useFootballKnowledge("goal-packs");
+ const football501Packs=goalData?.football501Packs??[];
  const pool=useMemo(()=>{
    const unique=new Map<string,CheckoutPlayer>();
    for(const pack of football501Packs)for(const player of pack.players){const value=player.value??player.goals??0;if(value>0&&!unique.has(player.id))unique.set(player.id,{id:player.id,name:player.name,value,label:player.label??"RECORDED SENIOR INTERNATIONAL GOALS"})}
@@ -1206,8 +1216,8 @@ function makeStrandsBoard(pack:typeof STRANDS_PACKS[number]){
 function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();const [boardNo,setBoardNo]=useState(0);const [selected,setSelected]=useState<number[]>([]);const pathRef=useRef<number[]>([]);const [dragging,setDragging]=useState(false);const [found,setFound]=useState<number[]>([]);const [wrong,setWrong]=useState(0);const [nudges,setNudges]=useState(0);const [hintedWord,setHintedWord]=useState<number|null>(null);const [finished,setFinished]=useState(false);const [notice,setNotice]=useState("");const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));const done=account.daily[utcDay()]?.strands!==undefined;
  const seed=mode==="daily"?"STRANDS:"+utcDay()+":"+boardNo:"STRANDS:PRACTICE:"+practiceSeed+":"+boardNo;
- const {players:cc0Players,strandsPacks,loading,error,retry}=useFootballKnowledge();
- const pool=useMemo(()=>cc0Players.map(cc0PlayerToGamePlayer),[cc0Players]);
+ const {data:strandsData,loading,error,retry}=useFootballKnowledge("strands");
+ const strandsPacks=strandsData?.packs??[];
  const staticPool=useMemo(()=>PLAYER_DATABASE.map(p=>({
    ...p,archiveId:p.name,careerSpells:[],seasonStats:[],careerAppsRecorded:false,careerGoalsRecorded:false,leagueAppsRecorded:false,leagueGoalsRecorded:false,
    careerApps:0,careerGoals:0,leagueApps:0,leagueGoals:0,leagueGoalSeasons:0,leagueAssists:0,leagueAssistSeasons:0,
@@ -1295,7 +1305,8 @@ function QuickQuizPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
  const [score,setScore]=useState(0);const [seconds,setSeconds]=useState(15);const [typed,setTyped]=useState("");const [typingDone,setTypingDone]=useState(false);const [finished,setFinished]=useState(false);
  const done=account.daily[utcDay()]?.["timed-quiz"]!==undefined;
  const seed=mode==="daily"?"QUIZ:"+utcDay():"QUIZ:PRACTICE:"+practiceSeed+":"+difficulty;
- const {timedQuizQuestions:bank,loading,error,retry}=useFootballKnowledge();
+ const {data:quizData,loading,error,retry}=useFootballKnowledge("timed-quiz");
+ const bank=quizData?.questions??[];
  const questions=useMemo(()=>bank.length===0?[]:mode==="daily"?makeCC0DailyQuizRound(bank,hashSeed(seed)):makeCC0QuizRound(bank,difficulty,hashSeed(seed),10),[bank,mode,difficulty,seed]);
  const question=questions[index];
  const progress=question?typed.length/question.question.length:0;
@@ -1449,7 +1460,8 @@ function ScoutSignalPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
  const [end,setEnd]=useState(false);
  const [won,setWon]=useState(false);
  const seed=mode==="daily"?"SCOUT:"+utcDay():"SCOUT:PRACTICE:"+practiceSeed;
- const {scoutPlayers,loading,error,retry}=useFootballKnowledge();
+ const {data:playerStatsData,loading,error,retry}=useFootballKnowledge("player-stats");
+ const scoutPlayers=playerStatsData?.players??[];
  const done=account.daily[utcDay()]?.["scout-signal"]!==undefined;
  const pool=useMemo(()=>scoutPlayers.map(cc0PlayerToGamePlayer).filter(p=>p.nationality!=="Unlisted"&&p.position),[scoutPlayers]);
  const guessPool=pool;
