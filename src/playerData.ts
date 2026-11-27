@@ -14,6 +14,8 @@ export type Player = {
 export const PLAYER_DATABASE: Player[] = [
   {name:"Virgil van Dijk",surname:"VANDIJK",nationality:"Netherlands",position:"DEF",club:"Liverpool",league:"Premier League",active:true,ageBand:"30s",clubs:["Groningen","Celtic","Southampton","Liverpool"],aliases:["van dijk","virgil van dijk"]},
   {name:"Mohamed Salah",surname:"SALAH",nationality:"Egypt",position:"FWD",club:"Liverpool",league:"Premier League",active:true,ageBand:"30s",clubs:["Basel","Chelsea","Fiorentina","Roma","Liverpool"],aliases:["salah","mo salah","mohamed salah"]},
+  {name:"Donyell Malen",surname:"MALEN",nationality:"Netherlands",position:"FWD",club:"Roma",league:"Serie A",active:true,ageBand:"20s",clubs:["PSV Eindhoven","Borussia Dortmund","Aston Villa","Roma"],aliases:["malen","donyell malen"]},
+  {name:"Bradley Barcola",surname:"BARCOLA",nationality:"France",position:"FWD",club:"Liverpool",league:"Premier League",active:true,ageBand:"20s",clubs:["Lyon","Paris Saint-Germain","Liverpool"],aliases:["barcola","bradley barcola"]},
   {name:"Sadio Mané",surname:"MANE",nationality:"Senegal",position:"FWD",club:"Al-Nassr",league:"Saudi Pro League",active:true,ageBand:"30s",clubs:["Metz","Salzburg","Southampton","Liverpool","Bayern Munich","Al-Nassr"],aliases:["mane","sadio mane"]},
   {name:"Roberto Firmino",surname:"FIRMINO",nationality:"Brazil",position:"FWD",club:"Al-Ahli",league:"Saudi Pro League",active:true,ageBand:"30s",clubs:["Hoffenheim","Liverpool","Al-Ahli"],aliases:["firmino","bobby firmino"]},
   {name:"Alisson Becker",surname:"BECKER",nationality:"Brazil",position:"GK",club:"Liverpool",league:"Premier League",active:true,ageBand:"30s",clubs:["Roma","Liverpool"],aliases:["alisson","alisson becker"]},
@@ -83,12 +85,12 @@ export const LEAGUE_GOALS = [
   {name:"Harry Kane",value:213},
   {name:"Wayne Rooney",value:208},
   {name:"Mohamed Salah",value:193},
+  {name:"Andrew Cole",value:187},
+  {name:"Sergio Agüero",value:184},
   {name:"Frank Lampard",value:177},
   {name:"Thierry Henry",value:175},
-  {name:"Sergio Agüero",value:184},
   {name:"Robbie Fowler",value:163},
-  {name:"Steven Gerrard",value:120},
-  {name:"Ryan Giggs",value:109},
+  {name:"Jermain Defoe",value:162}
 ];
 
 export const CAREER_FILES = [
@@ -109,7 +111,7 @@ export const STRANDS_PACKS = [
   {spangram:"STEVENGERRARD",words:["TOTTI","NANI","PIRES","OWEN","KOKE","MATA","HENRY","SAKA"],theme:"One-name football icons"},
   {spangram:"EDINSONCAVANI",words:["SALAH","MESSI","KAKA","GUTI","COLE","LAHM","ROBBEN","SON"],theme:"Football surnames"},
   {spangram:"ALISSONBECKER",words:["KANE","FODEN","VARDY","XAVI","PEPE","KLOSE","SON","SALAH"],theme:"From the pitch"},
-  {spangram:"DANIELEDEROSSI",words:["TERRY","NESTA","NANI","COLE","VIDIC","MATA","PIRES","SON"],theme:"European football names"},
+  {spangram:"DANIELEDEROSSI",words:["TERRY","NESTA","COLE","VIDIC","MATA","PIRES","SON","KANE"],theme:"European football names"},
   {spangram:"THOMASROSICKY",words:["HENRY","TOTTI","OWEN","KAKA","KANE","RICE","SALAH","PEPE"],theme:"Cult football favourites"},
   {spangram:"PATRICKVIEIRA",words:["VARDY","KLOSE","KANE","MESSI","SALAH","COLE","NANI","SON"],theme:"Midfield and attack"},
   {spangram:"VIRGILVANDIJK",words:["MESSI","NESTA","SAKA","TERRY","RODRI","MATA","SON","KAKA"],theme:"Famous football names"}
