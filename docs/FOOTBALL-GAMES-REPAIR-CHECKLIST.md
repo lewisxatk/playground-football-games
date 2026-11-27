@@ -17,13 +17,14 @@ Rule: after every successful GitHub commit, update this checklist in the next co
 - [x] Footle: accept any valid five-letter guess and improve progressive letter hints. Commit: `efb520401a`.
 - [x] Football Grid: rebuild around unique English club × national flag intersections; add actual flags and consistent sizing. Commits: `599d72dc76`, `30bcb621f8`, `7716f6421e`.
 - [x] Football Grid: replace the incorrect “exactly 16 candidate IDs” test with a 16-cell bipartite matching check, so overlapping candidate pools are accepted only when a fully unique solution exists. Commit: `61c7a1f4d0`.
+- [x] Football Grid: load a fresh archive sample on every retry and show the loading state while the new sample is fetched. Commit: `a7d4c8a4d8`.
 - [x] Link Up: use English-club alias matching and exact overlap-window clues. Commits: `32baeeda0a`, `259f5a9a20`, `c510c76f0c`.
 - [x] Link Up: repair the attempt gate so players get three guesses, can buy a fourth attempt, or skip without revealing the bridge. Commit: `199a453e74`.
 - [x] Career File: Premier League-only eligibility with a two-season minimum, appearance clues and unlockable identity hints. Commits: `41d97fce33`, `cb49370295`.
 
 ## To do — game repairs and verification
 - [ ] Footle: audit answer selection, keyboard feedback, hint costs, scoring and mobile behaviour.
-- [ ] Football Grid: verify all 16 intersections, unique-player enforcement, answer acceptance, retry behaviour and mobile layout (unique-solution feasibility fix committed).
+- [ ] Football Grid: verify all 16 intersections, unique-player enforcement, answer acceptance, retry behaviour and mobile layout (unique-solution and fresh-retry fixes committed).
 - [x] Diagnose and fix Football Grid club-name matching for dotted abbreviations such as “F.C.” / “A.F.C.”, which had reduced eligible English clubs to two. Commit: `6de5c53f6e4e3f1e418020bf136a543239927f1d`.
 - [x] Add archive-backed historic Premier League player pool for Grid so all clubs/seasons are available beyond the limited Wikidata career snapshot. Commit: `eea008d3bf59c9daf18b968ceb525974301fd4ba`.
 - [x] Fix the Grid retry button to reload the archive data instead of calling a stale, undefined retry handler. Commit: `f7d6f36f0e09949347ece76749a2660a68f0322b`.
@@ -64,5 +65,6 @@ Latest completed football-content validation: success on `d99d59ea3f545c41a2d755
 The full CC0 database build previously failed at canonical generation with `Football Grid packs below 500: 0`. Diagnostics showed 7,171 career players but only 779 with a nationality and only 2 English clubs meeting the four-nationality threshold. Commit `2713f3da46` enriches career profiles with Wikidata P27 nationality statements and uses all nationalities per player. The next full build must confirm grid pack generation and then complete data validation + site build. Several database-build runs were cancelled by newer pushes; do not call the build verified until a non-cancelled successful run is observed.
 
 Latest data-generator fix: `2713f3da463fe81e8a77846980ac71da0e51d0a7`.
+Latest Grid runtime retry fix: `a7d4c8a4d8b45c05c0ce9a18bbdb41e1cff09d0b`.
 
 Next action: poll the latest GitHub Actions build, inspect Football Grid pack counts and fix any remaining failures, then audit each implemented game and run the full typecheck/validation/build suite.
