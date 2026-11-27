@@ -828,9 +828,11 @@ function buildArchiveLinkUpQuestions(players:GamePlayer[],index:GridClubIndex,se
      if(!startWindow||!endWindow)continue;
      const signature=[start.archiveId,end.archiveId,answer.archiveId,clubA.key,clubB.key].join("|");
      if(seen.has(signature))continue;seen.add(signature);
-     const decoyPool=shuffle([...new Map([...clubA.players,...clubB.players]
-       .filter(player=>![start.archiveId,end.archiveId,answer.archiveId].includes(player.archiveId))
-       .map(player=>[player.archiveId,player])).values()],seed+pairIndex*15485863+pairQuestions);
+     const decoyMap=new Map<string,GamePlayer>();
+     for(const player of [...clubA.players,...clubB.players]){
+      if(![start.archiveId,end.archiveId,answer.archiveId].includes(player.archiveId))decoyMap.set(player.archiveId,player);
+     }
+     const decoyPool=shuffle([...decoyMap.values()],seed+pairIndex*15485863+pairQuestions);
      if(decoyPool.length<5)continue;
      const options=shuffle([answer,...decoyPool.slice(0,5)],seed+pairQuestions*31+pairIndex*193);
      questions.push({start,end,answer,startClub:clubA.name,endClub:clubB.name,startWindow,endWindow,options});
