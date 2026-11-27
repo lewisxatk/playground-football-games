@@ -117,17 +117,24 @@ function makePlayerConnections(players){
 
 function makeGridPacks(players){
  const positionMap={G:"GK",GK:"GK",D:"DEF",DF:"DEF",M:"MID",MF:"MID",F:"FWD",FW:"FWD"},positions=["GK","DEF","MID","FWD"],buckets=new Map();
- for(const player of players){const position=positionMap[player.positions?.[0]];const nation=player.nationalities?.[0];if(!position||!nation)continue;const key=position+":"+norm(nation),entry=buckets.get(key)||{position,nation,members:[]};entry.members.push(player.id);buckets.set(key,entry)}
+ for(const player of players){const position=positionMap[player.positions?.[0]],nation=player.nationalities?.[0];if(!position||!nation)continue;const key=position+":"+norm(nation),entry=buckets.get(key)||{position,nation,members:[]};entry.members.push(player.id);buckets.set(key,entry)}
  const byNation=new Map();for(const entry of buckets.values()){const group=byNation.get(norm(entry.nation))||{label:entry.nation,counts:{}};group.counts[entry.position]=entry.members.length;byNation.set(norm(entry.nation),group)}
  const eligible=[...byNation.values()].filter(group=>positions.every(position=>(group.counts[position]||0)>=4)).map(group=>group.label).sort();
- const packs=[],seen=new Set();
- for(let seed=1;seed<12000&&packs.length<500;seed++){
-  const countries=seededShuffle(eligible,seed*1013+71).slice(0,4);if(countries.length!==4)continue;
-  const answers=positions.map(position=>countries.map(country=>{const members=buckets.get(position+":"+norm(country))?.members||[];return seededShuffle(members,seed*97+position.length+country.length).slice(0,4)}));
-  if(answers.some(row=>row.some(cell=>cell.length!==4)))continue;
-  const signature=positions.join(",")+"|"+countries.map(norm).join("|")+"|"+answers.flat(2).join(",");
-  if(seen.has(signature))continue;seen.add(signature);
-  packs.push({id:id("football-grid",signature),positions,countries,answers,source:SOURCES.players.repo,licence:"CC0-1.0"});
+ if(eligible.length<4)return[];
+ const packs=[],seen=new Set(),comboCount=eligible.length*(eligible.length-1)*(eligible.length-2)*(eligible.length-3)/24,variants=Math.max(1,Math.ceil(520/comboCount));
+ let combo=0;
+ outer:for(let a=0;a<eligible.length-3;a++)for(let b=a+1;b<eligible.length-2;b++)for(let c=b+1;c<eligible.length-1;c++)for(let d=c+1;d<eligible.length;d++){
+  const countries=[eligible[a],eligible[b],eligible[c],eligible[d]];
+  for(let variant=0;variant<variants;variant++){
+   const seed=(combo+1)*7919+(variant+1)*104729;
+   const answers=positions.map(position=>countries.map(country=>seededShuffle(buckets.get(position+":"+norm(country))?.members||[],seed+position.length+country.length).slice(0,4)));
+   if(answers.some(row=>row.some(cell=>cell.length!==4)))continue;
+   const signature=positions.join(",")+"|"+countries.map(norm).join("|")+"|"+answers.flat(2).join(",");
+   if(seen.has(signature))continue;seen.add(signature);
+   packs.push({id:id("football-grid",signature),positions,countries,answers,source:SOURCES.players.repo,licence:"CC0-1.0"});
+   if(packs.length>=500)break outer;
+  }
+  combo++;
  }
  return packs;
 }
