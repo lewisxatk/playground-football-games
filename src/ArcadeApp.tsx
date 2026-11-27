@@ -6,7 +6,7 @@ import {
 } from "./playerData";
 import { ClubBadge, CountryFlag } from "./ClubBadge";
 import { useArchivePlayers } from "./useArchivePlayers";
-import { useQuestionBank, makeQuestionRound, type QuizTier, type QuizQuestion } from "./questionBank";
+import { useQuestionBank, makeQuestionRound, type QuizTier, type QuizQuestion, type QuestionBank } from "./questionBank";
 import { getWorldCupLineups } from "./tournamentNationData";
 import type { ArchiveGamePlayer, ArchiveCareerSpell, ArchiveGameStat } from "./careerFileData";
 import CareerFilePage from "./CareerFilePage";
@@ -1211,8 +1211,8 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
 }
 
 type QuizDifficulty=QuizTier;
-function makeTimedQuiz(bank: {tiers:Record<QuizTier,QuizQuestion[]>},difficulty:QuizDifficulty,seed:number,count=15):QuizQuestion[]{
- return makeQuestionRound(bank as any,difficulty,seed,count);
+function makeTimedQuiz(bank: QuestionBank,difficulty:QuizDifficulty,seed:number,count=15):QuizQuestion[]{
+ return makeQuestionRound(bank,difficulty,seed,count);
 }
 function QuickQuizPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();const [difficulty,setDifficulty]=useState<QuizDifficulty>("EASY");
