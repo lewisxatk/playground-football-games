@@ -33,8 +33,8 @@ const regionOf = player => {
   // UK country metadata does not always distinguish England, Scotland, Wales
   // and Northern Ireland. Only identify those records as English when their
   // league metadata identifies an English competition.
-  if (country.includes("england")) return "ENGLISH";
-  if (country.includes("unitedkingdom") || country.includes("greatbritain") || country === "uk" || country === "gb") {
+  if (country.includes("england") || country.includes("angleterre")) return "ENGLISH";
+  if (country.includes("unitedkingdom") || country.includes("greatbritain") || country.includes("royaumeuni") || country === "uk" || country === "gb") {
     return englishLeague ? "ENGLISH" : "INTERNATIONAL";
   }
   if (country) return "INTERNATIONAL";
