@@ -336,17 +336,89 @@ function ConnectionsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
  </Frame>;
 }
 
-const GRID_ROWS=["Arsenal","Chelsea","Liverpool"];const GRID_COLS=["France","Brazil","England"];
-const GRID_ANSWERS=[
- [["Thierry Henry","henry"],["Gabriel Martinelli","martinelli"],["Bukayo Saka","saka"]],
- [["N'Golo Kanté","kante"],["David Luiz","david luiz"],["Frank Lampard","lampard"]],
- [["Mamadou Sakho","sakho"],["Alisson Becker","alisson"],["Steven Gerrard","gerrard"]]
-];
+type GridDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
+type GridPuzzle={clubs:string[];countries:string[];answers:GamePlayer[][];quality:number};
+const GRID_LEVELS:GridDifficulty[]=["EASY","STANDARD","HARD","EXTREME"];
+function buildGridPuzzle(players:GamePlayer[],difficulty:GridDifficulty,seed:number):GridPuzzle|null{
+ const clubCounts=new Map<string,number>(),countryCounts=new Map<string,number>();
+ for(const p of players){
+   for(const club of new Set(p.clubs.filter(Boolean)))clubCounts.set(club,(clubCounts.get(club)??0)+1);
+   if(p.nationality&&p.nationality!=="Unlisted")countryCounts.set(p.nationality,(countryCounts.get(p.nationality)??0)+1);
+ }
+ const minClub=[12,7,4,2][GRID_LEVELS.indexOf(difficulty)];
+ const minCountry=[14,8,4,2][GRID_LEVELS.indexOf(difficulty)];
+ const clubs=Array.from(clubCounts.entries()).filter(([,n])=>n>=minClub).map(([name])=>name);
+ const countries=Array.from(countryCounts.entries()).filter(([,n])=>n>=minCountry).map(([name])=>name);
+ if(clubs.length<4||countries.length<4)return null;
+ let best:GridPuzzle|null=null;
+ for(let attempt=0;attempt<3500;attempt++){
+   const chosenClubs=shuffle(clubs,seed+attempt*17).slice(0,4);
+   const chosenCountries=shuffle(countries,seed+attempt*31+11).slice(0,4);
+   const answers=chosenClubs.map(club=>chosenCountries.map(country=>
+     players.filter(p=>p.nationality===country&&p.clubs.some(c=>normalise(c)===normalise(club)))
+   ));
+   if(answers.some(row=>row.some(cell=>cell.length===0)))continue;
+   const minimum=Math.min(...answers.flat().map(cell=>cell.length));
+   const maximum=Math.max(...answers.flat().map(cell=>cell.length));
+   const rarity=(chosenClubs.reduce((n,c)=>n+(clubCounts.get(c)??0),0)+chosenCountries.reduce((n,c)=>n+(countryCounts.get(c)??0),0));
+   const quality=difficulty==="EASY"?minimum*100-maximum+rarity/1000:
+     difficulty==="STANDARD"?minimum*50-maximum+rarity/1000:
+     difficulty==="HARD"?-maximum+minimum*10-rarity/1000:
+     -minimum*5-maximum-rarity/1000;
+   if(!best||quality>best.quality)best={clubs:chosenClubs,countries:chosenCountries,answers,quality};
+   if(difficulty==="EASY"&&minimum>=5)break;
+   if(difficulty==="STANDARD"&&minimum>=3)break;
+   if(difficulty==="HARD"&&minimum===1&&maximum<=5)break;
+   if(difficulty==="EXTREME"&&minimum===1&&maximum<=3)break;
+ }
+ return best;
+}
 function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
- const [mode,setMode]=useMode();const [values,setValues]=useState<string[]>(Array(9).fill(""));const [opened,setOpened]=useState<number[]>([]);const [active,setActive]=useState<number|null>(null);const [guess,setGuess]=useState("");const done=account.daily[utcDay()]?.["football-grid"]!==undefined;
- const check=()=>{if(active===null)return;const row=Math.floor(active/3),col=active%3;const accepted=GRID_ANSWERS[row][col];if(accepted.some(a=>normalise(a)===normalise(guess))){setValues(v=>v.map((x,i)=>i===active?accepted[0]:x));setOpened(v=>v.includes(active)?v:[...v,active]);setActive(null);setGuess("");if(opened.length===8&&mode==="daily"){onDaily("football-grid",900);}}else{setGuess("");}};
- return <Frame account={account} game="football-grid" eyebrow="CLUB × COUNTRY / 3 BY 3" title="FILL THE GRID." description="Each square asks for a player who represented the club and the country at the point where they meet." number="07" mode={mode} setMode={m=>{setMode(m);setValues(Array(9).fill(""));setOpened([]);setActive(null);setGuess("");}}>
- {done&&mode==="daily"?<Success title="GRID COMPLETE." detail="Nine names in the book. Practice is still open." button="PRACTICE GRID" onAgain={()=>setMode("practice")}/>:<Card className="grid-game"><div className="arc-game-meta"><span>9 ANSWERS / 9 CELLS</span><b>{opened.length}/9 FILLED</b></div><div className="football-grid-wrap"><div className="grid-corner">CLUB ↓<br/>NATION →</div>{GRID_COLS.map(c=><div className="grid-col-head" key={c}>{c}</div>)}{GRID_ROWS.map((r,ri)=><><div className="grid-row-head" key={r}>{r}</div>{GRID_COLS.map((c,ci)=>{const id=ri*3+ci;return <button key={id} className={"grid-cell "+(opened.includes(id)?"filled":"")+(active===id?" active":"")} onClick={()=>setActive(id)}><small>{r} × {c}</small><b>{values[id]||"?"}</b></button>;})}</>)}</div>{active!==null&&<div className="grid-answer"><small>{GRID_ROWS[Math.floor(active/3)]} × {GRID_COLS[active%3]}</small><input value={guess} onChange={e=>setGuess(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")check();}} placeholder="Enter a footballer…"/><button className="arc-button" onClick={check}>CHECK ↗</button></div>}<p className="arc-muted">One answer per square. Historical club membership counts. Try surnames or full names.</p></Card>}
+ const [mode,setMode]=useMode();
+ const [difficulty,setDifficulty]=useState<GridDifficulty>("STANDARD");
+ const [values,setValues]=useState<string[]>(Array(16).fill(""));
+ const [opened,setOpened]=useState<number[]>([]);
+ const [active,setActive]=useState<number|null>(null);
+ const [guess,setGuess]=useState("");
+ const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
+ const [gridNotice,setGridNotice]=useState("");
+ const done=account.daily[utcDay()]?.["football-grid"]!==undefined;
+ const seed=mode==="daily"?hashSeed("GRID:"+utcDay()+":"+difficulty):hashSeed("GRID:practice:"+practiceSeed+":"+difficulty);
+ const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,mode==="daily"?"GRID:"+utcDay():"GRID:PRACTICE:"+practiceSeed,1600);
+ const playerPool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
+ const puzzle=useMemo(()=>playerPool.length>=40?buildGridPuzzle(playerPool,difficulty,seed):null,[playerPool,difficulty,seed]);
+ const check=()=>{
+   if(active===null||!guess.trim()||!puzzle)return;
+   const row=Math.floor(active/4),col=active%4;
+   const accepted=puzzle.answers[row][col];
+   const player=archiveGuess(guess,accepted);
+   if(player){
+     const label=player.name;
+     const next=opened.includes(active)?opened:[...opened,active];
+     setValues(v=>v.map((x,i)=>i===active?label:x));setOpened(next);setActive(null);setGuess("");setGridNotice("");
+     if(next.length===16&&mode==="daily")onDaily("football-grid",Math.max(100,1000-next.length*15));
+   }else setGridNotice("That player doesn't fit this club × nationality square. Try another name.");
+ };
+ const reset=(newMode:Mode=mode,newDifficulty:GridDifficulty=difficulty)=>{
+   setValues(Array(16).fill(""));setOpened([]);setActive(null);setGuess("");setGridNotice("");
+   if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
+   setDifficulty(newDifficulty);
+ };
+ const unavailable=!loading&&(!puzzle||!playerPool.length);
+ return <Frame account={account} game="football-grid" eyebrow="CLUB × NATIONALITY / 4 BY 4" title="FILL THE GRID." description="Sixteen squares. Name a footballer who played for the club and represented the nationality at the top." number="07" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
+ {done&&mode==="daily"?<Success title="GRID COMPLETE." detail="All sixteen cells are filled. Try a fresh grid in unlimited practice." button="PRACTICE GRID" onAgain={()=>{setMode("practice");reset("practice");}}/>:
+  <Card className="grid-game">
+   <div className="arc-game-meta"><span>16 ANSWERS / 16 CELLS</span><b>{opened.length}/16 FILLED</b></div>
+   <div className="grid-difficulty">{GRID_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{level}</button>)}</div>
+   {loading&&playerPool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>BUILDING YOUR GRID</b><span>Finding valid clubs and nationalities from the player archive.</span></div>:
+    puzzle?<><div className="football-grid-wrap grid-four"><div className="grid-corner">CLUB ↓<br/>NATION →</div>{puzzle.countries.map(c=><div className="grid-col-head" key={c}><CountryFlag name={c}/><span>{c}</span></div>)}{puzzle.clubs.map((club,ri)=><><div className="grid-row-head" key={"r"+ri}><ClubBadge name={club} size={28}/><span>{club}</span></div>{puzzle.countries.map((country,ci)=>{const id=ri*4+ci;const doneCell=opened.includes(id);return <button key={id} className={"grid-cell "+(doneCell?"filled":"")+(active===id?" active":"")} onClick={()=>{setActive(id);setGuess("");setGridNotice("");}}><small>{club} × {country}</small><b>{values[id]||"?"}</b></button>;})}</>)}</div>
+     <div className="grid-game-bottom"><span>{difficulty} · {puzzle.answers.flat().reduce((n,c)=>n+c.length,0)} ACCEPTED PLAYER/CELL MATCHES</span><button className="arc-quiet" onClick={()=>reset(mode,difficulty)}>NEW GRID ↻</button></div>
+     {active!==null&&<div className="grid-answer"><small>{puzzle.clubs[Math.floor(active/4)]} × {puzzle.countries[active%4]}</small><input value={guess} onChange={e=>setGuess(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")check();}} placeholder="Full name or surname…"/><button className="arc-button" onClick={check}>CHECK ↗</button></div>}
+     {gridNotice&&<div className="arc-feedback"><b>NOT A MATCH.</b><p>{gridNotice}</p></div>}
+     <p className="arc-muted">Any player in the archive who satisfies both clues is accepted. Club history and nationality are based on recorded career data; the archive does not cover every player or season equally.</p>
+    </>:
+    <div className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NO VALID 4×4 GRID IN THIS DRAW"}</b><p>{error||"This difficulty/selection did not produce sixteen non-empty intersections. Try another level or draw again."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY / NEW DRAW ↗</button></div>}
+  </Card>}
  </Frame>;
 }
 
