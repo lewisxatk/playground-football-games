@@ -356,26 +356,49 @@ function FootlePage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
 type ConnectionsDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
 type DynamicGroup={name:string;color:string;members:GamePlayer[]};
 function buildConnectionsGroups(players:GamePlayer[],difficulty:ConnectionsDifficulty,seed:number):DynamicGroup[]{
- const byCountry=new Map<string,GamePlayer[]>();
- for(const p of players){
-   if(!p.nationality||p.nationality==="Unlisted")continue;
-   const list=byCountry.get(p.nationality)??[];
-   if(!list.some(x=>x.archiveId===p.archiveId))list.push(p);
-   byCountry.set(p.nationality,list);
- }
+ const dimensions:{label:string;get:(p:GamePlayer)=>string}[]=[
+   {label:"NATIONALITY",get:p=>p.nationality!=="Unlisted"?p.nationality:""},
+   {label:"POSITION",get:p=>p.position},
+   {label:"LATEST LEAGUE",get:p=>p.league!=="Unlisted"?p.league:""},
+   {label:"CAREER START DECADE",get:p=>p.firstYear===null?"":Math.floor(p.firstYear/10)*10+"s"}
+ ];
  const limits:{min:number;max:number}={
-   EASY:{min:55,max:Number.POSITIVE_INFINITY},
-   STANDARD:{min:22,max:65},
-   HARD:{min:8,max:30},
-   EXTREME:{min:4,max:14}
+   EASY:{min:45,max:Number.POSITIVE_INFINITY},
+   STANDARD:{min:16,max:90},
+   HARD:{min:7,max:35},
+   EXTREME:{min:4,max:16}
  }[difficulty];
- let nations=Array.from(byCountry.entries()).filter(([,items])=>items.length>=limits.min&&items.length<=limits.max);
- if(nations.length<4)nations=Array.from(byCountry.entries()).filter(([,items])=>items.length>=4);
- if(nations.length<4)return [];
- const chosen=shuffle(nations,seed).slice(0,4);
+ const candidates:{dimension:string;values:[string,GamePlayer[]][]}[]=[];
+ for(const dimension of dimensions){
+   const groups=new Map<string,GamePlayer[]>();
+   for(const player of players){
+     const value=dimension.get(player);if(!value)continue;
+     const list=groups.get(value)??[];
+     if(!list.some(p=>p.archiveId===player.archiveId))list.push(player);
+     groups.set(value,list);
+   }
+   const values=Array.from(groups.entries()).filter(([,members])=>members.length>=limits.min&&members.length<=limits.max);
+   if(values.length>=4)candidates.push({dimension:dimension.label,values});
+ }
+ if(!candidates.length){
+   for(const dimension of dimensions){
+     const groups=new Map<string,GamePlayer[]>();
+     for(const player of players){
+       const value=dimension.get(player);if(!value)continue;
+       const list=groups.get(value)??[];
+       if(!list.some(p=>p.archiveId===player.archiveId))list.push(player);
+       groups.set(value,list);
+     }
+     const values=Array.from(groups.entries()).filter(([,members])=>members.length>=4);
+     if(values.length>=4)candidates.push({dimension:dimension.label,values});
+   }
+ }
+ if(!candidates.length)return [];
+ const choice=shuffle(candidates,seed)[0];
+ const chosen=shuffle(choice.values,seed+97).slice(0,4);
  const colors=["gold","blue","pink","green"];
- const groups=chosen.map(([country,members],i)=>({
-   name:"NATIONALITY · "+country.toUpperCase(),
+ const groups=chosen.map(([value,members],i)=>({
+   name:choice.dimension+" · "+value.toUpperCase(),
    color:colors[i],
    members:shuffle(members,seed+i*97).slice(0,4)
  }));
@@ -402,7 +425,7 @@ function ConnectionsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
      const next=[...found,group];setFound(next);setSelected([]);setNotice("");
      if(next.length===4){setFinished(true);if(mode==="daily")onDaily("connections",1000-mistakes*150);}
    }else{
-     const nextMistakes=mistakes+1;setMistakes(nextMistakes);setSelected([]);setNotice("Not quite — those four names do not share one nationality group.");
+     const nextMistakes=mistakes+1;setMistakes(nextMistakes);setSelected([]);setNotice("Not quite — those four names do not share one football connection.");
      if(nextMistakes>=4){setFinished(true);if(mode==="daily")onDaily("connections",0);}
    }
  };
@@ -410,12 +433,12 @@ function ConnectionsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
    setDifficulty(newDifficulty);setSelected([]);setFound([]);setMistakes(0);setFinished(false);setNotice("");
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
  };
- return <Frame account={account} game="connections" eyebrow="SORT THE TOUCHLINE / 16 TILES" title="FIND THE CONNECTION." description="Sixteen footballers. Four hidden nationality groups. Find all four sets, with unlimited new archive draws in practice." number="06" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
+ return <Frame account={account} game="connections" eyebrow="SORT THE TOUCHLINE / 16 TILES" title="FIND THE CONNECTION." description="Sixteen footballers. Four hidden football connections — nationality, position, league or career era. Find all four sets." number="06" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
  {done&&mode==="daily"?<Success title="GROUPS FOUND." detail="Today's Connections board is complete. Go again in unlimited practice." button="PRACTICE" onAgain={()=>{setMode("practice");reset("practice");}}/>:
   <Card className="connections-game">
    <div className="arc-game-meta"><span>GROUPS FOUND {found.length}/4</span><b>MISTAKES {mistakes}/4</b></div>
    <div className="grid-difficulty">{(["EASY","STANDARD","HARD","EXTREME"] as ConnectionsDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{level}</button>)}</div>
-   {loading&&groups.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>BUILDING CONNECTIONS</b><span>Finding four distinct nationality groups in the archive.</span></div>:
+   {loading&&groups.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>BUILDING CONNECTIONS</b><span>Finding four distinct football groups in the archive.</span></div>:
     groups.length!==4?<div className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NOT ENOUGH MATCHING PLAYERS"}</b><p>{error||"The current data draw doesn't contain four groups at this difficulty. Try another level or draw again."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY DATABASE ↗</button></div>:
     <>
      <div className="connections-found">{found.map(i=><motion.div layout key={i} className={groups[i].color}><small>{groups[i].name}</small><b>{groups[i].members.map(p=>p.name).join(" · ")}</b></motion.div>)}</div>
