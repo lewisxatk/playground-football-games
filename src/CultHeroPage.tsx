@@ -29,7 +29,7 @@ export default function CultHeroPage({ dailyDone, onDailyComplete }: Props) {
   const day = cultHeroUtcDay();
   const poolSeed = mode === "daily" ? "CULT-HERO-DAILY-" + day : "CULT-HERO-PRACTICE-" + practiceSeed;
   const { data: careerData, loading, error, retry } = useFootballKnowledge("career-history");
-  const players = useMemo(() => (careerData?.cultHeroCandidates ?? []).map(cc0CareerToArchiveGamePlayer), [careerData]);
+  const players = useMemo(() => (careerData?.cultHeroCandidates ?? careerData?.players ?? []).map(cc0CareerToArchiveGamePlayer), [careerData]);
   const mysteries = useMemo(() => buildCC0CultHeroMysteries(players, poolSeed, 5), [players, poolSeed]);
 
   const [roundIndex, setRoundIndex] = useState(0);
