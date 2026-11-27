@@ -55,13 +55,17 @@ async function openDb(): Promise<Archive> {
     .map((season:any) => season.files?.squad?.path)
     .filter((path:any): path is string => typeof path === "string" && path.length > 0);
   if (!squadPaths.length) throw new Error("The archive is missing all season squad files.");
-  const squadViews:string[] = [];
+  const squadFiles:string[] = [];
   for (let index = 0; index < squadPaths.length; index++) {
     const file = "squad-" + index + ".parquet";
     await register(file, squadPaths[index]);
-    squadViews.push("SELECT * FROM read_parquet('" + file + "')");
+    squadFiles.push("'" + file + "'");
   }
-  await conn.query("CREATE VIEW squad AS " + squadViews.join(" UNION ALL "));
+  // Squad exports evolve between seasons. Read the registered files together
+  // and align their columns by name instead of UNIONing positional schemas.
+  await conn.query(
+    "CREATE VIEW squad AS SELECT * FROM read_parquet([" + squadFiles.join(",") + "], union_by_name=true)"
+  );
   const query = async (sql: string, params: unknown[] = []) => {
     const statement = await conn.prepare(sql);
     try {
