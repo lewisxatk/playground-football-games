@@ -376,3 +376,57 @@
 .arc-import-button input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px!important}
 .arc-save-message{margin:12px 0 0;padding:9px 11px;background:#f8f6ef;border-left:3px solid var(--ag);font-size:10px;font-weight:700;line-height:1.45}
 @media(max-width:620px){.arc-save-actions{flex-direction:column}.arc-save-actions>*{width:100%}.arc-import-button{min-height:42px}}
+
+
+/* PLAYGROUND reward motion: short, local feedback that respects reduced-motion preferences. */
+.footle-win{
+  position:relative;overflow:hidden;
+  background:linear-gradient(115deg,#e5f3c9 0%,#d6edac 55%,#eff7d9 100%);
+  border-left:5px solid #8baa45;
+  box-shadow:0 8px 24px rgba(112,145,68,.14);
+}
+.footle-win:after{
+  content:"";position:absolute;inset:-40% auto -40% -45%;width:28%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);
+  transform:skewX(-18deg);animation:pgGoalShine .9s ease-out .08s both;
+  pointer-events:none;
+}
+.footle-goal-ball{display:inline-block;margin:4px 0 8px;font-size:34px;filter:drop-shadow(0 4px 3px rgba(24,38,25,.16))}
+.footle-word-error{margin:8px 0 0;padding:9px 11px;background:#f5ddd3;border-left:3px solid #d77a59;color:#6c382c;font-size:9px;font-weight:900;letter-spacing:.04em}
+.footle-cell.correct{box-shadow:0 3px 0 #456b36;animation:pgFootleFlip .42s cubic-bezier(.2,.8,.2,1) both}
+.footle-cell.present{animation:pgFootleFlip .42s cubic-bezier(.2,.8,.2,1) both}
+.quiz-goal{
+  position:relative;overflow:hidden;background:linear-gradient(120deg,#e6f3c9,#d4ebaa);
+  border-left:5px solid #8baa45;box-shadow:0 7px 20px rgba(112,145,68,.12)
+}
+.quiz-goal:before{
+  content:"";position:absolute;inset:0;background:radial-gradient(circle at 95% 12%,rgba(255,255,255,.75),transparent 28%);
+  pointer-events:none
+}
+.quiz-miss{border-left:5px solid #d88a70;background:#f4e1d9}
+.climb-play .climb-options button.correct,.quiz-options button.correct{
+  box-shadow:0 4px 0 #6d8c42,0 0 0 2px rgba(139,170,69,.15);
+  animation:pgCorrectPulse .48s ease-out
+}
+.arc-button:not(:disabled),.footle-keyboard button:not(:disabled),.quiz-options button:not(:disabled){
+  transition:transform .16s ease,box-shadow .16s ease,background-color .16s ease
+}
+.arc-button:not(:disabled):active,.footle-keyboard button:not(:disabled):active{transform:translateY(2px) scale(.985)}
+@keyframes pgGoalShine{
+  0%{left:-45%;opacity:0}
+  20%{opacity:1}
+  100%{left:125%;opacity:0}
+}
+@keyframes pgFootleFlip{
+  0%{transform:rotateX(0deg) scale(1)}
+  45%{transform:rotateX(90deg) scale(.96)}
+  100%{transform:rotateX(0deg) scale(1)}
+}
+@keyframes pgCorrectPulse{
+  0%{box-shadow:0 0 0 0 rgba(139,170,69,.0)}
+  45%{box-shadow:0 0 0 5px rgba(139,170,69,.24)}
+  100%{box-shadow:0 4px 0 #6d8c42,0 0 0 0 rgba(139,170,69,0)}
+}
+@media(prefers-reduced-motion:reduce){
+  .footle-win:after,.footle-cell.correct,.footle-cell.present,.climb-play .climb-options button.correct,.quiz-options button.correct{animation:none!important}
+}
