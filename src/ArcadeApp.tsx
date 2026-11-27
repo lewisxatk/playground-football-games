@@ -24,6 +24,7 @@ type Account = {
   totals: Record<string, number>;
 };
 const STORAGE_KEY = "playground.local-account.v1";
+const difficultyLabel=(level:string)=>level==="STANDARD"?"MEDIUM / STANDARD":level;
 const ARCHIVE_POOL_SEED = "PLAYGROUND-GAME-POOL-2026-11";
 const EMPTY_ACCOUNT: Account = { nickname:"PLAYER 01", createdAt:new Date().toISOString(), streak:0, bestStreak:0, lastDailyDate:"", daily:{}, totals:{} };
 const GAME_LINKS = [
@@ -406,7 +407,7 @@ function DraftPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:n
  {done&&mode==="daily"?<Success title="SQUAD SUBMITTED." detail="Your daily Draft XI is banked. Unlimited practice draws a fresh squad pool." button="BUILD AGAIN" onAgain={()=>{setMode("practice");reset("practice");}}/>:
   <Card className="draft-game">
    <div className="arc-game-meta"><span>{picked.length} / 11 SELECTED</span><b>{counts.GK} GK · {counts.DEF} DEF · {counts.MID} MID · {counts.FWD} FWD</b></div>
-   <div className="grid-difficulty">{DRAFT_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{level}</button>)}</div>
+   <div className="grid-difficulty">{DRAFT_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{difficultyLabel(level)}</button>)}</div>
    <div className="draft-budget"><div><small>GAME CREDITS USED</small><strong>{spent}<i> / {budget} credits</i></strong></div><span>{budget-spent} LEFT</span><div className="draft-budget-line"><i style={{width:Math.min(100,spent/budget*100)+"%"}}/></div></div>
    {loading&&archivePool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>BUILDING THE PLAYER MARKET</b><span>SELECTING A FRESH 4—3—3 PLAYER POOL…</span></div>:
     <div className="draft-game-layout">
@@ -598,7 +599,7 @@ function ConnectionsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
  {done&&mode==="daily"?<Success title="GROUPS FOUND." detail="Today's Connections board is complete. Go again in unlimited practice." button="PRACTICE" onAgain={()=>{setMode("practice");reset("practice");}}/>:
   <Card className="connections-game">
    <div className="arc-game-meta"><span>GROUPS FOUND {found.length}/4</span><b>MISTAKES {mistakes}/4</b></div>
-   <div className="grid-difficulty">{(["EASY","STANDARD","HARD","EXTREME"] as ConnectionsDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{level}</button>)}</div>
+   <div className="grid-difficulty">{(["EASY","STANDARD","HARD","EXTREME"] as ConnectionsDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{difficultyLabel(level)}</button>)}</div>
    {loading&&groups.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>BUILDING CONNECTIONS</b><span>Finding four distinct football groups in the archive.</span></div>:
     groups.length!==4?<div className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NOT ENOUGH MATCHING PLAYERS"}</b><p>{error||"The current data draw doesn't contain four groups at this difficulty. Try another level or draw again."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY DATABASE ↗</button></div>:
     <>
@@ -697,7 +698,7 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
  {done&&mode==="daily"?<Success title="GRID COMPLETE." detail="All sixteen cells are filled. Try a fresh grid in unlimited practice." button="PRACTICE GRID" onAgain={()=>{setMode("practice");reset("practice");}}/>:
   <Card className="grid-game">
    <div className="arc-game-meta"><span>16 ANSWERS / 16 CELLS</span><b>{opened.length}/16 FILLED</b></div>
-   <div className="grid-difficulty">{GRID_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{level}</button>)}</div>
+   <div className="grid-difficulty">{GRID_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{difficultyLabel(level)}</button>)}</div>
    {loading&&playerPool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>BUILDING YOUR GRID</b><span>Finding valid clubs and nationalities from the player archive.</span></div>:
     puzzle?<><div className="football-grid-wrap grid-four"><div className="grid-corner">CLUB ↓<br/>NATION →</div>{puzzle.countries.map(c=><div className="grid-col-head" key={c}><CountryFlag name={c}/><span>{c}</span></div>)}{puzzle.clubs.map((club,ri)=><><div className="grid-row-head" key={"r"+ri}><ClubBadge name={club} size={28}/><span>{club}</span></div>{puzzle.countries.map((country,ci)=>{const id=ri*4+ci;const doneCell=opened.includes(id);return <button key={id} className={"grid-cell "+(doneCell?"filled":"")+(active===id?" active":"")} onClick={()=>{setActive(id);setGuess("");setGridNotice("");}}><small>{club} × {country}</small><b>{values[id]||"?"}</b></button>;})}</>)}</div>
      <div className="grid-game-bottom"><span>{difficulty} · {puzzle.answers.flat().reduce((n,c)=>n+c.length,0)} ACCEPTED PLAYER/CELL MATCHES</span><button className="arc-quiet" onClick={()=>reset(mode,difficulty)}>NEW GRID ↻</button></div>
@@ -763,7 +764,7 @@ function LadderPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  {done&&mode==="daily"?<Success title="TODAY'S ORDER IS LOCKED." detail="The daily Ladder has been completed. Unlimited practice uses fresh archive players." button="PRACTICE" onAgain={()=>{setMode("practice");reset("practice");}}/>:
   <Card className="ladder-game">
    <div className="arc-game-meta"><span>{players.length}/5 PLAYERS LOADED</span><b>{difficulty} · {metricLabel.toUpperCase()}</b></div>
-   <div className="grid-difficulty">{(["EASY","STANDARD","HARD","EXTREME"] as LadderDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level,metric)}>{level}</button>)}</div>
+   <div className="grid-difficulty">{(["EASY","STANDARD","HARD","EXTREME"] as LadderDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level,metric)}>{difficultyLabel(level)}</button>)}</div>
    <div className="ladder-control-row"><label>STAT<select value={metric} onChange={e=>reset(mode,difficulty,e.target.value as LadderMetric)}>{LADDER_METRICS.map(m=><option key={m.id} value={m.id}>{m.label}</option>)}</select></label><span>HIGHEST → LOWEST</span></div>
    {loading&&pool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>SCOUTING THE LADDER</b><span>Building a fresh set from the player archive.</span></div>:
     players.length<5?<div className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NOT ENOUGH RECORDED STATISTICS"}</b><p>{error||"This metric does not have five players with enough coverage in the current pool. Try another statistic or difficulty."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty,metric);}}>RETRY / NEW SET ↗</button></div>:
@@ -886,7 +887,7 @@ function FiveOhOnePage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
  {done&&mode==="daily"?<Success title="CHECKOUT BANKED." detail="Today's 501 challenge is complete. Practice is unlimited." button="PRACTICE" onAgain={()=>{setMode("practice");reset("practice");}}/>:
   <Card className="checkout-game">
    <div className="arc-game-meta"><span>VISIT / {Math.floor(used.length/3)+1}</span><b>{difficulty} · {metric==="leagueGoals"?"LEAGUE GOALS":"INTERNATIONAL CAPS"}</b></div>
-   <div className="grid-difficulty">{(["EASY","STANDARD","HARD","EXTREME"] as CheckoutDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level,metric)}>{level}</button>)}</div>
+   <div className="grid-difficulty">{(["EASY","STANDARD","HARD","EXTREME"] as CheckoutDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level,metric)}>{difficultyLabel(level)}</button>)}</div>
    <div className="checkout-scoreboard">
     <div className="checkout-target"><span>REMAINING</span><strong key={remaining}>{remaining}</strong><small>{remaining===0?"CHECKOUT!":remaining<=170?"ON THE FINISH":"301 / 501 CLUBHOUSE"}</small></div>
     <div className="checkout-dartboard"><div className="dart-ring ring-one"/><div className="dart-ring ring-two"/><div className="dart-ring ring-three"/><div className="dart-bull"/><motion.div className="dart-flight" animate={{x:[-30,6,0],y:[-26,4,0],rotate:[-35,8,0],opacity:[0,1,1]}} transition={{duration:.48,repeat:Infinity,repeatDelay:1.8}}/></div>
@@ -1048,7 +1049,7 @@ function MissingXIPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
   !match?<Card className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>OPENING THE WORLD CUP ARCHIVE</b><span>LOADING MATCHES AND STARTING ELEVENS…</span></Card>:
   <Card className="missing-game">
    <div className="arc-game-meta"><span>FIFA WORLD CUP · {match.year}</span><b>{3-attempts} ATTEMPTS LEFT</b></div>
-   <div className="grid-difficulty">{MISSING_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{level}</button>)}</div>
+   <div className="grid-difficulty">{MISSING_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{difficultyLabel(level)}</button>)}</div>
    <div className="missing-matchline"><div><small>ROUND</small><strong>{match.round||"MATCH"}</strong></div><div><small>OPPONENT</small><strong>{match.opponent}</strong></div><div><small>DATE</small><strong>{match.date}</strong></div><div><small>TEAM</small><strong>??????</strong></div></div>
    <div className="missing-formation-pitch">
     <div className="missing-pitch-markings"><i/><i/><i/><i/></div>
@@ -1297,6 +1298,8 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
  const [clubRows,setClubRows]=useState<Map<string,string>>(new Map());
  const [positionRows,setPositionRows]=useState<Map<string,string>>(new Map());
  const [clubsLoading,setClubsLoading]=useState(false);
+ const [clubLookupError,setClubLookupError]=useState("");
+ const [clubLookupAttempt,setClubLookupAttempt]=useState(0);
  const [attempts,setAttempts]=useState(0);const [ended,setEnded]=useState(false);const [won,setWon]=useState(false);
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
  const done=account.daily[utcDay()]?.["tournament-nation"]!==undefined;
@@ -1308,8 +1311,8 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
    return eligible[hashSeed(seed+":match")%eligible.length]??null;
  },[data,seed]);
  useEffect(()=>{
-   if(!match){setClubRows(new Map());setPositionRows(new Map());return;}
-   let live=true;setClubsLoading(true);setClubRows(new Map());setPositionRows(new Map());
+   if(!match){setClubRows(new Map());setPositionRows(new Map());setClubLookupError("");return;}
+   let live=true;setClubsLoading(true);setClubRows(new Map());setPositionRows(new Map());setClubLookupError("");
    getCareerClubsAtYear(match.starters,match.year).then(records=>{
      if(!live)return;
      const clubs=new Map<string,string>();const positions=new Map<string,string>();
@@ -1321,9 +1324,9 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
        if(distinctPositions.length===1)positions.set(key,distinctPositions[0]);
      }
      setClubRows(clubs);setPositionRows(positions);
-   }).catch(()=>{if(live){setClubRows(new Map());setPositionRows(new Map());}}).finally(()=>{if(live)setClubsLoading(false);});
+   }).catch(problem=>{if(live){setClubRows(new Map());setPositionRows(new Map());setClubLookupError(problem instanceof Error?problem.message:"The historical club lookup failed.");}}).finally(()=>{if(live)setClubsLoading(false);});
    return()=>{live=false;};
- },[match?.id]);
+ },[match?.id,clubLookupAttempt]);
  const teams=useMemo(()=>data?[...new Set(data.matches.map(m=>m.team).filter(Boolean))]:[],[data]);
  const optionCount=difficulty==="EASY"?3:difficulty==="STANDARD"?4:difficulty==="HARD"?6:8;
  const options=useMemo(()=>{
@@ -1363,7 +1366,7 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
   !match||!data?<Card className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>OPENING THE WORLD CUP ARCHIVE</b><span>Loading 1982–2022 starting line-ups.</span></Card>:
   <Card className="tournament-game">
    <div className="arc-game-meta"><span>FIFA WORLD CUP · {match.year}</span><b>{3-attempts} GUESSES LEFT</b></div>
-   <div className="grid-difficulty">{TOURNAMENT_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{level}</button>)}</div>
+   <div className="grid-difficulty">{TOURNAMENT_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{difficultyLabel(level)}</button>)}</div>
    <div className="tournament-match"><div><small>TOURNAMENT</small><b>FIFA WORLD CUP {match.year}</b></div><div><small>ROUND</small><b>{match.round||"MATCH"}</b></div><div><small>OPPONENT</small><b>{match.opponent}</b></div><div><small>DATE</small><b>{match.date}</b></div></div>
    <div className="tournament-pitch"><div className="tournament-pitch-lines"><i/><i/><i/></div>
     <div className="tournament-xi-rows">{lineupGroups.map((row,rowIndex)=><div className={"tournament-xi-row "+["keeper","defence","midfield","forwards"][rowIndex]} key={rowIndex}>
@@ -1378,6 +1381,7 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
     </div>)}</div>
     <div className="tournament-xi-caption"><span>FULL STARTING XI / 11 PLAYERS</span><span>{visibleClueCount} / {Math.min(clueCount,match.starters.length)} CLUBS MATCHED / {match.year}</span></div>
    </div>
+   {clubLookupError&&<div className="arc-feedback"><b>CLUB ARCHIVE MATCHING UNAVAILABLE</b><p>{clubLookupError} No unverified club names have been substituted.</p><button className="arc-quiet" onClick={()=>setClubLookupAttempt(value=>value+1)}>RETRY CLUB MATCHING ↻</button></div>}
    <p className="arc-muted">{positionsVerified?"Rows use the archive's broad player-position profiles; these are not confirmed match-day coordinates.":"The source supplies the starting eleven but not reliable match-day positions. The shirts use a clearly marked schematic 4-3-3 until enough profile positions are available."} Only exact player-name/year club matches are shown; missing clubs stay unrecorded.</p>
    {!ended?<><div className="tournament-options">{options.map(team=><button key={team} onClick={()=>choose(team)}>{team}<i>↗</i></button>)}</div><div className="arc-game-foot"><span>{difficulty} · {optionCount} NATIONAL TEAMS</span><span>{visibleClueCount} MATCHED / {Math.min(clueCount,match.starters.length)} CLUE SLOTS</span></div></>:
     <div className="arc-feedback"><b>{won?"YOU GOT THE NATION.":"THE NATION WAS "+match.team.toUpperCase()+"."}</b><p>{match.team} started against {match.opponent} at the {match.round} stage of the {match.year} World Cup.</p><button className="arc-button" onClick={()=>reset(mode)}>NEXT TOURNAMENT ↗</button></div>}
