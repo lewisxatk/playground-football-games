@@ -702,34 +702,34 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
  const puzzle=useMemo(()=>{
    if(!gridPacks.length)return null;
    const pack=gridPacks[seed%gridPacks.length],byId=new Map(playerPool.map(player=>[player.archiveId,player]));
-   const answerLimit=difficulty==="EASY"?4:difficulty==="STANDARD"?3:difficulty==="HARD"?2:1;
-   const answers=pack.answers.map(row=>row.map(cell=>cell.slice(0,answerLimit).flatMap(id=>{const player=byId.get(id);return player?[player]:[]})));
-   if(answers.some(row=>row.some(cell=>cell.length===0)))return null;
-   return {positions:pack.positions,countries:pack.countries,answers};
+   const answers=pack.answers.map(row=>row.map(cell=>cell.flatMap(id=>{const player=byId.get(id);return player?[player]:[]})));
+   if(answers.some(row=>row.some(cell=>cell.length===0))||new Set(answers.flat(2).map(player=>player.archiveId)).size!==16)return null;
+   return {clubs:pack.clubs,countries:pack.countries,answers};
  },[gridPacks,playerPool,seed,difficulty]);
- const positionLabel=(position:string)=>position==="GK"?"GOALKEEPER":position==="DEF"?"DEFENDER":position==="MID"?"MIDFIELDER":"FORWARD";
+ 
  const check=()=>{
    if(active===null||!guess.trim()||!puzzle)return;
    const row=Math.floor(active/4),col=active%4,accepted=puzzle.answers[row][col],player=archiveGuess(guess,accepted);
+   if(player&&values.some((value,index)=>index!==active&&normalise(value)===normalise(player.name))){setGridNotice("That player is already used in another square. Every grid answer must be a different footballer.");return;}
    if(player){const label=player.name,next=opened.includes(active)?opened:[...opened,active];setValues(v=>v.map((x,i)=>i===active?label:x));setOpened(next);setActive(null);setGuess("");setGridNotice("");if(next.length===16&&mode==="daily")onDaily("football-grid",Math.max(100,1000-next.length*15));}
-   else setGridNotice("That player doesn't fit this position × nation square. Try another name.");
+   else setGridNotice("That player has no verified spell at this English club with the selected nationality.");
  };
  const reset=(newMode:Mode=mode,newDifficulty:GridDifficulty=difficulty)=>{
    setValues(Array(16).fill(""));setOpened([]);setActive(null);setGuess("");setGridNotice("");
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
    setDifficulty(newDifficulty);
  };
- return <Frame account={account} game="football-grid" eyebrow="POSITION × NATION / 4 BY 4" title="FILL THE GRID." description="Sixteen squares. Name a footballer who represented the nation at the top and played in the position down the side." number="07" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
+ return <Frame account={account} game="football-grid" eyebrow="ENGLISH CLUB × NATIONALITY / 4 BY 4" title="FILL THE GRID." description="Sixteen squares. Name a different footballer for each English club and national flag. A verified dated club spell and nationality must match both sides." number="07" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
  {done&&mode==="daily"?<Success title="GRID COMPLETE." detail="All sixteen cells are filled. Try a fresh grid in unlimited practice." button="PRACTICE GRID" onAgain={()=>{setMode("practice");reset("practice");}}/>:
   <Card className="grid-game">
    <div className="arc-game-meta"><span>16 ANSWERS / 16 CELLS</span><b>{opened.length}/16 FILLED</b></div>
    <div className="grid-difficulty">{GRID_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{difficultyLabel(level)}</button>)}</div>
    {loading&&playerPool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>BUILDING YOUR GRID</b><span>Finding CC0 player intersections by position and nation.</span></div>:
-    puzzle?<><div className="football-grid-wrap grid-four"><div className="grid-corner">POSITION ↓<br/>NATION →</div>{puzzle.countries.map(country=><div className="grid-col-head" key={country}><CountryFlag name={country}/><span>{country}</span></div>)}{puzzle.positions.map((position,ri)=><><div className="grid-row-head" key={"r"+ri}><b>{positionLabel(position)}</b></div>{puzzle.countries.map((country,ci)=>{const id=ri*4+ci,doneCell=opened.includes(id);return <button key={id} className={"grid-cell "+(doneCell?"filled":"")+(active===id?" active":"")} onClick={()=>{setActive(id);setGuess("");setGridNotice("");}}><small>{positionLabel(position)} × {country}</small><b>{values[id]||"?"}</b></button>;})}</>)}</div>
+    puzzle?<><div className="football-grid-wrap grid-four"><div className="grid-corner">ENGLISH CLUB ↓<br/>NATION →</div>{puzzle.countries.map(country=><div className="grid-col-head" key={country}><CountryFlag name={country}/><span>{country}</span></div>)}{puzzle.clubs.map((club,ri)=><><div className="grid-row-head" key={"r"+ri}><ClubBadge name={club} size={30}/><b>{club}</b></div>{puzzle.countries.map((country,ci)=>{const id=ri*4+ci,doneCell=opened.includes(id);return <button key={id} className={"grid-cell "+(doneCell?"filled":"")+(active===id?" active":"")} onClick={()=>{setActive(id);setGuess("");setGridNotice("");}}><small>{club} × {country}</small><b>{values[id]||"?"}</b></button>;})}</>)}</div>
      <div className="grid-game-bottom"><span>{difficulty} · {puzzle.answers.flat().reduce((n,cell)=>n+cell.length,0)} ACCEPTED PLAYER/CELL MATCHES</span><button className="arc-quiet" onClick={()=>reset(mode,difficulty)}>NEW GRID ↻</button></div>
      {active!==null&&<div className="grid-answer"><small>{positionLabel(puzzle.positions[Math.floor(active/4)])} × {puzzle.countries[active%4]}</small><input value={guess} onChange={e=>setGuess(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")check();}} placeholder="Full name or surname…"/><button className="arc-button" onClick={check}>CHECK ↗</button></div>}
      {gridNotice&&<div className="arc-feedback"><b>NOT A MATCH.</b><p>{gridNotice}</p></div>}
-     <p className="arc-muted">The accepted answers use primary position and nationality from the CC0 player source. Difficulty changes how many valid names are accepted in each square.</p>
+     <p className="arc-muted">Every square is built from a dated English club-membership record and a recorded nationality. The 16 answer slots are unique: a footballer cannot be reused anywhere on the grid.</p>
     </>:
     <div className="arc-feedback"><b>{error?"CC0 PLAYER DATABASE UNAVAILABLE":"NO VALID 4×4 GRID IN THIS DRAW"}</b><p>{error||"This source did not produce sixteen non-empty intersections. Try another level or draw again."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY / NEW DRAW ↗</button></div>}
   </Card>}
