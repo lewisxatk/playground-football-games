@@ -356,17 +356,16 @@ At the end of every implementation update:
 - [!] A build-time compact/sharded export from the entire OpenFootballBase archive has not been created; initial first-load still uses browser-side remote DuckDB/Parquet. Shared IndexedDB caching improves repeat visits, but does not equal a complete edge-cached database.
 - [!] Transfer CSV is proxied and streamed into the Career File transfer-hint index on demand; it has not been merged into the shared player model or fully audited for player name/fee coverage.
 - [!] Head-to-head Rooms are still not implemented. Durable Objects + WebSockets are technically suitable; a separate Worker, room code flow, server-authoritative game state, reconnect and two-device QA remain to be built.
-- [!] The Climb still uses a small curated question array; Draft XI still uses a small static player list; Strands still has ten curated fixed boards rather than a procedural archive-generated daily/practice board bank.
+- [x] The Climb now builds five-question runs from archive-generated quiz templates, with a small curated fallback only when archive data is unavailable. Draft XI now draws archive-backed players and applies difficulty budgets. Strands builds dynamic 6×8 puzzles from archive names when a valid player group is available; the ten curated boards remain as fallback.
 - [!] Cloud Locker Room account sync, real player portraits, complete national-team crest library, national league/global club coverage and full human QA remain outstanding.
 
-**Next work order:**
-1. Build-time compressed player-data shards (or cached Worker endpoint) so the first iPhone visit no longer has to query remote Parquet in the browser; preserve source and missing-stat metadata.
-2. Expand The Climb and Draft XI onto the shared data pool and add difficulty/roster variety.
-3. Procedural Strands board generation with guaranteed 6×8 paths and a valid spangram.
-4. Import/normalise transfer dataset into compact player-linked fee hints; audit unmatched and ambiguous names.
-5. Make the daily/unlimited system and local recent-history semantics consistent across every game; add save export/restore and later cloud sync.
-6. Finish premium component-level art direction, readability and motion QA on actual iPhone and desktop.
-7. Head-to-head Games Room: create a separate Cloudflare Worker + Durable Object rooms service; then join code/lobby/game-picker, server-authoritative rounds, reconnect, room expiry and private 2-device testing.
+**Next work order (supersedes the earlier list above):**
+1. Replace the first-visit browser DuckDB/Parquet cost with compact build-time player-data shards or an edge-cached query endpoint; preserve source, season coverage and missing-stat flags.
+2. Normalise and connect the 2005–2024 transfer-fee dataset to canonical player IDs where the match is unambiguous; keep name-only and ambiguous matches flagged.
+3. Run systematic QA across all 16 routes: daily/personal seed repeatability, practice shard rotation, difficulty quality, no-repeat rules, scoring, iPhone touch gestures and small-screen typography.
+4. Improve historical player and national-team coverage beyond the World Cup 1982–2022 archive, only when sourced records are available.
+5. Add save-file export/restore (now implemented) to the test matrix; cloud account sync remains a separate optional service.
+6. Build the head-to-head Games Room as a separate Cloudflare Worker + Durable Object service with join codes, lobby/game picker, server-authoritative rounds, reconnect, room expiry and two-device testing.
 
 ## 14. Recovery and production verification (2026-11-27, 09:30–09:40 UTC)
 
@@ -393,3 +392,17 @@ At the end of every implementation update:
 3. QA the question and puzzle generators for distinct distractors, ambiguous names, accidental duplicate answers and valid game-specific difficulty.
 4. Carry out a real iPhone Safari and desktop test pass for every game route, focusing on input zoom, scrolling, drag behaviour, loading states, colour contrast and timer behaviour.
 5. Build the head-to-head Games Room as a separate Cloudflare Durable Objects/WebSockets service only after solo rounds and their answer sources are stable; server-authoritative score/timer state and two-device testing are mandatory.
+
+## 14. Latest continuation batch (2026-11-27, 09:40 UTC)
+
+- [x] Home scoreboard and tile artwork now reflect all 16 game routes (not the former 14); commit `115f281e188e447de6a9f2cd0095d003ec200d7c`, CI run [45975054441](https://github.com/lewisxatk/playground-football-games/actions/runs/45975054441), Pages deployment completed.
+- [x] All 13 archive-driven game hooks now keep the same deterministic pool for Daily, but use a different seed for each Practice run. Each seed uses the existing seven-day IndexedDB cache. This enables fresh 1,600-player slices from different archive samples over repeat sessions, rather than always returning the same fixed 1,600 players. Commit `e8476533890e0cc3276ef0b4ac5197b6fa3af88b`, CI run [45975163359](https://github.com/lewisxatk/playground-football-games/actions/runs/45975163359), Cloudflare production deployment completed in later build sequence.
+- [x] Body typography now uses loaded Space Grotesk rather than the unbundled Cabinet Grotesk family; individual game headings keep their own display font. Commit `eeba7dc43c40cac97f387031073b8d34428da32e`, CI run [45975087644](https://github.com/lewisxatk/playground-football-games/actions/runs/45975087644), Pages deployment succeeded.
+- [x] Career File input font-size and microcopy have an additional iPhone Safari zoom/readability guard. Commit `d2bd46983dcb27a4df497104aab0beaf5e4124fc`, CI run [45975239424](https://github.com/lewisxatk/playground-football-games/actions/runs/45975239424), deployment succeeded.
+- [x] Locker Room now exports the local player card to a JSON backup and can restore it on another browser/device. Import validation checks expected fields and bounds file size; restore replaces the current local record. Commit `46926bf1cebbb502f8d5f48bb5215467dd3e4cac`, CI run [45975488108](https://github.com/lewisxatk/playground-football-games/actions/runs/45975488108).
+- [x] Mobile styling for save export/import controls added. Commit `e7f021a38d81832f053ede786aa9d63432e86719`, CI run [45975506506](https://github.com/lewisxatk/playground-football-games/actions/runs/45975506506), Cloudflare Pages production deployment `71fd4b94-60e4-4d64-a6d3-29fb0d750357` succeeded at https://71fd4b94.playground-football-games.pages.dev.
+- [~] Practice archive shards still use browser-side DuckDB and remote Parquet on first use of a new seed. IndexedDB speeds repeat visits for that seed; this is not yet a fully static/offline player database.
+- [~] Transfer fees still load from the source CSV on demand for Career File; the fee dataset has not yet been normalised into the shared archive player records.
+- [!] No full real-iPhone manual QA or multi-user multiplayer test has been performed in this tool session. Production builds and automated data checks passing do not replace real-device testing.
+
+**Next actions:** (1) prototype a compact build-time/edge-served player shard, (2) integrate transfer-fee data with canonical player matching, (3) audit all game route behaviour and difficulty levels, (4) retain source/coverage notices for every derived statistic, (5) build the separate head-to-head room service only after solo-game QA.
