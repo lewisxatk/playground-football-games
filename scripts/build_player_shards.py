@@ -149,7 +149,17 @@ def clean_number(value: Any, default: int = 0) -> int:
 def clean_optional_number(value: Any) -> int | float | None:
     if value is None:
         return None
-    return clean(value)
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value) if value.is_integer() else value
+    try:
+        parsed = float(value)
+        return int(parsed) if parsed.is_integer() else parsed
+    except (TypeError, ValueError):
+        return None
 
 
 def build_rows(manifest: dict[str, Any], files: dict[str, Any]) -> list[dict[str, Any]]:
