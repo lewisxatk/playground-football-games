@@ -810,11 +810,15 @@ function LadderPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const pool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
  const familiarNames=useMemo(()=>new Set(PLAYER_DATABASE.map(player=>normalise(player.name))),[]);
  const easyPool=useMemo(()=>{
-   const familiar=pool.filter(player=>familiarNames.has(normalise(player.name)));
+   const hasMetric=(player:GamePlayer)=>{
+     const value=metric==="leagueGoals"?player.leagueGoals:metric==="careerApps"?player.careerApps:metric==="careerGoals"?player.careerGoals:player.caps??-1;
+     return value>=0&&(metric!=="leagueGoals"||player.leagueGoalSeasons>=2);
+   };
+   const familiar=pool.filter(player=>familiarNames.has(normalise(player.name))&&hasMetric(player));
    if(familiar.length>=5)return familiar;
-   const established=pool.filter(player=>player.careerApps>=250&&player.clubs.length>=2);
+   const established=pool.filter(player=>player.careerApps>=250&&player.clubs.length>=2&&hasMetric(player));
    return established.length>=5?established:pool;
- },[pool,familiarNames]);
+ },[pool,familiarNames,metric]);
  const generated=useMemo(()=>pool.length>=5?makeLadderSet(difficulty==="EASY"?easyPool:pool,metric,difficulty,hashSeed(seed+":"+metric+":"+difficulty)):[],[pool,easyPool,metric,difficulty,seed]);
  useEffect(()=>{setPlayers(generated);setSubmitted(false);},[generated]);
  const move=(i:number,dir:number)=>setPlayers(old=>{const next=[...old],j=i+dir;if(j<0||j>=next.length)return old;[next[i],next[j]]=[next[j],next[i]];return next;});
