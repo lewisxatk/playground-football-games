@@ -37,6 +37,7 @@ Rule: after every successful GitHub commit, update this checklist in the next co
 - [ ] Re-run CC0 database generation and confirm the corrected club match produces at least 500 valid Football Grid packs; previous run failed with zero packs.
 - [x] Link Up: generate ten unique runtime questions from the static OpenFootballBase season archive, requiring one shared teammate with overlapping dated spells at both English clubs; Premier League first, other English leagues as fallback. Commits: `6433666ce7`, `0b0badf03c`, `3aa6e8811a`.
 - [x] Link Up: display the exact overlapping year windows, six answer options, four progressive hints, three guesses plus an extra attempt, and a skip that does not reveal the answer. In-game source credit: OpenFootballBase-Data, CC BY-SA 4.0.
+- [x] Keep Link Up answer choices English-football based, with unique displayed names and no endpoint/answer duplicates. Commits: `d29c328110`, `3d2ffd924e`.
 - [ ] Verify the runtime archive reliably produces ten unique links on fresh samples and remains responsive on mobile.
 - [x] Link Up database pool: replace the single 50,000-row Wikidata career query with up to four deterministic 50,000-row pages (ORDER BY player and statement), retaining P27 nationality labels and deduplicating statements. Commit: `dbb6a8fcc3`.
 - [x] Keep the existing verified English-club Link Up shard generator connected while the larger season-stat runtime migration is unfinished; prevent a zero-question Link Up page. Commit: `e58e554bae`.
