@@ -98,13 +98,13 @@ async function parsePlayers(){const files=(await walk(P)).filter(p=>/(?:players|
 async function parseClubs(){const files=(await walk(C)).filter(p=>/clubs\.wiki\.txt$/i.test(p));const map=new Map();for(const path of files){const text=await readFile(path,"utf8");let nation=relative(C,path).split(/[\\/]/)[0].replace(/[-_]/g," ");for(const raw of text.split(/\r?\n/)){const line=raw.trim();if(!line)continue;if(/^=\s*/.test(line)){nation=country(line);continue}if(excluded(line)||line.length<3||line.length>100||line.includes("|")||/^(?:club|team|name|country)/i.test(line))continue;const name=line.replace(/\s+#.*$/,"").trim(),key=norm(name);if(!key)continue;const row=map.get(key)||{id:id("club",key),name,countries:[],source:SOURCES.clubs.repo,sourceCommit:SOURCES.clubs.commit,licence:"CC0-1.0"};if(nation&&!row.countries.some(x=>norm(x)===norm(nation)))row.countries.push(nation);map.set(key,row)}}return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name))}
 
 async function fetchWikidataCareers(players){
- const query=\`SELECT ?player ?playerLabel ?statement ?club ?clubLabel ?start ?end WHERE {
+ const query=`SELECT ?player ?playerLabel ?statement ?club ?clubLabel ?start ?end WHERE {
   ?player wdt:P106 wd:Q937857; p:P54 ?statement.
   ?statement ps:P54 ?club; pq:P580 ?start.
   OPTIONAL { ?statement pq:P582 ?end. }
   ?club wdt:P31/wdt:P279* wd:Q476028.
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
- } LIMIT 30000\`;
+ } LIMIT 30000`;
  const meta={status:"not-run",endpoint:SOURCES.wikidata.endpoint,retrievedAt:TODAY,rawRows:0,acceptedSpells:0,players:0,eligibleCareerFile:0,eligibleCultHero:0,error:null};
  let bindings=[];
  try{
