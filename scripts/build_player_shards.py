@@ -203,7 +203,7 @@ def build_rows(manifest: dict[str, Any], files: dict[str, Any]) -> list[dict[str
     stat_base AS (
       SELECT CASE WHEN coalesce(trim(player_qid),'') <> '' THEN player_qid
                   ELSE 'name:' || lower(trim(player)) END AS player_id,
-        club, club_link, club_qid, season, competition_group, apps, goals, assists
+        club, club_link, club_qid, seq, season, competition_group, apps, goals, assists
       FROM stat_club
     ),
     stat_rollup AS (
@@ -216,7 +216,10 @@ def build_rows(manifest: dict[str, Any], files: dict[str, Any]) -> list[dict[str
           THEN coalesce(nullif(club_qid,''),nullif(club_link,''),club) || '|' || season END) AS league_goal_seasons,
         sum(assists) FILTER (WHERE competition_group = 'League') AS league_assists,
         count(DISTINCT CASE WHEN competition_group='League' AND assists IS NOT NULL
-          THEN coalesce(nullif(club_qid,''),nullif(club_link,''),club) || '|' || season END) AS league_assist_seasons
+          THEN coalesce(nullif(club_qid,''),nullif(club_link,''),club) || '|' || season END) AS league_assist_seasons,
+        to_json(list(struct_pack(club:=club,clubLink:=club_link,clubQid:=club_qid,
+          season:=season,competitionGroup:=competition_group,apps:=apps,goals:=goals,assists:=assists)
+          ORDER BY season,seq) FILTER (WHERE apps IS NOT NULL OR goals IS NOT NULL OR assists IS NOT NULL)) AS season_stats_json
       FROM stat_base
       WHERE coalesce(competition_group,'') <> 'Total' AND coalesce(trim(season),'') <> ''
       GROUP BY player_id
@@ -281,6 +284,7 @@ def build_rows(manifest: dict[str, Any], files: dict[str, Any]) -> list[dict[str
       coalesce(st.league_goal_seasons,0) AS league_goal_seasons,
       coalesce(st.league_assists,0) AS league_assists,
       coalesce(st.league_assist_seasons,0) AS league_assist_seasons,
+      st.season_stats_json,
       coalesce(sq.nationality,'') AS nationality, coalesce(sq.position,'') AS position,
       coalesce(pp.full_name,'') AS full_name, coalesce(pp.birth_place,'') AS birth_place, pp.height_cm,
       b.birth_date,
@@ -326,6 +330,7 @@ def build_rows(manifest: dict[str, Any], files: dict[str, Any]) -> list[dict[str
             "leagueAssists": clean_number(row.get("league_assists")),
             "leagueAssistSeasons": clean_number(row.get("league_assist_seasons")),
             "seasons": clean_number(row.get("seasons")),
+            "seasonStats": json_list(row.get("season_stats_json")),
             "firstYear": row.get("first_year"),
             "lastYear": row.get("last_year"),
             "caps": row.get("caps"),
