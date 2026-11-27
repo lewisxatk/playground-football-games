@@ -72,7 +72,12 @@ function validateShard<K extends FootballKnowledgeKey>(key:K,value:unknown):Foot
   const lineups=list("lineups") as Record<string,unknown>[];
   if(lineups.some(row=>!row.id||!Array.isArray(row.starters)||row.starters.length!==11||new Set(row.starters as string[]).size!==11)||list("questions").length<500||list("playerCards").length<500)throw new Error("The World Cup master shard failed its line-up/question/player checks.");
  }
- if(key==="career-history"&&(list("players").length<500||list("linkUpPacks").length<500||list("careerFileCandidates").length<500||list("cultHeroCandidates").length<500))throw new Error("The CC0 career shard is below 500 unique playable records.");
+ if(key==="career-history"){
+  const players=list("players") as Record<string,unknown>[];
+  if(players.some(player=>!player.id||!player.qid||!Array.isArray(player.spells)))throw new Error("A Wikidata career profile is missing its QID or dated membership records.");
+  if(list("careerFileCandidates").length!==players.length||list("cultHeroCandidates").length!==players.length)throw new Error("The career candidate indexes do not match the canonical career profiles.");
+  if(list("linkUpPacks").some(pack=>{const row=pack as Record<string,unknown>;return !row.id||!row.answerPlayerId||!Array.isArray(row.optionPlayerIds)||(row.optionPlayerIds as unknown[]).length!==6;}))throw new Error("A Wikidata Link Up puzzle is malformed.");
+ }
  if(key==="connections"&&list("players").length<500)throw new Error("The CC0 connections player list is incomplete.");
  if(key==="football-grid"&&list("players").length<500)throw new Error("The CC0 grid player list is incomplete.");
  if(key==="connections"||key==="football-grid"){
