@@ -783,7 +783,7 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
  const seed=mode==="daily"?hashSeed("GRID:"+utcDay()+":"+difficulty):hashSeed("GRID:practice:"+practiceSeed+":"+difficulty);
  useEffect(()=>{
   let live=true;setArchiveLoading(true);setArchiveError("");
-  getStaticArchivePlayers("FOOTBALL-GRID-ARCHIVE",3200).then(players=>{
+  getStaticArchivePlayers("FOOTBALL-GRID-ARCHIVE:"+retryToken,3200).then(players=>{
    if(!live)return;
    if(!players?.length){setArchiveError("The season-by-season player archive could not be loaded.");setArchivePlayers([]);}
    else setArchivePlayers(players);
