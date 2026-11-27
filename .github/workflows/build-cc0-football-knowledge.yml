@@ -1,0 +1,69 @@
+name: Build CC0 football knowledge database
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/cult-hero-mystery-pack-opening
+    paths:
+      - "scripts/build-cc0-football-knowledge.mjs"
+      - ".github/workflows/build-cc0-football-knowledge.yml"
+      - "public/data/worldcup-lineups.json"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cc0-football-knowledge-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out PLAYGROUND
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Check out pinned CC0 player data
+        uses: actions/checkout@v4
+        with:
+          repository: openfootball/players
+          ref: 125d20f7cc06cac7e758b40df535a7695632680a
+          path: .sources/openfootball-players
+      - name: Check out pinned CC0 club data
+        uses: actions/checkout@v4
+        with:
+          repository: openfootball/clubs
+          ref: ae3800227c449447b3a337fc0aac79a8f02f4c8b
+          path: .sources/openfootball-clubs
+      - name: Verify upstream licences
+        shell: bash
+        run: |
+          grep -q "CC0 1.0 Universal" .sources/openfootball-players/LICENSE.md
+          grep -q "CC0 1.0 Universal" .sources/openfootball-clubs/LICENSE.md
+      - name: Build canonical database and game pools
+        run: node scripts/build-cc0-football-knowledge.mjs
+      - name: Publish generated database to feature branch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/football-knowledge.cc0.json public/data/football-knowledge-report.json
+          if git diff --cached --quiet; then echo "Database already current."; exit 0; fi
+          git commit -m "Build pinned CC0 football knowledge database [skip ci]"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+      - name: Upload build report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: football-knowledge-build-report
+          path: public/data/football-knowledge-report.json
+          if-no-files-found: ignore
+          retention-days: 30
