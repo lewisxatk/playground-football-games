@@ -49,8 +49,19 @@ async function openDb(): Promise<Archive> {
     await register(file, path);
     await conn.query("CREATE VIEW " + table + " AS SELECT * FROM read_parquet('" + file + "')");
   }
-  // Do not register every season squad parquet on startup. The files are numerous and
-  // very large on mobile; the quiz can draw and show its core career clues without them.
+  // Nationality and position come from the versioned squad records, not
+  // player_profile (which contains name, birthplace, height and photo fields).
+  const squadPaths = Object.values(manifest.seasons ?? {})
+    .map((season:any) => season.files?.squad?.path)
+    .filter((path:any): path is string => typeof path === "string" && path.length > 0);
+  if (!squadPaths.length) throw new Error("The archive is missing all season squad files.");
+  const squadViews:string[] = [];
+  for (let index = 0; index < squadPaths.length; index++) {
+    const file = "squad-" + index + ".parquet";
+    await register(file, squadPaths[index]);
+    squadViews.push("SELECT * FROM read_parquet('" + file + "')");
+  }
+  await conn.query("CREATE VIEW squad AS " + squadViews.join(" UNION ALL "));
   const query = async (sql: string, params: unknown[] = []) => {
     const statement = await conn.prepare(sql);
     try {
@@ -150,7 +161,8 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
         " list(DISTINCT cr.club_name) AS clubs, " +
         " list(struct_pack(club := cr.club_name, start_year := cr.start_year, end_year := cr.end_year)) AS career_spells, " +
         " COUNT(DISTINCT cr.club_name) AS club_count, " +
-        " SUM(coalesce(cr.apps,0)) AS appearances, SUM(coalesce(cr.goals,0)) AS goals, " +
+        " SUM(cr.apps) AS appearances, SUM(cr.goals) AS goals, " +
+        " COUNT(cr.apps) AS appearance_rows, COUNT(cr.goals) AS goal_rows, " +
         " arg_max(cr.club_name, coalesce(cr.end_year,cr.start_year,0)) AS current_club, " +
         " arg_max(cr.club_qid, coalesce(cr.end_year,cr.start_year,0)) AS current_club_qid, " +
         " MIN(cr.start_year) AS first_year, MAX(cr.end_year) AS last_year " +
@@ -161,12 +173,21 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
         " SUM(CASE WHEN st.competition_group='League' AND st.apps IS NOT NULL THEN st.apps ELSE 0 END) AS league_appearances, " +
         " SUM(CASE WHEN st.competition_group='League' AND st.goals IS NOT NULL THEN st.goals ELSE 0 END) AS league_goals, " +
         " COUNT(DISTINCT CASE WHEN st.competition_group='League' AND st.goals IS NOT NULL " +
-        " THEN coalesce(nullif(st.club_qid,''),nullif(st.club_link,''),st.club)||'|'||st.season END) AS league_goal_seasons " +
+        " THEN coalesce(nullif(st.club_qid,''),nullif(st.club_link,''),st.club)||'|'||st.season END) AS league_goal_seasons, " +
+        " SUM(CASE WHEN st.competition_group='League' THEN st.assists END) AS league_assists, " +
+        " COUNT(DISTINCT CASE WHEN st.competition_group='League' AND st.assists IS NOT NULL " +
+        " THEN coalesce(nullif(st.club_qid,''),nullif(st.club_link,''),st.club)||'|'||st.season END) AS league_assist_seasons " +
         " FROM stat_club st JOIN picked p ON p.player_qid=st.player_qid " +
         " WHERE coalesce(st.competition_group,'')<>'Total' AND coalesce(trim(st.season),'')<>'' GROUP BY st.player_qid" +
         "), profile_rollup AS (" +
-        " SELECT pp.player_qid, any_value(pp.nationality) AS nationality, any_value(pp.position) AS position " +
+        " SELECT pp.player_qid, any_value(pp.full_name) AS full_name, " +
+        " any_value(pp.birth_place) AS birth_place, any_value(pp.height_cm) AS height_cm " +
         " FROM player_profile pp JOIN picked p ON p.player_qid=pp.player_qid GROUP BY pp.player_qid" +
+        "), squad_rollup AS (" +
+        " SELECT sq.player_qid, arg_max(sq.nationality, try_cast(substr(sq.season,1,4) AS INTEGER)) AS nationality, " +
+        " arg_max(sq.position, try_cast(substr(sq.season,1,4) AS INTEGER)) AS position " +
+        " FROM squad sq JOIN picked p ON p.player_qid=sq.player_qid " +
+        " WHERE coalesce(trim(sq.player_qid),'')<>'' GROUP BY sq.player_qid" +
         "), birth_rollup AS (" +
         " SELECT b.player_qid, any_value(b.birth_date) AS birth_date " +
         " FROM birth b JOIN picked p ON p.player_qid=b.player_qid WHERE b.precision=11 GROUP BY b.player_qid" +
@@ -180,15 +201,20 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
         "SELECT c.player_qid, c.name, c.clubs, c.current_club, c.appearances, c.goals, " +
         "c.first_year, c.last_year, coalesce(c.club_count,0) AS club_count, " +
         "coalesce(st.seasons,0) AS seasons, coalesce(st.league_appearances,0) AS league_appearances, " +
-        "coalesce(st.league_goals,0) AS league_goals, coalesce(st.league_goal_seasons,0) AS league_goal_seasons, coalesce(pp.nationality,'') AS nationality, " +
-        "coalesce(pp.position,'') AS position, b.birth_date, nt.caps, nt.international_goals, " +
+        "coalesce(st.league_goals,0) AS league_goals, coalesce(st.league_goal_seasons,0) AS league_goal_seasons, " +
+        "coalesce(st.league_assists,0) AS league_assists, coalesce(st.league_assist_seasons,0) AS league_assist_seasons, " +
+        "coalesce(sq.nationality,'') AS nationality, coalesce(sq.position,'') AS position, " +
+        "coalesce(pp.full_name,'') AS full_name, coalesce(pp.birth_place,'') AS birth_place, pp.height_cm, " +
+        "coalesce(c.appearance_rows,0) AS appearance_rows, coalesce(c.goal_rows,0) AS goal_rows, " +
+        "b.birth_date, nt.caps, nt.international_goals, " +
         "coalesce(cl.country,'') AS current_country, coalesce(cl.league,'') AS current_league, cl.division AS current_division " +
         "FROM career_rollup c LEFT JOIN stat_rollup st ON st.player_qid=c.player_qid " +
         "LEFT JOIN profile_rollup pp ON pp.player_qid=c.player_qid " +
+        "LEFT JOIN squad_rollup sq ON sq.player_qid=c.player_qid " +
         "LEFT JOIN birth_rollup b ON b.player_qid=c.player_qid " +
         "LEFT JOIN national_rollup nt ON nt.player_qid=c.player_qid " +
         "LEFT JOIN club_rollup cl ON cl.wikidata_qid=c.current_club_qid " +
-        "WHERE coalesce(st.seasons,0)>=2 AND c.appearances>=20 ORDER BY hash(c.player_qid) LIMIT ?";
+        "WHERE c.appearances>=20 ORDER BY hash(c.player_qid) LIMIT ?";
       const rows = await a.query(sql, [...ids, limit]);
       return rows.map((r: any): ArchiveGamePlayer => {
         const spells = Array.isArray(r.career_spells) ? r.career_spells.map((spell:any)=>({
@@ -210,6 +236,13 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
         leagueAppearances: Number(r.league_appearances ?? 0),
         leagueGoals: Number(r.league_goals ?? 0),
         leagueGoalSeasons: Number(r.league_goal_seasons ?? 0),
+        leagueAssists: Number(r.league_assists ?? 0),
+        leagueAssistSeasons: Number(r.league_assist_seasons ?? 0),
+        fullName: String(r.full_name ?? ""),
+        birthPlace: String(r.birth_place ?? ""),
+        heightCm: n(r.height_cm),
+        careerAppearanceRows: Number(r.appearance_rows ?? 0),
+        careerGoalRows: Number(r.goal_rows ?? 0),
         seasons: Number(r.seasons ?? 0),
         firstYear: n(r.first_year),
         lastYear: n(r.last_year),
