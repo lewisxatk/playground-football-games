@@ -58,7 +58,7 @@ The generated report records the exact count, unit, readiness and live-integrati
 - Career File and Cult Hero — dated player-club membership records from Wikidata
 - Link Up — unique bridge puzzles based on overlapping dated membership records
 
-Career File and Cult Hero now use a separate Wikidata CC0 snapshot of dated player-club membership statements. Link Up uses only overlapping dated membership statements and generates bridge-player options from that same snapshot. The live Wikidata query is recorded with its endpoint, retrieval date, row count and accepted-spell count; the build report marks each game ready only when it reaches 500 unique candidates or packs. These records are not match appearances, and they must never be described as season statistics. The old mixed-provenance archive is not silently counted as CC0 content.
+Career File and Cult Hero now use a separate Wikidata CC0 snapshot of dated player-club membership statements. Link Up uses only overlapping dated membership statements and generates bridge-player options from that same snapshot. The live Wikidata query is recorded with its endpoint, retrieval date, row count and accepted-spell count. The query is currently capped at 50,000 raw rows per snapshot; the report reached that cap, so additional Wikidata statements may be omitted. Treat this as a large, useful open career pool, not a complete world-wide career-history census. The build report marks each game ready only when it reaches 500 unique candidates or packs. These records are not match appearances, and they must never be described as season statistics. The old mixed-provenance archive is not silently counted as CC0 content.
 
 ## Build and test
 
