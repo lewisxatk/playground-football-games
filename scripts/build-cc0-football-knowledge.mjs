@@ -160,15 +160,45 @@ function makeInternationalGoalPacks(scorers){
 
 function buildInternationalQuiz(matches){
  const scorelines=[...new Set(matches.map(m=>m.homeScore+"-"+m.awayScore))];
+ const teams=[...new Set(matches.flatMap(m=>[m.home,m.away]).filter(Boolean))];
+ const totals=[...new Set(matches.map(m=>String(m.homeScore+m.awayScore)))];
+ const margins=[...new Set(matches.map(m=>String(Math.abs(m.homeScore-m.awayScore))))];
  const ukTeams=new Set(["england","scotland","wales","northern ireland"]);
- const questions=matches.map(match=>{
-  const answer=match.homeScore+"-"+match.awayScore;
-  const distractors=scorelines.filter(score=>score!==answer).sort((a,b)=>createHash("sha256").update(match.id+a).digest("hex").localeCompare(createHash("sha256").update(match.id+b).digest("hex"))).slice(0,4);
+ const pickOptions=(answer,candidates,key)=>{
+  const distractors=[...new Set(candidates.map(String).filter(value=>value!==String(answer)))]
+   .sort((a,b)=>createHash("sha256").update(key+a).digest("hex").localeCompare(createHash("sha256").update(key+b).digest("hex"))).slice(0,4);
   if(distractors.length!==4)return null;
-  const options=[answer,...distractors].sort((a,b)=>createHash("sha256").update(match.id+a).digest("hex").localeCompare(createHash("sha256").update(match.id+b).digest("hex")));
+  return [String(answer),...distractors].sort((a,b)=>createHash("sha256").update(key+a).digest("hex").localeCompare(createHash("sha256").update(key+b).digest("hex")));
+ };
+ const questions=matches.map(match=>{
+  const selector=parseInt(createHash("sha256").update(match.id).digest("hex").slice(0,2),16)%4;
+  let answer,question,explanation,options,questionType;
+  if(selector===0){
+   questionType="scoreline";answer=match.homeScore+"-"+match.awayScore;
+   question="What was the final score when "+match.home+" played "+match.away+" on "+match.date+"?";
+   explanation=match.home+" "+answer.replace("-", "–")+" "+match.away+". Penalty shoot-out scores are not included.";
+   options=pickOptions(answer,scorelines,match.id);
+  }else if(selector===1){
+   questionType="match-winner";answer=match.homeScore===match.awayScore?"Draw":match.homeScore>match.awayScore?match.home:match.away;
+   question="Who won the match between "+match.home+" and "+match.away+" on "+match.date+"?";
+   explanation=match.home+" "+match.homeScore+"–"+match.awayScore+" "+match.away+". "+(answer==="Draw"?"The match finished level.":answer+" recorded the win.");
+   options=pickOptions(answer,[...teams,"Draw"],match.id);
+  }else if(selector===2){
+   questionType="total-goals";answer=String(match.homeScore+match.awayScore);
+   question="How many goals were scored when "+match.home+" met "+match.away+" on "+match.date+"?";
+   explanation="The match finished "+match.homeScore+"–"+match.awayScore+", making "+answer+" goals in total.";
+   options=pickOptions(answer,totals,match.id);
+  }else{
+   questionType="goal-margin";answer=String(Math.abs(match.homeScore-match.awayScore));
+   question="What was the winning margin when "+match.home+" played "+match.away+" on "+match.date+"?";
+   explanation="The final score was "+match.homeScore+"–"+match.awayScore+", a margin of "+answer+" goal"+(answer==="1"?"":"s")+".";
+   options=pickOptions(answer,margins,match.id);
+  }
+  if(!options)return null;
   const tier=match.year>=2000?"EASY":match.year>=1980?"MEDIUM":match.year>=1950?"HARD":"EXTREME";
   const region=match.region??(ukTeams.has(norm(match.home))||ukTeams.has(norm(match.away))?"UK":"INTERNATIONAL");
-  return{id:id("international-question",match.id),factId:match.id,playerId:match.id,tier,region,category:match.tournament,question:"What score was recorded when "+match.home+" played "+match.away+" on "+match.date+" in "+match.tournament+"?",answer,options,explanation:match.home+" "+answer.replace("-", "–")+" "+match.away+". Penalty shoot-out scores are not included.",source:(match.sourceKey==="england"?SOURCES.england:match.sourceKey==="championsLeague"?SOURCES.championsLeague:SOURCES.internationalResults).url+"/blob/"+(match.sourceKey==="england"?SOURCES.england:match.sourceKey==="championsLeague"?SOURCES.championsLeague:SOURCES.internationalResults).commit+"/"+(match.sourceFile??"results.csv"),matchId:match.id,eventDate:match.date};
+  const source=match.sourceKey==="england"?SOURCES.england:match.sourceKey==="championsLeague"?SOURCES.championsLeague:SOURCES.internationalResults;
+  return{id:id("international-question",match.id),factId:match.id,playerId:match.id,tier,region,category:match.tournament,questionType,question,answer,options,explanation,source:source.url+"/blob/"+source.commit+"/"+(match.sourceFile??"results.csv"),matchId:match.id,eventDate:match.date};
  }).filter(Boolean);
  const uk=questions.filter(q=>q.region==="UK").sort((a,b)=>a.id.localeCompare(b.id));
  const international=questions.filter(q=>q.region==="INTERNATIONAL").sort((a,b)=>a.id.localeCompare(b.id));
