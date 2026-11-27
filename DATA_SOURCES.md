@@ -15,6 +15,10 @@ The upstream project reports, as of 14 November 2026, approximately 85,099 playe
 
 Upstream documentation: [repository and source overview](https://github.com/florentfougeres/OpenFootballBase-Data), [data model and caveats](https://github.com/florentfougeres/OpenFootballBase-Data/blob/main/docs/en/data-model.md).
 
+## UEFA club competition results
+
+The match bank includes [OpenFootball Champions League](https://github.com/openfootball/champions-league), pinned at `abfaeddc2ee3d14f99ecc163c9ddb46cb4d67cef`. The importer reads the available Champions League, Europa League and Conference League result files, including qualifying rounds, and stores the season, competition, stage, date, source file and line number. It does not invent missing fixtures or player performance statistics.
+
 ## English domestic match results
 
 The CC0 match bank includes [OpenFootball England](https://github.com/openfootball/england), pinned at `9ee7a0c351805c99cc334478a9bf04b7d0432fec`. The build imports available Premier League, Championship/First Division, League One/Second Division, League Two/Third Division, FA Cup and EFL Cup result files. It skips squad files, RSSSF extracts and duplicate full-season files. Each imported match keeps its season, competition, date, source path, line number and source commit. The current source coverage is not a complete all-time English football archive; exact season/competition counts are written to the generated report.
