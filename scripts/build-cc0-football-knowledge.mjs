@@ -337,20 +337,28 @@ function makeConnections(clubs){const byCountry=new Map();for(const club of club
 function seededShuffle(items,seed){const copy=[...items];let state=seed>>>0;const random=()=>{state=(state+0x6D2B79F5)>>>0;let t=state;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296};for(let i=copy.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[copy[i],copy[j]]=[copy[j],copy[i]]}return copy}
 function makePlayerConnections(players){
  const buckets=new Map();
- const add=(dimension,value,player)=>{if(!value)return;const key=dimension+":"+value,entry=buckets.get(key)||{dimension,value,members:[]};entry.members.push(player.id);buckets.set(key,entry)};
- for(const p of players){for(const nation of p.nationalities||[])add("NATIONALITY",nation,p);for(const position of p.positions||[]){const label=({G:"GOALKEEPER",GK:"GOALKEEPER",D:"DEFENDER",DF:"DEFENDER",M:"MIDFIELDER",MF:"MIDFIELDER",F:"FORWARD",FW:"FORWARD"})[position]||position;add("POSITION",label,p)}}
- const options=[...buckets.values()].map(x=>({...x,members:[...new Set(x.members)]})).filter(x=>x.members.length>=4);
+ const add=(dimension,value,player)=>{if(!value)return;const key=dimension+":"+value,entry=buckets.get(key)||{key,dimension,value,members:[]};entry.members.push(player.id);buckets.set(key,entry)};
+ for(const player of players){
+  const nation=player.nationalities?.[0];if(nation)add("NATIONALITY",nation,player);
+  const raw=player.positions?.[0],position=({G:"GOALKEEPER",GK:"GOALKEEPER",D:"DEFENDER",DF:"DEFENDER",M:"MIDFIELDER",MF:"MIDFIELDER",F:"FORWARD",FW:"FORWARD"})[raw]||"";if(position)add("POSITION",position,player);
+ }
+ const options=[...buckets.values()].map(option=>({...option,members:[...new Set(option.members)]})).filter(option=>option.members.length>=4);
  const packs=[],seen=new Set();
- for(let seed=1;seed<6000&&packs.length<500;seed++){
-  const ordered=seededShuffle(options,seed*7919+17),used=new Set(),groups=[];
-  for(const option of ordered){if(groups.length===4)break;const candidates=seededShuffle(option.members,seed*37+option.value.length*13);const members=candidates.filter(member=>!used.has(member)).slice(0,4);if(members.length!==4)continue;members.forEach(member=>used.add(member));groups.push({name:option.dimension+" · "+option.value.toUpperCase(),dimension:option.dimension,value:option.value,memberIds:members})}
-  if(groups.length!==4||used.size!==16)continue;
-  const signature=groups.map(g=>g.name+":"+g.memberIds.slice().sort().join(",")).sort().join("|");
-  if(seen.has(signature))continue;seen.add(signature);packs.push({id:id("connections-players",signature),source:SOURCES.players.repo,licence:"CC0-1.0",groups});
+ for(let seed=1;seed<30000&&packs.length<500;seed++){
+  const ordered=seededShuffle(options,seed*7919+17);let chosen=null,exclusive=null;
+  for(let offset=0;offset<=ordered.length-4&&!chosen;offset++){
+   const candidate=ordered.slice(offset,offset+4);
+   const groups=candidate.map(option=>{const members=option.members.filter(id=>candidate.every(other=>other.key===option.key||!other.members.includes(id)));return seededShuffle(members,seed*37+option.value.length*13).slice(0,4)});
+   if(groups.every(group=>group.length===4)){chosen=candidate;exclusive=groups;}
+  }
+  if(!chosen||!exclusive)continue;
+  const groups=chosen.map((option,index)=>({name:option.dimension+" · "+option.value.toUpperCase(),dimension:option.dimension,value:option.value,memberIds:exclusive[index]}));
+  const members=groups.flatMap(group=>group.memberIds);if(members.length!==16||!uniqueValues(members))continue;
+  const signature=groups.map(group=>group.name+":"+group.memberIds.slice().sort().join(",")).sort().join("|");
+  if(seen.has(signature))continue;seen.add(signature);packs.push({id:id("connections-players",signature),source:SOURCES.players.repo,licence:"CC0-1.0",ambiguityChecked:true,groups});
  }
  return packs;
 }
-
 function makeGridPacks(players){
  const positionMap={G:"GK",GK:"GK",D:"DEF",DF:"DEF",M:"MID",MF:"MID",F:"FWD",FW:"FWD"},positions=["GK","DEF","MID","FWD"],buckets=new Map();
  for(const player of players){const position=positionMap[player.positions?.[0]],nation=player.nationalities?.[0];if(!position||!nation)continue;const key=position+":"+norm(nation),entry=buckets.get(key)||{position,nation,members:[]};entry.members.push(player.id);buckets.set(key,entry)}
