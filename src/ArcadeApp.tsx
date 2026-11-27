@@ -1356,12 +1356,21 @@ function QuickQuizPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
 type TournamentDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
 const TOURNAMENT_LEVELS: TournamentDifficulty[]=["EASY","STANDARD","HARD","EXTREME"];
 const lineupNameKey=(value:string)=>normalise(value);
+function tournamentPositionGroup(raw:string):"keeper"|"defence"|"midfield"|"forwards"|""{
+ const value=raw.toLocaleLowerCase();
+ if(value.includes("goalkeeper")||value==="gk")return "keeper";
+ if(value.includes("defend")||value.includes("back"))return "defence";
+ if(value.includes("midfield")||value==="mf")return "midfield";
+ if(value.includes("forward")||value.includes("striker")||value.includes("winger")||value.includes("attack"))return "forwards";
+ return "";
+}
 function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();
  const [difficulty,setDifficulty]=useState<TournamentDifficulty>("STANDARD");
  const [data,setData]=useState<Awaited<ReturnType<typeof getWorldCupLineups>>|null>(null);
  const [loadError,setLoadError]=useState("");
  const [clubRows,setClubRows]=useState<Map<string,string>>(new Map());
+ const [positionRows,setPositionRows]=useState<Map<string,string>>(new Map());
  const [clubsLoading,setClubsLoading]=useState(false);
  const [attempts,setAttempts]=useState(0);const [ended,setEnded]=useState(false);const [won,setWon]=useState(false);
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
@@ -1374,13 +1383,20 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
    return eligible[hashSeed(seed+":match")%eligible.length]??null;
  },[data,seed]);
  useEffect(()=>{
-   if(!match){setClubRows(new Map());return;}
-   let live=true;setClubsLoading(true);setClubRows(new Map());
+   if(!match){setClubRows(new Map());setPositionRows(new Map());return;}
+   let live=true;setClubsLoading(true);setClubRows(new Map());setPositionRows(new Map());
    getCareerClubsAtYear(match.starters,match.year).then(records=>{
-     if(!live)return;const rows=new Map<string,string>();
-     for(const name of match.starters){const found=records.get(lineupNameKey(name))??[];const distinct=[...new Set(found.map(x=>x.club).filter(Boolean))];if(distinct.length===1)rows.set(lineupNameKey(name),distinct[0]);}
-     setClubRows(rows);
-   }).catch(()=>{if(live)setClubRows(new Map());}).finally(()=>{if(live)setClubsLoading(false);});
+     if(!live)return;
+     const clubs=new Map<string,string>();const positions=new Map<string,string>();
+     for(const name of match.starters){
+       const key=lineupNameKey(name);const found=records.get(key)??[];
+       const distinctClubs=[...new Set(found.map(x=>x.club).filter(Boolean))];
+       const distinctPositions=[...new Set(found.map(x=>x.position).filter(Boolean))];
+       if(distinctClubs.length===1)clubs.set(key,distinctClubs[0]);
+       if(distinctPositions.length===1)positions.set(key,distinctPositions[0]);
+     }
+     setClubRows(clubs);setPositionRows(positions);
+   }).catch(()=>{if(live){setClubRows(new Map());setPositionRows(new Map());}}).finally(()=>{if(live)setClubsLoading(false);});
    return()=>{live=false;};
  },[match?.id]);
  const teams=useMemo(()=>data?[...new Set(data.matches.map(m=>m.team).filter(Boolean))]:[],[data]);
@@ -1391,8 +1407,22 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
    return shuffle([match.team,...shuffle(wrong,hashSeed(seed+":wrong")).slice(0,optionCount-1)],hashSeed(seed+":options"));
  },[match,teams,seed,optionCount]);
  const clueCount=difficulty==="EASY"?11:difficulty==="STANDARD"?9:difficulty==="HARD"?7:5;
- const clueNames=match?match.starters.slice(0,clueCount):[];
- const known=clueNames.filter(name=>clubRows.has(lineupNameKey(name))).length;
+ const clueNames=match?.starters??[];
+ const visibleClueCount=clueNames.slice(0,clueCount).filter(name=>clubRows.has(lineupNameKey(name))).length;
+ const lineupGroups=useMemo(()=>{
+   if(!match)return [] as {name:string;index:number;role:string;club:string;showClue:boolean}[][];
+   const players=match.starters.map((name,index)=>({
+     name,index,role:positionRows.get(lineupNameKey(name))??"",
+     club:clubRows.get(lineupNameKey(name))??"",showClue:index<clueCount
+   }));
+   const roles=["keeper","defence","midfield","forwards"] as const;
+   const grouped=roles.map(role=>players.filter(p=>tournamentPositionGroup(p.role)===role));
+   const roleCount=grouped.reduce((count,row)=>count+row.length,0);
+   const valid=roleCount===11&&grouped[0].length===1&&grouped[1].length>=3&&grouped[1].length<=5&&grouped[2].length>=2&&grouped[2].length<=5&&grouped[3].length>=1&&grouped[3].length<=4;
+   return valid?grouped:[players.slice(0,1),players.slice(1,5),players.slice(5,8),players.slice(8,11)];
+ },[match?.id,positionRows,clubRows,clueCount]);
+ const positionsVerified=Boolean(match&&match.starters.every(name=>Boolean(positionRows.get(lineupNameKey(name))))&&
+   lineupGroups[0]?.length===1&&lineupGroups[1]?.length>=3&&lineupGroups[1]?.length<=5&&lineupGroups[2]?.length>=2&&lineupGroups[2]?.length<=5&&lineupGroups[3]?.length>=1);
  const choose=(team:string)=>{
    if(ended||!match)return;const tries=attempts+1;setAttempts(tries);
    if(team===match.team){setWon(true);setEnded(true);if(mode==="daily")onDaily("tournament-nation",Math.max(150,1000-(tries-1)*220));}
@@ -1402,7 +1432,7 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
    setDifficulty(newDifficulty);setAttempts(0);setEnded(false);setWon(false);
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
  };
- return <Frame account={account} game="tournament-nation" eyebrow="WORLD CUP ARCHIVE / STARTING XI" title="TOURNAMENT NATION." description="A historic World Cup starting XI. Each shirt reveals the club recorded for that player at the tournament year. Name the country." number="15" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
+ return <Frame account={account} game="tournament-nation" eyebrow="WORLD CUP ARCHIVE / STARTING XI" title="TOURNAMENT NATION." description="Identify the country from a full historic World Cup starting XI. Each shirt gives you a club clue from that tournament year." number="15" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
  {done&&mode==="daily"?<Success title="NATION IDENTIFIED." detail="Today's tournament challenge is complete. Practice draws from other recorded World Cup line-ups." button="PRACTICE" onAgain={()=>{setMode("practice");reset("practice");}}/>:
   loadError?<Card className="arc-feedback"><b>TOURNAMENT DATA UNAVAILABLE</b><p>{loadError}</p><button className="arc-button" onClick={()=>{setLoadError("");getWorldCupLineups().then(setData).catch(e=>setLoadError(String(e)));}}>RETRY DATA ↗</button></Card>:
   !match||!data?<Card className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>OPENING THE WORLD CUP ARCHIVE</b><span>Loading 1982–2022 starting line-ups.</span></Card>:
@@ -1411,17 +1441,20 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
    <div className="grid-difficulty">{TOURNAMENT_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{level}</button>)}</div>
    <div className="tournament-match"><div><small>TOURNAMENT</small><b>FIFA WORLD CUP {match.year}</b></div><div><small>ROUND</small><b>{match.round||"MATCH"}</b></div><div><small>OPPONENT</small><b>{match.opponent}</b></div><div><small>DATE</small><b>{match.date}</b></div></div>
    <div className="tournament-pitch"><div className="tournament-pitch-lines"><i/><i/><i/></div>
-    <div className="tournament-xi-grid">{clueNames.map((name,i)=>{
-      const club=clubRows.get(lineupNameKey(name));
-      return <motion.div className={"tournament-shirt t-shirt-"+i} key={name} initial={{opacity:0,y:10,scale:.9}} animate={{opacity:1,y:0,scale:1}} transition={{delay:i*.025}}>
-       <div className="shirt-shape"><b>{String(i+1).padStart(2,"0")}</b></div>
-       <div className="shirt-club">{club?<><ClubBadge name={club} size={22}/><small>{club}</small></>:<small>{clubsLoading?"LOOKING UP CLUB":"CLUB NOT RECORDED"}</small>}</div>
-      </motion.div>;
-    })}</div>
-    <div className="tournament-xi-caption"><span>STARTING XI / {known} OF {clueNames.length} CLUBS MATCHED</span><span>CLUB CLUES / {match.year}</span></div>
+    <div className="tournament-xi-rows">{lineupGroups.map((row,rowIndex)=><div className={"tournament-xi-row "+["keeper","defence","midfield","forwards"][rowIndex]} key={rowIndex}>
+     {row.map(({name,index,role,club,showClue})=><motion.div className="tournament-shirt" key={name} initial={{opacity:0,y:10,scale:.9}} animate={{opacity:1,y:0,scale:1}} transition={{delay:index*.018}}>
+       <div className="shirt-shape"><b>{String(index+1).padStart(2,"0")}</b></div>
+       <div className="shirt-club">
+        {showClue&&club?<><ClubBadge name={club} size={22}/><small>{club}</small></>:
+         <small>{showClue?(clubsLoading?"LOOKING UP CLUB":"CLUB NOT RECORDED"):"CLUE HIDDEN"}</small>}
+        {role&&<i className="shirt-position">{role}</i>}
+       </div>
+      </motion.div>)}
+    </div>)}</div>
+    <div className="tournament-xi-caption"><span>FULL STARTING XI / {visibleClueCount} CLUBS MATCHED</span><span>{clueCount} CLUB CLUES REVEALED / {match.year}</span></div>
    </div>
-   <p className="arc-muted">The source provides starting-line-up order, not exact on-pitch positions. Club clues appear only where an exact player-name and year overlap is found in the career archive. Unknown clubs are not guessed.</p>
-   {!ended?<><div className="tournament-options">{options.map(team=><button key={team} onClick={()=>choose(team)}>{team}<i>↗</i></button>)}</div><div className="arc-game-foot"><span>{difficulty} · {optionCount} NATIONAL TEAMS</span><span>{clueNames.length} CLUB CLUES SHOWN</span></div></>:
+   <p className="arc-muted">{positionsVerified?"Rows use the archive's broad player-position profiles; these are not confirmed match-day coordinates.":"The source supplies the starting eleven but not reliable match-day positions. The shirts use a clearly marked schematic 4-3-3 until enough profile positions are available."} Only exact player-name/year club matches are shown; missing clubs stay unrecorded.</p>
+   {!ended?<><div className="tournament-options">{options.map(team=><button key={team} onClick={()=>choose(team)}>{team}<i>↗</i></button>)}</div><div className="arc-game-foot"><span>{difficulty} · {optionCount} NATIONAL TEAMS</span><span>{clueCount} CLUB CLUES SHOWN</span></div></>:
     <div className="arc-feedback"><b>{won?"YOU GOT THE NATION.":"THE NATION WAS "+match.team.toUpperCase()+"."}</b><p>{match.team} started against {match.opponent} at the {match.round} stage of the {match.year} World Cup.</p><button className="arc-button" onClick={()=>reset(mode)}>NEXT TOURNAMENT ↗</button></div>}
   </Card>}
  </Frame>;
