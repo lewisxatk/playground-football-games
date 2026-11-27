@@ -1,6 +1,6 @@
 # CC0 Football Knowledge Engine
 
-Generated database: `public/data/football-knowledge.cc0.json`
+Generated game shards: `public/data/football-knowledge-*.cc0.json` (lazy-loaded per game; the 83 MB monolithic file is no longer served)
 Machine-readable QA report: `public/data/football-knowledge-report.json`
 Builder: `scripts/build-cc0-football-knowledge.mjs`
 Workflow: `.github/workflows/build-cc0-football-knowledge.yml`
@@ -57,6 +57,6 @@ Career File, Cult Hero and Link Up are deliberately not marked ready in the repo
 
 ## Build and test
 
-Run `npm run build` to type-check and build the site. The CC0 workflow checks out pinned upstream revisions, verifies their licence files, rebuilds the database, runs the full site build, and publishes the generated database/report only to the feature branch.
+Run `npm run build` to type-check and build the site. The CC0 workflow checks out pinned upstream revisions, verifies their licence files, rebuilds game-specific shards, runs the full site build, and publishes the shards/report only to the feature branch. Each game fetches only its own shard rather than downloading the full database on first load.
 
 The feature branch and draft pull request are isolated from `main`; this work does not deploy or merge to production.
