@@ -97,6 +97,7 @@ function awardDaily(account:Account,game:GameId,score:number):Account{
     daily:{...account.daily,[day]:{...existing,[game]:score}},totals:{...account.totals,[game]:(account.totals[game]??0)+1}};
 }
 function todayGames(account:Account){return Object.keys(account.daily[utcDay()]??{}).length;}
+function todayPoints(account:Account){return Object.values(account.daily[utcDay()]??{}).reduce((total,score)=>total+score,0);}
 
 type GamePlayer = Player & {
   archiveId:string;
@@ -369,7 +370,7 @@ function ClimbPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:n
   error||!bank?<Card className="arc-feedback"><b>QUESTION BANK UNAVAILABLE</b><p>{error||"The validated football question bank could not be opened."}</p><button className="arc-button" onClick={retry}>RETRY QUESTION BANK ↗</button></Card>:
   <Card className="climb-play">
    <div className="arc-game-meta"><span>QUESTION {step+1} / 5</span><b>{lives} LIVES · {score} PTS</b></div>
-   <div className="grid-difficulty">{levels.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>restart(mode,level)}>{level==="MEDIUM"?"MEDIUM / STANDARD":level}</button>)}</div>
+   <div className="grid-difficulty">{levels.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>restart(mode,level)}>{level==="STANDARD"?"MEDIUM / STANDARD":level}</button>)}</div>
    <p className="difficulty-note">{difficultyDescription(difficulty)}</p>
    <div className="climb-life-track">{[0,1,2].map(i=><i key={i} className={i<lives?"alive":""}/>)}</div>
    <div className="climb-source-line"><span>{question?.category??"FOOTBALL"}</span><span>{question?.region==="ENGLISH"?"ENGLISH FOOTBALL":"OTHER EUROPEAN LEAGUES"}</span></div>
@@ -978,6 +979,48 @@ function FiveOhOnePage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
 type LinkDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
 type GeneratedLink={start:GamePlayer;end:GamePlayer;answer:GamePlayer;startClub:string;endClub:string;options:GamePlayer[]};
 
+function makeLinkQuestions(pool:GamePlayer[],seed:number):GeneratedLink[]{
+ const bounds=(spell:ArchiveCareerSpell):[number,number]|null=>{
+   let start=spell.startYear??null,end=spell.endYear??null;
+   if(start===null&&end===null){
+     const years=String(spell.years??"").match(/(?:19|20)\d{2}/g)?.map(Number)??[];
+     if(!years.length)return null;
+     start=Math.min(...years);end=Math.max(...years);
+   }
+   if(start===null)start=end;
+   if(end===null)end=start;
+   return start===null||end===null?null:[Math.min(start,end),Math.max(start,end)];
+ };
+ const overlaps=(a:ArchiveCareerSpell,b:ArchiveCareerSpell)=>{
+   const x=bounds(a),y=bounds(b);
+   return Boolean(x&&y&&Math.max(x[0],y[0])<=Math.min(x[1],y[1]));
+ };
+ const byClub=new Map<string,GamePlayer[]>();
+ for(const player of pool)for(const club of new Set(player.careerSpells.map(s=>s.club).filter(Boolean))){
+   const list=byClub.get(normalise(club))??[];list.push(player);byClub.set(normalise(club),list);
+ }
+ const result:GeneratedLink[]=[];
+ for(const answer of shuffle(pool,seed)){
+   const spells=answer.careerSpells.filter(s=>s.club&&bounds(s));
+   let found:GeneratedLink|undefined;
+   for(let i=0;i<spells.length&&!found;i++)for(let j=i+1;j<spells.length&&!found;j++){
+     const first=spells[i],second=spells[j];
+     if(normalise(first.club)===normalise(second.club))continue;
+     const startOptions=(byClub.get(normalise(first.club))??[]).filter(p=>p.archiveId!==answer.archiveId&&p.careerSpells.some(s=>normalise(s.club)===normalise(first.club)&&overlaps(first,s)));
+     const endOptions=(byClub.get(normalise(second.club))??[]).filter(p=>p.archiveId!==answer.archiveId&&p.careerSpells.some(s=>normalise(s.club)===normalise(second.club)&&overlaps(second,s)));
+     const pairs=startOptions.flatMap(start=>endOptions.filter(end=>end.archiveId!==start.archiveId).map(end=>({start,end})));
+     if(!pairs.length)continue;
+     const pair=shuffle(pairs,seed+result.length*31+answer.archiveId.length)[0];
+     const decoys=shuffle(pool.filter(p=>p.archiveId!==answer.archiveId&&p.archiveId!==pair.start.archiveId&&p.archiveId!==pair.end.archiveId),seed+result.length*47).slice(0,3);
+     if(decoys.length<3)continue;
+     found={start:pair.start,end:pair.end,answer,startClub:first.club,endClub:second.club,options:shuffle([answer,...decoys],seed+result.length*59)};
+   }
+   if(found)result.push(found);
+   if(result.length>=40)break;
+ }
+ return result;
+}
+
 function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();const [difficulty,setDifficulty]=useState<LinkDifficulty>("STANDARD");
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
@@ -1576,7 +1619,7 @@ function ScoutSignalPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
    const found=archiveGuess(guess,guessPool);
    const name=guess.trim();
    if(!name||name.length<2||end)return;
-   const p=found??({...pool[0],archiveId:"typed:"+normalise(name),name,surname:name.split(/\s+/).slice(-1)[0],nationality:"Unlisted",club:"Unknown club",clubs:[],position:"Unknown",league:"Unlisted",ageBand:"Unknown",careerSpells:[]} as GamePlayer);
+   const p=found??({...pool[0],archiveId:"typed:"+normalise(name),name,surname:name.split(/\s+/).slice(-1)[0],nationality:"Unlisted",club:"Unknown club",clubs:[],position:"" as GamePlayer["position"],league:"Unlisted",ageBand:"Unknown",careerSpells:[]} as unknown as GamePlayer);
    if(history.some(x=>normalise(x.name)===normalise(p.name)))return;
    const next=[...history,p];setHistory(next);setGuess("");
    if(p.archiveId===target.archiveId){setWon(true);setEnd(true);if(mode==="daily")onDaily("scout-signal",Math.max(100,1000-(next.length-1)*90));}
