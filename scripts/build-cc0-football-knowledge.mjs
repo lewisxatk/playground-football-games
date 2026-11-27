@@ -520,9 +520,20 @@ const connectionPlayers=players.filter(player=>connectionIds.has(player.id));
 const gridPlayers=players.filter(player=>gridIds.has(player.id));
 const positionPlayerRows=positionPlayers.map(p=>({id:p.id,name:p.name,aliases:p.aliases||[],positions:p.positions,nationalities:p.nationalities,birthYears:p.birthYears,worldCupYears:p.worldCupYears||[],internationalGoalsRecorded:p.internationalGoalsRecorded??0,worldCupStarts:p.worldCupStarts??0,source:p.source}));
 const quizTiers=["EASY","MEDIUM","HARD","EXTREME"];
+const makeQuizTierShards=(game,questions)=>quizTiers.flatMap(tier=>{
+ const items=questions.filter(question=>question.tier===tier);
+ if(tier==="EASY"){
+  const midpoint=Math.ceil(items.length/2);
+  return [
+   [game+"-easy-1",{...common,questions:items.slice(0,midpoint)}],
+   [game+"-easy-2",{...common,questions:items.slice(midpoint)}]
+  ];
+ }
+ return [[game+"-"+tier.toLowerCase(),{...common,questions:items}]];
+});
 const quizShards=Object.fromEntries([
- ...quizTiers.map(tier=>["the-climb-"+tier.toLowerCase(),{...common,questions:internationalQuiz.climb.filter(question=>question.tier===tier)}]),
- ...quizTiers.map(tier=>["timed-quiz-"+tier.toLowerCase(),{...common,questions:internationalQuiz.timed.filter(question=>question.tier===tier)}])
+ ...makeQuizTierShards("the-climb",internationalQuiz.climb),
+ ...makeQuizTierShards("timed-quiz",internationalQuiz.timed)
 ]);
 for(const [game,questions] of [["the-climb",internationalQuiz.climb],["timed-quiz",internationalQuiz.timed]])for(const tier of quizTiers){const count=questions.filter(question=>question.tier===tier).length;if(count<500)throw new Error(game+" "+tier+" shard below 500 questions: "+count);}
 const shards={
@@ -543,14 +554,16 @@ const shards={
  "career-history":{...common,meta:wikidataCareerImport.meta,players:careerPlayers,linkUpPacks}
 };
 await mkdir(OUT,{recursive:true});
-await Promise.all(["football-knowledge.cc0.json","football-knowledge-the-climb.cc0.json","football-knowledge-timed-quiz.cc0.json"].map(file=>rm(resolve(OUT,file),{force:true})));
+await Promise.all(["football-knowledge.cc0.json","football-knowledge-the-climb.cc0.json","football-knowledge-timed-quiz.cc0.json","football-knowledge-the-climb-easy.cc0.json","football-knowledge-timed-quiz-easy.cc0.json"].map(file=>rm(resolve(OUT,file),{force:true})));
 const shardManifest={};
 for(const [key,data] of Object.entries(shards)){
  const file="football-knowledge-"+key+".cc0.json";
  const content=JSON.stringify(data);
+ const bytes=Buffer.byteLength(content);
+ if(bytes>24*1024*1024)throw new Error("Shard "+key+" exceeds the safe Cloudflare Pages asset size: "+bytes+" bytes.");
  await writeFile(resolve(OUT,file),content);
  const recordCounts=Object.fromEntries(Object.entries(data).filter(([,value])=>Array.isArray(value)).map(([name,value])=>[name,value.length]));
- shardManifest[key]={file:"/data/"+file,bytes:Buffer.byteLength(content),sha256:createHash("sha256").update(content).digest("hex"),recordCounts};
+ shardManifest[key]={file:"/data/"+file,bytes,sha256:createHash("sha256").update(content).digest("hex"),recordCounts};
 }
 const manifest={schemaVersion:1,generatedAt:TODAY,idPolicy:"Stable SHA-256-derived IDs from canonicalised names or source-scoped fact keys; source IDs retained where supplied.",licencePolicy:"CC0-1.0 data only; no third-party crests, photographs, portraits or copied quiz wording.",accuracyWarning:"CC0 does not guarantee completeness or factual accuracy. Career records are dated membership statements, not appearances; international goals are recorded source events, not guaranteed career totals.",sourceRegistry:SOURCES,shards:shardManifest};
 await writeFile(resolve(OUT,"football-knowledge-manifest.cc0.json"),JSON.stringify(manifest,null,2)+"\n");
