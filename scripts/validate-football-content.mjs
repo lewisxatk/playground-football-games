@@ -6,6 +6,7 @@ const normalise = value => String(value ?? "").normalize("NFD").replace(/[\u0300
   .toLocaleLowerCase("en-GB").replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim().replace(/\s+/g, " ");
 const difficulties = ["easy","medium","hard","extreme"];
 const categories = ["players","clubs","managers","transfers","stadiums","matches","records","trophies","tournaments","firsts","history","milestones"];
+const topics = ["premier-league","efl","english-cups","champions-league","european-club","world-cup","euros","la-liga","bundesliga","serie-a","ligue-1","international","players","clubs","managers","transfers","stadiums","matches","trophies"];
 if (data.version !== 1 || !Array.isArray(data.facts)) throw new Error("Unsupported football facts file.");
 for (const f of data.facts) {
   const id = f.id || "(missing ID)";
@@ -20,6 +21,7 @@ for (const f of data.facts) {
   if (!aliases.includes(normalise(f.answer))) errors.push(id + ": canonical answer not accepted");
   if (new Set(aliases).size !== aliases.length) errors.push(id + ": duplicate aliases after accent normalisation");
   if (!f.explanation?.trim()) errors.push(id + ": missing explanation");
+  if (!topics.includes(f.topic)) errors.push(id + ": invalid/missing topic");
   if (!categories.includes(f.category)) errors.push(id + ": invalid/missing category");
   if (!difficulties.includes(f.difficulty)) errors.push(id + ": invalid/missing difficulty");
   if (!f.difficultyReason?.trim()) errors.push(id + ": missing difficulty rationale");
@@ -28,9 +30,10 @@ for (const f of data.facts) {
   if (f.reviewStatus !== "verified") errors.push(id + ": not approved for live use");
   if (!Array.isArray(f.gameModes) || !f.gameModes.length) errors.push(id + ": no native quiz mode mapping");
   if (f.gameModes?.some(mode => !["timed-quiz","the-climb"].includes(mode))) errors.push(id + ": basic factual question mapped to a non-quiz mode");
-  if (f.choices) {
+  if (!Array.isArray(f.choices) || f.choices.length !== 4) errors.push(id + ": every quiz question needs four choices");
+  else {
     const choices = f.choices.map(normalise);
-    if (choices.length !== 4 || new Set(choices).size !== 4) errors.push(id + ": needs four distinct choices");
+    if (new Set(choices).size !== 4) errors.push(id + ": choices must be distinct after normalisation");
     if (choices.filter(x => x === normalise(f.answer)).length !== 1) errors.push(id + ": answer must appear exactly once");
   }
 }
