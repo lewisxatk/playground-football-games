@@ -2,7 +2,7 @@
 
 ## Product direction
 
-Every game should test the same broad football world through its own mechanics. The initial audience is UK fans and friends, so English football is the default foundation, not a separate category that appears only in selected games.
+Every game should draw from one broad football knowledge universe. The first audience is UK fans and friends, so English football is the backbone, while European and international football keeps the games varied.
 
 ## Shared content balance
 
@@ -14,71 +14,62 @@ Every game should test the same broad football world through its own mechanics. 
 | World Cup and European Championship | 15% |
 | Other Big Five leagues (La Liga, Bundesliga, Serie A, Ligue 1) | 10% |
 
-The percentages are a long-run content mix, not a rigid quota for every short daily round. Each game should rotate categories so players encounter variety over time.
+These are long-run targets, not quotas for every short daily round.
 
-## Content volume: count the right thing
+## Difficulty rubric
 
-A raw player row is not a question. The target is 500–1,000 playable, checked units per game:
+- **Easy:** recognisable players, clubs, iconic moments and headline records that a broad football audience is likely to know.
+- **Medium:** familiar subjects but with a more specific record, event, season or competition context.
+- **Hard:** specialist statistics, older history, less familiar competitions, or precise recall.
+- **Extreme:** obscure historical details, exact milestone records, unusual edge cases or facts that even regular fans may need to think hard about.
 
-| Game | Counted unit | Target |
-|---|---|---:|
-| Lowball | Complete comparison/challenge packs | 750 |
-| The Climb | Questions | 1,000 |
-| Draft XI | Complete squad challenge packs | 750 |
-| Career File | Player career files | 750 |
-| Footle | Accepted player-name answers | 750 |
-| The Connection | Complete 16-tile puzzle packs | 750 |
-| Football Grid | Complete valid boards | 750 |
-| The Ladder | Complete ranking rounds | 750 |
-| The Reveal | Player clue cards | 750 |
-| Football 501 | Complete stat/countdown challenges | 750 |
-| The Link Up | Complete link puzzles | 750 |
-| Missing XI | Complete line-up puzzles | 750 |
-| Football Strands | Complete themed word-search packs | 750 |
-| Scout Signal | Player clue/attribute cards | 750 |
-| Tournament Nation | Complete tournament line-up packs | 750 |
-| The Quick Quiz | Questions | 1,000 |
-| Cult Hero | Player mystery cards | 750 |
+Difficulty is an editorial estimate of recall difficulty, not a judgement about the player. It should be reviewed using actual play data later.
 
-A pack must be playable and pass its game-specific validation. Duplicates, invalid answers and near-identical reskins do not count towards the target.
+## Master question bank
 
-## Question and answer standards
+The master factual database lives in public/data/football-facts.seed.json while it is being expanded. Each record contains a stable ID, broad topic, specific category, difficulty and rationale, natural-language question, canonical answer, four answer choices, accepted spellings, reveal explanation, competition scope, valid-as-of date, source URL, checked date, review status and native game-mode mapping.
 
-Each factual item should have:
-- A stable ID and game/topic category.
-- The exact question or puzzle prompt.
-- One canonical answer and accepted aliases (or the complete valid answer set).
-- Competition and statistical scope (e.g. Premier League, European Cup/Champions League, all senior internationals).
-- Season/date cutoff for changing records.
-- A source URL and source/retrieval date.
-- A review status: `verified`, `needs-review`, or `retired`.
-- A concise explanation that resolves the answer.
+Question wording is written for PLAYGROUND. Sources discover and verify facts; the project does not copy third-party quiz packs or question wording.
 
-For multiple-choice questions, every option must be checked against the exact wording. For open answers, normalise accents and punctuation and accept genuine aliases. Never make a question stricter than its displayed wording.
+## Source policy
 
-## Competition and record coverage
+Prefer primary or competition-authority sources: Premier League, EFL, The FA, UEFA, FIFA, Bundesliga, Ligue 1, Lega Serie A and La Liga. Secondary reporting can help discover facts, but an item should not be marked verified until the detail can be checked against a reliable source.
 
-Prioritise:
-1. Premier League records, clubs, seasons, managers, transfers, goals, assists, appearances, clean sheets, hat-tricks and memorable matches.
-2. EFL Championship, League One, League Two, promotion/relegation, play-offs, FA Cup and League Cup.
-3. European Cup / UEFA Champions League records, winners, finals, top scorers, appearances, hat-tricks and English clubs' European history. Label the European Cup/Champions League era correctly.
-4. FIFA World Cup and UEFA European Championship winners, finals, appearances, goals, assists where reliable, clean sheets and historic moments.
-5. Recognisable players and clubs from La Liga, Bundesliga, Serie A and Ligue 1, including their European links.
+Be explicit about scope: Premier League rather than all English top-flight history; EURO finals rather than qualifying; European Cup/Champions League continuity only where the record is genuinely shared; league goals rather than all-competition goals. Never turn player nationality into proof of a national-team appearance.
 
-## Game-specific interpretation
+## Current first batch
 
-- Quiz formats: question bank entries.
-- Footle: unique valid surnames/player-name answers, with recognisability tiers and useful letter clues.
-- Connections/Strands: complete packs, tested for one defensible solution and no unintended overlaps.
-- Football Grid: complete boards with verified club appearances or verified national-team appearances; nationality alone is not a national-team cap.
-- Link Up: the intended linking player must be the only valid answer under the prompt's rules.
-- Missing XI/Tournament Nation: line-ups must identify match, tournament, year and source.
-- Ladder/Lowball/501: compare like-for-like statistics and label the competition and date cutoff.
-- Career File/Reveal/Cult Hero/Scout Signal: clue packs must be sourced, internally consistent and not leak the answer too early.
-- Draft XI: player prices/eligibility and budget rules need a date-stamped source and a clear game balance policy.
+The first development batch contains 60 question records, with 15 each in Easy, Medium, Hard and Extreme.
 
-## Honest rollout gates
+| Topic | Current records | Approximate share |
+|---|---:|---:|
+| Premier League | 23 | 38% |
+| EFL and English cups | 12 | 20% |
+| Champions League / European Cup | 10 | 17% |
+| World Cup and EURO | 9 | 15% |
+| Other Big Five leagues | 6 | 10% |
 
-Do not claim a game has 500–1,000 questions until its generated playable content has been counted and validated. The existing archive-derived quiz bank has 800 questions per difficulty tier, but those are mostly player-profile questions and do not constitute 800 fully reviewed questions for every game. The generated JSON is a build artifact, so CI should publish a machine-readable QA report with per-game counts, topic mix, duplicate checks, answer checks and unresolved items.
+Sources represented: Premier League, EFL, The FA, UEFA, FIFA, Bundesliga, Ligue 1, Lega Serie A and La Liga.
 
-Release in stages: shared content schema and source register; quiz/records bank; answer alias and stat-scope validation; then adapt each game to its own pack type. Keep the work on the development branch until the full build and gameplay checks pass.
+The first batch includes unusual angles: the first live televised Premier League goal, Portsmouth 7-4 Reading, a Barnsley play-off final moment, the first FA Cup final's scorer and playing alias, the fastest Champions League hat-trick, the oldest European Cup final player and historic EFL records.
+
+## How games consume the bank
+
+These records are question units. They are natively mapped to Timed Quiz and The Climb only. Other games need purpose-built converters:
+
+- Footle needs a recognisable, deduplicated player answer pool with aliases and useful letter hints.
+- Connections and Strands need complete packs tested for one unique solution.
+- Football Grid needs complete boards with club appearances or national-team caps genuinely verified.
+- Link Up needs one valid connecting player and decoys that cannot also satisfy the clues.
+- Missing XI and Tournament Nation need full, sourced line-ups and tournament context.
+- Ladder, Lowball and Football 501 need like-for-like numeric comparisons with clear competition scope.
+- Career File, Reveal, Cult Hero and Scout Signal need coherent clue/card records rather than isolated quiz questions.
+- Draft XI needs its own eligibility, price and budget validation.
+
+A fact in the master bank does not automatically count as a playable pack for all games.
+
+## Quality gates
+
+The validator rejects missing difficulty/category, duplicate IDs or question text, duplicate accepted answers after accent normalisation, incomplete questions, unverified items, missing sources or scope, invalid choices, multiple correct options and accidental mapping of a basic question to a game that requires a converted puzzle pack.
+
+Do not claim the database is complete at 500–1,000 questions. The 60-question batch is a first quality-controlled foundation. Continue in researched batches, then connect the validated bank to gameplay and measure which difficulty levels are actually too easy or too hard.
