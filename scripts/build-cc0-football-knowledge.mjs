@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readdir, readFile, writeFile, mkdir, rm } from "node:fs/promises";
 import { resolve, relative } from "node:path";
-const ROOT=process.cwd(), P=resolve(ROOT,".sources/openfootball-players"), C=resolve(ROOT,".sources/openfootball-clubs"), IR=resolve(ROOT,".sources/international-results");
+const ROOT=process.cwd(), P=resolve(ROOT,".sources/openfootball-players"), C=resolve(ROOT,".sources/openfootball-clubs"), IR=resolve(ROOT,".sources/international-results"), ENGLAND=resolve(ROOT,".sources/openfootball-england");
 const TODAY=new Date().toISOString().slice(0,10), OUT=resolve(ROOT,"public/data");
 const SOURCES={players:{repo:"openfootball/players",commit:"125d20f7cc06cac7e758b40df535a7695632680a",licence:"CC0-1.0",url:"https://github.com/openfootball/players"},clubs:{repo:"openfootball/clubs",commit:"ae3800227c449447b3a337fc0aac79a8f02f4c8b",licence:"CC0-1.0",url:"https://github.com/openfootball/clubs"},worldCup:{repo:"openfootball/worldcup.json",commit:"516d3825c3bd23fdc298c4014e84bde78f2d4965",licence:"CC0-1.0",url:"https://github.com/openfootball/worldcup.json",file:"public/data/worldcup-lineups.json"},internationalResults:{repo:"martj42/international_results",commit:"ca84241bb3eed854a1956a2fab442fe4daad40dd",licence:"CC0-1.0",url:"https://github.com/martj42/international_results",file:"results.csv"},england:{repo:"openfootball/england",commit:"9ee7a0c351805c99cc334478a9bf04b7d0432fec",licence:"CC0-1.0",url:"https://github.com/openfootball/england"},wikidata:{repo:"Wikidata",licence:"CC0-1.0",url:"https://www.wikidata.org/wiki/Wikidata:Licensing",endpoint:"https://query-next.wikidata.org/sparql",retrievedAt:TODAY}};
 const norm=s=>String(s??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/&/g," and ").replace(/[^a-z0-9]+/g," ").trim().replace(/\s+/g," ");
@@ -25,14 +25,14 @@ async function parseInternationalResults(){
 
 async function parseEnglishMatches(){
  const files=(await walk(ENGLAND)).filter(path=>{
-  const rel=relative(ENGLAND,path).replace(/\\/g,"/");
+  const rel=relative(ENGLAND,path).split(String.fromCharCode(92)).join("/");
   if(rel.startsWith("rsssf/")||rel.includes("/squads/")||/-full\.txt$/i.test(rel))return false;
   return /(?:^|\/)(?:[1-4]-(?:premierleague|championship|league1|league2|division1|division2|division3)|eflcup|facup)\.txt$/i.test(rel);
  });
  const monthMap={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
  const records=new Map();
  for(const path of files){
-  const rel=relative(ENGLAND,path).replace(/\\/g,"/");
+  const rel=relative(ENGLAND,path).split(String.fromCharCode(92)).join("/");
   const seasonMatch=rel.match(/(?:^|\/)(\d{4})-(\d{2})\//);
   if(!seasonMatch)continue;
   const seasonStart=Number(seasonMatch[1]),seasonEnd=2000+Number(seasonMatch[2]);
@@ -46,28 +46,17 @@ async function parseEnglishMatches(){
   else if(/eflcup/i.test(filename))competition="EFL Cup";
   else if(/facup/i.test(filename))competition="FA Cup";
   if(!competition)continue;
-  const content=await readFile(path,"utf8");
-  let currentDate="";
-  const lines=content.split(/\r?\n/);
+  const content=await readFile(path,"utf8");let currentDate="";const lines=content.split(/\r?\n/);
   for(let lineIndex=0;lineIndex<lines.length;lineIndex++){
-   const line=lines[lineIndex].trim();
-   if(!line||line.startsWith("#")||line.startsWith("=")||line.startsWith("▪"))continue;
+   const line=lines[lineIndex].trim();if(!line||line.startsWith("#")||line.startsWith("=")||line.startsWith("▪"))continue;
    const day=line.match(/^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+([A-Za-z]{3})\s+(\d{1,2})(?:\s+(\d{4}))?$/);
-   if(day){
-    const month=monthMap[day[1]];
-    if(!month)continue;
-    const year=day[3]?Number(day[3]):month>=7?seasonStart:seasonEnd;
-    currentDate=year+"-"+String(month).padStart(2,"0")+"-"+String(Number(day[2])).padStart(2,"0");
-    continue;
-   }
+   if(day){const month=monthMap[day[1]];if(!month)continue;const year=day[3]?Number(day[3]):month>=7?seasonStart:seasonEnd;currentDate=year+"-"+String(month).padStart(2,"0")+"-"+String(Number(day[2])).padStart(2,"0");continue;}
    if(!currentDate)continue;
    const match=line.match(/^(?:\d{1,2}:\d{2}\s+)?(.+?)\s+v\s+(.+?)\s+(\d+)-(\d+)(?:\s+\([^)]*\))?(?:\s+(?:aet|pens?|penalties))?\s*$/i);
-   if(!match)continue;
-   const cleanTeam=value=>value.trim().replace(/\s+FC$/i,"");
+   if(!match)continue;const cleanTeam=value=>value.trim().replace(/\s+FC$/i,"");
    const home=cleanTeam(match[1]),away=cleanTeam(match[2]),homeScore=Number(match[3]),awayScore=Number(match[4]);
    if(!home||!away||homeScore>30||awayScore>30)continue;
-   const key=[competition,seasonStart,currentDate,norm(home),norm(away)].join("|");
-   if(records.has(key))continue;
+   const key=[competition,seasonStart,currentDate,norm(home),norm(away)].join("|");if(records.has(key))continue;
    const sourceRow=rel+":"+String(lineIndex+1);
    records.set(key,{id:id("english-match",key),date:currentDate,year:Number(currentDate.slice(0,4)),home,away,homeScore,awayScore,tournament:competition+" "+seasonStart+"/"+String(seasonEnd).slice(-2),competition,season:seasonStart+"/"+String(seasonEnd).slice(-2),region:"UK",neutral:false,source:SOURCES.england,sourceFile:rel,sourceRow});
   }
