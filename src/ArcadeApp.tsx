@@ -687,74 +687,8 @@ function ConnectionsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
 }
 
 type GridDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
-type GridPuzzle={clubs:string[];countries:string[];answers:GamePlayer[][][];quality:number};
+type GridPuzzle={positions:string[];countries:string[];answers:GamePlayer[][][]};
 const GRID_LEVELS:GridDifficulty[]=["EASY","STANDARD","HARD","EXTREME"];
-function buildGridPuzzle(players:GamePlayer[],difficulty:GridDifficulty,seed:number):GridPuzzle|null{
- const intersections=new Map<string,GamePlayer[]>();
- const clubNames=new Map<string,string>(),countryNames=new Map<string,string>();
- const clubTotals=new Map<string,number>(),countryTotals=new Map<string,number>();
- for(const p of players){
-   const nation=countryLabel(p.nationality||"");
-   if(!nation||nation==="Unlisted")continue;
-   const country=normalise(nation);
-   countryTotals.set(country,(countryTotals.get(country)??0)+1);countryNames.set(country,nation);
-   for(const club of new Set(p.clubs.filter(Boolean))){
-     const clubKey=normalise(club);if(!clubKey)continue;
-     clubTotals.set(clubKey,(clubTotals.get(clubKey)??0)+1);clubNames.set(clubKey,club);
-     const key=clubKey+"::"+country;
-     const rows=intersections.get(key)??[];
-     if(!rows.some(row=>row.archiveId===p.archiveId))rows.push(p);
-     intersections.set(key,rows);
-   }
- }
- if(players.length<40)return null;
- const tierIndex=GRID_LEVELS.indexOf(difficulty);
- const minClub=[12,7,4,2][tierIndex],minCountry=[14,8,4,2][tierIndex];
- const byCountry=new Map<string,Set<string>>();
- for(const [key,rows] of intersections){
-   if(!rows.length)continue;
-   const [club,country]=key.split("::");
-   const set=byCountry.get(country)??new Set<string>();set.add(club);byCountry.set(country,set);
- }
- const countries=Array.from(byCountry.keys())
-   .filter(country=>(countryTotals.get(country)??0)>=minCountry)
-   .sort((a,b)=>(byCountry.get(b)?.size??0)-(byCountry.get(a)?.size??0));
- const candidateCountries=(countries.length>=4?countries:Array.from(byCountry.keys())
-   .sort((a,b)=>(byCountry.get(b)?.size??0)-(byCountry.get(a)?.size??0))).slice(0,20);
- if(candidateCountries.length<4)return null;
- let best:GridPuzzle|null=null,bestQuality=-Infinity,attempt=0;
- const makeCandidate=(nationKeys:string[],commonClubs:string[])=>{
-   const ranked=commonClubs.filter(club=>(clubTotals.get(club)??0)>=minClub || difficulty==="HARD" || difficulty==="EXTREME");
-   if(ranked.length<4)return;
-   const sample=shuffle(ranked,seed+attempt*19).slice(0,Math.min(8,ranked.length));
-   for(let a=0;a<sample.length-3;a++)for(let b=a+1;b<sample.length-2;b++)
-    for(let c=b+1;c<sample.length-1;c++)for(let d=c+1;d<sample.length;d++){
-     const chosen=[sample[a],sample[b],sample[c],sample[d]];
-     const answers=chosen.map(club=>nationKeys.map(country=>intersections.get(club+"::"+country)??[]));
-     const counts=answers.flat().map(cell=>cell.length);
-     if(counts.some(n=>n===0))continue;
-     const minimum=Math.min(...counts),maximum=Math.max(...counts),sum=counts.reduce((x,y)=>x+y,0);
-     const quality=difficulty==="EASY"?minimum*1000-maximum*8+sum/100:
-       difficulty==="STANDARD"?minimum*350-maximum*4+sum/500:
-       difficulty==="HARD"?-maximum*20+minimum*100-sum/100:
-       -maximum*100-sum;
-     if(quality>bestQuality){
-       bestQuality=quality;
-       best={clubs:chosen.map(key=>clubNames.get(key)??key),
-         countries:nationKeys.map(key=>countryNames.get(key)??key),answers,quality};
-     }
-    }
- };
- for(let a=0;a<candidateCountries.length-3;a++)for(let b=a+1;b<candidateCountries.length-2;b++)
-  for(let c=b+1;c<candidateCountries.length-1;c++)for(let d=c+1;d<candidateCountries.length;d++){
-   attempt++;
-   const nations=[candidateCountries[a],candidateCountries[b],candidateCountries[c],candidateCountries[d]];
-   const common=Array.from(byCountry.get(nations[0])??[])
-     .filter(club=>nations.every(country=>intersections.has(club+"::"+country)));
-   if(common.length>=4)makeCandidate(nations,common);
-  }
- return best;
-}
 function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();
  const [difficulty,setDifficulty]=useState<GridDifficulty>("STANDARD");
@@ -766,39 +700,41 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
  const [gridNotice,setGridNotice]=useState("");
  const done=account.daily[utcDay()]?.["football-grid"]!==undefined;
  const seed=mode==="daily"?hashSeed("GRID:"+utcDay()+":"+difficulty):hashSeed("GRID:practice:"+practiceSeed+":"+difficulty);
- const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,4200);
- const playerPool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
- const puzzle=useMemo(()=>playerPool.length>=40?buildGridPuzzle(playerPool,difficulty,seed):null,[playerPool,difficulty,seed]);
+ const {players:cc0Players,gridPacks,loading,error,retry}=useFootballKnowledge();
+ const playerPool=useMemo(()=>cc0Players.map(cc0PlayerToGamePlayer),[cc0Players]);
+ const puzzle=useMemo(()=>{
+   if(!gridPacks.length)return null;
+   const pack=gridPacks[seed%gridPacks.length],byId=new Map(playerPool.map(player=>[player.archiveId,player]));
+   const answerLimit=difficulty==="EASY"?4:difficulty==="STANDARD"?3:difficulty==="HARD"?2:1;
+   const answers=pack.answers.map(row=>row.map(cell=>cell.slice(0,answerLimit).flatMap(id=>{const player=byId.get(id);return player?[player]:[]})));
+   if(answers.some(row=>row.some(cell=>cell.length===0)))return null;
+   return {positions:pack.positions,countries:pack.countries,answers};
+ },[gridPacks,playerPool,seed,difficulty]);
+ const positionLabel=(position:string)=>position==="GK"?"GOALKEEPER":position==="DEF"?"DEFENDER":position==="MID"?"MIDFIELDER":"FORWARD";
  const check=()=>{
    if(active===null||!guess.trim()||!puzzle)return;
-   const row=Math.floor(active/4),col=active%4;
-   const accepted=puzzle.answers[row][col];
-   const player=archiveGuess(guess,accepted);
-   if(player){
-     const label=player.name;
-     const next=opened.includes(active)?opened:[...opened,active];
-     setValues(v=>v.map((x,i)=>i===active?label:x));setOpened(next);setActive(null);setGuess("");setGridNotice("");
-     if(next.length===16&&mode==="daily")onDaily("football-grid",Math.max(100,1000-next.length*15));
-   }else setGridNotice("That player doesn't fit this club × nationality square. Try another name.");
+   const row=Math.floor(active/4),col=active%4,accepted=puzzle.answers[row][col],player=archiveGuess(guess,accepted);
+   if(player){const label=player.name,next=opened.includes(active)?opened:[...opened,active];setValues(v=>v.map((x,i)=>i===active?label:x));setOpened(next);setActive(null);setGuess("");setGridNotice("");if(next.length===16&&mode==="daily")onDaily("football-grid",Math.max(100,1000-next.length*15));}
+   else setGridNotice("That player doesn't fit this position × nation square. Try another name.");
  };
  const reset=(newMode:Mode=mode,newDifficulty:GridDifficulty=difficulty)=>{
    setValues(Array(16).fill(""));setOpened([]);setActive(null);setGuess("");setGridNotice("");
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
    setDifficulty(newDifficulty);
  };
- return <Frame account={account} game="football-grid" eyebrow="CLUB × NATIONALITY / 4 BY 4" title="FILL THE GRID." description="Sixteen squares. Name a footballer who played for the club and represented the nationality at the top." number="07" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
+ return <Frame account={account} game="football-grid" eyebrow="POSITION × NATION / 4 BY 4" title="FILL THE GRID." description="Sixteen squares. Name a footballer who represented the nation at the top and played in the position down the side." number="07" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
  {done&&mode==="daily"?<Success title="GRID COMPLETE." detail="All sixteen cells are filled. Try a fresh grid in unlimited practice." button="PRACTICE GRID" onAgain={()=>{setMode("practice");reset("practice");}}/>:
   <Card className="grid-game">
    <div className="arc-game-meta"><span>16 ANSWERS / 16 CELLS</span><b>{opened.length}/16 FILLED</b></div>
    <div className="grid-difficulty">{GRID_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{difficultyLabel(level)}</button>)}</div>
-   {loading&&playerPool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>BUILDING YOUR GRID</b><span>Finding valid clubs and nationalities from the player archive.</span></div>:
-    puzzle?<><div className="football-grid-wrap grid-four"><div className="grid-corner">CLUB ↓<br/>NATION →</div>{puzzle.countries.map(c=><div className="grid-col-head" key={c}><CountryFlag name={c}/><span>{c}</span></div>)}{puzzle.clubs.map((club,ri)=><><div className="grid-row-head" key={"r"+ri}><ClubBadge name={club} size={28}/><span>{club}</span></div>{puzzle.countries.map((country,ci)=>{const id=ri*4+ci;const doneCell=opened.includes(id);return <button key={id} className={"grid-cell "+(doneCell?"filled":"")+(active===id?" active":"")} onClick={()=>{setActive(id);setGuess("");setGridNotice("");}}><small>{club} × {country}</small><b>{values[id]||"?"}</b></button>;})}</>)}</div>
-     <div className="grid-game-bottom"><span>{difficulty} · {puzzle.answers.flat().reduce((n,c)=>n+c.length,0)} ACCEPTED PLAYER/CELL MATCHES</span><button className="arc-quiet" onClick={()=>reset(mode,difficulty)}>NEW GRID ↻</button></div>
-     {active!==null&&<div className="grid-answer"><small>{puzzle.clubs[Math.floor(active/4)]} × {puzzle.countries[active%4]}</small><input value={guess} onChange={e=>setGuess(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")check();}} placeholder="Full name or surname…"/><button className="arc-button" onClick={check}>CHECK ↗</button></div>}
+   {loading&&playerPool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>BUILDING YOUR GRID</b><span>Finding CC0 player intersections by position and nation.</span></div>:
+    puzzle?<><div className="football-grid-wrap grid-four"><div className="grid-corner">POSITION ↓<br/>NATION →</div>{puzzle.countries.map(country=><div className="grid-col-head" key={country}><CountryFlag name={country}/><span>{country}</span></div>)}{puzzle.positions.map((position,ri)=><><div className="grid-row-head" key={"r"+ri}><b>{positionLabel(position)}</b></div>{puzzle.countries.map((country,ci)=>{const id=ri*4+ci,doneCell=opened.includes(id);return <button key={id} className={"grid-cell "+(doneCell?"filled":"")+(active===id?" active":"")} onClick={()=>{setActive(id);setGuess("");setGridNotice("");}}><small>{positionLabel(position)} × {country}</small><b>{values[id]||"?"}</b></button>;})}</>)}</div>
+     <div className="grid-game-bottom"><span>{difficulty} · {puzzle.answers.flat().reduce((n,cell)=>n+cell.length,0)} ACCEPTED PLAYER/CELL MATCHES</span><button className="arc-quiet" onClick={()=>reset(mode,difficulty)}>NEW GRID ↻</button></div>
+     {active!==null&&<div className="grid-answer"><small>{positionLabel(puzzle.positions[Math.floor(active/4)])} × {puzzle.countries[active%4]}</small><input value={guess} onChange={e=>setGuess(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")check();}} placeholder="Full name or surname…"/><button className="arc-button" onClick={check}>CHECK ↗</button></div>}
      {gridNotice&&<div className="arc-feedback"><b>NOT A MATCH.</b><p>{gridNotice}</p></div>}
-     <p className="arc-muted">Any player in the archive who satisfies both clues is accepted. Club history and nationality are based on recorded career data; the archive does not cover every player or season equally.</p>
+     <p className="arc-muted">The accepted answers use primary position and nationality from the CC0 player source. Difficulty changes how many valid names are accepted in each square.</p>
     </>:
-    <div className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NO VALID 4×4 GRID IN THIS DRAW"}</b><p>{error||"This difficulty/selection did not produce sixteen non-empty intersections. Try another level or draw again."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY / NEW DRAW ↗</button></div>}
+    <div className="arc-feedback"><b>{error?"CC0 PLAYER DATABASE UNAVAILABLE":"NO VALID 4×4 GRID IN THIS DRAW"}</b><p>{error||"This source did not produce sixteen non-empty intersections. Try another level or draw again."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY / NEW DRAW ↗</button></div>}
   </Card>}
  </Frame>;
 }
