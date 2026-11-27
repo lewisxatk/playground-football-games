@@ -870,7 +870,7 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
  const seed=mode==="daily"?hashSeed("GRID:"+utcDay()+":"+difficulty):hashSeed("GRID:practice:"+practiceSeed+":"+difficulty);
  useEffect(()=>{
   let live=true;setArchiveLoading(true);setArchiveError("");
-  getStaticArchivePlayers("FOOTBALL-GRID-ARCHIVE:"+retryToken,3200).then(players=>{
+  getStaticArchivePlayers("ENGLISH-FOOTBALL-ARCHIVE"+(retryToken?":"+retryToken:""),3200).then(players=>{
    if(!live)return;
    if(!players?.length){setArchiveError("The season-by-season player archive could not be loaded.");setArchivePlayers([]);}
    else setArchivePlayers(players);
@@ -1126,7 +1126,7 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const seed=mode==="daily"?"LINK:"+utcDay():"LINK:PRACTICE:"+practiceSeed;
  useEffect(()=>{
   let live=true;setArchiveLoading(true);setArchiveError("");
-  getStaticArchivePlayers("LINK-UP-ARCHIVE:"+retryToken,3200).then(players=>{
+  getStaticArchivePlayers("ENGLISH-FOOTBALL-ARCHIVE"+(retryToken?":"+retryToken:""),3200).then(players=>{
    if(!live)return;
    if(!players?.length){setArchiveError("The season-by-season player archive could not be loaded.");setArchivePlayers([]);}
    else setArchivePlayers(players);
