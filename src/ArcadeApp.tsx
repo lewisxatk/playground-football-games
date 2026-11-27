@@ -1199,8 +1199,8 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
  {done&&mode==="daily"?<Success title="DAILY BOARD CLEARED." detail="Today’s themed Strands board is complete. Fresh club and nation practice boards are available." button="PRACTICE STRANDS" onAgain={()=>{setMode("practice");setPracticeSeed(String(Math.floor(Math.random()*1e12)));nextBoard();}}/>:
   <Card className="strands-game">
    <div className="arc-game-meta"><span>{mode==="daily"?"TODAY’S BOARD":"PRACTICE BOARD "+(boardNo+1)}</span><b>{found.length}/{board.words.length} NAMES FOUND</b></div>
-   <div className="strands-theme"><small>THE THEME</small><strong>{pack.theme}</strong><span>{dynamicPack?"Every answer belongs to this club or nationality theme.":"Fallback football word board."} Select adjacent letters in any direction; diagonal links are allowed.</span></div>
-   {loading&&pool.length===0&&<div className="strands-pool-note">LOADING PLAYER NAMES…</div>}
+   <div className="strands-theme"><small>THE THEME</small><strong>{pack.theme}</strong><span>{strandsPacks.length?"Prebuilt CC0 football name pack.":"Fallback football word board."} Select adjacent letters in any direction; diagonal links are allowed.</span></div>
+   {loading&&strandsPacks.length===0&&<div className="strands-pool-note">LOADING CC0 STRANDS PACKS…</div>}
    <div className={"strands-grid "+(dragging?"is-dragging":"")} onPointerMove={handlePointerMove} onPointerUp={finishPath} onPointerCancel={cancelPath} onContextMenu={e=>e.preventDefault()}>
     <svg className="strands-trail" viewBox="0 0 600 800" preserveAspectRatio="none" aria-hidden="true">
      {selected.length>1&&<polyline points={selected.map(cell=>{const row=Math.floor(cell/6),col=cell%6;return ((col+.5)/6*600)+","+((row+.5)/8*800);}).join(" ")} fill="none" stroke="currentColor" strokeWidth="13" strokeLinecap="round" strokeLinejoin="round"/>}
@@ -1219,7 +1219,7 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
    {hintedWord!==null&&<p className="arc-muted">HINT: the first two letters ({board.words[hintedWord].slice(0,2)}) of a hidden player name are highlighted on the board. The hint costs 100 points.</p>}
    {currentDone&&<div className="arc-feedback"><b>{mode==="daily"?"DAILY BOARD COMPLETE.":"BOARD COMPLETE."}</b><p>SPANGRAM: {board.spangram} · SCORE: {Math.max(100,1000-nudges*100-wrong*15)}</p>{mode==="practice"&&<button className="arc-button" onClick={nextBoard}>NEXT PUZZLE ↗</button>}</div>}
    <div className="strands-legend"><span><i className="blue"/> FOOTBALLER</span><span><i className="gold"/> SPANGRAM / FULL NAME</span></div>
-   {error&&<div className="arc-feedback"><b>ARCHIVE FALLBACK</b><p>Curated Strands packs remain playable while the player pool is unavailable.</p><button className="arc-quiet" onClick={retry}>RETRY ARCHIVE</button></div>}
+   {error&&<div className="arc-feedback"><b>CC0 STRANDS SHARD UNAVAILABLE</b><p>The curated fallback board remains playable while the game pack loads.</p><button className="arc-quiet" onClick={retry}>RETRY PACKS</button></div>}
   </Card>}
  </Frame>;
 }
