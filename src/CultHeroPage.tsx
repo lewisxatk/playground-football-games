@@ -143,15 +143,15 @@ export default function CultHeroPage({ dailyDone, onDailyComplete }: Props) {
           <div className="arc-heading-line">
             <div>
               <h1>CULT HERO<span className="ch-heading-period">.</span></h1>
-              <p>Five familiar names across Europe’s big five. Follow the career clues and name each footballer.</p>
+              <p>Five mystery footballers from the CC0 career archive. Follow the dated club clues and name each player.</p>
             </div>
             <div className="arc-file-no"><small>GAME FILE</small><b>17</b></div>
           </div>
         </div>
 
         <div className="ch-intro-strip">
-          <span>BIG FIVE LEAGUE POOL.</span>
-          <span>FAMILIAR FOOTBALLERS.</span>
+          <span>DATED CLUB RECORDS.</span>
+          <span>CC0 CAREER SNAPSHOT.</span>
           <span>FIVE MYSTERIES.</span>
         </div>
 
