@@ -170,15 +170,85 @@ function AccountPage({account,setAccount}:{account:Account;setAccount:(a:Account
 }
 
 function LowballPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
- const [mode,setMode]=useMode();const [step,setStep]=useState(0);const [score,setScore]=useState(0);const [pick,setPick]=useState<number|null>(null);const [runDone,setRunDone]=useState(false);
+ const [mode,setMode]=useMode();
+ const [step,setStep]=useState(0);
+ const [score,setScore]=useState(0);
+ const [pick,setPick]=useState<number|null>(null);
+ const [runDone,setRunDone]=useState(false);
+ const [used,setUsed]=useState<string[]>([]);
+ const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
  const done=account.daily[utcDay()]?.lowball!==undefined;
- const rounds=useMemo(()=>{const bank=shuffle([...LEAGUE_GOALS],mode==="daily"?hashSeed("LOWBALL"+utcDay()):Math.floor(Math.random()*1e9));return Array.from({length:5},(_,i)=>bank.slice(i*2,i*2+2));},[mode]);
- const pair=rounds[step]??rounds[0];const correct=pair[0].value>pair[1].value?0:1;
- const choose=(i:number)=>{if(pick!==null||done&&mode==="daily")return;setPick(i);if(i===correct)setScore(v=>v+100+(step*15));};
- const next=()=>{if(step===4){setRunDone(true);if(mode==="daily")onDaily("lowball",score);return;}setStep(v=>v+1);setPick(null);};
- const restart=()=>{setStep(0);setScore(0);setPick(null);if(mode==="practice")setMode("practice");};
- return <Frame account={account} game="lowball" eyebrow="STAT FACE-OFF / QUICK FIRE" title="WHO'S GOT MORE?" description="Two players. One number. Pick the bigger Premier League goal total." number="01" mode={mode} setMode={m=>{setMode(m);restart();}}>
-  {done&&mode==="daily"?<Success title="DAILY DONE." detail="You've banked today's Lowball challenge. Switch to practice for more duels." button="PRACTICE" onAgain={()=>setMode("practice")}/>:runDone?<Success title="FIVE DUELS DONE." detail={"You scored "+score+" points in this run."} button="RUN IT BACK" onAgain={restart}/>:<Card className="lb-panel"><div className="arc-game-meta"><span>DUEL {step+1} / 5</span><b>{score} PTS</b></div><div className="lb-vs"><div className="lb-player"><small>PLAYER A</small><strong>{pair[0].name}</strong><span>{pick!==null?pair[0].value+" PL GOALS":"— — —"}</span></div><div className="lb-vs-mark">VS</div><div className="lb-player"><small>PLAYER B</small><strong>{pair[1].name}</strong><span>{pick!==null?pair[1].value+" PL GOALS":"— — —"}</span></div></div><div className="lb-actions">{pair.map((p,i)=><button key={p.name} onClick={()=>choose(i)} disabled={pick!==null} className={pick===null?"":i===correct?"correct":"wrong"}>MORE GOALS ↗</button>)}</div>{pick!==null&&<div className="arc-feedback"><b>{pick===correct?"YOU CALLED IT.":"NOT QUITE."}</b><p>{pair[correct].name} leads with {pair[correct].value} Premier League goals.</p><button className="arc-button" onClick={next}>{step===4?"BANK SCORE":"NEXT DUEL"} ↗</button></div>}</Card>}
+ const seed=mode==="daily"?"LOWBALL:"+utcDay():"LOWBALL:PRACTICE:"+practiceSeed;
+ const {players:archivePlayers,loading:poolLoading,error:poolError,retry:retryPool}=useArchivePlayers(true,seed,1600);
+ const archivePool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer)
+   .filter(p=>p.leagueGoalSeasons>=2&&p.leagueGoals>=0&&p.name!=="Unknown player"),[archivePlayers]);
+ const fallbackPool=LEAGUE_GOALS.map(p=>({name:p.name,value:p.value,club:"Premier League archive",seasons:1,id:p.name}));
+ const sourcePool=archivePool.length>=2
+   ?archivePool.map(p=>({name:p.name,value:p.leagueGoals,club:p.club,seasons:p.leagueGoalSeasons,id:p.archiveId}))
+   :fallbackPool;
+ const level=Math.min(3,Math.floor(step/5));
+ const levelNames=["EASY","STANDARD","HARD","EXTREME"];
+ const metric=archivePool.length>=2?"RECORDED LEAGUE GOALS":"PREMIER LEAGUE GOALS";
+ const pair=useMemo(()=>{
+   const candidates=sourcePool.filter(p=>!used.includes(p.id));
+   const available=candidates.length>=2?candidates:sourcePool;
+   const randomized=shuffle(available,hashSeed(seed+":DUEL:"+step));
+   const minGap=[.28,.12,.04,0][level];
+   const maxGap=[1,.28,.12,.04][level];
+   let selectedPair:[typeof randomized[number],typeof randomized[number]]|null=null;
+   for(let i=0;i<randomized.length&&!selectedPair;i++){
+     for(let j=i+1;j<randomized.length;j++){
+       const high=Math.max(randomized[i].value,randomized[j].value);
+       const low=Math.min(randomized[i].value,randomized[j].value);
+       if(high===low&&level<3)continue;
+       const gap=(high-low)/Math.max(1,high);
+       if(gap>=minGap&&(level===3?gap<=.04:gap<maxGap)){
+         selectedPair=[randomized[i],randomized[j]];
+         break;
+       }
+     }
+   }
+   return selectedPair??(randomized.length>=2?[randomized[0],randomized[1]]:fallbackPool.slice(0,2) as any);
+ },[sourcePool,used,seed,step,level]);
+ const correct=pair[0].value>pair[1].value?0:1;
+ const choose=(i:number)=>{
+   if(pick!==null||runDone||done&&mode==="daily")return;
+   setPick(i);
+   if(i===correct){
+     setScore(v=>v+100+(level*50));
+     setUsed(v=>[...v,pair[0].id,pair[1].id]);
+   }else{
+     setRunDone(true);
+     if(mode==="daily")onDaily("lowball",score);
+   }
+ };
+ const next=()=>{
+   if(pick===null)return;
+   if(step+1>=10&&mode==="daily"){
+     setRunDone(true);onDaily("lowball",score+100+(level*50));return;
+   }
+   setStep(v=>v+1);setPick(null);
+ };
+ const restart=(newMode:Mode=mode)=>{
+   setStep(0);setScore(0);setPick(null);setRunDone(false);setUsed([]);
+   if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
+ };
+ return <Frame account={account} game="lowball" eyebrow="STAT FACE-OFF / QUICK FIRE" title="WHO'S GOT MORE?" description="Two players. One number. Pick the bigger recorded league goal total. Your streak gets harder every five correct answers." number="01" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
+  {done&&mode==="daily"?<Success title="DAILY DONE." detail="Today's ten-duel challenge is banked. Practice runs are unlimited." button="PRACTICE" onAgain={()=>{setMode("practice");restart("practice");}}/>:
+   poolLoading&&archivePlayers.length===0?<Card className="lb-panel lb-loading"><motion.div className="lb-loading-ball" animate={{y:[0,-12,0],rotate:[0,180,360]}} transition={{duration:1.2,repeat:Infinity,ease:"easeInOut"}}>⚽</motion.div><b>SCOUTING THE ARCHIVE</b><p>Building a fresh pool of footballers and recorded stats…</p><span>THE FIRST LOAD CAN TAKE A LITTLE LONGER. NEXT VISITS USE A LOCAL CACHE.</span></Card>:
+   runDone?<Success title={pick===null?"RUN COMPLETE.":"STREAK ENDED."} detail={"You reached "+step+" correct in a row and banked "+score+" points."} button="NEW RUN" onAgain={()=>restart(mode)}/>:
+   <Card className="lb-panel">
+    <div className="arc-game-meta"><span>{mode==="daily"?"DAILY DUEL "+(step+1)+" / 10":"STREAK "+step+" · "+levelNames[level]}</span><b>{score} PTS</b></div>
+    <div className="lb-streak-meter">{[0,1,2,3].map(i=><span key={i} className={i<=level?"on":""}>{i===0?"EASY":i===1?"STD":i===2?"HARD":"EXTREME"}</span>)}</div>
+    <div className="lb-vs">
+     <div className="lb-player"><small>PLAYER A</small><strong>{pair[0].name}</strong><span>{pick!==null?pair[0].value.toLocaleString("en-GB")+" GOALS":"— — —"}</span><i>{pair[0].club}</i></div>
+     <div className="lb-vs-mark">VS</div>
+     <div className="lb-player"><small>PLAYER B</small><strong>{pair[1].name}</strong><span>{pick!==null?pair[1].value.toLocaleString("en-GB")+" GOALS":"— — —"}</span><i>{pair[1].club}</i></div>
+    </div>
+    <div className="lb-actions">{pair.map((p,i)=><button key={p.id} onClick={()=>choose(i)} disabled={pick!==null} className={pick===null?"":i===correct?"correct":"wrong"}>MORE GOALS ↗</button>)}</div>
+    {pick!==null&&<div className="arc-feedback"><b>{pick===correct?"YOU CALLED IT.":"STREAK OVER."}</b><p>{pair[correct].name} has {pair[correct].value.toLocaleString("en-GB")} recorded league goals in the source records.</p><button className="arc-button" onClick={pick===correct?next:()=>{if(mode==="daily")onDaily("lowball",score);setRunDone(true);}}>{pick===correct?(mode==="daily"&&step===9?"BANK DAILY SCORE":"NEXT DUEL"):"SEE RUN RESULT"} ↗</button></div>}
+    <div className="lb-data-note"><b>{metric}</b><span>{archivePool.length>=2?"Source rows with recorded league statistics; season coverage varies by player.":"Starter fallback list while the shared archive is unavailable."}</span>{poolError&&<button onClick={retryPool}>RETRY ARCHIVE</button>}</div>
+   </Card>}
  </Frame>;
 }
 
