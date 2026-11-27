@@ -492,17 +492,15 @@ function FootlePage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const [typed,setTyped]=useState("");const [guesses,setGuesses]=useState<string[]>([]);const [end,setEnd]=useState(false);const [wordError,setWordError]=useState("");const [hinted,setHinted]=useState<number[]>([]);
  const done=account.daily[utcDay()]?.footle!==undefined;
  const seed=mode==="daily"?"FOOTLE:"+utcDay():"FOOTLE:PRACTICE:"+practiceSeed;
- const {players:cc0Players,loading:cc0Loading}=useFootballKnowledge();
- const {players:archivePlayers,loading:archiveLoading,error}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,1600);
+ const {players:cc0Players,loading,error}=useFootballKnowledge();
  const bank=useMemo(()=>{
-   const names=[...cc0Players.map(p=>p.name),...cc0Players.flatMap(p=>p.aliases??[]),...archivePlayers.map(p=>p.name)];
+   const names=[...cc0Players.map(p=>p.name),...cc0Players.flatMap(p=>p.aliases??[])];
    const surnames=names.map(value=>{
      const parts=value.trim().split(/\s+/).filter(Boolean);
      return (parts.at(-1)??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,"");
    }).filter(name=>name.length===5);
    return [...new Set([...surnames,...WORDS])].sort((a,b)=>a.localeCompare(b));
- },[cc0Players,archivePlayers]);
- const loading=cc0Loading||archiveLoading;
+ },[cc0Players]);
  const target=bank.length?bank[hashSeed(seed+":answer")%bank.length]:WORDS[0];
  const win=guesses.at(-1)===target;
  const submitWord=()=>{
@@ -640,9 +638,16 @@ function ConnectionsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
  const [notice,setNotice]=useState("");const done=account.daily[utcDay()]?.connections!==undefined;
  const seed=mode==="daily"?"CONNECTIONS:"+utcDay():"CONNECTIONS:PRACTICE:"+practiceSeed;
- const {players:cc0Players,loading,error,retry}=useFootballKnowledge();
+ const {players:cc0Players,connectionsPacks,loading,error,retry}=useFootballKnowledge();
  const pool=useMemo(()=>cc0Players.map(cc0PlayerToGamePlayer),[cc0Players]);
- const groups=useMemo(()=>pool.length>=32?buildConnectionsGroups(pool,difficulty,hashSeed(seed+":"+difficulty)):[],[pool,difficulty,seed]);
+ const groups=useMemo(()=>{
+   const pack=connectionsPacks.length?connectionsPacks[hashSeed(seed+":"+difficulty)%connectionsPacks.length]:null;
+   if(!pack)return pool.length>=32?buildConnectionsGroups(pool,difficulty,hashSeed(seed+":"+difficulty)):[];
+   const byId=new Map(pool.map(player=>[player.archiveId,player]));
+   const colours=["gold","blue","pink","green"];
+   const converted=pack.groups.map((group,index)=>({name:group.name,color:colours[index],members:group.memberIds.flatMap(id=>{const player=byId.get(id);return player?[player]:[];})}));
+   return converted.length===4&&converted.every(group=>group.members.length===4)?converted:[];
+ },[pool,connectionsPacks,difficulty,seed]);
  const tilePlayers=useMemo(()=>shuffle(groups.flatMap(g=>g.members),hashSeed(seed+":TILES:"+difficulty)),[groups,seed,difficulty]);
  const selectedGroup=()=>groups.findIndex(g=>selected.length===4&&selected.every(id=>g.members.some(p=>p.archiveId===id)));
  const submit=()=>{
@@ -1299,7 +1304,7 @@ function makeStrandsBoard(pack:typeof STRANDS_PACKS[number]){
 function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();const [boardNo,setBoardNo]=useState(0);const [selected,setSelected]=useState<number[]>([]);const pathRef=useRef<number[]>([]);const [dragging,setDragging]=useState(false);const [found,setFound]=useState<number[]>([]);const [wrong,setWrong]=useState(0);const [nudges,setNudges]=useState(0);const [hintedWord,setHintedWord]=useState<number|null>(null);const [finished,setFinished]=useState(false);const [notice,setNotice]=useState("");const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));const done=account.daily[utcDay()]?.strands!==undefined;
  const seed=mode==="daily"?"STRANDS:"+utcDay()+":"+boardNo:"STRANDS:PRACTICE:"+practiceSeed+":"+boardNo;
- const {players:cc0Players,loading,error,retry}=useFootballKnowledge();
+ const {players:cc0Players,strandsPacks,loading,error,retry}=useFootballKnowledge();
  const pool=useMemo(()=>cc0Players.map(cc0PlayerToGamePlayer),[cc0Players]);
  const staticPool=useMemo(()=>PLAYER_DATABASE.map(p=>({
    ...p,archiveId:p.name,careerSpells:[],seasonStats:[],careerAppsRecorded:false,careerGoalsRecorded:false,leagueAppsRecorded:false,leagueGoalsRecorded:false,
@@ -1309,7 +1314,7 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
 
  const dynamicPack=useMemo(()=>makeDynamicStrandsPack(pool,hashSeed(seed))??makeDynamicStrandsPack(staticPool,hashSeed(seed+1)),[pool,staticPool,seed]);
  const staticOrder=useMemo(()=>shuffle(STRANDS_PACKS,hashSeed("STRANDS:"+utcDay())),[]);
- const pack=dynamicPack??(mode==="daily"?staticOrder[boardNo%staticOrder.length]:STRANDS_PACKS[hashSeed(seed)%STRANDS_PACKS.length]);
+ const pack=strandsPacks.length?strandsPacks[hashSeed(seed)%strandsPacks.length]:dynamicPack??(mode==="daily"?staticOrder[boardNo%staticOrder.length]:STRANDS_PACKS[hashSeed(seed)%STRANDS_PACKS.length]);
  const board=useMemo(()=>makeStrandsBoard(pack),[pack]);
  const solved=(index:number)=>found.includes(index);
  const isBlocked=(cell:number)=>board.paths.some((path,idx)=>solved(idx)&&path.includes(cell));
