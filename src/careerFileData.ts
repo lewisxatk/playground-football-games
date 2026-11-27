@@ -1,7 +1,7 @@
 import * as duckdb from "@duckdb/duckdb-wasm";
 
 export type LeagueCode = "ALL" | "ENG-PL" | "ESP-LL" | "ITA-SA" | "DEU-BL" | "FRA-L1";
-export type Candidate = { id: string; name: string; apps: number; spells: number; clubs: number; statSeasons: number };
+export type Candidate = { id: string; name: string; apps: number; spells: number; clubs: number; statSeasons: number; region?: "ENGLISH" | "INTERNATIONAL" };
 export type Spell = {
   seq: number; years: string; start: number | null; end: number | null; club: string;
   clubLink: string; clubQid: string; loan: boolean; apps: number | null; goals: number | null;
