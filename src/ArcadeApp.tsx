@@ -1249,7 +1249,7 @@ export function ArcadeApp(){
   "lowball":<LowballPage account={account} onDaily={onDaily}/>,
   "the-climb":<ClimbPage account={account} onDaily={onDaily}/>,
   "draft-xi":<DraftPage account={account} onDaily={onDaily}/>,
-  "career-file":<CareerFilePage/>,
+  "career-file":<CareerFilePage dailyDone={account.daily[utcDay()]?.["career-file"]!==undefined} onDailyComplete={score=>onDaily("career-file",score)}/>,
   "footle":<FootlePage account={account} onDaily={onDaily}/>,
   "connections":<ConnectionsPage account={account} onDaily={onDaily}/>,
   "football-grid":<GridPage account={account} onDaily={onDaily}/>,
