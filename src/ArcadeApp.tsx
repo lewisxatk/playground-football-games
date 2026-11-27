@@ -1037,7 +1037,7 @@ function MissingXIPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
  const done=account.daily[utcDay()]?.["missing-xi"]!==undefined;
  const seed=mode==="daily"?"MISSING-XI:"+utcDay()+":"+difficulty:"MISSING-XI:PRACTICE:"+practiceSeed+":"+difficulty;
 
- const lineups=useMemo(()=>worldCupData?.lineups.filter(m=>m.starters.length===11&&m.year>=1982&&m.year<=2022)??[],[worldCupData]);
+ const lineups=useMemo(()=>worldCupData?.lineups.filter(m=>m.starters.length===11&&m.year>=1982&&m.year<=2026)??[],[worldCupData]);
  const match=useMemo(()=>lineups.length?lineups[hashSeed(seed+":match")%lineups.length]:null,[lineups,seed]);
  const missingIndex=match?hashSeed(seed+":missing")%11:0;
  const missingPlayer=match?.starters[missingIndex]??"";
