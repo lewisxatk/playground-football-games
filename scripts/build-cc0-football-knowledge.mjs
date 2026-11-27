@@ -104,28 +104,30 @@ async function fetchWikidataCareers(players){
   OPTIONAL { ?statement pq:P582 ?end. }
   ?club wdt:P31/wdt:P279* wd:Q476028.
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
- } LIMIT 30000`;
+ } LIMIT 15000`;
  const meta={status:"not-run",endpoint:SOURCES.wikidata.endpoint,retrievedAt:TODAY,rawRows:0,acceptedSpells:0,players:0,eligibleCareerFile:0,eligibleCultHero:0,error:null};
  let bindings=[];
- try{
-  const url=new URL(SOURCES.wikidata.endpoint);
-  url.searchParams.set("query",query);
-  url.searchParams.set("format","json");
-  url.searchParams.set("timeout","50s");
-  const response=await fetch(url,{headers:{
-   "Accept":"application/sparql-results+json",
-   "User-Agent":"PLAYGROUND-Football-Games/0.1 (https://github.com/lewisxatk/playground-football-games)"
-  },signal:AbortSignal.timeout(55000)});
-  if(!response.ok)throw new Error("Wikidata Query Service returned HTTP "+response.status);
-  const payload=await response.json();
-  bindings=payload?.results?.bindings??[];
-  if(!Array.isArray(bindings))throw new Error("Wikidata returned an unexpected SPARQL result shape.");
-  meta.status="success";meta.rawRows=bindings.length;
- }catch(error){
-  meta.status="unavailable";meta.error=error instanceof Error?error.message:String(error);
-  console.warn("Wikidata career import unavailable; non-career CC0 games remain buildable:",meta.error);
-  return {players:[],meta};
+ const endpoints=[SOURCES.wikidata.endpoint,"https://query.wikidata.org/sparql"];
+ let lastError=null;
+ for(const endpoint of endpoints){
+  try{
+   const url=new URL(endpoint);
+   url.searchParams.set("query",query);
+   url.searchParams.set("format","json");
+   url.searchParams.set("timeout","30s");
+   const response=await fetch(url,{headers:{
+    "Accept":"application/sparql-results+json",
+    "User-Agent":"PLAYGROUND-Football-Games/0.1 (https://github.com/lewisxatk/playground-football-games)"
+   },signal:AbortSignal.timeout(35000)});
+   if(!response.ok)throw new Error(endpoint+" returned HTTP "+response.status);
+   const payload=await response.json();
+   const rows=payload?.results?.bindings??[];
+   if(!Array.isArray(rows))throw new Error(endpoint+" returned an unexpected SPARQL result shape.");
+   bindings=rows;meta.status="success";meta.endpoint=endpoint;meta.rawRows=rows.length;lastError=null;break;
+  }catch(error){lastError=error instanceof Error?error.message:String(error);console.warn("Wikidata endpoint failed:",lastError)}
  }
+ if(lastError){meta.status="unavailable";meta.error=lastError;console.warn("Wikidata career import unavailable; other CC0 game pools remain buildable.");return {players:[],meta};}
+
  const byName=new Map();
  for(const player of players){const key=norm(player.name);if(!key)continue;const list=byName.get(key)||[];list.push(player);byName.set(key,list)}
  const profiles=new Map(),spellsSeen=new Set();
