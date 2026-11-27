@@ -319,12 +319,24 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
       const seed=isDaily
         ?"PLAYGROUND-CAREER-FILE:"+new Date().toISOString().slice(0,10)+":"+mode+":"+league
         :"PLAYGROUND-CAREER-FILE:PRACTICE:"+String(Date.now())+":"+mode+":"+league;
-      const rawPlayers=await getStaticArchivePlayers(seed,3200);
+      const [rawPlayers,clubResponse]=await Promise.all([
+        getStaticArchivePlayers(seed,3200),
+        fetch("/data/football-knowledge-football-grid-clubs.cc0.json",{cache:"force-cache"})
+      ]);
       if(live&&rawPlayers?.length){
         const mapped=rawPlayers.map(archivePlayerToCareerFile);
         staticPlayers.current=new Map(mapped.map(player=>[player.id,player]));
-        const list=mapped.map(player=>archivePlayerCandidate(player,rawPlayers.find(raw=>raw.id===player.id)!))
-          .filter(candidate=>candidate.region==="ENGLISH"&&candidate.statSeasons>=2);
+        const clubIndex=clubResponse.ok?await clubResponse.json():null;
+        const premierLeagueKeys=new Set<string>((clubIndex?.premierLeagueClubs??[]).map((club:string)=>clean(club)
+          .replace(/^(?:f c|a f c|fc|afc) /,"").replace(/ (?:f c|a f c|football club|fc|afc)$/,"")));
+        const list=mapped.map((player,index)=>archivePlayerCandidate(player,rawPlayers[index]!))
+          .filter((candidate,index)=>{
+            const raw=rawPlayers[index];
+            const hasPremierLeagueSpell=premierLeagueKeys.size
+              ?raw.spells.some(spell=>premierLeagueKeys.has(clean(spell.club).replace(/^(?:f c|a f c|fc|afc) /,"").replace(/ (?:f c|a f c|football club|fc|afc)$/,"")))
+              :candidate.region==="ENGLISH";
+            return hasPremierLeagueSpell&&candidate.statSeasons>=2;
+          });
         if(list.length>=50){
           setPool(list);
           await newPlayer(list,mode);
