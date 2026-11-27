@@ -6,14 +6,14 @@ import {
 } from "./playerData";
 import { ClubBadge, CountryFlag } from "./ClubBadge";
 import { useArchivePlayers } from "./useArchivePlayers";
-import { type QuizTier } from "./questionBank";
+
 import { getWorldCupLineups } from "./tournamentNationData";
 import type { ArchiveGamePlayer, ArchiveCareerSpell, ArchiveGameStat } from "./careerFileData";
 import CareerFilePage from "./CareerFilePage";
 import CultHeroPage from "./CultHeroPage";
 import CultHeroCollectionPage from "./CultHeroCollectionPage";
 import { getCareerClubsAtYear } from "./careerFileData";
-import { useFootballKnowledge, makeCC0QuizRound, makeCC0DailyQuizRound } from "./footballKnowledge";
+import { useFootballKnowledge, makeCC0QuizRound, makeCC0DailyQuizRound, type CC0QuizTier as QuizTier } from "./footballKnowledge";
 import "./arcade.css";
 import "./playground-upgrades.css";
 
