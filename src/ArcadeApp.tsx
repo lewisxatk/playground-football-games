@@ -8,6 +8,7 @@ import { ClubBadge, CountryFlag } from "./ClubBadge";
 import { useArchivePlayers } from "./useArchivePlayers";
 import { getWorldCupLineups } from "./tournamentNationData";
 import type { ArchiveGamePlayer } from "./careerFileData";
+import CareerFilePage from "./CareerFilePage";
 import { getCareerClubsAtYear } from "./careerFileData";
 import "./arcade.css";
 
@@ -860,7 +861,7 @@ export function ArcadeApp(){
   "lowball":<LowballPage account={account} onDaily={onDaily}/>,
   "the-climb":<ClimbPage account={account} onDaily={onDaily}/>,
   "draft-xi":<DraftPage account={account} onDaily={onDaily}/>,
-  "career-file":<CareerPage account={account} onDaily={onDaily}/>,
+  "career-file":<CareerFilePage/>,
   "footle":<FootlePage account={account} onDaily={onDaily}/>,
   "connections":<ConnectionsPage account={account} onDaily={onDaily}/>,
   "football-grid":<GridPage account={account} onDaily={onDaily}/>,
