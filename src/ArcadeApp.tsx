@@ -849,50 +849,6 @@ function buildArchiveLinkUpQuestions(players:GamePlayer[],index:GridClubIndex,se
  const english=buildFor(index.englishLeagueClubs,"ENGLISH LEAGUES");
  return english.length>=premier.length?english:premier;
 }
-type ArchiveLinkQuestion={start:GamePlayer;end:GamePlayer;answer:GamePlayer;startClub:string;endClub:string;options:GamePlayer[]};
-function buildArchiveLinkUpQuestions(players:GamePlayer[],index:GridClubIndex|null,seed:number):ArchiveLinkQuestion[]{
- if(!index||players.length<100)return[];
- const clubNames=[...new Set([...(index.premierLeagueClubs??[]),...(index.englishLeagueClubs??[])])];
- const canonical=new Map<string,string>();for(const club of clubNames){const key=gridClubKey(club);if(key)canonical.set(key,club);}
- const byClub=new Map<string,{player:GamePlayer;spell:ArchiveCareerSpell}[]>();
- const eligibleSpells=new Map<string,ArchiveCareerSpell[]>();
- for(const player of players){
-  const spells=(player.careerSpells??[]).filter(spell=>spell.clubQid&&spell.startYear!==null&&canonical.has(gridClubKey(spell.club)));
-  eligibleSpells.set(player.archiveId,spells);
-  for(const spell of spells){const list=byClub.get(spell.clubQid!)??[];if(!list.some(item=>item.player.archiveId===player.archiveId))list.push({player,spell});byClub.set(spell.clubQid!,list);}
- }
- const overlaps=(a:ArchiveCareerSpell,b:ArchiveCareerSpell)=>{
-  const aStart=a.startYear??0,aEnd=a.endYear??a.startYear??0,bStart=b.startYear??0,bEnd=b.endYear??b.startYear??0;
-  return Math.max(aStart,bStart)<=Math.min(aEnd,bEnd);
- };
- const ordered=shuffle(players,seed),questions:ArchiveLinkQuestion[]=[],usedAnswers=new Set<string>(),signatures=new Set<string>();
- for(const answer of ordered){
-  if(questions.length>=120||usedAnswers.has(answer.archiveId))continue;
-  const spells=eligibleSpells.get(answer.archiveId)??[];
-  let found:ArchiveLinkQuestion|null=null;
-  for(let i=0;i<spells.length&&!found;i++)for(let j=i+1;j<spells.length&&!found;j++){
-   const first=spells[i],second=spells[j];if(first.clubQid===second.clubQid)continue;
-   const startCandidates=(byClub.get(first.clubQid!)??[]).filter(item=>overlaps(first,item.spell));
-   const endCandidates=(byClub.get(second.clubQid!)??[]).filter(item=>overlaps(second,item.spell));
-   const startIds=new Set(startCandidates.map(item=>item.player.archiveId));
-   const bridgeIds=[...new Set(endCandidates.map(item=>item.player.archiveId))].filter(id=>startIds.has(id));
-   if(bridgeIds.length!==1||bridgeIds[0]!==answer.archiveId)continue;
-   const startChoices=shuffle(startCandidates.filter(item=>item.player.archiveId!==answer.archiveId),seed+hashSeed(answer.archiveId+first.clubQid)).slice(0,20);
-   const endChoices=shuffle(endCandidates.filter(item=>item.player.archiveId!==answer.archiveId),seed+hashSeed(answer.archiveId+second.clubQid)).slice(0,20);
-   let pair:{start:GamePlayer;end:GamePlayer}|null=null;
-   for(const startItem of startChoices){const endItem=endChoices.find(item=>item.player.archiveId!==startItem.player.archiveId);if(endItem){pair={start:startItem.player,end:endItem.player};break;}}
-   if(!pair)continue;
-   const signature=[answer.archiveId,pair.start.archiveId,pair.end.archiveId,first.clubQid,second.clubQid].join("|");
-   if(signatures.has(signature))continue;
-   const decoys=shuffle(players.filter(player=>player.archiveId!==answer.archiveId&&player.archiveId!==pair!.start.archiveId&&player.archiveId!==pair!.end.archiveId),seed+hashSeed(signature)).slice(0,5);
-   if(decoys.length<5)continue;
-   signatures.add(signature);
-   found={start:pair.start,end:pair.end,answer,startClub:canonical.get(gridClubKey(first.club))??first.club,endClub:canonical.get(gridClubKey(second.club))??second.club,options:shuffle([answer,...decoys],seed+hashSeed(signature+"options"))};
-  }
-  if(found){questions.push(found);usedAnswers.add(answer.archiveId);}
- }
- return questions;
-}
 function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();
  const [difficulty,setDifficulty]=useState<GridDifficulty>("STANDARD");
