@@ -28,7 +28,6 @@ type FootballKnowledgeShards = {
  footle:{answers:string[];answerRecords:{id:string;answer:string;source:string;sourceCommit:string;licence:"CC0-1.0"}[]};
  connections:{players:CC0FootballPlayer[];packs:CC0ConnectionsPack[];clubCountryPacks?:unknown[]};
  strands:{packs:CC0StrandsPack[]};
- "football-grid":{players:CC0FootballPlayer[];packs:CC0GridPack[]};
  "the-climb-easy-1":{questions:CC0QuizQuestion[]}; "the-climb-easy-2":{questions:CC0QuizQuestion[]}; "the-climb-medium":{questions:CC0QuizQuestion[]}; "the-climb-hard":{questions:CC0QuizQuestion[]}; "the-climb-extreme":{questions:CC0QuizQuestion[]};
  "timed-quiz-easy-1":{questions:CC0QuizQuestion[]}; "timed-quiz-easy-2":{questions:CC0QuizQuestion[]}; "timed-quiz-medium":{questions:CC0QuizQuestion[]}; "timed-quiz-hard":{questions:CC0QuizQuestion[]}; "timed-quiz-extreme":{questions:CC0QuizQuestion[]};
  "the-reveal":{playerCards:WorldCupPlayerCard[]};
@@ -38,7 +37,7 @@ type FootballKnowledgeShards = {
 };
 export type FootballKnowledgeKey=keyof FootballKnowledgeShards;
 const shardCache=new Map<FootballKnowledgeKey,Promise<unknown>>();
-const minimums:Record<FootballKnowledgeKey,number>={core:500,matches:500,"english-matches":500,"european-club-matches":500,"goal-events":500,"world-cup":500,footle:500,connections:500,strands:500,"football-grid":500,"the-climb-easy-1":500,"the-climb-easy-2":500,"the-climb-medium":500,"the-climb-hard":500,"the-climb-extreme":500,
+const minimums:Record<FootballKnowledgeKey,number>={core:500,matches:500,"english-matches":500,"european-club-matches":500,"goal-events":500,"world-cup":500,footle:500,connections:500,strands:500,"the-climb-easy-1":500,"the-climb-easy-2":500,"the-climb-medium":500,"the-climb-hard":500,"the-climb-extreme":500,
  "timed-quiz-easy-1":500,"timed-quiz-easy-2":500,"timed-quiz-medium":500,"timed-quiz-hard":500,"timed-quiz-extreme":500,"the-reveal":500,"goal-packs":500,"player-stats":500,"career-history":0};
 
 function validateShard<K extends FootballKnowledgeKey>(key:K,value:unknown):FootballKnowledgeShards[K]{
@@ -54,7 +53,6 @@ function validateShard<K extends FootballKnowledgeKey>(key:K,value:unknown):Foot
   key==="footle"?list("answers").length:
   key==="connections"?list("packs").length:
   key==="strands"?list("packs").length:
-  key==="football-grid"?list("packs").length:
   key.startsWith("the-climb-")||key.startsWith("timed-quiz-")?list("questions").length:
   key==="the-reveal"?list("playerCards").length:
   key==="goal-packs"?Math.min(list("lowballPairs").length,list("ladderPacks").length,list("football501Packs").length):
@@ -82,8 +80,7 @@ function validateShard<K extends FootballKnowledgeKey>(key:K,value:unknown):Foot
   if(list("linkUpPacks").length<500||list("linkUpPacks").some(pack=>{const row=pack as Record<string,unknown>;return !row.id||!row.answerPlayerId||!Array.isArray(row.optionPlayerIds)||(row.optionPlayerIds as unknown[]).length!==6;}))throw new Error("The Wikidata Link Up puzzle shard is incomplete or malformed.");
  }
  if(key==="connections"&&list("players").length<500)throw new Error("The CC0 connections player list is incomplete.");
- if(key==="football-grid"&&list("players").length<500)throw new Error("The CC0 grid player list is incomplete.");
- if(key==="connections"||key==="football-grid"){
+ if(key==="connections"){
   const players=list("players") as Record<string,unknown>[];
   if(players.some(player=>!player.id||!player.name||player.licence!=="CC0-1.0"))throw new Error("A CC0 player record is missing its identity or licence marker.");
  }
