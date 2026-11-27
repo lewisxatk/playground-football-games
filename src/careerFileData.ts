@@ -107,7 +107,8 @@ export async function getCandidates(league: LeagueCode): Promise<Candidate[]> {
   }));
 }
 
-export type ArchiveCareerSpell={club:string;startYear:number|null;endYear:number|null};
+export type ArchiveCareerSpell={club:string;startYear:number|null;endYear:number|null;clubLink?:string;clubQid?:string;loan?:boolean};
+export type ArchiveGameStat={club:string;clubLink:string;clubQid:string;season:string;competitionGroup:string;apps:number|null;goals:number|null;assists:number|null};
 export type ArchiveGamePlayer = {
   id: string;
   name: string;
@@ -115,6 +116,14 @@ export type ArchiveGamePlayer = {
   position: string;
   clubs: string[];
   spells: ArchiveCareerSpell[];
+  stats?: ArchiveGameStat[];
+  fullName?: string;
+  birthPlace?: string;
+  heightCm?: number | null;
+  appearanceRows?: number;
+  goalRows?: number;
+  leagueAppearanceRows?: number;
+  leagueGoalRows?: number;
   currentClub: string;
   appearances: number;
   goals: number;
