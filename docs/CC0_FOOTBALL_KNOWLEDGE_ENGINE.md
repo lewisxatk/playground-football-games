@@ -1,6 +1,6 @@
 # CC0 Football Knowledge Engine
 
-Generated master and game shards: `public/data/football-knowledge-*.cc0.json` (lazy-loaded per game; no 83 MB monolithic file is served). The checksummed index is `public/data/football-knowledge-manifest.cc0.json` and the QA summary is `public/data/football-knowledge-report.json`.
+Generated master and game shards: `public/data/football-knowledge-*.cc0.json` (lazy-loaded per game; quiz pools are split into four difficulty-specific shards to keep every static asset below Cloudflare Pages per-file limits). The checksummed index is `public/data/football-knowledge-manifest.cc0.json` and the QA summary is `public/data/football-knowledge-report.json`.
 Machine-readable QA report: `public/data/football-knowledge-report.json`
 Builder: `scripts/build-cc0-football-knowledge.mjs`
 Workflow: `.github/workflows/build-cc0-football-knowledge.yml`
@@ -30,7 +30,7 @@ The international-results source is a men's senior full-international dataset. O
 - Match facts use date, home team, away team and tournament as their source-scoped identity.
 - Each generated quiz record has a stable fact ID, source URL, event date, answer, and distinct answer choices.
 - Puzzle packs have stable IDs and game-specific units. A pack is not counted merely because it contains multiple phrasings of one fact.
-- The Climb and Timed Quiz receive separate match partitions so the same match question is not placed in both pools. UK domestic match facts are marked UK and balanced into quiz rounds ahead of international fixtures.
+- The Climb and Timed Quiz receive separate match partitions so the same match question is not placed in both pools. Each quiz pool is further split into EASY, MEDIUM, HARD and EXTREME files and reassembled by the client loader, avoiding oversized static assets. UK domestic match facts are marked UK and balanced into quiz rounds ahead of international fixtures.
 
 ## Accuracy and QA
 
