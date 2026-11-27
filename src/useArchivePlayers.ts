@@ -68,7 +68,7 @@ function seededHash(value:string):number{
 
 async function getStaticIndex():Promise<StaticPlayerIndex|null>{
   if(!staticIndexPromise){
-    staticIndexPromise=fetch("/data/player-shards/index.json",{cache:"force-cache"})
+    staticIndexPromise=fetch("/data/player-shards/manifest.json",{cache:"force-cache"})
       .then(async response=>{
         if(!response.ok)return null;
         const index=await response.json() as StaticPlayerIndex;
