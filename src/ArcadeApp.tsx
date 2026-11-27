@@ -774,7 +774,7 @@ function getTeammateOverlap(a:GamePlayer,b:GamePlayer,clubKey:string):LinkYearWi
  }
  return null;
 }
-function buildArchiveLinkUpQuestions(players:GamePlayer[],index:GridClubIndex,seed:number):ArchiveLinkQuestion[]{
+function buildArchiveLinkUpQuestions(players:GamePlayer[],index:GridClubIndex,seed:number,difficulty:LinkDifficulty):ArchiveLinkQuestion[]{
  const canonical=new Map<string,string>();
  for(const club of [...index.premierLeagueClubs,...index.englishLeagueClubs])canonical.set(gridClubKey(club),club);
  const byClub=new Map<string,Array<{player:GamePlayer;spell:ArchiveCareerSpell}>>();
