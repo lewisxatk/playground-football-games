@@ -24,7 +24,10 @@ export type FootballFact = {
   explanation: string;
   competition: string;
   scope: string;
+  /** Date the fact/source was last checked; not the date of the match/event. */
   validAsOf: string;
+  /** Historical match/event date, when the fact is tied to a dated event. */
+  eventDate?: string;
   source: { name: string; url: string; checkedAt: string };
   reviewStatus: "verified" | "needs-review" | "retired";
   /** Native question modes only. Other games require a conversion step. */
@@ -37,7 +40,7 @@ export function normaliseFootballAnswer(value: string): string {
 }
 export function validateFootballFacts(facts: FootballFact[]) {
   const errors: string[] = [];
-  const ids = new Set<string>(), questions = new Set<string>();
+  const ids = new Set<string>(), questions = new Set<string>(), factKeys = new Set<string>();
   const categories = new Set<FootballQuestionCategory>(["players","clubs","managers","transfers","stadiums","matches","records","trophies","tournaments","firsts","history","milestones"]);
   const difficulties = new Set<FootballDifficulty>(["easy","medium","hard","extreme"]);
   for (const fact of facts) {
@@ -49,6 +52,9 @@ export function validateFootballFacts(facts: FootballFact[]) {
     if (question && questions.has(question)) errors.push(id + ": duplicate question.");
     questions.add(question);
     if (!fact.answer?.trim()) errors.push(id + ": missing short answer.");
+    const factKey = [fact.topic, fact.competition, fact.scope, normaliseFootballAnswer(fact.answer ?? "")].join("|");
+    if (factKeys.has(factKey)) errors.push(id + ": duplicate underlying fact/scope.");
+    factKeys.add(factKey);
     const accepted = (fact.acceptedAnswers ?? []).map(normaliseFootballAnswer).filter(Boolean);
     if (!accepted.includes(normaliseFootballAnswer(fact.answer ?? ""))) errors.push(id + ": accepted answers must include the canonical answer.");
     if (new Set(accepted).size !== accepted.length) errors.push(id + ": duplicate accepted aliases after normalisation.");
@@ -67,7 +73,7 @@ export function validateFootballFacts(facts: FootballFact[]) {
     } else {
       const choices = fact.choices.map(normaliseFootballAnswer);
       if (new Set(choices).size !== 4) errors.push(id + ": choices must be distinct after normalisation.");
-      if (choices.filter(choice => choice === normaliseFootballAnswer(fact.answer)).length !== 1) errors.push(id + ": correct answer must appear exactly once.");
+      if (choices.filter(choice => accepted.includes(choice)).length !== 1) errors.push(id + ": the canonical answer or one accepted alias must appear exactly once.");
     }
   }
   return { valid: errors.length === 0, errors };
