@@ -1007,119 +1007,113 @@ function makeTimedQuiz(players:GamePlayer[],difficulty:QuizDifficulty,seed:numbe
    :Array(15).fill(difficulty) as Exclude<QuizDifficulty,"STANDARD">[];
  const output:QuizQuestion[]=[];
  const usedPlayers=new Set<string>();
- const tierTemplates:Record<Exclude<QuizDifficulty,"STANDARD">,((p:GamePlayer)=>{answer:string;question:string;options:string[];explanation:string;source:string}|null)[]> = {
+ type QuizDraft={answer:string;question:string;options:string[];explanation:string;source:string};
+ type QuizTemplate=(player:GamePlayer)=>QuizDraft|null;
+ const tierTemplates:Record<Exclude<QuizDifficulty,"STANDARD">,QuizTemplate[]> = {
   EASY:[
-   p=>p.nationality&&p.nationality!=="Unlisted"?{
-     answer:p.nationality,
-     question:"Which nationality is recorded for "+p.name+"?",
+   (p)=>{if(p.nationality&&p.nationality!=="Unlisted")return {
+     answer:p.nationality,question:"Which nationality is recorded for "+p.name+"?",
      options:players.map(x=>x.nationality).filter(v=>v&&v!=="Unlisted"),
      explanation:p.name+" is listed with "+p.nationality+" nationality in the player profile.",
      source:"OpenFootballBase player profile"
-   }:null,
-   p=>p.position?{
-     answer:p.position,
-     question:"What position group is recorded for "+p.name+"?",
+   };return null;},
+   (p)=>{if(p.position)return {
+     answer:p.position,question:"What position group is recorded for "+p.name+"?",
      options:players.map(x=>x.position).filter(Boolean),
      explanation:p.name+"'s profile lists the position group "+p.position+".",
      source:"OpenFootballBase player profile"
-   }:null,
-   p=>p.clubs.length?{
-     answer:p.clubs[0],
-     question:"Which club appears first in "+p.name+"'s recorded career history?",
+   };return null;},
+   (p)=>{if(p.clubs.length)return {
+     answer:p.clubs[0],question:"Which club appears first in "+p.name+"'s recorded career history?",
      options:players.flatMap(x=>x.clubs.slice(0,1)),
      explanation:"The earliest listed club spell in this archive sample for "+p.name+" is "+p.clubs[0]+".",
      source:"OpenFootballBase career history; dated club spells"
-   }:null
+   };return null;}
   ],
   MEDIUM:[
-   p=>p.club&&p.club!=="Unknown club"?{
-     answer:p.club,
-     question:"Which club is most recently listed in "+p.name+"'s career record?",
+   (p)=>{if(p.club&&p.club!=="Unknown club")return {
+     answer:p.club,question:"Which club is most recently listed in "+p.name+"'s career record?",
      options:players.map(x=>x.club).filter(v=>v&&v!=="Unknown club"),
      explanation:p.club+" is the latest club spell recorded for "+p.name+" in this archive.",
      source:"OpenFootballBase career history"
-   }:null,
-   p=>p.clubs.length>=2?{
-     answer:p.clubs[0],
-     question:"Which of these clubs is recorded as "+p.name+"'s first senior club?",
+   };return null;},
+   (p)=>{if(p.clubs.length>=2)return {
+     answer:p.clubs[0],question:"Which of these clubs is recorded as "+p.name+"'s first senior club?",
      options:players.flatMap(x=>x.clubs.slice(0,1)),
      explanation:p.clubs[0]+" is the earliest club listed in the available career spells for "+p.name+".",
      source:"OpenFootballBase career history; dated club spells"
-   }:null,
-   p=>p.clubs.length?{
-     answer:String(p.clubs.length),
-     question:"How many distinct club names are listed in "+p.name+"'s career record?",
+   };return null;},
+   (p)=>{if(p.clubs.length)return {
+     answer:String(p.clubs.length),question:"How many distinct club names are listed in "+p.name+"'s career record?",
      options:players.map(x=>String(x.clubs.length)).filter(v=>v!=="0"),
      explanation:p.name+" has "+p.clubs.length+" distinct clubs in the available archive career history.",
      source:"OpenFootballBase career history; distinct recorded club names"
-   }:null,
-   p=>p.league&&p.league!=="Unlisted"?{
-     answer:p.league,
-     question:"Which league is recorded for "+p.name+"'s latest listed club?",
+   };return null;},
+   (p)=>{if(p.league&&p.league!=="Unlisted")return {
+     answer:p.league,question:"Which league is recorded for "+p.name+"'s latest listed club?",
      options:players.map(x=>x.league).filter(v=>v&&v!=="Unlisted"),
      explanation:p.club+" is associated with "+p.league+" in the available club metadata.",
      source:"OpenFootballBase club metadata"
-   }:null
+   };return null;}
   ],
   HARD:[
-   p=>p.leagueGoalSeasons>=2?{
+   (p)=>{if(p.leagueGoalSeasons>=2)return {
      answer:p.leagueGoals.toLocaleString("en-GB"),
      question:"How many league goals are recorded for "+p.name+" across the available stat rows?",
      options:players.filter(x=>x.leagueGoalSeasons>=2).map(x=>x.leagueGoals.toLocaleString("en-GB")),
      explanation:"The archive records "+p.leagueGoals.toLocaleString("en-GB")+" league goals for "+p.name+" across "+p.leagueGoalSeasons+" player-season rows where league goals are explicitly present.",
      source:"OpenFootballBase club-season statistics; recorded league-goal rows only"
-   }:null,
-   p.careerGoals>0?{
+   };return null;},
+   (p)=>{if(p.careerGoals>0)return {
      answer:p.careerGoals.toLocaleString("en-GB"),
      question:"What career-goal total is recorded in the career infobox rows for "+p.name+"?",
      options:players.filter(x=>x.careerGoals>0).map(x=>x.careerGoals.toLocaleString("en-GB")),
      explanation:"The sum of recorded career-spell goals in this archive is "+p.careerGoals.toLocaleString("en-GB")+". It may not represent a complete all-competition total.",
      source:"OpenFootballBase career infobox records; coverage may be incomplete"
-   }:null,
-   p.clubs.length>=2?{
-     answer:String(p.clubs.length),
-     question:"How many distinct clubs appear in "+p.name+"'s recorded career spells?",
+   };return null;},
+   (p)=>{if(p.clubs.length>=2)return {
+     answer:String(p.clubs.length),question:"How many distinct clubs appear in "+p.name+"'s recorded career spells?",
      options:players.map(x=>String(x.clubs.length)).filter(v=>v!=="0"),
      explanation:p.name+" has "+p.clubs.length+" distinct club names in the available archive record.",
      source:"OpenFootballBase career history"
-   }:null,
-   p.caps!==null&&p.caps>0?{
+   };return null;},
+   (p)=>{if(p.caps!==null&&p.caps>0)return {
      answer:p.caps.toLocaleString("en-GB"),
      question:"How many international caps are recorded for "+p.name+"?",
      options:players.filter(x=>x.caps!==null&&x.caps>0).map(x=>(x.caps??0).toLocaleString("en-GB")),
      explanation:"The national-team table records "+p.caps+" caps for "+p.name+". International coverage can be incomplete.",
      source:"OpenFootballBase national-team records; coverage may be incomplete"
-   }:null
+   };return null;}
   ],
   EXTREME:[
-   p=>p.firstYear!==null?{
+   (p)=>{if(p.firstYear!==null)return {
      answer:Math.floor(p.firstYear/10)*10+"s",
      question:"Which decade does "+p.name+"'s first recorded senior career year fall in?",
      options:players.filter(x=>x.firstYear!==null).map(x=>Math.floor((x.firstYear??0)/10)*10+"s"),
      explanation:"The earliest career year recorded for "+p.name+" is "+p.firstYear+", which falls in the "+Math.floor(p.firstYear/10)*10+"s.",
      source:"OpenFootballBase dated career history"
-   }:null,
-   p=>p.careerApps>0?{
+   };return null;},
+   (p)=>{if(p.careerApps>0)return {
      answer:p.careerApps.toLocaleString("en-GB"),
      question:"What total of senior appearances is recorded across "+p.name+"'s career spells?",
      options:players.filter(x=>x.careerApps>0).map(x=>x.careerApps.toLocaleString("en-GB")),
      explanation:"The archive's career infobox rows sum to "+p.careerApps.toLocaleString("en-GB")+" appearances for "+p.name+". This is not guaranteed to be complete.",
      source:"OpenFootballBase career infobox records; coverage may be incomplete"
-   }:null,
-   p.internationalGoals!==null&&p.internationalGoals>0?{
+   };return null;},
+   (p)=>{if(p.internationalGoals!==null&&p.internationalGoals>0)return {
      answer:p.internationalGoals.toLocaleString("en-GB"),
      question:"How many international goals are recorded for "+p.name+"?",
      options:players.filter(x=>x.internationalGoals!==null&&x.internationalGoals>0).map(x=>(x.internationalGoals??0).toLocaleString("en-GB")),
      explanation:"The national-team table records "+p.internationalGoals+" international goals. Coverage can be incomplete.",
      source:"OpenFootballBase national-team records; coverage may be incomplete"
-   }:null,
-   p.lastYear!==null&&p.firstYear!==null?{
+   };return null;},
+   (p)=>{if(p.lastYear!==null&&p.firstYear!==null)return {
      answer:String(p.lastYear-p.firstYear+1),
      question:"Across how many calendar years does "+p.name+"'s recorded career span?",
      options:players.filter(x=>x.firstYear!==null&&x.lastYear!==null).map(x=>String((x.lastYear??0)-(x.firstYear??0)+1)),
      explanation:"The archive's earliest and latest recorded career years for "+p.name+" are "+p.firstYear+" and "+p.lastYear+".",
      source:"OpenFootballBase dated career history"
-   }:null
+   };return null;}
   ]
  };
  const uniqueOptions=(answer:string,options:string[],salt:number)=>{
