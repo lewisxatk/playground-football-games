@@ -56,7 +56,9 @@ function archivePlayerToCareerFile(raw:ArchiveGamePlayer):Player{
 function archivePlayerCandidate(player:Player,raw:ArchiveGamePlayer):Candidate{
  const country=clean(raw.currentCountry??"");
  const league=clean(raw.currentLeague??"");
- const englishLeague=["premierleague","championship","leagueone","leaguetwo","nationalleague","englishfootball","efl","fa"].some(value=>league.replace(/[^a-z]/g,"").includes(value));
+ const normalisedLeague=league.replace(/[^a-z]/g,"");
+ const englishLeague=normalisedLeague.startsWith("efl")||normalisedLeague.includes("englishfootball")||
+   ["premierleague","championship","leagueone","leaguetwo","nationalleague"].includes(normalisedLeague);
  const region:Candidate["region"]=country.includes("england")||country.includes("angleterre")?"ENGLISH":
    country.includes("united kingdom")||country.includes("great britain")||country.includes("royaume uni")||country==="uk"||country==="gb"? (englishLeague?"ENGLISH":"INTERNATIONAL"):
    country?"INTERNATIONAL":league.replace(/[^a-z]/g,"").startsWith("eng")||league.includes("englishfootball")?"ENGLISH":
