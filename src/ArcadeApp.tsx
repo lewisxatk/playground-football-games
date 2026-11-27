@@ -1388,7 +1388,8 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
  });
  useEffect(()=>{try{localStorage.setItem(tournamentUsageKey,JSON.stringify(practicePlays));}catch{/* daily cap is best effort on this device */}},[practicePlays]);
  const practiceCount=practicePlays[utcDay()]??0;
- const practiceLimitReached=mode==="practice"&&practiceCount>=5;
+ const [practiceRunActive,setPracticeRunActive]=useState(false);
+ const practiceLimitReached=mode==="practice"&&practiceCount>=5&&!practiceRunActive;
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
  const done=account.daily[utcDay()]?.["tournament-nation"]!==undefined;
  const seed=mode==="daily"?"TOURNAMENT:"+utcDay()+":"+difficulty:"TOURNAMENT:PRACTICE:"+practiceSeed+":"+difficulty;
@@ -1441,12 +1442,12 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
    lineupGroups[0]?.length===1&&lineupGroups[1]?.length>=3&&lineupGroups[1]?.length<=5&&lineupGroups[2]?.length>=2&&lineupGroups[2]?.length<=5&&lineupGroups[3]?.length>=1);
  const choose=(team:string)=>{
    if(ended||!match)return;const tries=attempts+1;setAttempts(tries);
-   if(team===match.team){setWon(true);setEnded(true);if(mode==="daily")onDaily("tournament-nation",Math.max(150,1000-(tries-1)*220));else setPracticePlays(old=>({...old,[utcDay()]:Math.min(5,(old[utcDay()]??0)+1)}));}
-   else if(tries>=maxGuesses){setWon(false);setEnded(true);if(mode==="daily")onDaily("tournament-nation",0);else setPracticePlays(old=>({...old,[utcDay()]:Math.min(5,(old[utcDay()]??0)+1)}));}
+   if(team===match.team){setWon(true);setEnded(true);setPracticeRunActive(false);if(mode==="daily")onDaily("tournament-nation",Math.max(150,1000-(tries-1)*220));}
+   else if(tries>=maxGuesses){setWon(false);setEnded(true);setPracticeRunActive(false);if(mode==="daily")onDaily("tournament-nation",0);}
  };
  const reset=(newMode:Mode=mode,newDifficulty:TournamentDifficulty=difficulty)=>{
    setDifficulty(newDifficulty);setAttempts(0);setEnded(false);setWon(false);
-   if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
+   if(newMode==="practice"&&(practicePlays[utcDay()]??0)<5){setPracticePlays(old=>({...old,[utcDay()]:Math.min(5,(old[utcDay()]??0)+1)}));setPracticeRunActive(true);setPracticeSeed(String(Math.floor(Math.random()*1e12)));}
  };
  return <Frame account={account} game="tournament-nation" eyebrow="WORLD CUP ARCHIVE / STARTING XI" title="TOURNAMENT NATION." description="Identify the country from a full historic World Cup starting XI. Each shirt gives you a club clue from that tournament year." number="15" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
  {done&&mode==="daily"?<Success title="NATION IDENTIFIED." detail="Today's tournament challenge is complete. Five practice runs are also available each day." button="PRACTICE" onAgain={()=>{setMode("practice");reset("practice");}}/>:
@@ -1501,7 +1502,7 @@ function ScoutSignalPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
  type SignalKey="nationality"|"careerClub"|"latestClub"|"position"|"league"|"ageBand";
  const sharedClubs=(p:GamePlayer)=>p.clubs.filter(c=>target.clubs.some(t=>normalise(t)===normalise(c)));
  const category=(key:SignalKey,p:GamePlayer)=>{
-   if(key==="nationality")return Boolean(p.nationality&&p.nationality!=="Unlisted")&&p.nationality===target.nationality;
+   if(key==="nationality")return Boolean(p.nationality&&p.nationality!=="Unlisted")&&countryLabel(p.nationality)===countryLabel(target.nationality);
    if(key==="careerClub")return sharedClubs(p).length>0;
    if(key==="latestClub")return Boolean(p.club&&p.club!=="Unknown club")&&normalise(p.club)===normalise(target.club);
    if(key==="position")return Boolean(p.position)&&p.position===target.position;
@@ -1522,8 +1523,11 @@ function ScoutSignalPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
  };
  const submit=(e:FormEvent)=>{
    e.preventDefault();
-   const p=archiveGuess(guess,guessPool);
-   if(!p||history.some(x=>normalise(x.name)===normalise(p.name))||end)return;
+   const found=archiveGuess(guess,guessPool);
+   const name=guess.trim();
+   if(!name||name.length<2||end)return;
+   const p=found??({...pool[0],archiveId:"typed:"+normalise(name),name,surname:name.split(/\\s+/).slice(-1)[0],nationality:"Unlisted",club:"Unknown club",clubs:[],position:"Unknown",league:"Unlisted",ageBand:"Unknown",careerSpells:[]} as GamePlayer);
+   if(history.some(x=>normalise(x.name)===normalise(p.name)))return;
    const next=[...history,p];setHistory(next);setGuess("");
    if(p.archiveId===target.archiveId){setWon(true);setEnd(true);if(mode==="daily")onDaily("scout-signal",Math.max(100,1000-(next.length-1)*90));}
    else if(next.length>=10){setEnd(true);if(mode==="daily")onDaily("scout-signal",0);}
@@ -1544,7 +1548,7 @@ function ScoutSignalPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
    <div className="scout-rows">{history.map(p=><motion.div className="scout-row" layout key={p.archiveId} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}}>
      <b>{p.name}</b>{attrs.map(([key,label])=><span key={label} className={category(key,p)?"lit":"scout-cell"} title={label+": "+(key==="careerClub"?sharedClubs(p).join(", ")||"No shared club":key==="latestClub"?p.club:key==="nationality"?p.nationality:key==="position"?p.position:key==="league"?p.league:p.ageBand)}>{valueFor(key,p)}</span>)}
    </motion.div>)}</div>
-   <form className="arc-guess-form" onSubmit={submit}><input list="scout-players" value={guess} onChange={e=>setGuess(e.target.value)} placeholder="Try a full name or surname…"/><datalist id="scout-players">{guessPool.map(p=><option key={p.archiveId} value={p.name}/>)}</datalist><button className="arc-button" disabled={!archiveGuess(guess,guessPool)||end}>SCAN PLAYER ↗</button></form>
+   <form className="arc-guess-form" onSubmit={submit}><input list="scout-players" value={guess} onChange={e=>setGuess(e.target.value)} placeholder="Try a full name or surname…"/><datalist id="scout-players">{guessPool.map(p=><option key={p.archiveId} value={p.name}/>)}</datalist><button className="arc-button" disabled={guess.trim().length<2||end}>SCAN PLAYER ↗</button></form>
    <p className="arc-muted">A shared club is a club listed in both careers. Latest club uses the archive's latest listed career spell; it is not a live transfer feed.</p>
    {error&&<div className="arc-feedback"><b>ARCHIVE FALLBACK</b><p>The large archive could not be reached, so the starter list is active instead.</p><button className="arc-quiet" onClick={retry}>RETRY DATABASE</button></div>}
    {end&&<div className="arc-feedback"><b>{won?"TARGET FOUND":"THE PLAYER WAS "+target.name}</b><p>{target.nationality} · {target.position} · {target.clubs.join(" → ")}</p><button className="arc-button" onClick={reset}>NEXT SCOUT REPORT ↗</button></div>}
