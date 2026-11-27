@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import type { QuizTier } from "./questionBank";
+export type CC0QuizTier = "EASY" | "MEDIUM" | "HARD" | "EXTREME";
 export type CC0FootballPlayer = { id:string; name:string; aliases:string[]; nationalities:string[]; birthYears:number[]; positions:string[]; source:string; sourceCommit:string; licence:"CC0-1.0" };
 export type CC0ConnectionsPack = { id:string; groups:{name:string;dimension:string;value:string;memberIds:string[]}[] };
 export type CC0StrandsPack = { id:string; spangram:string; words:string[]; theme:string };
-export type CC0QuizQuestion = {id:string;factId:string;playerId:string;tier:QuizTier;region:"UK"|"INTERNATIONAL";category:string;question:string;answer:string;options:string[];explanation:string;source:string;matchId:string;eventDate:string};
+export type CC0QuizQuestion = {id:string;factId:string;playerId:string;tier:CC0QuizTier;region:"UK"|"INTERNATIONAL";category:string;question:string;answer:string;options:string[];explanation:string;source:string;matchId:string;eventDate:string};
 type WorldCupPlayerCard = {id:string;name:string;worldCups:number[];teams:string[];matchIds:string[]};
 type KnowledgeDatabase = {
  schemaVersion:number; players:CC0FootballPlayer[];
@@ -28,7 +28,7 @@ export function useFootballKnowledge(){
  return {players:database?.players??[],connectionsPacks:database?.games?.connections?.packs??[],strandsPacks:database?.games?.strands?.packs??[],playerCards:database?.worldCup?.playerCards??[],climbQuestions:database?.games?.["the-climb"]?.questions??[],timedQuizQuestions:database?.games?.["timed-quiz"]?.questions??[],loading,error,retry:()=>setAttempt(value=>value+1)};
 }
 function seededShuffle<T>(items:T[],seed:number):T[]{const copy=[...items];let state=seed>>>0;for(let i=copy.length-1;i>0;i--){state=(Math.imul(state,1664525)+1013904223)>>>0;const j=state%(i+1);[copy[i],copy[j]]=[copy[j],copy[i]]}return copy}
-export function makeCC0QuizRound(pool:CC0QuizQuestion[],tier:QuizTier,seed:number,count=5):CC0QuizQuestion[]{
+export function makeCC0QuizRound(pool:CC0QuizQuestion[],tier:CC0QuizTier,seed:number,count=5):CC0QuizQuestion[]{
  const eligible=pool.filter(q=>q.tier===tier);if(!eligible.length)return[];
  const uk=seededShuffle(eligible.filter(q=>q.region==="UK"),seed+17),international=seededShuffle(eligible.filter(q=>q.region==="INTERNATIONAL"),seed+31);
  const ukCount=Math.min(uk.length,Math.round(count*.4)),selected=[...uk.slice(0,ukCount),...international.slice(0,count-ukCount)];
@@ -36,7 +36,7 @@ export function makeCC0QuizRound(pool:CC0QuizQuestion[],tier:QuizTier,seed:numbe
  return seededShuffle(selected,seed+59);
 }
 export function makeCC0DailyQuizRound(pool:CC0QuizQuestion[],seed:number):CC0QuizQuestion[]{
- const plan:{tier:QuizTier;count:number}[]=[{tier:"EASY",count:5},{tier:"MEDIUM",count:5},{tier:"HARD",count:5},{tier:"EXTREME",count:2}],selected:CC0QuizQuestion[]=[];
+ const plan:{tier:CC0QuizTier;count:number}[]=[{tier:"EASY",count:5},{tier:"MEDIUM",count:5},{tier:"HARD",count:5},{tier:"EXTREME",count:2}],selected:CC0QuizQuestion[]=[];
  plan.forEach((entry,index)=>selected.push(...makeCC0QuizRound(pool,entry.tier,seed+index*101,entry.count)));
  return seededShuffle(selected,seed+997);
 }
