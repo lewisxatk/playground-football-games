@@ -107,6 +107,7 @@ export type ArchiveGamePlayer = {
   goals: number;
   leagueAppearances: number;
   leagueGoals: number;
+  leagueGoalSeasons: number;
   seasons: number;
   firstYear: number | null;
   lastYear: number | null;
@@ -154,8 +155,10 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
         " GROUP BY cr.player_qid HAVING SUM(coalesce(cr.apps,0))>=10" +
         "), stat_rollup AS (" +
         " SELECT st.player_qid, COUNT(DISTINCT coalesce(nullif(st.club_qid,''),nullif(st.club_link,''),st.club)||'|'||st.season) AS seasons, " +
-        " SUM(CASE WHEN st.competition_group='League' THEN coalesce(st.apps,0) ELSE 0 END) AS league_appearances, " +
-        " SUM(CASE WHEN st.competition_group='League' THEN coalesce(st.goals,0) ELSE 0 END) AS league_goals " +
+        " SUM(CASE WHEN st.competition_group='League' AND st.apps IS NOT NULL THEN st.apps ELSE 0 END) AS league_appearances, " +
+        " SUM(CASE WHEN st.competition_group='League' AND st.goals IS NOT NULL THEN st.goals ELSE 0 END) AS league_goals, " +
+        " COUNT(DISTINCT CASE WHEN st.competition_group='League' AND st.goals IS NOT NULL " +
+        " THEN coalesce(nullif(st.club_qid,''),nullif(st.club_link,''),st.club)||'|'||st.season END) AS league_goal_seasons " +
         " FROM stat_club st JOIN picked p ON p.player_qid=st.player_qid " +
         " WHERE coalesce(st.competition_group,'')<>'Total' AND coalesce(trim(st.season),'')<>'' GROUP BY st.player_qid" +
         "), profile_rollup AS (" +
@@ -171,7 +174,7 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
         "SELECT c.player_qid, c.name, c.clubs, c.current_club, c.appearances, c.goals, " +
         "c.first_year, c.last_year, coalesce(c.club_count,0) AS club_count, " +
         "coalesce(st.seasons,0) AS seasons, coalesce(st.league_appearances,0) AS league_appearances, " +
-        "coalesce(st.league_goals,0) AS league_goals, coalesce(pp.nationality,'') AS nationality, " +
+        "coalesce(st.league_goals,0) AS league_goals, coalesce(st.league_goal_seasons,0) AS league_goal_seasons, coalesce(pp.nationality,'') AS nationality, " +
         "coalesce(pp.position,'') AS position, b.birth_date, nt.caps, nt.international_goals, " +
         "coalesce(cl.country,'') AS current_country, coalesce(cl.league,'') AS current_league, cl.division AS current_division " +
         "FROM career_rollup c LEFT JOIN stat_rollup st ON st.player_qid=c.player_qid " +
@@ -192,6 +195,7 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
         goals: Number(r.goals ?? 0),
         leagueAppearances: Number(r.league_appearances ?? 0),
         leagueGoals: Number(r.league_goals ?? 0),
+        leagueGoalSeasons: Number(r.league_goal_seasons ?? 0),
         seasons: Number(r.seasons ?? 0),
         firstYear: n(r.first_year),
         lastYear: n(r.last_year),
