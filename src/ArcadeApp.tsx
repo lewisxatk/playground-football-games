@@ -55,7 +55,10 @@ type GameId = typeof GAME_LINKS[number]["id"];
 const normalise = (v:string) => v.toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
 
 const countryLabel = (value:string) => {
-  const key=normalise(value);
+  const raw=value.trim();
+  const stripped=raw.replace(/^(?:drapeau de la|drapeau de|vlag van|flag of|bandera de|flagge von)\s+/i,"")
+    .replace(/\s+u(?:15|16|17|18|19|20|21|23)\b/ig,"").trim();
+  const key=normalise(stripped);
   const labels:Record<string,string>={
     eng:"England",wal:"Wales",wls:"Wales",sco:"Scotland",nir:"Northern Ireland",
     esp:"Spain",espana:"Spain",es:"Spain",ger:"Germany",deu:"Germany",ned:"Netherlands",nld:"Netherlands",
@@ -64,9 +67,12 @@ const countryLabel = (value:string) => {
     cotedivoire:"Ivory Coast",kor:"South Korea",jpn:"Japan",usa:"United States",mex:"Mexico",mar:"Morocco",
     nga:"Nigeria",sen:"Senegal",gha:"Ghana",cmr:"Cameroon",irn:"Iran",aus:"Australia",can:"Canada",
     den:"Denmark",swe:"Sweden",nor:"Norway",pol:"Poland",ukr:"Ukraine",cze:"Czechia",rou:"Romania",
-    tur:"Türkiye",gre:"Greece",sau:"Saudi Arabia",ksa:"Saudi Arabia",qat:"Qatar",chn:"China"
+    tur:"Türkiye",gre:"Greece",sau:"Saudi Arabia",ksa:"Saudi Arabia",qat:"Qatar",chn:"China",
+    hnd:"Honduras",hon:"Honduras",ecu:"Ecuador",chi:"Chile",crc:"Costa Rica",par:"Paraguay",
+    drapeaufrance:"France",vlagvanjapan:"Japan",republiqueducongo:"Republic of the Congo"
   };
-  return labels[key]??value.trim();
+  const first=normalise(stripped.split(/[\s,(/-]+/)[0]??"");
+  return labels[key]??labels[first]??stripped;
 };
 const utcDay = () => new Date().toISOString().slice(0,10);
 const previousDay = (day:string) => { const d=new Date(day+"T00:00:00Z"); d.setUTCDate(d.getUTCDate()-1); return d.toISOString().slice(0,10); };
@@ -186,7 +192,7 @@ function HomePage({account}:{account:Account}){
     <section className="arc-home-hero"><div><div className="arc-eyebrow"><span/> THE FOOTBALL ARCADE / EST. 2026</div><h1>NO HALF<br/><em>TIME.</em></h1><p>Quick games, proper football knowledge and a reason to come back tomorrow.</p><div className="arc-hero-actions"><a className="arc-button" href="/footle">PLAY TODAY'S FOOTLE ↗</a><a className="arc-text-link" href="#all-games">PICK YOUR GAME ↓</a></div></div>
       <div className="arc-home-graphic"><div className="arc-graphic-label">THE PLAYGROUND / 16 GAME MODES</div><div className="arc-graphic-pitch"><i className="half"/><i className="centre"/><i className="box-one"/><i className="box-two"/><motion.span className="graphic-ball" animate={{x:[0,32,-20,0],y:[0,-15,8,0],rotate:[0,180,360]}} transition={{duration:5,repeat:Infinity,ease:"easeInOut"}}/></div><div className="arc-graphic-bottom"><span>GUESS / THINK / PLAY</span><b>↗</b><span>16 WAYS TO PLAY</span></div></div>
     </section>
-    <section className="arc-daily-strip"><div><small>YOUR DAILY RECORD / UTC</small><strong>{done} <i>/ 16</i></strong><span>GAMES PLAYED TODAY</span></div><div><small>YOUR STREAK</small><strong>{account.streak} <i>days</i></strong><span>BEST {account.bestStreak} DAYS</span></div><div><small>PLAYER NAME</small><strong className="nickname-stat">{account.nickname}</strong><span>LOCAL PLAYER SAVE</span></div><a href="/locker-room">OPEN LOCKER ROOM ↗</a></section>
+    <section className="arc-daily-strip"><div><small>YOUR DAILY RECORD / UTC</small><strong>{done} <i>/ 16</i></strong><span>GAMES PLAYED TODAY</span></div><div><small>YOUR STREAK</small><strong>{account.streak} <i>days</i></strong><span>BEST {account.bestStreak} DAYS</span></div><div><small>PLAYER NAME</small><strong className="nickname-stat">{account.nickname}</strong><span>LOCAL PLAYER SAVE · {todayPoints(account).toLocaleString("en-GB")} DAILY POINTS</span></div><a href="/locker-room">OPEN LOCKER ROOM ↗</a></section>
     <section id="all-games" className="arc-game-directory"><div className="arc-section-title"><div><span>01 / THE LINE-UP</span><h2>PICK YOUR<br/><em>GAME.</em></h2></div><p>Every game has its own page. Daily challenges reset together at midnight GMT. Practice whenever you like.</p></div>
       <div className="arc-home-grid">{GAME_LINKS.map((game,i)=><motion.a href={"/"+game.id} key={game.id} className={"arc-game-tile "+game.tone} whileHover={{y:-5,rotate:i%2?1:-1}} whileTap={{scale:.985}}><div><small>PG / GAME {String(i+1).padStart(2,"0")}</small><span>{game.tag}</span></div><div className="arc-tile-art"><i>{["↗","Ⅲ","XI","?","A","▦","▤","↗","◉","501","↔","11","✳","◎","🏆","⏱"][i]}</i></div><h3>{game.title}</h3><p>{game.sub}</p><b className="arc-tile-arrow">PLAY ↗</b></motion.a>)}</div>
     </section>
@@ -1248,7 +1254,7 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
  const currentDone=found.length===9;
  const hintedCells=hintedWord===null?[]:(board.paths[hintedWord]?.slice(0,2)??[]);
  return <Frame account={account} game="strands" eyebrow="6 × 8 LETTER PUZZLE / DAILY THEME" title="FOOTBALL STRANDS." description="Find eight football names connected by one clear football theme, then trace the spangram that names the connection." number="13" mode={mode} setMode={m=>{setMode(m);setBoardNo(0);if(m==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));pathRef.current=[];setSelected([]);setFound([]);setWrong(0);setNudges(0);setHintedWord(null);setNotice("");setDragging(false);setFinished(false);}}>
- {done&&mode==="daily"?<Success title="TEN BOARDS CLEARED." detail="Today’s Strands board is complete. Fresh themed practice boards are available." button="PRACTICE STRANDS" onAgain={()=>{setMode("practice");setPracticeSeed(String(Math.floor(Math.random()*1e12)));nextBoard();}}/>:
+ {done&&mode==="daily"?<Success title="DAILY BOARD CLEARED." detail="Today’s Strands board is complete. Fresh themed practice boards are available." button="PRACTICE STRANDS" onAgain={()=>{setMode("practice");setPracticeSeed(String(Math.floor(Math.random()*1e12)));nextBoard();}}/>:
   <Card className="strands-game">
    <div className="arc-game-meta"><span>{mode==="daily"?"TODAY’S BOARD":"PRACTICE BOARD "+(boardNo+1)}</span><b>{found.length}/9 NAMES FOUND</b></div>
    <div className="strands-theme"><small>THE THEME</small><strong>{pack.theme}</strong><span>{dynamicPack?"Every answer belongs to this club or nationality theme.":"Fallback football word board."} Select adjacent letters in any direction; diagonal links are allowed.</span></div>
@@ -1265,10 +1271,10 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
         aria-label={"Row "+(Math.floor(i/8)+1)+", column "+(i%8+1)+", letter "+letter}>{letter}</motion.button>;
     })}
    </div>
-   <div className="strands-actions"><button className="arc-quiet" onClick={cancelPath}>CLEAR PATH</button><button className="arc-button" onClick={hint} disabled={nudges>=3||finished}>HINT −100 PTS ({nudges}/3)</button><button className="arc-quiet" onClick={nextBoard}>SKIP / NEXT ↗</button></div>
+   <div className="strands-actions"><button className="arc-quiet" onClick={cancelPath}>CLEAR PATH</button><button className="arc-button" onClick={hint} disabled={nudges>=3||finished}>HINT −100 PTS ({nudges}/3)</button>{mode==="practice"&&<button className="arc-quiet" onClick={nextBoard}>SKIP / NEXT ↗</button>}</div>
    {dragging&&<p className="strands-drag-live">KEEP DRAGGING · RELEASE TO CHECK</p>}
    {notice&&<div className="strands-feedback"><span>{notice}</span><button onClick={cancelPath}>DISMISS</button></div>}
-   {hintedWord!==null&&<p className="arc-muted">HINT: the first two letters of {board.words[hintedWord]} are highlighted on the board. The hint costs 100 points.</p>}
+   {hintedWord!==null&&<p className="arc-muted">HINT: the first two letters ({board.words[hintedWord].slice(0,2)}) of a hidden player name are highlighted on the board. The hint costs 100 points.</p>}
    {currentDone&&<div className="arc-feedback"><b>{mode==="daily"?"DAILY BOARD COMPLETE.":"BOARD COMPLETE."}</b><p>SPANGRAM: {board.spangram} · SCORE: {Math.max(100,1000-nudges*100-wrong*15)}</p>{mode==="practice"&&<button className="arc-button" onClick={nextBoard}>NEXT PUZZLE ↗</button>}</div>}
    <div className="strands-legend"><span><i className="blue"/> FOOTBALLER</span><span><i className="gold"/> SPANGRAM / FULL NAME</span></div>
    {error&&<div className="arc-feedback"><b>ARCHIVE FALLBACK</b><p>Curated Strands packs remain playable while the player pool is unavailable.</p><button className="arc-quiet" onClick={retry}>RETRY ARCHIVE</button></div>}
@@ -1276,10 +1282,6 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
  </Frame>;
 }
 
-type QuizDifficulty=QuizTier;
-function makeTimedQuiz(bank: QuestionBank,difficulty:QuizDifficulty,seed:number,count=15):QuizQuestion[]{
- return makeQuestionRound(bank,difficulty,seed,count);
-}
 type QuizDifficulty=QuizTier;
 function makeTimedQuiz(bank: QuestionBank,difficulty:QuizDifficulty,seed:number,count=10):QuizQuestion[]{
  return makeQuestionRound(bank,difficulty,seed,count);
