@@ -64,16 +64,34 @@ def build(archive:pathlib.Path,out:pathlib.Path,release_tag:str)->None:
    if not rel: raise RuntimeError("Missing table path: "+name)
    paths[name]=(base/rel).resolve()
    if not paths[name].is_file(): raise RuntimeError("Missing Parquet: "+str(paths[name]))
+  squad_paths=[]
+  for season_info in (manifest.get("seasons") or {}).values():
+   rel=((season_info.get("files") or {}).get("squad") or {}).get("path")
+   if rel:
+    path=(base/rel).resolve()
+    if path.is_file(): squad_paths.append(path)
+  if not squad_paths: raise RuntimeError("The release contains no season squad Parquet files.")
+  stat_source_path=None
+  stat_source_rel=((manifest.get("tables") or {}).get("stat_source") or {}).get("path")
+  if stat_source_rel:
+   candidate=(base/stat_source_rel).resolve()
+   if candidate.is_file(): stat_source_path=candidate
   db=duckdb.connect(":memory:")
   for name,path in paths.items():
    db.execute(f"CREATE VIEW {name} AS SELECT * FROM read_parquet({literal(path)})")
+  squad_list=", ".join(literal(path) for path in squad_paths)
+  db.execute(f"CREATE VIEW squad AS SELECT * FROM read_parquet([{squad_list}], union_by_name=true)")
+  if stat_source_path:
+   db.execute(f"CREATE VIEW stat_source AS SELECT * FROM read_parquet({literal(stat_source_path)})")
+  else:
+   db.execute("CREATE VIEW stat_source AS SELECT CAST(NULL AS VARCHAR) player_qid, CAST(NULL AS VARCHAR) source_title, CAST(NULL AS BIGINT) source_revid WHERE false")
   print("Aggregating career, statistics, player identity and club metadata…",flush=True)
   sql="""
   WITH career_rollup AS (
    SELECT COALESCE(NULLIF(TRIM(player_qid),''),'name:'||player) id,
     any_value(player) name,
     list(struct_pack(club:=club_name,startYear:=start_year,endYear:=end_year,
-      clubLink:=club_link,clubQid:=club_qid,loan:=loan)
+      clubLink:=club_link,clubQid:=club_qid,loan:=loan,sourceTitle:=source_title,sourceRevision:=source_revid)
       ORDER BY COALESCE(start_year,9999),seq) spells,
     SUM(apps) appearances,SUM(goals) goals,COUNT(apps) appearance_rows,COUNT(goals) goal_rows,
     COUNT(DISTINCT club_name) club_count,
@@ -98,33 +116,43 @@ def build(archive:pathlib.Path,out:pathlib.Path,release_tag:str)->None:
    FROM stat_club GROUP BY 1
   ), profile_rollup AS (
    SELECT COALESCE(NULLIF(TRIM(player_qid),''),'name:'||player) id,
-    any_value(full_name) full_name,any_value(nationality) nationality,
-    any_value(position) position,any_value(birth_place) birth_place
+    any_value(full_name) full_name,any_value(birth_place) birth_place
    FROM player_profile GROUP BY 1
+  ), squad_rollup AS (
+   SELECT COALESCE(NULLIF(TRIM(player_qid),''),'name:'||player) id,
+    arg_max(nationality,try_cast(substr(season,1,4) AS INTEGER)) nationality,
+    arg_max(position,try_cast(substr(season,1,4) AS INTEGER)) position
+   FROM squad GROUP BY 1
   ), birth_rollup AS (
    SELECT player_qid,any_value(birth_date) birth_date FROM birth
    WHERE precision=11 GROUP BY player_qid
   ), national_rollup AS (
    SELECT COALESCE(NULLIF(TRIM(player_qid),''),'name:'||player) id,
     SUM(caps) caps,SUM(goals) international_goals FROM national GROUP BY 1
+  ), stat_source_rollup AS (
+   SELECT player_qid,any_value(source_title) stat_source_title,any_value(source_revid) stat_source_revision
+   FROM stat_source GROUP BY player_qid
   ), club_rollup AS (
    SELECT wikidata_qid,any_value(country) country,any_value(league) league,
     any_value(division) division FROM club GROUP BY wikidata_qid
   )
   SELECT c.id,c.name,COALESCE(p.full_name,c.name) full_name,
-   COALESCE(p.nationality,'') nationality,COALESCE(p.position,'') position,
+   COALESCE(sq.nationality,'') nationality,COALESCE(sq.position,'') position,
    COALESCE(p.birth_place,'') birth_place,c.spells,c.appearances,c.goals,
    c.appearance_rows,c.goal_rows,c.club_count,c.current_club,c.current_club_qid,
    c.first_year,c.last_year,s.stat_seasons,s.league_appearances,s.league_goals,
    s.league_appearance_rows,s.league_goal_rows,s.league_goal_seasons,s.stats,
    n.caps,n.international_goals,b.birth_date,
    COALESCE(cl.country,'') current_country,COALESCE(cl.league,'') current_league,
-   cl.division current_division
+   cl.division current_division, c.career_source_title,c.career_source_revision,
+   ss.stat_source_title,ss.stat_source_revision
   FROM career_rollup c
   LEFT JOIN stat_rollup s ON s.id=c.id
   LEFT JOIN profile_rollup p ON p.id=c.id
+  LEFT JOIN squad_rollup sq ON sq.id=c.id
   LEFT JOIN birth_rollup b ON b.player_qid=c.id
   LEFT JOIN national_rollup n ON n.id=c.id
+  LEFT JOIN stat_source_rollup ss ON ss.player_qid=c.id
   LEFT JOIN club_rollup cl ON cl.wikidata_qid=c.current_club_qid
   ORDER BY c.id
   """
@@ -149,6 +177,10 @@ def build(archive:pathlib.Path,out:pathlib.Path,release_tag:str)->None:
     "currentClub":str(row.get("current_club") or ""),
     "appearances":clean(row.get("appearances")),"goals":clean(row.get("goals")),
     "appearanceRows":int(row.get("appearance_rows") or 0),"goalRows":int(row.get("goal_rows") or 0),
+    "careerSourceTitle":str(row.get("career_source_title") or ""),
+    "careerSourceRevision":clean(row.get("career_source_revision")),
+    "statSourceTitle":str(row.get("stat_source_title") or ""),
+    "statSourceRevision":clean(row.get("stat_source_revision")),
     "clubCount":int(row.get("club_count") or 0),"firstYear":clean(row.get("first_year")),
     "lastYear":clean(row.get("last_year")),"seasons":int(row.get("stat_seasons") or 0),
     "leagueAppearances":clean(row.get("league_appearances")),"leagueGoals":clean(row.get("league_goals")),
