@@ -547,6 +547,8 @@ This section records the separate gameplay-rework branch so work is not confused
 - [x] Added `scripts/validate-cc0-quiz-pools.mjs` to check question IDs, unique match facts, difficulty, region, question wording, five distinct options, one correct answer, source/date provenance, manifest counts and minimum English/international coverage per tier.
 - [x] Wired the new validator into `npm run validate:data`, so CI will fail if any difficulty tier cannot satisfy English-first rounds.
 - [x] Updated The Climb and Quick Quiz descriptions so the English-domestic emphasis is visible in the UI.
+- [x] Changed the existing international-goals higher/lower tile to display as **WHO'S GOT MORE?**, so it is not misrepresented as the ClubPark-style Lowball game.
+- [x] Improved match-winner distractors: prefer clubs/nations from the same competition, then fall back to the same source family instead of mixing English clubs with national teams.
 - [x] Researched the 212k+ England Football League Data dataset. It is a CC BY 4.0 candidate with third-party rights reserved, so it is documented for review but not bulk-imported. Official Premier League pages are kept as manual fact-check references only; current terms prohibit commercial database extraction without prior written approval.
 - [!] GitHub Actions must complete on the latest commit before this batch can be called build-verified. Physical iPhone/desktop playtesting is still outstanding.
 - [!] The English-first weighting currently applies to The Climb and Quick Quiz, not every game. Lowball, Ladder and Football 501 still use recorded senior international-goal values and need English player-stat data before they can honestly become English-stat games.
