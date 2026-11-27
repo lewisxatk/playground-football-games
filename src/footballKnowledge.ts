@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 export type CC0FootballPlayer = { id:string; name:string; aliases:string[]; nationalities:string[]; birthYears:number[]; positions:string[]; source:string; sourceCommit:string; licence:"CC0-1.0" };
-type KnowledgeDatabase = { schemaVersion:number; players:CC0FootballPlayer[]; report:{counts:Record<string,number>;games:Record<string,{count:number;ready:boolean}>} };
+export type CC0ConnectionsPack = { id:string; groups:{name:string;dimension:string;value:string;memberIds:string[]}[] };
+export type CC0StrandsPack = { id:string; spangram:string; words:string[]; theme:string };
+type KnowledgeDatabase = {
+ schemaVersion:number;
+ players:CC0FootballPlayer[];
+ worldCup?:{playerCards?:{id:string;name:string;worldCups:number[];teams:string[];matchIds:string[]}[]};
+ games?:{connections?:{packs:CC0ConnectionsPack[]};strands?:{packs:CC0StrandsPack[]}};
+ report:{counts:Record<string,number>;games:Record<string,{count:number;ready:boolean}>};
+};
 let databasePromise:Promise<KnowledgeDatabase>|null=null;
 export async function loadFootballKnowledge(force=false):Promise<KnowledgeDatabase>{
  if(force)databasePromise=null;
@@ -13,7 +21,7 @@ export async function loadFootballKnowledge(force=false):Promise<KnowledgeDataba
  return databasePromise;
 }
 export function useFootballKnowledge(){
- const [players,setPlayers]=useState<CC0FootballPlayer[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(""),[attempt,setAttempt]=useState(0);
- useEffect(()=>{let live=true;setLoading(true);setError("");loadFootballKnowledge(attempt>0).then(db=>{if(live)setPlayers(db.players)}).catch(problem=>{if(live)setError(problem instanceof Error?problem.message:"CC0 football database unavailable.")}).finally(()=>{if(live)setLoading(false)});return()=>{live=false}},[attempt]);
- return {players,loading,error,retry:()=>setAttempt(value=>value+1)};
+ const [database,setDatabase]=useState<KnowledgeDatabase|null>(null),[loading,setLoading]=useState(true),[error,setError]=useState(""),[attempt,setAttempt]=useState(0);
+ useEffect(()=>{let live=true;setLoading(true);setError("");loadFootballKnowledge(attempt>0).then(db=>{if(live)setDatabase(db)}).catch(problem=>{if(live)setError(problem instanceof Error?problem.message:"CC0 football database unavailable.")}).finally(()=>{if(live)setLoading(false)});return()=>{live=false}},[attempt]);
+ return {players:database?.players??[],connectionsPacks:database?.games?.connections?.packs??[],strandsPacks:database?.games?.strands?.packs??[],playerCards:database?.worldCup?.playerCards??[],loading,error,retry:()=>setAttempt(value=>value+1)};
 }
