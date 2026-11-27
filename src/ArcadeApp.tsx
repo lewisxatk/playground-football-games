@@ -398,14 +398,14 @@ function ClimbPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:n
    <div className="grid-difficulty">{levels.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>restart(mode,level)}>{difficultyLabel(level)}</button>)}</div>
    <p className="difficulty-note">{difficultyDescription(difficulty)}</p>
    <div className="climb-life-track">{[0,1,2].map(i=><i key={i} className={i<lives?"alive":""}/>)}</div>
-   <div className="climb-source-line"><span>{question?.category??"FOOTBALL"}</span><span>{question?.region==="UK"?"UK NATIONAL SIDES":"OTHER INTERNATIONAL TEAMS"}</span></div>
+   <div className="climb-source-line"><span>{question?.category??"FOOTBALL"}</span><span>{question?.region==="ENGLISH"?"ENGLISH FOOTBALL":"OTHER EUROPEAN LEAGUES"}</span></div>
    <h2>{ended?"RUN COMPLETE.":question?.question??"No question available."}</h2>
    {ended?<div className="arc-feedback"><p>You climbed {step+1} questions and banked {score} points.</p><button className="arc-button" onClick={()=>restart(mode)}>RUN IT BACK ↻</button></div>:
     <><div className="climb-options">{question?.options.map(option=><motion.button key={option} whileTap={{scale:.985}} onClick={()=>choose(option)} disabled={!!answer} className={answer===option?(option===question.answer?"correct":"wrong"):""}>{option}<i>↗</i></motion.button>)}</div>
      {answer&&<motion.div className={"arc-feedback "+(answer===question.answer?"quiz-goal":"quiz-miss")} initial={{opacity:0,y:12,scale:.98}} animate={{opacity:1,y:0,scale:1}}><b>{answer===question.answer?"GOAL! RIGHT ANSWER.":"NOT THIS TIME."}</b><p>{question.explanation}</p><small>{question.source}</small><button className="arc-button" onClick={next}>{step===4||lives<=0?"SEE RESULT":"NEXT QUESTION"} ↗</button></motion.div>}
     </>}
    <p className="arc-muted">Question bank: 800+ per difficulty. Every run uses a 75% English-club / 25% other-league mix.</p>
-   <div className="arc-game-foot"><span>5 QUESTIONS · 3 LIVES</span><span>{bank.filter(item=>item.tier===difficulty).length} MATCH QUESTIONS IN THIS TIER</span></div>
+   <div className="arc-game-foot"><span>5 QUESTIONS · 3 LIVES</span><span>{bank.meta.distribution[difficulty].total} IN THIS TIER</span></div>
   </Card>}
  </Frame>;
 }
@@ -1412,7 +1412,7 @@ function QuickQuizPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
    <div className="quiz-question"><div className="quiz-type-cursor"/><h2>{typed}{!typingDone&&<i className="quiz-caret"/>}</h2><div className="quiz-progress"><i style={{width:(progress*100)+"%"}}/></div></div>
    {typingDone&&<motion.div className="quiz-options" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}}>{question.options.map(option=><motion.button key={option} whileTap={{scale:.985}} onClick={()=>choose(option)} disabled={locked} className={locked&&option===question.answer?"correct":locked&&option===chosen?"wrong":""}>{option}</motion.button>)}</motion.div>}
    {locked&&<motion.div className={"arc-feedback "+(chosen===question.answer?"quiz-goal":"quiz-miss")} initial={{opacity:0,y:12,scale:.98}} animate={{opacity:1,y:0,scale:1}}><b>{chosen===question.answer?"GOAL! CORRECT.":chosen?"NOT THIS TIME.":"TIME'S UP."}</b><p>{question.explanation}</p><small>{question.source}</small><button className="arc-button" onClick={next}>{index+1===questions.length?"SEE FINAL SCORE":"NEXT QUESTION ↗"}</button></motion.div>}
-   <div className="arc-game-foot"><span>{question.category} / {question.region==="UK"?"UK NATIONAL SIDES":"INTERNATIONAL FOOTBALL"}</span><span>{quizSeconds(question.tier)} SECONDS · {quizPoints(question.tier)} PTS</span></div>
+   <div className="arc-game-foot"><span>{question.category} / {question.region==="ENGLISH"?"ENGLISH FOOTBALL":"INTERNATIONAL FOOTBALL"}</span><span>{quizSeconds(question.tier)} SECONDS · {quizPoints(question.tier)} PTS</span></div>
   </Card>}
  </Frame>;
 }
