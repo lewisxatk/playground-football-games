@@ -201,21 +201,13 @@ function makeWikidataLinkPacks(careerPlayers,target=750){
  };
  const uniqueBridge=(start,end,startSpell,endSpell,answer)=>{
   const startClub=byClub.get(startSpell.clubQid)||[],endClub=byClub.get(endSpell.clubQid)||[];
-  const starts=startClub.some(x=>x.player.id===start.id&&overlaps(startSpell,x.spell));
-  const ends=endClub.some(x=>x.player.id===end.id&&overlaps(endSpell,x.spell));
-  if(!starts||!ends)return false;
-  const isBridge=(player)=>player.spells.some(spell=>spell.clubQid===startSpell.clubQid&&overlaps(spell,startSpell))&&player.spells.some(spell=>spell.clubQid===endSpell.clubQid&&overlaps(spell,endSpell));
-  // The named endpoints must not themselves satisfy the bridge clue.
-  if(isBridge(start)||isBridge(end))return false;
-  // A third player is the only bridge when that same player has overlapping spells at both endpoint clubs.
-  const bridgePlayers=new Set();
-  for(const candidate of careerPlayers){
-   if(candidate.id===start.id||candidate.id===end.id)continue;
-   const hasFirst=candidate.spells.some(spell=>spell.clubQid===startSpell.clubQid&&overlaps(spell,startSpell));
-   const hasSecond=candidate.spells.some(spell=>spell.clubQid===endSpell.clubQid&&overlaps(spell,endSpell));
-   if(hasFirst&&hasSecond)bridgePlayers.add(candidate.id);
-  }
-  return bridgePlayers.size===1&&bridgePlayers.has(answer.id);
+  const overlappingStart=new Set(startClub.filter(x=>overlaps(x.spell,startSpell)).map(x=>x.player.id));
+  const overlappingEnd=new Set(endClub.filter(x=>overlaps(x.spell,endSpell)).map(x=>x.player.id));
+  // The endpoints themselves must not satisfy the bridge clue.
+  if(overlappingStart.has(start.id)&&overlappingEnd.has(start.id))return false;
+  if(overlappingStart.has(end.id)&&overlappingEnd.has(end.id))return false;
+  const bridgeIds=[...overlappingStart].filter(id=>overlappingEnd.has(id)&&id!==start.id&&id!==end.id);
+  return bridgeIds.length===1&&bridgeIds[0]===answer.id;
  };
  const ordered=seededShuffle(careerPlayers,20261127),packs=[],usedAnswers=new Set(),usedSignatures=new Set();
  for(const answer of ordered){
