@@ -34,7 +34,7 @@ type FootballKnowledgeShards = {
  "the-reveal":{playerCards:WorldCupPlayerCard[]};
  "goal-packs":{lowballPairs:CC0StatPack[];ladderPacks:CC0StatPack[];football501Packs:CC0StatPack[]};
  "player-stats":{players:CC0DraftPlayer[]};
- "career-history":{players:CC0CareerPlayer[];careerFileCandidates:CC0CareerPlayer[];cultHeroCandidates:CC0CareerPlayer[];linkUpPacks:CC0LinkUpPack[];meta:{status:string;endpoint:string;retrievedAt:string;rawRows:number;acceptedSpells:number;players:number;eligibleCareerFile:number;eligibleCultHero:number;error:string|null}};
+ "career-history":{players:CC0CareerPlayer[];careerFileCandidates?:CC0CareerPlayer[];cultHeroCandidates?:CC0CareerPlayer[];linkUpPacks:CC0LinkUpPack[];meta:{status:string;endpoint:string;retrievedAt:string;rawRows:number;acceptedSpells:number;players:number;eligibleCareerFile:number;eligibleCultHero:number;error:string|null}};
 };
 export type FootballKnowledgeKey=keyof FootballKnowledgeShards;
 const shardCache=new Map<FootballKnowledgeKey,Promise<unknown>>();
