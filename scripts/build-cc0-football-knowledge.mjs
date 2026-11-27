@@ -535,7 +535,17 @@ const positionPlayers=statPlayers.filter(p=>(p.positions||[]).some(pos=>["G","GK
 const nations=[...new Set(lineups.flatMap(m=>[m.team,m.opponent]))].sort();
 const uniqueWorldCupMatches=[...new Map(lineups.map(match=>[match.matchId,match])).values()];
 const quiz=uniqueWorldCupMatches.map(m=>{const answer=m.opponent,distractors=nations.filter(n=>norm(n)!==norm(answer)).sort((a,b)=>createHash("sha256").update(m.id+a).digest("hex").localeCompare(createHash("sha256").update(m.id+b).digest("hex"))).slice(0,3);if(distractors.length!==3)return null;const choices=[answer,...distractors].sort((a,b)=>createHash("sha256").update(m.id+a).digest("hex").localeCompare(createHash("sha256").update(m.id+b).digest("hex")));return{id:id("wc-question",m.matchId),factId:id("wc-match",m.matchId),question:"Which team did "+m.team+" face in the "+m.year+" FIFA World Cup match on "+m.date+"?",answer,choices,explanation:m.team+" faced "+answer+" in the "+m.year+" FIFA World Cup.",competition:"FIFA World Cup",year:m.year,eventDate:m.date,source:SOURCES.worldCup.url+"/blob/"+SOURCES.worldCup.commit+"/"+(m.sourceFile??(m.year+"/worldcup-full.json")),sourceKey:"worldCup",sourceRow:m.sourceRow??m.id}});
-const validQuiz=quiz.filter(Boolean),footle=players.filter(p=>p.name.length>=4&&p.name.length<=22&&/^[\p{L}][\p{L}'’ .-]+$/u.test(p.name));
+const validQuiz=quiz.filter(Boolean);
+const worldCupQuizPool=seededShuffle(validQuiz,20261127).slice(0,200).map(question=>{
+ const extra=nations.filter(nation=>!question.choices.some(choice=>norm(choice)===norm(nation)))
+  .sort((a,b)=>createHash("sha256").update(question.id+a).digest("hex").localeCompare(createHash("sha256").update(question.id+b).digest("hex")))[0];
+ if(!extra)return null;
+ const options=[...question.choices,extra].sort((a,b)=>createHash("sha256").update(question.id+a).digest("hex").localeCompare(createHash("sha256").update(question.id+b).digest("hex")));
+ const tier=question.year>=2010?"EASY":question.year>=2000?"MEDIUM":question.year>=1980?"HARD":"EXTREME";
+ return{id:question.id+"-quiz",factId:question.factId,playerId:question.factId,tier,region:"INTERNATIONAL",category:"FIFA World Cup",question:question.question,answer:question.answer,options,explanation:question.explanation,source:question.source,matchId:question.factId,eventDate:question.eventDate};
+}).filter(Boolean);
+worldCupQuizPool.forEach((question,index)=>(index%2?internationalQuiz.timed:internationalQuiz.climb).push(question));
+const footle=players.filter(p=>p.name.length>=4&&p.name.length<=22&&/^[\p{L}][\p{L}'’ .-]+$/u.test(p.name));
 const uniqueFootleAnswers=[...new Set(footle.flatMap(p=>[p.name,...(p.aliases||[])]).map(value=>(value.trim().split(/\s+/).at(-1)||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,"")).filter(word=>word.length===5))].sort();
 const cards=new Map();for(const m of lineups)for(const name of m.starters){const k=norm(name),r=cards.get(k)||{id:id("wc-player",k),name,worldCups:[],teams:[],matchIds:[]};if(!r.worldCups.includes(m.year))r.worldCups.push(m.year);if(!r.teams.includes(m.team))r.teams.push(m.team);if(!r.matchIds.includes(m.id))r.matchIds.push(m.id);cards.set(k,r)}
 const clubConnections=makeConnections(clubs);
