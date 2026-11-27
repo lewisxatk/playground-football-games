@@ -687,7 +687,6 @@ function ConnectionsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
 }
 
 type GridDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
-type GridPuzzle={positions:string[];countries:string[];answers:GamePlayer[][][]};
 const GRID_LEVELS:GridDifficulty[]=["EASY","STANDARD","HARD","EXTREME"];
 function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();
