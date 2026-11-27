@@ -9,6 +9,7 @@ import { ClubBadge, CountryFlag } from "./ClubBadge";
 import { cc0CareerToArchiveGamePlayer } from "./cc0CareerAdapter";
 import type { ArchiveGamePlayer, ArchiveCareerSpell, ArchiveGameStat } from "./careerFileData";
 import CareerFilePage from "./CareerFilePage";
+import { getArchiveGamePlayers } from "./careerFileData";
 import CultHeroPage from "./CultHeroPage";
 import CultHeroCollectionPage from "./CultHeroCollectionPage";
 import { useFootballKnowledge, useFootballQuizKnowledge, makeCC0QuizRound, makeCC0DailyQuizRound, type CC0QuizTier as QuizTier } from "./footballKnowledge";
@@ -684,6 +685,60 @@ function ConnectionsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
 
 type GridDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
 const GRID_LEVELS:GridDifficulty[]=["EASY","STANDARD","HARD","EXTREME"];
+const HISTORIC_PREMIER_LEAGUE_CLUBS=[
+ "Arsenal","Aston Villa","Barnsley","Birmingham City","Blackburn Rovers","Blackpool","Bolton Wanderers","Bournemouth",
+ "Bradford City","Brentford","Brighton & Hove Albion","Burnley","Cardiff City","Charlton Athletic","Chelsea","Coventry City",
+ "Crystal Palace","Derby County","Everton","Fulham","Huddersfield Town","Hull City","Ipswich Town","Leeds United","Leicester City",
+ "Liverpool","Luton Town","Manchester City","Manchester United","Middlesbrough","Newcastle United","Norwich City","Nottingham Forest",
+ "Oldham Athletic","Portsmouth","Queens Park Rangers","Reading","Sheffield United","Sheffield Wednesday","Southampton","Stoke City",
+ "Sunderland","Swansea City","Tottenham Hotspur","Watford","West Bromwich Albion","West Ham United","Wigan Athletic","Wolverhampton Wanderers"
+];
+const gridClubKey=(value:string)=>normalise(value.replace(/&/g,"and")).replace(/\\b(?:association football club|football club|fc|afc|the)\\b/g," ").replace(/\\s+/g," ").trim();
+function archiveGamePlayerToGamePlayer(p:ArchiveGamePlayer):GamePlayer{
+ const birthYear=p.birthDate?Number(p.birthDate.slice(0,4)):null,age=birthYear&&birthYear>1800?new Date().getUTCFullYear()-birthYear:null;
+ const ageBand=age===null?"Unknown":age<20?"Teens":age<30?"20s":age<40?"30s":age<50?"40s":age<60?"50s":"60s+";
+ const parts=p.name.trim().split(/\\s+/).filter(Boolean),surname=parts.at(-1)??p.name;
+ return {name:p.name,surname:surname.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,""),
+  nationality:countryLabel(p.nationality||p.currentCountry||"Unlisted"),position:positionCode(p.position),club:p.currentClub||"Unknown club",
+  league:p.currentLeague||"Unlisted",active:false,ageBand,clubs:p.clubs??[],aliases:[p.name,p.fullName??p.name],archiveId:p.id,
+  careerSpells:p.spells??[],seasonStats:p.seasonStats??p.stats??[],careerAppsRecorded:p.appearances!==null,careerGoalsRecorded:p.goals!==null,
+  leagueAppsRecorded:(p.leagueAppearanceRows??0)>0,leagueGoalsRecorded:(p.leagueGoalRows??0)>0,careerApps:p.appearances??0,
+  careerGoals:p.goals??0,leagueApps:p.leagueAppearances??0,leagueGoals:p.leagueGoals??0,leagueGoalSeasons:p.leagueGoalSeasons??0,
+  leagueAssists:p.leagueAssists??0,leagueAssistSeasons:p.leagueAssistSeasons??0,statSeasons:p.seasons??0,firstYear:p.firstYear??null,
+  lastYear:p.lastYear??null,caps:p.caps??null,internationalGoals:p.internationalGoals??null,birthDate:p.birthDate??"",
+  currentCountry:p.currentCountry??"",currentDivision:p.currentDivision??null};
+}
+function makeArchivePremierLeagueGrid(players:GamePlayer[],seed:number){
+ const buckets=new Map<string,GamePlayer[]>(),clubLabels=new Map<string,string>();
+ for(const player of players){
+  const nation=player.nationality;if(!nation||nation==="Unlisted")continue;
+  const seenClubs=new Set<string>();
+  for(const spell of player.careerSpells){
+   const key=gridClubKey(spell.club);if(!HISTORIC_PREMIER_LEAGUE_CLUBS.some(club=>gridClubKey(club)===key)||seenClubs.has(key))continue;
+   seenClubs.add(key);clubLabels.set(key,HISTORIC_PREMIER_LEAGUE_CLUBS.find(club=>gridClubKey(club)===key)||spell.club);
+   const bucketKey=key+":"+normalise(nation),list=buckets.get(bucketKey)??[];
+   if(!list.some(existing=>existing.archiveId===player.archiveId))list.push(player);
+   buckets.set(bucketKey,list);
+  }
+ }
+ const eligible=HISTORIC_PREMIER_LEAGUE_CLUBS.map(club=>gridClubKey(club)).filter(key=>{
+  const nations=new Set([...buckets.keys()].filter(bucket=>bucket.startsWith(key+":")).map(bucket=>bucket.slice(key.length+1)));
+  return nations.size>=4;
+ });
+ if(eligible.length<4)return null;
+ for(let attempt=0;attempt<4000;attempt++){
+  const clubs=shuffle(eligible,seed+attempt*7919).slice(0,4);
+  if(clubs.length!==4)continue;
+  const common=[...new Set(clubs.flatMap(club=>[...buckets.keys()].filter(bucket=>bucket.startsWith(club+":")).map(bucket=>bucket.slice(club.length+1))))]
+   .filter(nation=>clubs.every(club=>(buckets.get(club+":"+nation)?.length??0)>=1));
+  if(common.length<4)continue;
+  const countries=shuffle(common,seed+attempt*104729).slice(0,4);
+  const answers=clubs.map(club=>countries.map(nation=>shuffle(buckets.get(club+":"+nation)??[],seed+attempt+club.length*nation.length).slice(0,12)));
+  if(answers.some(row=>row.some(cell=>cell.length===0))||!hasUniqueGridAssignment(answers))continue;
+  return {clubs:clubs.map(key=>clubLabels.get(key)??key),countries: countries.map(value=>players.find(player=>normalise(player.nationality)===value)?.nationality??value),answers};
+ }
+ return null;
+}
 function hasUniqueGridAssignment(rows:GamePlayer[][][]):boolean{
  const cells=rows.flat().map((players,index)=>({index,players:[...new Map(players.map(player=>[player.archiveId,player])).values()]}));
  if(cells.length!==16||cells.some(cell=>cell.players.length===0))return false;
