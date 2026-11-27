@@ -13,6 +13,7 @@ import CareerFilePage from "./CareerFilePage";
 import CultHeroPage from "./CultHeroPage";
 import CultHeroCollectionPage from "./CultHeroCollectionPage";
 import { getCareerClubsAtYear } from "./careerFileData";
+import { useFootballKnowledge } from "./footballKnowledge";
 import "./arcade.css";
 import "./playground-upgrades.css";
 
@@ -155,6 +156,16 @@ function archivePlayerToGamePlayer(p:ArchiveGamePlayer):GamePlayer{
     caps:p.caps,internationalGoals:p.internationalGoals,birthDate:p.birthDate,
     currentCountry:p.currentCountry,currentDivision:p.currentDivision
   };
+}
+function cc0PlayerToGamePlayer(p:{id:string;name:string;aliases:string[];nationalities:string[];birthYears:number[];positions:string[]}):GamePlayer{
+ const parts=p.name.trim().split(/\s+/).filter(Boolean),surname=parts.at(-1)??p.name;
+ const rawPosition=p.positions?.[0]??"";
+ const position:Player["position"]=rawPosition==="G"||rawPosition==="GK"?"GK":rawPosition==="D"||rawPosition==="DF"?"DEF":rawPosition==="M"||rawPosition==="MF"?"MID":rawPosition==="F"||rawPosition==="FW"?"FWD":"" as Player["position"];
+ const birthYear=p.birthYears?.[0]??null,age=birthYear===null?null:new Date().getUTCFullYear()-birthYear;
+ const ageBand=age===null?"Unknown":age<20?"Teens":age<30?"20s":age<40?"30s":age<50?"40s":age<60?"50s":"60s+";
+ return {name:p.name,surname:surname.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,""),
+ nationality:countryLabel(p.nationalities?.[0]??"Unlisted"),position,club:"Unknown club",league:"Unlisted",active:false,ageBand,clubs:[],aliases:[p.name,...(p.aliases??[])],archiveId:p.id,
+ careerSpells:[],seasonStats:[],careerAppsRecorded:false,careerGoalsRecorded:false,leagueAppsRecorded:false,leagueGoalsRecorded:false,careerApps:0,careerGoals:0,leagueApps:0,leagueGoals:0,leagueGoalSeasons:0,leagueAssists:0,leagueAssistSeasons:0,statSeasons:0,firstYear:null,lastYear:null,caps:null,internationalGoals:null,birthDate:"",currentCountry:p.nationalities?.[0]??"",currentDivision:null};
 }
 function archiveGuess(input:string,players:GamePlayer[]):GamePlayer|undefined{
   const key=normalise(input);
@@ -481,15 +492,17 @@ function FootlePage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const [typed,setTyped]=useState("");const [guesses,setGuesses]=useState<string[]>([]);const [end,setEnd]=useState(false);const [wordError,setWordError]=useState("");const [hinted,setHinted]=useState<number[]>([]);
  const done=account.daily[utcDay()]?.footle!==undefined;
  const seed=mode==="daily"?"FOOTLE:"+utcDay():"FOOTLE:PRACTICE:"+practiceSeed;
- const {players:archivePlayers,loading,error}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,1600);
+ const {players:cc0Players,loading:cc0Loading,error:cc0Error}=useFootballKnowledge();
+ const {players:archivePlayers,loading:archiveLoading,error}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,1600);
  const bank=useMemo(()=>{
-   const archived=archivePlayers.map(p=>{
-     const parts=p.name.trim().split(/\s+/).filter(Boolean);
-     const raw=parts.slice(-1)[0]??"";
-     return raw.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,"");
+   const names=[...cc0Players.map(p=>p.name),...cc0Players.flatMap(p=>p.aliases??[]),...archivePlayers.map(p=>p.name)];
+   const surnames=names.map(value=>{
+     const parts=value.trim().split(/\s+/).filter(Boolean);
+     return (parts.at(-1)??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,"");
    }).filter(name=>name.length===5);
-   return [...new Set([...archived,...WORDS])].sort((a,b)=>a.localeCompare(b));
- },[archivePlayers]);
+   return [...new Set([...surnames,...WORDS])].sort((a,b)=>a.localeCompare(b));
+ },[cc0Players,archivePlayers]);
+ const loading=cc0Loading||archiveLoading;
  const target=bank.length?bank[hashSeed(seed+":answer")%bank.length]:WORDS[0];
  const win=guesses.at(-1)===target;
  const submitWord=()=>{
@@ -627,8 +640,8 @@ function ConnectionsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
  const [notice,setNotice]=useState("");const done=account.daily[utcDay()]?.connections!==undefined;
  const seed=mode==="daily"?"CONNECTIONS:"+utcDay():"CONNECTIONS:PRACTICE:"+practiceSeed;
- const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,1600);
- const pool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
+ const {players:cc0Players,loading,error,retry}=useFootballKnowledge();
+ const pool=useMemo(()=>cc0Players.map(cc0PlayerToGamePlayer),[cc0Players]);
  const groups=useMemo(()=>pool.length>=32?buildConnectionsGroups(pool,difficulty,hashSeed(seed+":"+difficulty)):[],[pool,difficulty,seed]);
  const tilePlayers=useMemo(()=>shuffle(groups.flatMap(g=>g.members),hashSeed(seed+":TILES:"+difficulty)),[groups,seed,difficulty]);
  const selectedGroup=()=>groups.findIndex(g=>selected.length===4&&selected.every(id=>g.members.some(p=>p.archiveId===id)));
@@ -1286,8 +1299,8 @@ function makeStrandsBoard(pack:typeof STRANDS_PACKS[number]){
 function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();const [boardNo,setBoardNo]=useState(0);const [selected,setSelected]=useState<number[]>([]);const pathRef=useRef<number[]>([]);const [dragging,setDragging]=useState(false);const [found,setFound]=useState<number[]>([]);const [wrong,setWrong]=useState(0);const [nudges,setNudges]=useState(0);const [hintedWord,setHintedWord]=useState<number|null>(null);const [finished,setFinished]=useState(false);const [notice,setNotice]=useState("");const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));const done=account.daily[utcDay()]?.strands!==undefined;
  const seed=mode==="daily"?"STRANDS:"+utcDay()+":"+boardNo:"STRANDS:PRACTICE:"+practiceSeed+":"+boardNo;
- const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,4200);
- const pool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
+ const {players:cc0Players,loading,error,retry}=useFootballKnowledge();
+ const pool=useMemo(()=>cc0Players.map(cc0PlayerToGamePlayer),[cc0Players]);
  const staticPool=useMemo(()=>PLAYER_DATABASE.map(p=>({
    ...p,archiveId:p.name,careerSpells:[],seasonStats:[],careerAppsRecorded:false,careerGoalsRecorded:false,leagueAppsRecorded:false,leagueGoalsRecorded:false,
    careerApps:0,careerGoals:0,leagueApps:0,leagueGoals:0,leagueGoalSeasons:0,leagueAssists:0,leagueAssistSeasons:0,
