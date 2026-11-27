@@ -501,43 +501,70 @@ function buildConnectionsGroups(players:GamePlayer[],difficulty:ConnectionsDiffi
    HARD:{min:7,max:35},
    EXTREME:{min:4,max:16}
  }[difficulty];
- const candidates:{dimension:string;values:[string,GamePlayer[]][]}[]=[];
+ type GroupOption={dimension:string;value:string;members:GamePlayer[];key:string};
+ const options:GroupOption[]=[];
  for(const dimension of dimensions){
-   const groups=new Map<string,GamePlayer[]>();
+   const buckets=new Map<string,GamePlayer[]>();
    for(const player of players){
      const value=dimension.get(player);if(!value)continue;
-     const list=groups.get(value)??[];
+     const list=buckets.get(value)??[];
      if(!list.some(p=>p.archiveId===player.archiveId))list.push(player);
-     groups.set(value,list);
+     buckets.set(value,list);
    }
-   const values=Array.from(groups.entries()).filter(([,members])=>members.length>=limits.min&&members.length<=limits.max);
-   if(values.length>=4)candidates.push({dimension:dimension.label,values});
+   for(const [value,members] of buckets){
+     if(members.length<limits.min||members.length>limits.max)continue;
+     const selected=shuffle(members,seed+dimension.label.length*41+value.length*17).slice(0,4);
+     if(selected.length!==4||new Set(selected.map(p=>p.archiveId)).size!==4)continue;
+     options.push({dimension:dimension.label,value,members:selected,key:dimension.label+":"+value});
+   }
  }
- if(!candidates.length){
+ if(options.length<4){
+   // Ease the member-count limits only when the strict difficulty filter has too few candidates.
    for(const dimension of dimensions){
-     const groups=new Map<string,GamePlayer[]>();
-     for(const player of players){
-       const value=dimension.get(player);if(!value)continue;
-       const list=groups.get(value)??[];
-       if(!list.some(p=>p.archiveId===player.archiveId))list.push(player);
-       groups.set(value,list);
+     const buckets=new Map<string,GamePlayer[]>();
+     for(const player of players){const value=dimension.get(player);if(!value)continue;const list=buckets.get(value)??[];if(!list.some(p=>p.archiveId===player.archiveId))list.push(player);buckets.set(value,list);}
+     for(const [value,members] of buckets){
+       if(members.length<4)continue;
+       const key=dimension.label+":"+value;
+       if(options.some(option=>option.key===key))continue;
+       const selected=shuffle(members,seed+dimension.label.length*43+value.length*19).slice(0,4);
+       options.push({dimension:dimension.label,value,members:selected,key});
      }
-     const values=Array.from(groups.entries()).filter(([,members])=>members.length>=4);
-     if(values.length>=4)candidates.push({dimension:dimension.label,values});
    }
  }
- if(!candidates.length)return [];
- const choice=shuffle(candidates,seed)[0];
- const chosen=shuffle(choice.values,seed+97).slice(0,4);
- const colors=["gold","blue","pink","green"];
- const groups=chosen.map(([value,members],i)=>({
-   name:choice.dimension+" · "+value.toUpperCase(),
-   color:colors[i],
-   members:shuffle(members,seed+i*97).slice(0,4)
+ if(options.length<4)return [];
+ const ordered=shuffle(options,seed);
+ const selected:GroupOption[]=[];
+ const usedPlayers=new Set<string>();
+ const search=(depth:number,usedDimensions:Set<string>):boolean=>{
+   if(depth===4)return true;
+   for(const option of ordered){
+     if(selected.some(item=>item.key===option.key))continue;
+     // Prefer four different types of connection, then allow repeats only when data coverage requires it.
+     if(usedDimensions.has(option.dimension)&&ordered.some(item=>item.dimension!==option.dimension&&!usedDimensions.has(item.dimension)))continue;
+     if(option.members.some(player=>usedPlayers.has(player.archiveId)))continue;
+     selected.push(option);option.members.forEach(player=>usedPlayers.add(player.archiveId));
+     const nextDimensions=new Set(usedDimensions);nextDimensions.add(option.dimension);
+     if(search(depth+1,nextDimensions))return true;
+     selected.pop();option.members.forEach(player=>usedPlayers.delete(player.archiveId));
+   }
+   return false;
+ };
+ if(!search(0,new Set())){
+   selected.length=0;usedPlayers.clear();
+   for(const option of ordered){
+     if(selected.some(item=>item.key===option.key)||option.members.some(player=>usedPlayers.has(player.archiveId)))continue;
+     selected.push(option);option.members.forEach(player=>usedPlayers.add(player.archiveId));
+     if(selected.length===4)break;
+   }
+ }
+ if(selected.length!==4||usedPlayers.size!==16)return [];
+ const colours=["gold","blue","pink","green"];
+ return selected.map((option,index)=>({
+   name:option.dimension+" · "+option.value.toUpperCase(),
+   color:colours[index],
+   members:option.members
  }));
- const unique=groups.flatMap(g=>g.members).map(p=>p.archiveId);
- if(unique.length!==16||new Set(unique).size!==16)return [];
- return groups;
 }
 function ConnectionsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();const [difficulty,setDifficulty]=useState<ConnectionsDifficulty>("STANDARD");
