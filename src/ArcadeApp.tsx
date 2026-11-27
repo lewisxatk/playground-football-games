@@ -14,6 +14,7 @@ import CultHeroPage from "./CultHeroPage";
 import CultHeroCollectionPage from "./CultHeroCollectionPage";
 import { getCareerClubsAtYear } from "./careerFileData";
 import "./arcade.css";
+import "./playground-upgrades.css";
 
 type Mode = "daily" | "practice";
 type Account = {
@@ -197,10 +198,10 @@ function Card({children,className=""}:{children:React.ReactNode;className?:strin
 function HomePage({account}:{account:Account}){
   const done=todayGames(account);
   return <div className="arc-shell arc-home"><TopBar account={account}/><main className="arc-home-main">
-    <section className="arc-home-hero"><div><div className="arc-eyebrow"><span/> THE FOOTBALL ARCADE / EST. 2026</div><h1>NO HALF<br/><em>TIME.</em></h1><p>Quick games, proper football knowledge and a reason to come back tomorrow.</p><div className="arc-hero-actions"><a className="arc-button" href="/footle">PLAY TODAY'S FOOTLE ↗</a><a className="arc-text-link" href="#all-games">PICK YOUR GAME ↓</a></div></div>
+    <motion.section className="arc-home-hero" initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} transition={{duration:.46,ease:"easeOut"}}><div><div className="arc-eyebrow"><span/> THE FOOTBALL ARCADE / EST. 2026</div><h1>NO HALF<br/><em>TIME.</em></h1><p>Quick games, proper football knowledge and a reason to come back tomorrow.</p><div className="arc-hero-actions"><a className="arc-button" href="/footle">PLAY TODAY'S FOOTLE ↗</a><a className="arc-text-link" href="#all-games">PICK YOUR GAME ↓</a></div></div>
       <div className="arc-home-graphic"><div className="arc-graphic-label">THE PLAYGROUND / 17 GAME MODES</div><div className="arc-graphic-pitch"><i className="half"/><i className="centre"/><i className="box-one"/><i className="box-two"/><motion.span className="graphic-ball" animate={{x:[0,32,-20,0],y:[0,-15,8,0],rotate:[0,180,360]}} transition={{duration:5,repeat:Infinity,ease:"easeInOut"}}/></div><div className="arc-graphic-bottom"><span>GUESS / THINK / PLAY</span><b>↗</b><span>17 WAYS TO PLAY</span></div></div>
-    </section>
-    <section className="arc-daily-strip"><div><small>YOUR DAILY RECORD / UTC</small><strong>{done} <i>/ 17</i></strong><span>GAMES PLAYED TODAY</span></div><div><small>YOUR STREAK</small><strong>{account.streak} <i>days</i></strong><span>BEST {account.bestStreak} DAYS</span></div><div><small>PLAYER NAME</small><strong className="nickname-stat">{account.nickname}</strong><span>LOCAL PLAYER SAVE · {todayPoints(account).toLocaleString("en-GB")} DAILY POINTS</span></div><a href="/locker-room">OPEN LOCKER ROOM ↗</a></section>
+    </motion.section>
+    <section className="arc-daily-strip"><div><small>YOUR DAILY RECORD / UTC</small><motion.strong key={done} initial={{opacity:0,y:7}} animate={{opacity:1,y:0}}>{done} <i>/ 17</i></motion.strong><span>GAMES PLAYED TODAY</span></div><div><small>YOUR STREAK</small><motion.strong key={account.streak} initial={{opacity:0,y:7}} animate={{opacity:1,y:0}}>{account.streak} <i>days</i></motion.strong><span>BEST {account.bestStreak} DAYS</span></div><div><small>PLAYER NAME</small><strong className="nickname-stat">{account.nickname}</strong><span>LOCAL PLAYER SAVE · {todayPoints(account).toLocaleString("en-GB")} DAILY POINTS</span></div><a href="/locker-room">OPEN LOCKER ROOM ↗</a></section>
     <section id="all-games" className="arc-game-directory"><div className="arc-section-title"><div><span>01 / THE LINE-UP</span><h2>PICK YOUR<br/><em>GAME.</em></h2></div><p>Every game has its own page. Daily challenges reset at midnight GMT. Practice allowances vary by game.</p></div>
       <div className="arc-home-grid">{GAME_LINKS.map((game,i)=><motion.a href={"/"+game.id} key={game.id} className={"arc-game-tile "+game.tone} whileHover={{y:-5,rotate:i%2?1:-1}} whileTap={{scale:.985}}><div><small>PG / GAME {String(i+1).padStart(2,"0")}</small><span>{game.tag}</span></div><div className="arc-tile-art"><i>{["↗","Ⅲ","XI","?","A","▦","▤","↗","◉","501","↔","11","✳","◎","🏆","⏱","CH"][i]}</i></div><h3>{game.title}</h3><p>{game.sub}</p><b className="arc-tile-arrow">PLAY ↗</b></motion.a>)}</div>
     </section>
@@ -1671,8 +1672,8 @@ export function ArcadeApp(){
  },[]);
  const onDaily=(game:GameId,score:number)=>setAccount(prev=>awardDaily(prev,game,score));
  const path=pageFromPath(window.location.pathname);
- if(path==="locker-room")return <MotionConfig reducedMotion="user"><AccountPage account={account} setAccount={setAccount}/></MotionConfig>;
  const pages:Record<string,React.ReactNode>={
+  "locker-room":<AccountPage account={account} setAccount={setAccount}/>,
   "lowball":<LowballPage account={account} onDaily={onDaily}/>,
   "the-climb":<ClimbPage account={account} onDaily={onDaily}/>,
   "draft-xi":<DraftPage account={account} onDaily={onDaily}/>,
@@ -1692,5 +1693,5 @@ export function ArcadeApp(){
   "cult-hero":<CultHeroPage dailyDone={account.daily[utcDay()]?.["cult-hero"]!==undefined} onDailyComplete={score=>onDaily("cult-hero",score)}/>,
   "cult-hero-collection":<CultHeroCollectionPage/>
  };
- return <MotionConfig reducedMotion="user">{pages[path]??<HomePage account={account}/>}</MotionConfig>;
+ return <MotionConfig reducedMotion="user"><AnimatePresence mode="wait" initial={false}><motion.div key={path} className="pg-route-stage" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}} transition={{duration:.22,ease:"easeOut"}}>{pages[path]??<HomePage account={account}/>}</motion.div></AnimatePresence></MotionConfig>;
 }
