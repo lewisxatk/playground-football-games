@@ -482,6 +482,12 @@ const gridIds=new Set(gridPacks.flatMap(pack=>pack.answers.flat(2)));
 const connectionPlayers=players.filter(player=>connectionIds.has(player.id));
 const gridPlayers=players.filter(player=>gridIds.has(player.id));
 const positionPlayerRows=positionPlayers.map(p=>({id:p.id,name:p.name,aliases:p.aliases||[],positions:p.positions,nationalities:p.nationalities,birthYears:p.birthYears,worldCupYears:p.worldCupYears||[],internationalGoalsRecorded:p.internationalGoalsRecorded??0,worldCupStarts:p.worldCupStarts??0,source:p.source}));
+const quizTiers=["EASY","MEDIUM","HARD","EXTREME"];
+const quizShards=Object.fromEntries([
+ ...quizTiers.map(tier=>["the-climb-"+tier.toLowerCase(),{...common,questions:internationalQuiz.climb.filter(question=>question.tier===tier)}]),
+ ...quizTiers.map(tier=>["timed-quiz-"+tier.toLowerCase(),{...common,questions:internationalQuiz.timed.filter(question=>question.tier===tier)}])
+]);
+for(const [game,questions] of [["the-climb",internationalQuiz.climb],["timed-quiz",internationalQuiz.timed]])for(const tier of quizTiers){const count=questions.filter(question=>question.tier===tier).length;if(count<500)throw new Error(game+" "+tier+" shard below 500 questions: "+count);}
 const shards={
  core:{...common,players,clubs},
  matches:{...common,matches:internationalMatches},
@@ -493,8 +499,7 @@ const shards={
  connections:{...common,players:connectionPlayers,packs:playerConnections},
  strands:{...common,packs:strands},
  "football-grid":{...common,players:gridPlayers,packs:gridPacks},
- "the-climb":{...common,questions:internationalQuiz.climb},
- "timed-quiz":{...common,questions:internationalQuiz.timed},
+ ...quizShards,
  "the-reveal":{...common,playerCards:[...cards.values()]},
  "goal-packs":{...common,lowballPairs:internationalGoalPacks.lowball,ladderPacks:internationalGoalPacks.ladder,football501Packs:internationalGoalPacks.football501},
  "player-stats":{...common,players:positionPlayerRows},
