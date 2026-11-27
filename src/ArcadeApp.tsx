@@ -498,7 +498,7 @@ function FootlePage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const keyRows=["QWERTYUIOP","ASDFGHJKL","ZXCVBNM"];
  const restart=(newMode:Mode=mode)=>{
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
-   setTyped("");setGuesses([]);setEnd(false);setWordError("");
+   setTyped("");setGuesses([]);setEnd(false);setWordError("");setHinted([]);
  };
  const updateTyped=(value:string)=>{setWordError("");setTyped(value.replace(/[^a-z]/gi,"").slice(0,5));};
  const hintLetter=()=>{
@@ -1295,7 +1295,7 @@ type QuizDifficulty=QuizTier;
 function makeTimedQuiz(bank: QuestionBank,difficulty:QuizDifficulty,seed:number,count=10):QuizQuestion[]{
  return makeQuestionRound(bank,difficulty,seed,count);
 }
-const quizSeconds=(tier:QuizTier)=>tier==="EXTREME"?30:tier==="HARD"?25:15;
+const quizSeconds=(tier:QuizTier)=>tier==="EXTREME"?30:tier==="HARD"?25:tier==="MEDIUM"?15:10;
 const quizPoints=(tier:QuizTier)=>tier==="EXTREME"?300:tier==="HARD"?200:tier==="MEDIUM"?150:100;
 function QuickQuizPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();const [difficulty,setDifficulty]=useState<QuizDifficulty>("EASY");
@@ -1382,6 +1382,13 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
  const [clubLookupError,setClubLookupError]=useState("");
  const [clubLookupAttempt,setClubLookupAttempt]=useState(0);
  const [attempts,setAttempts]=useState(0);const [ended,setEnded]=useState(false);const [won,setWon]=useState(false);const maxGuesses=5;
+ const tournamentUsageKey="playground.tournament-nation.practice.v1";
+ const [practicePlays,setPracticePlays]=useState<Record<string,number>>(()=>{
+   try{const value=JSON.parse(localStorage.getItem(tournamentUsageKey)||"{}");return value&&typeof value==="object"?value:{};}catch{return {};}
+ });
+ useEffect(()=>{try{localStorage.setItem(tournamentUsageKey,JSON.stringify(practicePlays));}catch{/* daily cap is best effort on this device */}},[practicePlays]);
+ const practiceCount=practicePlays[utcDay()]??0;
+ const practiceLimitReached=mode==="practice"&&practiceCount>=5;
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
  const done=account.daily[utcDay()]?.["tournament-nation"]!==undefined;
  const seed=mode==="daily"?"TOURNAMENT:"+utcDay()+":"+difficulty:"TOURNAMENT:PRACTICE:"+practiceSeed+":"+difficulty;
@@ -1434,19 +1441,20 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
    lineupGroups[0]?.length===1&&lineupGroups[1]?.length>=3&&lineupGroups[1]?.length<=5&&lineupGroups[2]?.length>=2&&lineupGroups[2]?.length<=5&&lineupGroups[3]?.length>=1);
  const choose=(team:string)=>{
    if(ended||!match)return;const tries=attempts+1;setAttempts(tries);
-   if(team===match.team){setWon(true);setEnded(true);if(mode==="daily")onDaily("tournament-nation",Math.max(150,1000-(tries-1)*220));}
-   else if(tries>=maxGuesses){setWon(false);setEnded(true);if(mode==="daily")onDaily("tournament-nation",0);}
+   if(team===match.team){setWon(true);setEnded(true);if(mode==="daily")onDaily("tournament-nation",Math.max(150,1000-(tries-1)*220));else setPracticePlays(old=>({...old,[utcDay()]:Math.min(5,(old[utcDay()]??0)+1)}));}
+   else if(tries>=maxGuesses){setWon(false);setEnded(true);if(mode==="daily")onDaily("tournament-nation",0);else setPracticePlays(old=>({...old,[utcDay()]:Math.min(5,(old[utcDay()]??0)+1)}));}
  };
  const reset=(newMode:Mode=mode,newDifficulty:TournamentDifficulty=difficulty)=>{
    setDifficulty(newDifficulty);setAttempts(0);setEnded(false);setWon(false);
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
  };
  return <Frame account={account} game="tournament-nation" eyebrow="WORLD CUP ARCHIVE / STARTING XI" title="TOURNAMENT NATION." description="Identify the country from a full historic World Cup starting XI. Each shirt gives you a club clue from that tournament year." number="15" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
- {done&&mode==="daily"?<Success title="NATION IDENTIFIED." detail="Today's tournament challenge is complete. Practice draws from other recorded World Cup line-ups." button="PRACTICE" onAgain={()=>{setMode("practice");reset("practice");}}/>:
+ {done&&mode==="daily"?<Success title="NATION IDENTIFIED." detail="Today's tournament challenge is complete. Five practice runs are also available each day." button="PRACTICE" onAgain={()=>{setMode("practice");reset("practice");}}/>:
+  practiceLimitReached?<Card className="arc-result"><small>DAILY PRACTICE LIMIT</small><h2>FIVE MATCHES PLAYED.</h2><p>You have used all five free Tournament Nation practice runs today. The allowance resets at 00:00 GMT.</p></Card>:
   loadError?<Card className="arc-feedback"><b>TOURNAMENT DATA UNAVAILABLE</b><p>{loadError}</p><button className="arc-button" onClick={()=>{setLoadError("");getWorldCupLineups().then(setData).catch(e=>setLoadError(String(e)));}}>RETRY DATA ↗</button></Card>:
   !match||!data?<Card className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>OPENING THE WORLD CUP ARCHIVE</b><span>Loading 1982–2022 starting line-ups.</span></Card>:
   <Card className="tournament-game">
-   <div className="arc-game-meta"><span>FIFA WORLD CUP · {match.year}</span><b>{maxGuesses-attempts} GUESSES LEFT</b></div>
+   <div className="arc-game-meta"><span>FIFA WORLD CUP · {match.year}</span><b>{maxGuesses-attempts} GUESSES LEFT · {mode==="practice"?Math.max(0,5-practiceCount)+" RUNS LEFT TODAY":"DAILY GAME"}</b></div>
    <div className="grid-difficulty">{TOURNAMENT_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{difficultyLabel(level)}</button>)}</div>
    <div className="tournament-match"><div><small>TOURNAMENT</small><b>FIFA WORLD CUP {match.year}</b></div><div><small>ROUND</small><b>{match.round||"MATCH"}</b></div><div><small>OPPONENT</small><b>{match.opponent}</b></div><div><small>DATE</small><b>{match.date}</b></div></div>
    <div className="tournament-pitch"><div className="tournament-pitch-lines"><i/><i/><i/></div>
