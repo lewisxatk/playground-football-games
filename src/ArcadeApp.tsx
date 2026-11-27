@@ -56,9 +56,9 @@ const normalise = (v:string) => v.toLocaleLowerCase().normalize("NFD").replace(/
 
 const countryLabel = (value:string) => {
   const stripped=value.trim()
-    .replace(/^(?:drapeau de la|drapeau de|vlag van|flag of|bandera de|flagge von|fahne von)\\s+/i,"")
-    .replace(/\\s+u-?(?:15|16|17|18|19|20|21|23)\\b/ig,"")
-    .replace(/\\s+\\d{4}\\s*[-–/]\\s*\\d{2,4}.*$/,"").trim();
+    .replace(/^(?:drapeau de la|drapeau de|vlag van|flag of|bandera de|flagge von|fahne von)\s+/i,"")
+    .replace(/\s+u-?(?:15|16|17|18|19|20|21|23)\b/ig,"")
+    .replace(/\s+\d{4}\s*[-–/]\s*\d{2,4}.*$/,"").trim();
   const key=normalise(stripped);
   const labels:Record<string,string>={
     eng:"England",wal:"Wales",wls:"Wales",sco:"Scotland",nir:"Northern Ireland",
@@ -76,7 +76,7 @@ const countryLabel = (value:string) => {
     uzb:"Uzbekistan",tha:"Thailand",ind:"India",drapeaufrance:"France",vlagvanjapan:"Japan",
     republiqueducongo:"Republic of the Congo"
   };
-  const first=normalise(stripped.split(/[\\s,(/-]+/)[0]??"");
+  const first=normalise(stripped.split(/[\s,(/-]+/)[0]??"");
   return labels[key]??labels[first]??stripped;
 };
 const utcDay = () => new Date().toISOString().slice(0,10);
