@@ -723,7 +723,7 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
  const [gridNotice,setGridNotice]=useState("");
  const done=account.daily[utcDay()]?.["football-grid"]!==undefined;
  const seed=mode==="daily"?hashSeed("GRID:"+utcDay()+":"+difficulty):hashSeed("GRID:practice:"+practiceSeed+":"+difficulty);
- const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,1600);
+ const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,4200);
  const playerPool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
  const puzzle=useMemo(()=>playerPool.length>=40?buildGridPuzzle(playerPool,difficulty,seed):null,[playerPool,difficulty,seed]);
  const check=()=>{
@@ -1370,7 +1370,7 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
  const [clubsLoading,setClubsLoading]=useState(false);
  const [clubLookupError,setClubLookupError]=useState("");
  const [clubLookupAttempt,setClubLookupAttempt]=useState(0);
- const [attempts,setAttempts]=useState(0);const [ended,setEnded]=useState(false);const [won,setWon]=useState(false);
+ const [attempts,setAttempts]=useState(0);const [ended,setEnded]=useState(false);const [won,setWon]=useState(false);const maxGuesses=5;
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
  const done=account.daily[utcDay()]?.["tournament-nation"]!==undefined;
  const seed=mode==="daily"?"TOURNAMENT:"+utcDay()+":"+difficulty:"TOURNAMENT:PRACTICE:"+practiceSeed+":"+difficulty;
@@ -1394,7 +1394,7 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
        if(distinctPositions.length===1)positions.set(key,distinctPositions[0]);
      }
      setClubRows(clubs);setPositionRows(positions);
-   }).catch(problem=>{if(live){setClubRows(new Map());setPositionRows(new Map());setClubLookupError(problem instanceof Error?problem.message:"The historical club lookup failed.");}}).finally(()=>{if(live)setClubsLoading(false);});
+   }).catch(problem=>{if(live){setClubRows(new Map());setPositionRows(new Map());setClubLookupError("The historical club archive could not be opened for this match. The nation question remains playable; unverified club names will not be shown.");}}).finally(()=>{if(live)setClubsLoading(false);});
    return()=>{live=false;};
  },[match?.id,clubLookupAttempt]);
  const teams=useMemo(()=>data?[...new Set(data.matches.map(m=>m.team).filter(Boolean))]:[],[data]);
@@ -1424,7 +1424,7 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
  const choose=(team:string)=>{
    if(ended||!match)return;const tries=attempts+1;setAttempts(tries);
    if(team===match.team){setWon(true);setEnded(true);if(mode==="daily")onDaily("tournament-nation",Math.max(150,1000-(tries-1)*220));}
-   else if(tries>=3){setWon(false);setEnded(true);if(mode==="daily")onDaily("tournament-nation",0);}
+   else if(tries>=maxGuesses){setWon(false);setEnded(true);if(mode==="daily")onDaily("tournament-nation",0);}
  };
  const reset=(newMode:Mode=mode,newDifficulty:TournamentDifficulty=difficulty)=>{
    setDifficulty(newDifficulty);setAttempts(0);setEnded(false);setWon(false);
@@ -1435,7 +1435,7 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
   loadError?<Card className="arc-feedback"><b>TOURNAMENT DATA UNAVAILABLE</b><p>{loadError}</p><button className="arc-button" onClick={()=>{setLoadError("");getWorldCupLineups().then(setData).catch(e=>setLoadError(String(e)));}}>RETRY DATA ↗</button></Card>:
   !match||!data?<Card className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>OPENING THE WORLD CUP ARCHIVE</b><span>Loading 1982–2022 starting line-ups.</span></Card>:
   <Card className="tournament-game">
-   <div className="arc-game-meta"><span>FIFA WORLD CUP · {match.year}</span><b>{3-attempts} GUESSES LEFT</b></div>
+   <div className="arc-game-meta"><span>FIFA WORLD CUP · {match.year}</span><b>{maxGuesses-attempts} GUESSES LEFT</b></div>
    <div className="grid-difficulty">{TOURNAMENT_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{difficultyLabel(level)}</button>)}</div>
    <div className="tournament-match"><div><small>TOURNAMENT</small><b>FIFA WORLD CUP {match.year}</b></div><div><small>ROUND</small><b>{match.round||"MATCH"}</b></div><div><small>OPPONENT</small><b>{match.opponent}</b></div><div><small>DATE</small><b>{match.date}</b></div></div>
    <div className="tournament-pitch"><div className="tournament-pitch-lines"><i/><i/><i/></div>
@@ -1477,6 +1477,7 @@ function ScoutSignalPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
    currentCountry:"",currentDivision:null
  } as GamePlayer)),[]);
  const pool=archived.length>=2?archived:staticPool;
+ const guessPool=useMemo(()=>Array.from(new Map([...pool,...staticPool].map(player=>[player.archiveId,player])).values()),[pool,staticPool]);
  const target=pool[hashSeed(seed+":target")%pool.length];
  type SignalKey="nationality"|"careerClub"|"latestClub"|"position"|"league"|"ageBand";
  const sharedClubs=(p:GamePlayer)=>p.clubs.filter(c=>target.clubs.some(t=>normalise(t)===normalise(c)));
@@ -1502,8 +1503,8 @@ function ScoutSignalPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
  };
  const submit=(e:FormEvent)=>{
    e.preventDefault();
-   const p=archiveGuess(guess,pool);
-   if(!p||history.some(x=>x.archiveId===p.archiveId)||end)return;
+   const p=archiveGuess(guess,guessPool);
+   if(!p||history.some(x=>normalise(x.name)===normalise(p.name))||end)return;
    const next=[...history,p];setHistory(next);setGuess("");
    if(p.archiveId===target.archiveId){setWon(true);setEnd(true);if(mode==="daily")onDaily("scout-signal",Math.max(100,1000-(next.length-1)*90));}
    else if(next.length>=10){setEnd(true);if(mode==="daily")onDaily("scout-signal",0);}
