@@ -1571,7 +1571,7 @@ function ScoutSignalPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
    const found=archiveGuess(guess,guessPool);
    const name=guess.trim();
    if(!name||name.length<2||end)return;
-   const p=found??({...pool[0],archiveId:"typed:"+normalise(name),name,surname:name.split(/\\s+/).slice(-1)[0],nationality:"Unlisted",club:"Unknown club",clubs:[],position:"Unknown",league:"Unlisted",ageBand:"Unknown",careerSpells:[]} as GamePlayer);
+   const p=found??({...pool[0],archiveId:"typed:"+normalise(name),name,surname:name.split(/\s+/).slice(-1)[0],nationality:"Unlisted",club:"Unknown club",clubs:[],position:"Unknown",league:"Unlisted",ageBand:"Unknown",careerSpells:[]} as GamePlayer);
    if(history.some(x=>normalise(x.name)===normalise(p.name)))return;
    const next=[...history,p];setHistory(next);setGuess("");
    if(p.archiveId===target.archiveId){setWon(true);setEnd(true);if(mode==="daily")onDaily("scout-signal",Math.max(100,1000-(next.length-1)*90));}
