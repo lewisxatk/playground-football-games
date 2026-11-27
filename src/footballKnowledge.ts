@@ -148,7 +148,7 @@ export function useFootballQuizKnowledge(game:"the-climb"|"timed-quiz"){
 
 function seededShuffle<T>(items:T[],seed:number):T[]{const copy=[...items];let state=seed>>>0;for(let i=copy.length-1;i>0;i--){state=(Math.imul(state,1664525)+1013904223)>>>0;const j=state%(i+1);[copy[i],copy[j]]=[copy[j],copy[i]]}return copy}
 function balancedEnglishQuota(count:number,seed:number):number{
- const exact=count*.85,base=Math.floor(exact),roundUpSlots=Math.round((exact-base)*4);
+ const exact=count*.9,base=Math.floor(exact),roundUpSlots=Math.round((exact-base)*4);
  return base+((seed>>>0)%4<roundUpSlots?1:0);
 }
 export function makeCC0QuizRound(
@@ -156,7 +156,7 @@ export function makeCC0QuizRound(
  tier:CC0QuizTier,
  seed:number,
  count=5,
- requestedEnglishCount=Math.max(count===5?4:Math.ceil(count*.8),Math.min(count,balancedEnglishQuota(count,seed))),
+ requestedEnglishCount=count===5?4:Math.min(count,balancedEnglishQuota(count,seed)),
  excludedMatchIds:ReadonlySet<string>=new Set()
 ):CC0QuizQuestion[]{
  // One match must not appear twice in the same round under different question templates.
@@ -188,10 +188,10 @@ export function makeCC0DailyQuizRound(pool:CC0QuizQuestion[],seed:number):CC0Qui
  // Daily mix: fifteen English domestic questions and two UEFA Champions League questions.
  // International national-team friendlies and minor tournaments are deliberately excluded.
  const plan:{tier:CC0QuizTier;count:number;englishCount:number}[]=[
-  {tier:"EASY",count:5,englishCount:4},
-  {tier:"MEDIUM",count:5,englishCount:4},
-  {tier:"HARD",count:5,englishCount:5},
-  {tier:"EXTREME",count:2,englishCount:2}
+  {tier:"EASY",count:5,englishCount:5},
+  {tier:"MEDIUM",count:5,englishCount:5},
+  {tier:"HARD",count:5,englishCount:4},
+  {tier:"EXTREME",count:2,englishCount:1}
  ];
  const selected:CC0QuizQuestion[]=[];
  const usedMatches=new Set<string>();
