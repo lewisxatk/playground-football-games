@@ -3,13 +3,13 @@ export type CC0QuizTier = "EASY" | "MEDIUM" | "HARD" | "EXTREME";
 
 export type CC0FootballPlayer = {id:string;name:string;aliases:string[];nationalities:string[];birthYears:number[];positions:string[];source:string;sourceCommit?:string;licence:"CC0-1.0";wikidataId?:string;internationalGoalsRecorded?:number;worldCupStarts?:number;worldCupYears?:number[]};
 export type CC0Club = {id:string;name:string;countries:string[];source:string;sourceCommit:string;licence:"CC0-1.0"};
-export type CC0InternationalMatch = {id:string;date:string;year:number;home:string;away:string;homeScore:number;awayScore:number;tournament:string;competition?:string;season?:string;region?:"UK"|"INTERNATIONAL";sourceFile?:string;sourceRow?:string;city?:string;country?:string;neutral?:boolean;sourceKey:string;round?:string};
+export type CC0InternationalMatch = {id:string;date:string;year:number;home:string;away:string;homeScore:number;awayScore:number;tournament:string;competition?:string;season?:string;region?:"ENGLISH_DOMESTIC"|"INTERNATIONAL";sourceFile?:string;sourceRow?:string;city?:string;country?:string;neutral?:boolean;sourceKey:string;round?:string};
 export type CC0InternationalGoalEvent = {id:string;date:string;year:number;home:string;away:string;team:string;scorer:string;minute:string;penalty:boolean;ownGoal:boolean;eligibleForScorerTotals:boolean;sourceKey:string};
 export type CC0WorldCupLineup = {id:string;matchId:string;year:number;date:string;team:string;opponent:string;starters:string[];tournament:string;round:string;sourceKey?:string;sourceFile?:string;sourceRow?:string};
 export type CC0ConnectionsPack = {id:string;groups:{name:string;dimension:string;value:string;memberIds:string[]}[]};
 export type CC0StrandsPack = {id:string;spangram:string;words:string[];theme:string};
 export type CC0GridPack = {id:string;positions:string[];countries:string[];answers:string[][][]};
-export type CC0QuizQuestion = {id:string;factId:string;playerId:string;tier:CC0QuizTier;region:"UK"|"INTERNATIONAL";category:string;question:string;answer:string;options:string[];explanation:string;source:string;matchId:string;eventDate:string};
+export type CC0QuizQuestion = {id:string;factId:string;playerId:string;tier:CC0QuizTier;region:"ENGLISH_DOMESTIC"|"INTERNATIONAL";category:string;question:string;answer:string;options:string[];explanation:string;source:string;matchId:string;eventDate:string};
 export type CC0StatPlayer = {id:string;name:string;value?:number;goals?:number;internationalGoalsRecorded?:number;teams?:string[];label?:string};
 export type CC0StatPack = {id:string;players:CC0StatPlayer[];metric?:string};
 export type CC0DraftPlayer = {id:string;name:string;aliases:string[];positions:string[];nationalities:string[];birthYears:number[];worldCupYears:number[];internationalGoalsRecorded:number;worldCupStarts:number;source:string};
@@ -157,7 +157,7 @@ export function makeCC0QuizRound(
  }
  const eligible=[...byMatch.values()];
  if(!eligible.length)return[];
- const uk=seededShuffle(eligible.filter(q=>q.region==="UK"),seed+17);
+ const uk=seededShuffle(eligible.filter(q=>q.region==="ENGLISH_DOMESTIC"),seed+17);
  const international=seededShuffle(eligible.filter(q=>q.region==="INTERNATIONAL"),seed+31);
  const ukCount=Math.max(0,Math.min(count,requestedUKCount,uk.length));
  const internationalCount=Math.min(count-ukCount,international.length);
