@@ -147,12 +147,16 @@ export function useFootballQuizKnowledge(game:"the-climb"|"timed-quiz"){
 }
 
 function seededShuffle<T>(items:T[],seed:number):T[]{const copy=[...items];let state=seed>>>0;for(let i=copy.length-1;i>0;i--){state=(Math.imul(state,1664525)+1013904223)>>>0;const j=state%(i+1);[copy[i],copy[j]]=[copy[j],copy[i]]}return copy}
+function balancedEnglishQuota(count:number,seed:number):number{
+ const exact=count*.75,base=Math.floor(exact),roundUpSlots=Math.round((exact-base)*4);
+ return base+((seed>>>0)%4<roundUpSlots?1:0);
+}
 export function makeCC0QuizRound(
  pool:CC0QuizQuestion[],
  tier:CC0QuizTier,
  seed:number,
  count=5,
- requestedEnglishCount=Math.round(count*.75),
+ requestedEnglishCount=balancedEnglishQuota(count,seed),
  excludedMatchIds:ReadonlySet<string>=new Set()
 ):CC0QuizQuestion[]{
  // One match must not appear twice in the same round under different question templates.
@@ -189,6 +193,8 @@ export function makeCC0DailyQuizRound(pool:CC0QuizQuestion[],seed:number):CC0Qui
   {tier:"HARD",count:5,englishCount:4},
   {tier:"EXTREME",count:2,englishCount:1}
  ];
+ // Three daily rounds use 13/4 and one uses 12/5, giving exactly 75/25 over four days.
+ if(balancedEnglishQuota(17,seed)===12)plan[(seed>>>0)%3].englishCount=3;
  const selected:CC0QuizQuestion[]=[];
  const usedMatches=new Set<string>();
  plan.forEach((entry,index)=>{
