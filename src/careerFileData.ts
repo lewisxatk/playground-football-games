@@ -149,8 +149,6 @@ export type ArchiveGamePlayer = {
   careerSourceRevision?: number | null;
   statSourceTitle?: string;
   statSourceRevision?: number | null;
-  nationalRows?: number;
-  nationalTeams?: string[];
 };
 const gamePoolPromises = new Map<string, Promise<ArchiveGamePlayer[]>>();
 
