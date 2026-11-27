@@ -288,17 +288,17 @@ function LowballPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
  const done=account.daily[utcDay()]?.lowball!==undefined;
  const seed=mode==="daily"?"LOWBALL:"+utcDay():"LOWBALL:PRACTICE:"+practiceSeed;
- const {players:archivePlayers,loading:poolLoading,error:poolError,retry:retryPool}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,1600);
- const archivePool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer)
-   .filter(p=>p.leagueGoalSeasons>=2&&p.leagueGoals>=0&&p.name!=="Unknown player"),[archivePlayers]);
+ const {lowballPairs,loading:poolLoading,error:poolError,retry}=useFootballKnowledge();
  type DuelStatPlayer={name:string;value:number;club:string;seasons:number;id:string};
- const fallbackPool:DuelStatPlayer[]=LEAGUE_GOALS.map(p=>({name:p.name,value:p.value,club:"Premier League archive",seasons:1,id:p.name}));
- const sourcePool:DuelStatPlayer[]=archivePool.length>=2
-   ?archivePool.map(p=>({name:p.name,value:p.leagueGoals,club:p.club,seasons:p.leagueGoalSeasons,id:p.archiveId}))
-   :fallbackPool;
+ const fallbackPool:DuelStatPlayer[]=LEAGUE_GOALS.map(p=>({name:p.name,value:p.value,club:"Starter list",seasons:1,id:p.name}));
+ const sourcePool=useMemo(()=>{
+   const unique=new Map<string,DuelStatPlayer>();
+   for(const pack of lowballPairs)for(const player of pack.players){const value=player.value??player.goals??player.internationalGoalsRecorded??0;if(value>0&&!unique.has(player.id))unique.set(player.id,{id:player.id,name:player.name,value,club:player.teams?.[0]??"International football",seasons:1})}
+   return [...unique.values()];
+ },[lowballPairs]);
  const level=Math.min(3,Math.floor(step/5));
  const levelNames=["EASY","MEDIUM / STANDARD","HARD","EXTREME"];
- const metric=archivePool.length>=2?"RECORDED LEAGUE GOALS":"PREMIER LEAGUE GOALS";
+ const metric=sourcePool.length>=2?"RECORDED SENIOR INTERNATIONAL GOALS":"STARTER FALLBACK LIST";
  const pair=useMemo(()=>{
    const candidates=sourcePool.filter(p=>!used.includes(p.id));
    const available=candidates.length>=2?candidates:sourcePool;
@@ -343,9 +343,9 @@ function LowballPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
    setStep(0);setScore(0);setPick(null);setRunDone(false);setUsed([]);
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
  };
- return <Frame account={account} game="lowball" eyebrow="STAT FACE-OFF / QUICK FIRE" title="WHO'S GOT MORE?" description="Two players. One number. Pick the bigger recorded league goal total. Your streak gets harder every five correct answers." number="01" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
+ return <Frame account={account} game="lowball" eyebrow="STAT FACE-OFF / QUICK FIRE" title="WHO'S GOT MORE?" description="Two players. One number. Pick who has more recorded senior international goals. The source coverage is not a claim of complete career totals." number="01" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
   {done&&mode==="daily"?<Success title="DAILY DONE." detail="Today's ten-duel challenge is banked. Practice runs are unlimited." button="PRACTICE" onAgain={()=>{setMode("practice");restart("practice");}}/>:
-   poolLoading&&archivePlayers.length===0?<Card className="lb-panel lb-loading"><motion.div className="lb-loading-ball" animate={{y:[0,-12,0],rotate:[0,180,360]}} transition={{duration:1.2,repeat:Infinity,ease:"easeInOut"}}>⚽</motion.div><b>SCOUTING THE ARCHIVE</b><p>Building a fresh pool of footballers and recorded stats…</p><span>THE FIRST LOAD CAN TAKE A LITTLE LONGER. NEXT VISITS USE A LOCAL CACHE.</span></Card>:
+   poolLoading&&sourcePool.length===0?<Card className="lb-panel lb-loading"><motion.div className="lb-loading-ball" animate={{y:[0,-12,0],rotate:[0,180,360]}} transition={{duration:1.2,repeat:Infinity,ease:"easeInOut"}}>⚽</motion.div><b>SCOUTING THE ARCHIVE</b><p>Building a fresh pool of footballers and recorded stats…</p><span>THE FIRST LOAD CAN TAKE A LITTLE LONGER. NEXT VISITS USE A LOCAL CACHE.</span></Card>:
    runDone?<Success title={pick===null?"RUN COMPLETE.":"STREAK ENDED."} detail={"You reached "+step+" correct in a row and banked "+score+" points."} button="NEW RUN" onAgain={()=>restart(mode)}/>:
    <Card className="lb-panel">
     <div className="arc-game-meta"><span>{mode==="daily"?"DAILY DUEL "+(step+1)+" / 10":"STREAK "+step+" · "+levelNames[level]}</span><motion.b key={score} initial={{opacity:0,y:8,scale:.9}} animate={{opacity:1,y:0,scale:1}} transition={{type:"spring",stiffness:320,damping:18}}>{score} PTS</motion.b></div>
@@ -356,8 +356,8 @@ function LowballPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
      <div className="lb-player"><small>PLAYER B</small><strong>{pair[1].name}</strong><span>{pick!==null&&<motion.span initial={{opacity:0,y:12,scale:.92}} animate={{opacity:1,y:0,scale:1}} transition={{duration:.3}}>{pair[1].value.toLocaleString("en-GB")} GOALS</motion.span>}{pick===null?"— — —":""}</span><i>{pair[1].club}</i></div>
     </div>
     <div className="lb-actions">{pair.map((p,i)=><button key={p.id} onClick={()=>choose(i)} disabled={pick!==null} className={pick===null?"":i===correct?"correct":"wrong"}>MORE GOALS ↗</button>)}</div>
-    {pick!==null&&<motion.div className={"arc-feedback "+(pick===correct?"quiz-goal":"quiz-miss")} initial={{opacity:0,y:14,scale:.97}} animate={{opacity:1,y:0,scale:1}} transition={{type:"spring",stiffness:240,damping:22}}><b>{pick===correct?"YOU CALLED IT. ⚽":"STREAK OVER."}</b><p>{pair[correct].name} has {pair[correct].value.toLocaleString("en-GB")} recorded league goals in the source records.</p><button className="arc-button" onClick={pick===correct?next:()=>{if(mode==="daily")onDaily("lowball",score);setRunDone(true);}}>{pick===correct?(mode==="daily"&&step===9?"BANK DAILY SCORE":"NEXT DUEL"):"SEE RUN RESULT"} ↗</button></motion.div>}
-    <div className="lb-data-note"><b>{metric}</b><span>{archivePool.length>=2?"Source rows with recorded league statistics; season coverage varies by player.":"Starter fallback list while the shared archive is unavailable."}</span>{poolError&&<button onClick={retryPool}>RETRY ARCHIVE</button>}</div>
+    {pick!==null&&<motion.div className={"arc-feedback "+(pick===correct?"quiz-goal":"quiz-miss")} initial={{opacity:0,y:14,scale:.97}} animate={{opacity:1,y:0,scale:1}} transition={{type:"spring",stiffness:240,damping:22}}><b>{pick===correct?"YOU CALLED IT. ⚽":"STREAK OVER."}</b><p>{pair[correct].name} has {pair[correct].value.toLocaleString("en-GB")} recorded senior international goals in the CC0 source records.</p><button className="arc-button" onClick={pick===correct?next:()=>{if(mode==="daily")onDaily("lowball",score);setRunDone(true);}}>{pick===correct?(mode==="daily"&&step===9?"BANK DAILY SCORE":"NEXT DUEL"):"SEE RUN RESULT"} ↗</button></motion.div>}
+    <div className="lb-data-note"><b>{metric}</b><span>{sourcePool.length>=2?"Men’s senior full-international goals recorded in the CC0 source; coverage is not guaranteed complete.":"Manual starter fallback while the CC0 database is unavailable."}</span>{poolError&&<button onClick={retry}>RETRY DATABASE</button>}</div>
    </Card>}
  </Frame>;
 }
