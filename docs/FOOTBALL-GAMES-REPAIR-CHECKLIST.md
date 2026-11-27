@@ -37,6 +37,7 @@ Rule: after every successful GitHub commit, update this checklist in the next co
 - [ ] Re-run CC0 database generation and confirm the corrected club match produces at least 500 valid Football Grid packs; previous run failed with zero packs.
 - [ ] Link Up: validate ten unique questions; confirm each bridge player genuinely overlaps at both English clubs; review hints, lives and scoring (attempt/extra-life flow fix committed).
 - [x] Link Up database pool: replace the single 50,000-row Wikidata career query with up to four deterministic 50,000-row pages (ORDER BY player and statement), retaining P27 nationality labels and deduplicating statements. Commit: `dbb6a8fcc3`.
+- [x] Keep the existing verified English-club Link Up shard generator connected while the larger season-stat runtime migration is unfinished; prevent a zero-question Link Up page. Commit: `e58e554bae`.
 - [ ] Confirm the expanded career import generates at least 500 unique Link Up bridge puzzles. Latest pre-pagination build produced 47; do not weaken unique-bridge evidence to inflate the count.
 - [ ] Career File: verify clue accuracy, timeline, aliases, reveal/hint costs and source provenance (Premier League eligibility now uses generated club index).
 - [ ] Review Quick Quiz / The Climb pools and daily/practice allocations against the user's English-domestic preference.
