@@ -54,13 +54,19 @@ function archivePlayerToCareerFile(raw:ArchiveGamePlayer):Player{
  };
 }
 function archivePlayerCandidate(player:Player,raw:ArchiveGamePlayer):Candidate{
+ const country=clean(raw.currentCountry??"");
+ const league=clean(raw.currentLeague??"");
+ const region:Candidate["region"]=country.includes("england")||country.includes("united kingdom")||league.includes("premier league")?"ENGLISH":
+   ["spain","italy","germany","france"].some(value=>country.includes(value))||
+   ["laliga","seriea","bundesliga","ligue1"].some(value=>league.includes(value))?"INTERNATIONAL":undefined;
  return {
    id:player.id,
    name:player.name,
    apps:raw.appearances??0,
    spells:player.spells.length,
    clubs:new Set(player.spells.map(spell=>spell.clubQid||clean(spell.clubLink||spell.club)).filter(Boolean)).size,
-   statSeasons:raw.seasons??0
+   statSeasons:raw.seasons??0,
+   region
  };
 }
 
@@ -246,10 +252,23 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     const unused=options.filter(c=>!seen.current.has(c.id));
     const source=dailyDraw?options:(unused.length?unused:options);
     if(!dailyDraw&&!unused.length){seen.current.clear();persistRecentCareerIds(seen.current);setNote("You have worked through this difficulty and league pool. The player draw has restarted.");}
+    // All Top Five mixes English clubs with Spain, Italy, Germany and France.
+    // Individual league filters remain dedicated to the selected competition.
+    const balancedSource=league==="ALL"?(()=>{
+      const english=source.filter(candidate=>candidate.region==="ENGLISH");
+      const international=source.filter(candidate=>candidate.region==="INTERNATIONAL");
+      if(english.length>=54&&international.length>=18){
+        return [
+          ...shuffleCandidates(english,54,dailyDraw?dailySeed+":EN":dailySeed+":EN"),
+          ...shuffleCandidates(international,18,dailyDraw?dailySeed+":INT":dailySeed+":INT")
+        ];
+      }
+      return source;
+    })():source;
     // The first file of each UTC day is deterministic for everyone on the same
     // difficulty/league. Subsequent files are random practice and avoid repeats.
     // Keep the phone draw bounded: 72 candidates and at most six full lookups.
-    const dailyCandidates=dailyDraw?[...source].sort((a,b)=>a.id.localeCompare(b.id)):source;
+    const dailyCandidates=dailyDraw?[...balancedSource].sort((a,b)=>a.id.localeCompare(b.id)):balancedSource;
     const draw=shuffleCandidates(dailyCandidates,72,dailyDraw?dailySeed:undefined);
     setLoadingPlayer(true);
     setNote("Picking a fresh file from "+options.length.toLocaleString("en-GB")+" eligible careers…");
