@@ -38,12 +38,13 @@ export default function CultHeroCollectionPage() {
 
   useEffect(() => {
     if (stage !== "opening" || !pendingPlayer) return;
+    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
     const timer = window.setTimeout(() => {
       const result = addCultHeroCard(pendingPlayer, "pack");
       setCollection(result.collection);
       setWasAdded(result.added);
       setStage("revealed");
-    }, 2380);
+    }, reducedMotion ? 120 : 2380);
     return () => window.clearTimeout(timer);
   }, [stage, pendingPlayer]);
 
