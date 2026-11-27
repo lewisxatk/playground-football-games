@@ -268,15 +268,51 @@ const CLIMB_Q=[
  {q:"Who won the 1998 Ballon d'Or?",a:["Zinedine Zidane","Ronaldo Nazário","David Beckham","Dennis Bergkamp"],correct:"Zinedine Zidane",fact:"Zidane won after France's World Cup victory."}
 ];
 function ClimbPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
- const [mode,setMode]=useMode();const [step,setStep]=useState(0);const [lives,setLives]=useState(3);const [score,setScore]=useState(0);const [answer,setAnswer]=useState("");const [ended,setEnded]=useState(false);
+ const [mode,setMode]=useMode();const [difficulty,setDifficulty]=useState<QuizDifficulty>("STANDARD");
+ const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
+ const [step,setStep]=useState(0);const [lives,setLives]=useState(3);const [score,setScore]=useState(0);const [answer,setAnswer]=useState("");const [ended,setEnded]=useState(false);
  const done=account.daily[utcDay()]?.["the-climb"]!==undefined;
- const questions=useMemo(()=>shuffle(CLIMB_Q,mode==="daily"?hashSeed("CLIMB"+utcDay()):Math.floor(Math.random()*1e9)).slice(0,5),[mode]);
+ const seed=mode==="daily"?"CLIMB:"+utcDay()+":"+difficulty:"CLIMB:PRACTICE:"+practiceSeed+":"+difficulty;
+ const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,ARCHIVE_POOL_SEED,1600);
+ const pool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
+ const generated=useMemo(()=>{
+   const candidates=pool.length>=20?makeTimedQuiz(pool,difficulty,hashSeed(seed)): [];
+   const picked=shuffle(candidates,hashSeed(seed+":CLIMB-QUESTIONS")).slice(0,5);
+   return picked.map(q=>({q:q.question,a:q.options,correct:q.answer,fact:q.explanation,source:q.source,tier:q.tier}));
+ },[pool,difficulty,seed]);
+ const fallback=useMemo(()=>shuffle(CLIMB_Q,hashSeed(seed+":fallback")).slice(0,5).map(q=>({...q,source:"PLAYGROUND starter question bank",tier:"STANDARD"})),[seed]);
+ const questions=generated.length>=5?generated:fallback;
  const q=questions[step];
- const choose=(a:string)=>{if(answer||ended)return;setAnswer(a);if(a===q.correct)setScore(s=>s+100+lives*25);else setLives(v=>v-1);};
- const next=()=>{if(lives<=0||step===4){setEnded(true);if(mode==="daily")onDaily("the-climb",score);return;}setStep(v=>v+1);setAnswer("");};
- const restart=()=>{setStep(0);setLives(3);setScore(0);setAnswer("");setEnded(false);};
- return <Frame account={account} game="the-climb" eyebrow="SURVIVAL QUIZ / FIVE QUESTIONS" title="KEEP CLIMBING." description="Five questions. Three lives. Every correct answer takes you higher." number="02" mode={mode} setMode={m=>{setMode(m);restart();}}>
- {done&&mode==="daily"?<Success title="RUN COMPLETE." detail="Your daily climb is banked. Unlimited practice is always open." button="PRACTICE RUN" onAgain={()=>setMode("practice")}/>:<Card className="climb-play"><div className="arc-game-meta"><span>QUESTION {step+1} / 5</span><b>{lives} LIVES · {score} PTS</b></div><div className="climb-life-track">{[0,1,2].map(i=><i key={i} className={i<lives?"alive":""}/>)}</div><h2>{ended?"RUN COMPLETE.":q.q}</h2>{ended?<div className="arc-feedback"><p>You climbed {step+1} questions and banked {score} points.</p><button className="arc-button" onClick={restart}>RUN IT BACK ↻</button></div>:<><div className="climb-options">{q.a.map(a=><button key={a} onClick={()=>choose(a)} disabled={!!answer} className={answer===a?(a===q.correct?"correct":"wrong"):""}>{a}<i>↗</i></button>)}</div>{answer&&<div className="arc-feedback"><b>{answer===q.correct?"RIGHT ANSWER.":"NOT THIS TIME."}</b><p>{q.fact}</p><button className="arc-button" onClick={next}>{step===4||lives<=0?"SEE RESULT":"NEXT QUESTION"} ↗</button></div>}</>}</Card>}
+ const choose=(a:string)=>{
+   if(answer||ended||!q)return;
+   setAnswer(a);
+   if(a===q.correct)setScore(v=>v+100+lives*25);else setLives(v=>v-1);
+ };
+ const next=()=>{
+   if(lives<=0||step===4){setEnded(true);if(mode==="daily")onDaily("the-climb",score);return;}
+   setStep(v=>v+1);setAnswer("");
+ };
+ const restart=(newMode:Mode=mode,newDifficulty:QuizDifficulty=difficulty)=>{
+   setDifficulty(newDifficulty);setStep(0);setLives(3);setScore(0);setAnswer("");setEnded(false);
+   if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
+ };
+ return <Frame account={account} game="the-climb" eyebrow="SURVIVAL QUIZ / FIVE QUESTIONS" title="KEEP CLIMBING." description="Five questions. Three lives. Archive-generated football questions, with a starter fallback when the data source is unavailable." number="02" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
+ {done&&mode==="daily"?<Success title="RUN COMPLETE." detail="Your daily climb is banked. Unlimited practice has fresh questions." button="PRACTICE RUN" onAgain={()=>{setMode("practice");restart("practice");}}/>:
+  loading&&pool.length===0?<Card className="climb-loading"><motion.div animate={{y:[0,-10,0],rotate:[0,180,360]}} transition={{duration:1.4,repeat:Infinity}}>⚽</motion.div><b>SCOUTING THE NEXT QUESTIONS</b><span>BUILDING FIVE FROM THE PLAYER ARCHIVE…</span></Card>:
+  <Card className="climb-play">
+   <div className="arc-game-meta"><span>QUESTION {step+1} / 5</span><b>{lives} LIVES · {score} PTS</b></div>
+   <div className="grid-difficulty">{(["STANDARD","EASY","MEDIUM","HARD","EXTREME"] as QuizDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>restart(mode,level)}>{level}</button>)}</div>
+   <div className="climb-life-track">{[0,1,2].map(i=><i key={i} className={i<lives?"alive":""}/>)}</div>
+   <div className="climb-source-line"><span>{q?.tier??"FOOTBALL"}</span><span>{generated.length>=5?"ARCHIVE QUESTION":"STARTER QUESTION"}</span></div>
+   <h2>{ended?"RUN COMPLETE.":q?.q??"No question available."}</h2>
+   {ended?<div className="arc-feedback"><p>You climbed {step+1} questions and banked {score} points.</p><button className="arc-button" onClick={()=>restart(mode)}>RUN IT BACK ↻</button></div>:
+    <><div className="climb-options">{q?.a.map(a=><button key={a} onClick={()=>choose(a)} disabled={!!answer} className={answer===a?(a===q.correct?"correct":"wrong"):""}>{a}<i>↗</i></button>)}</div>
+     {answer&&<div className="arc-feedback"><b>{answer===q.correct?"RIGHT ANSWER.":"NOT THIS TIME."}</b><p>{q.fact}</p><small>{q.source}</small><button className="arc-button" onClick={next}>{step===4||lives<=0?"SEE RESULT":"NEXT QUESTION"} ↗</button></div>}
+    </>}
+   {error&&<p className="arc-muted">The archive request failed; the curated starter question bank is being used.</p>}
+   <p className="arc-muted">Each quiz fact uses an available archive field. Archive coverage is incomplete and the source wording is shown after each answer.</p>
+   <div className="arc-game-foot"><span>5 QUESTIONS · 3 LIVES</span><button className="arc-quiet" onClick={()=>{retry();restart(mode);}}>REFRESH ARCHIVE</button></div>
+  </Card>}
  </Frame>;
 }
 
