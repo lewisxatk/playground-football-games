@@ -20,6 +20,59 @@ async function parseInternationalResults(){
  for(const row of rows){const date=row.date,home=row.home_team,away=row.away_team,homeScore=Number(row.home_score),awayScore=Number(row.away_score),tournament=row.tournament;if(!date||!home||!away||row.home_score===""||row.away_score===""||!Number.isInteger(homeScore)||!Number.isInteger(awayScore)||!tournament)continue;const key=[date,norm(home),norm(away),norm(tournament)].join("|");if(map.has(key))continue;map.set(key,{id:id("international-match",key),date,year:Number(date.slice(0,4)),home,away,homeScore,awayScore,tournament,city:row.city,country:row.country,neutral:String(row.neutral).toLowerCase()==="true",source:SOURCES.internationalResults})}
  return [...map.values()].sort((a,b)=>a.date.localeCompare(b.date));
 }
+
+async function parseInternationalGoals(players){
+ const rows=parseCsv(await readFile(resolve(IR,"goalscorers.csv"),"utf8"));
+ const aliases=new Map();
+ for(const player of players)for(const name of [player.name,...(player.aliases||[])])aliases.set(norm(name),player);
+ const aggregates=new Map(),events=new Set();let accepted=0,duplicates=0,ownGoals=0;
+ for(const row of rows){
+  const date=String(row.date||"").trim(),team=String(row.team||"").trim(),scorer=String(row.scorer||"").trim();
+  const home=String(row.home_team||"").trim(),away=String(row.away_team||"").trim(),minute=String(row.minute||"").trim();
+  if(!date||!team||!scorer||!/^\d{4}-\d{2}-\d{2}$/.test(date))continue;
+  if(["true","1","yes"].includes(String(row.own_goal||"").trim().toLowerCase())){ownGoals++;continue;}
+  const eventKey=[date,norm(home),norm(away),norm(team),norm(scorer),minute,String(row.penalty||"")].join("|");
+  if(events.has(eventKey)){duplicates++;continue;}events.add(eventKey);accepted++;
+  let player=aliases.get(norm(scorer));
+  if(!player){
+   player={id:id("player",scorer),name:scorer,aliases:[],nationalities:[],birthYears:[],positions:[],source:SOURCES.internationalResults.repo,sourceCommit:SOURCES.internationalResults.commit,licence:"CC0-1.0"};
+   players.push(player);aliases.set(norm(scorer),player);
+  }
+  const entry=aggregates.get(player.id)||{id:player.id,name:player.name,goals:0,penaltyGoals:0,nonPenaltyGoals:0,teams:[],years:[],matches:[],source:SOURCES.internationalResults.repo,sourceCommit:SOURCES.internationalResults.commit,licence:"CC0-1.0",scope:"Recorded goals in men's senior full internationals, 1872–2024; source coverage is not guaranteed complete."};
+  entry.goals++;
+  if(["true","1","yes"].includes(String(row.penalty||"").trim().toLowerCase()))entry.penaltyGoals++;else entry.nonPenaltyGoals++;
+  const year=Number(date.slice(0,4));if(!entry.years.includes(year))entry.years.push(year);
+  if(!entry.teams.some(x=>norm(x)===norm(team)))entry.teams.push(team);
+  const match=[date,home,away].join(" · ");if(!entry.matches.includes(match))entry.matches.push(match);
+  aggregates.set(player.id,entry);
+ }
+ const scorers=[...aggregates.values()].sort((a,b)=>b.goals-a.goals||a.name.localeCompare(b.name));
+ return {scorers,meta:{acceptedGoalEvents:accepted,duplicateGoalRows:duplicates,ownGoalsExcluded:ownGoals,uniqueScorers:scorers.length,eligibleScorers:scorers.filter(x=>x.goals>=2).length}};
+}
+function makeInternationalGoalPacks(scorers){
+ const eligible=scorers.filter(player=>player.goals>=2),lowball=[],ladder=[],football501=[];
+ const pairSeen=new Set(),ladderSeen=new Set(),checkoutSeen=new Set();
+ if(eligible.length<500)return{lowball,ladder,football501};
+ for(let seed=1;seed<20000&&lowball.length<750;seed++){
+  const draw=seededShuffle(eligible,seed*7919+23),a=draw[0],b=draw[1];
+  if(!a||!b||a.id===b.id||a.goals===b.goals)continue;
+  const signature=[a.id,b.id].sort().join("|");if(pairSeen.has(signature))continue;pairSeen.add(signature);
+  lowball.push({id:id("lowball",signature),players:[a,b].map(p=>({id:p.id,name:p.name,value:p.goals})),metric:"recorded senior international goals",source:SOURCES.internationalResults});
+ }
+ for(let seed=1;seed<20000&&ladder.length<750;seed++){
+  const draw=seededShuffle(eligible,seed*3571+61).slice(0,5);
+  if(draw.length!==5||new Set(draw.map(p=>p.id)).size!==5||new Set(draw.map(p=>p.goals)).size!==5)continue;
+  const signature=draw.map(p=>p.id).sort().join("|");if(ladderSeen.has(signature))continue;ladderSeen.add(signature);
+  ladder.push({id:id("ladder",signature),players:draw.map(p=>({id:p.id,name:p.name,value:p.goals})),metric:"recorded senior international goals",source:SOURCES.internationalResults});
+ }
+ for(let seed=1;seed<20000&&football501.length<750;seed++){
+  const draw=seededShuffle(eligible,seed*2377+83).slice(0,12);
+  if(draw.length!==12||new Set(draw.map(p=>p.id)).size!==12)continue;
+  const signature=draw.map(p=>p.id).sort().join("|");if(checkoutSeen.has(signature))continue;checkoutSeen.add(signature);
+  football501.push({id:id("football-501",signature),players:draw.map(p=>({id:p.id,name:p.name,value:p.goals,label:"RECORDED SENIOR INTERNATIONAL GOALS"})),metric:"recorded senior international goals",source:SOURCES.internationalResults});
+ }
+ return{lowball,ladder,football501};
+}
 function buildInternationalQuiz(matches){
  const scorelines=[...new Set(matches.map(m=>m.homeScore+"-"+m.awayScore))];
  const ukTeams=new Set(["england","scotland","wales","northern ireland"]);
@@ -71,6 +124,8 @@ function makeStrandsPacks(players){
 const players=await parsePlayers(),clubs=await parseClubs();
 const internationalMatches=await parseInternationalResults();
 const internationalQuiz=buildInternationalQuiz(internationalMatches);
+const internationalGoals=await parseInternationalGoals(players);
+const internationalGoalPacks=makeInternationalGoalPacks(internationalGoals.scorers);
 const lineupData=JSON.parse(await readFile(resolve(ROOT,"public/data/worldcup-lineups.json"),"utf8"));
 const lineups=(lineupData.matches||[]).filter(m=>m?.id&&m.team&&m.opponent&&Number.isInteger(m.year)&&Array.isArray(m.starters)&&m.starters.length===11&&new Set(m.starters.map(norm)).size===11);
 const nations=[...new Set(lineups.flatMap(m=>[m.team,m.opponent]))].sort();
@@ -81,7 +136,7 @@ const cards=new Map();for(const m of lineups)for(const name of m.starters){const
 const clubConnections=makeConnections(clubs);
 const playerConnections=makePlayerConnections(players);
 const strands=makeStrandsPacks(players);
-const report={generatedAt:TODAY,policy:"CC0-only pinned source whitelist; licence does not guarantee factual accuracy",counts:{players:players.length,clubs:clubs.length,footlePlayerRecords:footle.length,footleAnswers:uniqueFootleAnswers.length,worldCupLineups:lineups.length,worldCupPlayerCards:cards.size,worldCupQuestions:validQuiz.length,internationalMatches:internationalMatches.length,climbQuestions:internationalQuiz.climb.length,timedQuizQuestions:internationalQuiz.timed.length,connectionsPacks:playerConnections.length,strandsPacks:strands.length,clubCountryPacks:clubConnections.length},games:{footle:{unit:"unique five-letter surname",count:uniqueFootleAnswers.length,ready:uniqueFootleAnswers.length>=500,integrated:true},"the-climb":{unit:"question",count:internationalQuiz.climb.length,ready:internationalQuiz.climb.length>=500,integrated:true},"timed-quiz":{unit:"question",count:internationalQuiz.timed.length,ready:internationalQuiz.timed.length>=500,integrated:true},connections:{unit:"puzzle-pack",count:playerConnections.length,ready:playerConnections.length>=500,integrated:true},"missing-xi":{unit:"puzzle-pack",count:lineups.length,ready:lineups.length>=500,integrated:true},"tournament-nation":{unit:"puzzle-pack",count:lineups.length,ready:lineups.length>=500,integrated:true},"the-reveal":{unit:"player-card",count:cards.size,ready:cards.size>=500,integrated:true},"link-up":{unit:"puzzle-pack",count:lineups.length,ready:lineups.length>=500,integrated:false},strands:{unit:"puzzle-pack",count:strands.length,ready:strands.length>=500,integrated:true},"football-grid":{unit:"puzzle-pack",count:0,ready:false,integrated:false,reason:"needs verified player-club intersections"},lowball:{unit:"challenge-pack",count:0,ready:false,integrated:false,reason:"needs scoped numeric player/club records"},ladder:{unit:"challenge-pack",count:0,ready:false,integrated:false,reason:"needs scoped numeric player/club records"},"football-501":{unit:"challenge-pack",count:0,ready:false,integrated:false,reason:"needs scoped numeric player/club records"},"draft-xi":{unit:"challenge-pack",count:0,ready:false,integrated:false,reason:"needs verified positions and pricing"},"career-file":{unit:"player-card",count:0,ready:false,integrated:false,reason:"needs dated career spells"},"cult-hero":{unit:"player-card",count:0,ready:false,integrated:false,reason:"needs dated club-spell histories"},"scout-signal":{unit:"player-card",count:0,ready:false,integrated:false,reason:"needs verified positions and player attributes"}}};
+const report={generatedAt:TODAY,policy:"CC0-only pinned source whitelist; licence does not guarantee factual accuracy",counts:{players:players.length,clubs:clubs.length,footlePlayerRecords:footle.length,footleAnswers:uniqueFootleAnswers.length,worldCupLineups:lineups.length,worldCupPlayerCards:cards.size,worldCupQuestions:validQuiz.length,internationalMatches:internationalMatches.length,internationalGoalEvents:internationalGoals.meta.acceptedGoalEvents,internationalGoalScorers:internationalGoals.meta.uniqueScorers,internationalScorersForGames:internationalGoals.meta.eligibleScorers,lowballPacks:internationalGoalPacks.lowball.length,ladderPacks:internationalGoalPacks.ladder.length,football501Packs:internationalGoalPacks.football501.length,climbQuestions:internationalQuiz.climb.length,timedQuizQuestions:internationalQuiz.timed.length,connectionsPacks:playerConnections.length,strandsPacks:strands.length,clubCountryPacks:clubConnections.length},games:{footle:{unit:"unique five-letter surname",count:uniqueFootleAnswers.length,ready:uniqueFootleAnswers.length>=500,integrated:true},"the-climb":{unit:"question",count:internationalQuiz.climb.length,ready:internationalQuiz.climb.length>=500,integrated:true},"timed-quiz":{unit:"question",count:internationalQuiz.timed.length,ready:internationalQuiz.timed.length>=500,integrated:true},connections:{unit:"puzzle-pack",count:playerConnections.length,ready:playerConnections.length>=500,integrated:true},"missing-xi":{unit:"puzzle-pack",count:lineups.length,ready:lineups.length>=500,integrated:true},"tournament-nation":{unit:"puzzle-pack",count:lineups.length,ready:lineups.length>=500,integrated:true},"the-reveal":{unit:"player-card",count:cards.size,ready:cards.size>=500,integrated:true},"link-up":{unit:"puzzle-pack",count:lineups.length,ready:lineups.length>=500,integrated:false},strands:{unit:"puzzle-pack",count:strands.length,ready:strands.length>=500,integrated:true},"football-grid":{unit:"puzzle-pack",count:0,ready:false,integrated:false,reason:"needs CC0 position × country grid converter"},lowball:{unit:"challenge-pack",count:internationalGoalPacks.lowball.length,ready:internationalGoalPacks.lowball.length>=500,integrated:false,reason:"recorded men's senior international goals; UI conversion pending"},ladder:{unit:"challenge-pack",count:internationalGoalPacks.ladder.length,ready:internationalGoalPacks.ladder.length>=500,integrated:false,reason:"recorded men's senior international goals; UI conversion pending"},"football-501":{unit:"challenge-pack",count:internationalGoalPacks.football501.length,ready:internationalGoalPacks.football501.length>=500,integrated:false,reason:"recorded men's senior international goals; UI conversion pending"},"draft-xi":{unit:"challenge-pack",count:0,ready:false,integrated:false,reason:"needs verified positions and pricing"},"career-file":{unit:"player-card",count:0,ready:false,integrated:false,reason:"needs dated career spells"},"cult-hero":{unit:"player-card",count:0,ready:false,integrated:false,reason:"needs dated club-spell histories"},"scout-signal":{unit:"player-card",count:0,ready:false,integrated:false,reason:"needs verified positions and player attributes"}}};
 for(const [k,n] of [["players",players.length],["Footle answers",uniqueFootleAnswers.length],["World Cup lineups",lineups.length],["World Cup questions",validQuiz.length],["The Climb questions",internationalQuiz.climb.length],["Timed Quiz questions",internationalQuiz.timed.length],["Connections packs",playerConnections.length],["Strands packs",strands.length]])if(n<500)throw new Error(k+" below 500: "+n);
-const database={schemaVersion:1,generatedAt:TODAY,idPolicy:"Stable SHA-256-derived IDs from normalised canonical names and source-scoped fact keys.",sourceRegistry:SOURCES,licencePolicy:"Only source repositories whose data licence is CC0-1.0 are imported. No club crest or portrait rights are included.",accuracyWarning:"CC0 is a reuse status, not a factual accuracy warranty. Review source data before publication.",report,players,clubs,worldCup:{lineups,playerCards:[...cards.values()]},internationalResults:{matches:internationalMatches},games:{footle:{answers:uniqueFootleAnswers.map(answer=>({id:id("footle-answer",answer),answer,source:SOURCES.players.repo,licence:"CC0-1.0"}))},quiz:{questions:validQuiz}, "the-climb":{questions:internationalQuiz.climb}, "timed-quiz":{questions:internationalQuiz.timed},connections:{packs:playerConnections,clubCountryPacks:clubConnections},strands:{packs:strands},"missing-xi":{packs:lineups},"tournament-nation":{packs:lineups},"the-reveal":{cards:[...cards.values()]},"link-up":{packs:lineups.map(m=>({id:id("link-up",m.id),matchId:m.id,team:m.team,opponent:m.opponent,year:m.year,players:m.starters}))}}};
+const database={schemaVersion:1,generatedAt:TODAY,idPolicy:"Stable SHA-256-derived IDs from normalised canonical names and source-scoped fact keys.",sourceRegistry:SOURCES,licencePolicy:"Only source repositories whose data licence is CC0-1.0 are imported. No club crest or portrait rights are included.",accuracyWarning:"CC0 is a reuse status, not a factual accuracy warranty. Review source data before publication.",report,players,clubs,worldCup:{lineups,playerCards:[...cards.values()]},internationalResults:{matches:internationalMatches,scorers:internationalGoals.scorers,scorerMeta:internationalGoals.meta},games:{footle:{answers:uniqueFootleAnswers.map(answer=>({id:id("footle-answer",answer),answer,source:SOURCES.players.repo,licence:"CC0-1.0"}))},quiz:{questions:validQuiz}, "the-climb":{questions:internationalQuiz.climb}, "timed-quiz":{questions:internationalQuiz.timed},connections:{packs:playerConnections,clubCountryPacks:clubConnections},strands:{packs:strands},lowball:{pairs:internationalGoalPacks.lowball},ladder:{packs:internationalGoalPacks.ladder},football501:{packs:internationalGoalPacks.football501},"missing-xi":{packs:lineups},"tournament-nation":{packs:lineups},"the-reveal":{cards:[...cards.values()]},"link-up":{packs:lineups.map(m=>({id:id("link-up",m.id),matchId:m.id,team:m.team,opponent:m.opponent,year:m.year,players:m.starters}))}}};
 await mkdir(OUT,{recursive:true});await writeFile(resolve(OUT,"football-knowledge.cc0.json"),JSON.stringify(database));await writeFile(resolve(OUT,"football-knowledge-report.json"),JSON.stringify(report,null,2)+"\n");console.log(JSON.stringify(report,null,2));
