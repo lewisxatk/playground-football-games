@@ -86,7 +86,7 @@ function positionCode(raw:string):Player["position"]{
   if(p.includes("DF")||p.includes("DEFENDER")||p.includes("BACK"))return "DEF";
   if(p.includes("MF")||p.includes("MID"))return "MID";
   if(p.includes("FW")||p.includes("FORWARD")||p.includes("STRIKER"))return "FWD";
-  return "MID";
+  return "" as Player["position"];
 }
 function archivePlayerToGamePlayer(p:ArchiveGamePlayer):GamePlayer{
   const name=p.name.trim();
@@ -587,12 +587,48 @@ function LadderPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
 }
 
 function RevealPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
- const [mode,setMode]=useMode();const [record,setRecord]=useState<Player>(PLAYER_DATABASE[hashSeed("REVEAL"+utcDay())%PLAYER_DATABASE.length]);const [reveal,setReveal]=useState(0);const [guess,setGuess]=useState("");const [tries,setTries]=useState(0);const [end,setEnd]=useState(false);const [won,setWon]=useState(false);const done=account.daily[utcDay()]?.["the-reveal"]!==undefined;
- const clues=[record.nationality+" international",record.position+" by trade",record.clubs.slice(0,2).join(" → "),record.league==="Retired"?"A former professional":"Last listed at "+record.club];
- const restart=(selectedMode:Mode=mode)=>{setRecord(selectedMode==="daily"?PLAYER_DATABASE[hashSeed("REVEAL"+utcDay())%PLAYER_DATABASE.length]:PLAYER_DATABASE[Math.floor(Math.random()*PLAYER_DATABASE.length)]);setReveal(0);setGuess("");setTries(0);setEnd(false);setWon(false);};
- const submit=(e:FormEvent)=>{e.preventDefault();if(end||!guess.trim())return;const next=tries+1;setTries(next);if(acceptedName(guess,[record.name,...record.aliases])){setWon(true);setEnd(true);if(mode==="daily")onDaily("the-reveal",Math.max(100,900-reveal*100-next*40));}else if(next>=8){setEnd(true);if(mode==="daily")onDaily("the-reveal",0);}setGuess("");};
- return <Frame account={account} game="the-reveal" eyebrow="BLUR / CLUE / IDENTIFY" title="THE REVEAL." description="A mystery player. Four career clues. Identify them before your available points run down." number="09" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
- {done&&mode==="daily"?<Success title="MYSTERY SOLVED." detail="Today's Reveal is complete. Practice has a fresh player." button="PRACTICE" onAgain={()=>setMode("practice")}/>:<Card className="reveal-game"><div className="arc-game-meta"><span>CLUE {reveal+1} / 4</span><b>{Math.max(0,900-reveal*100-tries*40)} PTS AVAILABLE</b></div><div className="reveal-portrait"><div className={"reveal-silhouette r"+reveal}><span>{end?record.name.split(" ").map(x=>x[0]).join("").slice(0,2):"?"}</span></div><small>PLAYER IMAGE / PORTRAIT NOT CONNECTED</small></div><div className="reveal-clues">{clues.slice(0,reveal+1).map((c,i)=><p key={i}><span>0{i+1}</span>{c}</p>)}</div><button className="arc-quiet" onClick={()=>setReveal(v=>Math.min(3,v+1))} disabled={reveal>=3||end}>REVEAL NEXT CLUE −100 PTS</button><form className="arc-guess-form" onSubmit={submit}><input value={guess} onChange={e=>setGuess(e.target.value)} placeholder="Who is the player?" disabled={end}/><button className="arc-button">GUESS ↗</button></form>{end&&<div className="arc-feedback"><b>{won?"GOT THEM.":"THE PLAYER WAS "+record.name}</b><button className="arc-button" onClick={()=>restart()}>NEXT PLAYER ↗</button></div>}</Card>}
+ const [mode,setMode]=useMode();
+ const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
+ const [reveal,setReveal]=useState(0);const [guess,setGuess]=useState("");const [tries,setTries]=useState(0);const [end,setEnd]=useState(false);const [won,setWon]=useState(false);
+ const done=account.daily[utcDay()]?.["the-reveal"]!==undefined;
+ const seed=mode==="daily"?"REVEAL:"+utcDay():"REVEAL:PRACTICE:"+practiceSeed;
+ const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,seed,1600);
+ const pool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer).filter(p=>p.nationality!=="Unlisted"&&p.clubs.length>=2),[archivePlayers]);
+ const target=pool.length?pool[hashSeed(seed+":target")%pool.length]:null;
+ const clues=target?[
+   {label:"Nationality",value:target.nationality},
+   {label:"Position",value:target.position||"Position not recorded"},
+   {label:"Career path",value:target.clubs.join(" → ")},
+   {label:"Career record",value:target.lastYear!==null?target.firstYear+"–"+target.lastYear:"Career dates incomplete"},
+   {label:"Recorded appearances",value:target.careerApps.toLocaleString("en-GB")},
+   {label:"Recorded goals",value:target.careerGoals.toLocaleString("en-GB")}
+ ].filter(c=>Boolean(c.value)): [];
+ const score=Math.max(0,1000-(Math.max(0,reveal-1)*100)-tries*45);
+ const restart=(newMode:Mode=mode)=>{
+   if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
+   setReveal(0);setGuess("");setTries(0);setEnd(false);setWon(false);
+ };
+ const submit=(e:FormEvent)=>{
+   e.preventDefault();if(end||!guess.trim()||!target)return;
+   const next=tries+1;setTries(next);
+   if(acceptedName(guess,[target.name,target.surname,...target.aliases])){setWon(true);setEnd(true);if(mode==="daily")onDaily("the-reveal",score);}
+   else if(next>=8){setEnd(true);if(mode==="daily")onDaily("the-reveal",0);}
+   setGuess("");
+ };
+ const showNext=()=>{if(reveal<clues.length-1)setReveal(v=>v+1);};
+ return <Frame account={account} game="the-reveal" eyebrow="BLUR / CLUE / IDENTIFY" title="THE REVEAL." description="A mystery player from the archive. Use the career clues, reveal more information when you need it, then name the footballer." number="09" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
+ {done&&mode==="daily"?<Success title="MYSTERY SOLVED." detail="Today's Reveal is complete. Archive-backed practice has a fresh target." button="PRACTICE" onAgain={()=>{setMode("practice");restart("practice");}}/>:
+  loading&&pool.length===0?<Card className="reveal-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>OPENING THE PLAYER DOSSIER</b><span>SCANNING RECORDED CAREERS AND CLUB SPELLS…</span></Card>:
+  !target?<Card className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NO COMPLETE PLAYER FILES FOUND"}</b><p>{error||"The current archive draw did not find enough complete career clues. Try another draw."}</p><button className="arc-button" onClick={()=>{retry();restart(mode);}}>RETRY ARCHIVE ↗</button></Card>:
+  <Card className="reveal-game">
+   <div className="arc-game-meta"><span>CLUE {Math.min(reveal+1,clues.length)} / {clues.length}</span><b>{Math.max(0,8-tries)} GUESSES · {score} PTS AVAILABLE</b></div>
+   <div className="reveal-portrait"><motion.div className={"reveal-silhouette r"+Math.min(3,reveal)} animate={{scale:[1,1.015,1]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut"}}><span>{end?target.name.split(" ").map(x=>x[0]).join("").slice(0,2):"?"}</span></motion.div><small>ARCHIVE PLAYER / PORTRAIT NOT CONNECTED</small></div>
+   <div className="reveal-clues">{clues.slice(0,reveal+1).map((c,i)=><motion.p key={c.label} initial={{opacity:0,x:-8}} animate={{opacity:1,x:0}}><span>0{i+1}</span><b>{c.label}:</b> {c.value}</motion.p>)}</div>
+   <div className="reveal-actions"><button className="arc-quiet" onClick={showNext} disabled={reveal>=clues.length-1||end}>REVEAL NEXT CLUE −100 PTS</button><span>{clues.length-reveal-1} CLUES HIDDEN</span></div>
+   <form className="arc-guess-form" onSubmit={submit}><input value={guess} onChange={e=>setGuess(e.target.value)} placeholder="Full name or surname…" disabled={end}/><button className="arc-button" disabled={!guess.trim()||end}>LOCK IN ↗</button></form>
+   {end&&<div className="arc-feedback"><b>{won?"GOT THEM.": "THE PLAYER WAS "+target.name}</b><p>{won?"You identified the archive player.":"The target's recorded career was "+target.clubs.join(" → ")+ "."}</p><button className="arc-button" onClick={()=>restart(mode)}>NEXT PLAYER ↗</button></div>}
+   <p className="arc-muted">Career totals and club spells reflect available archive records; they are not guaranteed complete for every player.</p>
+  </Card>}
  </Frame>;
 }
 
