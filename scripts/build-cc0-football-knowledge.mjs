@@ -396,7 +396,7 @@ const internationalQuiz=buildInternationalQuiz(allMatches);
 const internationalGoals=await parseInternationalGoals(players);
 const internationalGoalPacks=makeInternationalGoalPacks(internationalGoals.scorers);
 const lineupData=JSON.parse(await readFile(resolve(ROOT,"public/data/worldcup-lineups.json"),"utf8"));
-const legacyLineups=(lineupData.matches||[]).filter(m=>m?.id&&m.team&&m.opponent&&Number.isInteger(m.year)&&Array.isArray(m.starters)&&m.starters.length===11&&new Set(m.starters.map(norm)).size===11).map(match=>({...match,sourceKey:"worldCup",sourceFile:"public/data/worldcup-lineups.json"}));
+const legacyLineups=(lineupData.matches||[]).filter(m=>m?.id&&m.team&&m.opponent&&Number.isInteger(m.year)&&Array.isArray(m.starters)&&m.starters.length===11&&new Set(m.starters.map(norm)).size===11).map(match=>({...match,sourceKey:"worldCup",sourceFile:match.year+"/worldcup-full.json"}));
 const currentWorldCup=JSON.parse(await readFile(resolve(WORLD_CUP,"2026/worldcup-full.json"),"utf8"));
 const currentLineups=(currentWorldCup.matches||[]).flatMap(match=>{
  const teams=[{team:match.team1,opponent:match.team2,lineup:match.lineup?.[0]},{team:match.team2,opponent:match.team1,lineup:match.lineup?.[1]}];
