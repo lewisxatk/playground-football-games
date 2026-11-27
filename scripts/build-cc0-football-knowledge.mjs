@@ -536,7 +536,7 @@ const shards={
  "career-history":{...common,meta:wikidataCareerImport.meta,players:careerPlayers,linkUpPacks}
 };
 await mkdir(OUT,{recursive:true});
-await rm(resolve(OUT,"football-knowledge.cc0.json"),{force:true});
+await Promise.all(["football-knowledge.cc0.json","football-knowledge-the-climb.cc0.json","football-knowledge-timed-quiz.cc0.json"].map(file=>rm(resolve(OUT,file),{force:true})));
 const shardManifest={};
 for(const [key,data] of Object.entries(shards)){
  const file="football-knowledge-"+key+".cc0.json";
