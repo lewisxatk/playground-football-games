@@ -47,10 +47,68 @@ async function writeCache(key: string, players: ArchiveGamePlayer[]): Promise<vo
   db.close();
 }
 
+type StaticPlayerIndex = {
+  sourceRelease?: string;
+  sourceAssetSha256?: string;
+  playerCount?: number;
+  shardSize?: number;
+  shardCount?: number;
+  shards?: { file:string; count:number; sha256:string }[];
+};
+let staticIndexPromise:Promise<StaticPlayerIndex|null>|null=null;
+
+function seededHash(value:string):number{
+  let hash=2166136261;
+  for(let i=0;i<value.length;i++){hash^=value.charCodeAt(i);hash=Math.imul(hash,16777619);}
+  return hash>>>0;
+}
+
+async function getStaticIndex():Promise<StaticPlayerIndex|null>{
+  if(!staticIndexPromise){
+    staticIndexPromise=fetch("/data/player-shards/index.json",{cache:"force-cache"})
+      .then(async response=>{
+        if(!response.ok)return null;
+        const index=await response.json() as StaticPlayerIndex;
+        if(!index.sourceAssetSha256||!Array.isArray(index.shards)||index.shards.length<10||
+          !Number.isFinite(index.playerCount))return null;
+        return index;
+      }).catch(()=>null);
+  }
+  return staticIndexPromise;
+}
+
+async function loadStaticPlayerShard(seed:string,limit:number):Promise<ArchiveGamePlayer[]|null>{
+  const index=await getStaticIndex();
+  if(!index?.shards?.length)return null;
+  const shard=index.shards[seededHash(seed)%index.shards.length];
+  if(!shard?.file||!Number.isInteger(shard.count))return null;
+  const cacheKey="static:"+index.sourceAssetSha256+":"+shard.file+":"+seed+":"+limit;
+  const cached=await readCache(cacheKey);
+  if(cached)return cached.slice(0,limit);
+  const response=await fetch("/data/player-shards/"+shard.file,{cache:"force-cache"});
+  if(!response.ok)throw new Error("Static player shard could not be loaded ("+response.status+").");
+  const rows=await response.json() as ArchiveGamePlayer[];
+  if(!Array.isArray(rows)||rows.length!==shard.count)throw new Error("Static player shard count does not match its index.");
+  // Keep shared daily samples identical; a new practice seed picks another
+  // shard and a deterministic subset from within it.
+  const sampled=[...rows].sort((a,b)=>
+    seededHash(seed+":"+a.id)-seededHash(seed+":"+b.id)
+  ).slice(0,limit);
+  await writeCache(cacheKey,sampled);
+  return sampled;
+}
+
 function poolFor(key: string, limit: number): Promise<ArchiveGamePlayer[]> {
   const existing = memoryPools.get(key);
   if (existing) return existing;
   const request = (async () => {
+    try {
+      const staticPlayers=await loadStaticPlayerShard(key,limit);
+      if(staticPlayers)return staticPlayers;
+    } catch(error) {
+      // Preserve the existing remote Parquet path as a safety fallback while
+      // a new shard set is being deployed or an individual static asset fails.
+    }
     const cached = await readCache(key);
     if (cached) return cached.slice(0, limit);
     const players = await getArchiveGamePlayers(limit, key);
