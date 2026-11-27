@@ -55,8 +55,8 @@
   "shards": {
     "core": {
       "file": "/data/football-knowledge-core.cc0.json",
-      "bytes": 18800171,
-      "sha256": "9da84568b29d03b98aa920df976008f06e5853730067be8f7daa533ad2fd2d23",
+      "bytes": 18800198,
+      "sha256": "3211a62b97ea4c1b450505971a30073c63f27d23bcd53ff97b4687fcc92504e9",
       "recordCounts": {
         "players": 75226,
         "clubs": 560
@@ -72,8 +72,8 @@
     },
     "english-matches": {
       "file": "/data/football-knowledge-english-matches.cc0.json",
-      "bytes": 22341196,
-      "sha256": "fc7775c761dc2538ac10e04da567bd661ff7107c251632f00eba5d1cd6ca6c4a",
+      "bytes": 23189960,
+      "sha256": "d68826b72cac337e09e1f4cb415a3df4769eebe4d05242eadc165c6024c40928",
       "recordCounts": {
         "matches": 60626
       }
@@ -88,8 +88,8 @@
     },
     "goal-events": {
       "file": "/data/football-knowledge-goal-events.cc0.json",
-      "bytes": 20526588,
-      "sha256": "8ef5db7ea91622d4df3d588eb60b0379a966cba55b67a26a8567f2dd1bd6832f",
+      "bytes": 20526587,
+      "sha256": "af4a882b0b62ca97ccfbf997a2298dab5b6183d45a0b95472b95230d83c92e3e",
       "recordCounts": {
         "events": 47835,
         "scorers": 14839
@@ -114,8 +114,8 @@
     },
     "connections": {
       "file": "/data/football-knowledge-connections.cc0.json",
-      "bytes": 1872337,
-      "sha256": "1dda104ff97abd3edcfb4276e26d6be3cf487037b5520cfa456db690d225d82b",
+      "bytes": 1872298,
+      "sha256": "9abc96718214007e4bcfcc7f006a57c0f98d75958e8a0d3b1bd74d5a4e27651b",
       "recordCounts": {
         "players": 5043,
         "packs": 500
@@ -124,7 +124,7 @@
     "strands": {
       "file": "/data/football-knowledge-strands.cc0.json",
       "bytes": 110298,
-      "sha256": "a5a76e0de2303ac5e3f4cccf993191c8be7b2a8cdbe9069b0d90c5df0f30ebad",
+      "sha256": "e729a2ba6c85f24eafd5b52dad82eb9c6691e68da91b74a754a61b4af6ac48be",
       "recordCounts": {
         "packs": 500
       }
@@ -132,7 +132,7 @@
     "football-grid": {
       "file": "/data/football-knowledge-football-grid.cc0.json",
       "bytes": 2856296,
-      "sha256": "9c3f31059d78697e7ef033014c6077c0f5bdd44040e338f7650e362cee8b62d1",
+      "sha256": "a6f09ba770799c1a839eae62d8bc2a8112f1d5f482b13ba7f77cc8c18e2c5d08",
       "recordCounts": {
         "players": 7130,
         "packs": 500
@@ -140,82 +140,82 @@
     },
     "the-climb-easy-1": {
       "file": "/data/football-knowledge-the-climb-easy-1.cc0.json",
-      "bytes": 14476748,
-      "sha256": "96708b4e9cc76c59da875731677b2e0930e6f9687f295d7919d332ead9757d60",
+      "bytes": 9497403,
+      "sha256": "e8ba718e476229645a9a8fbef216b2e663b302cb98356252cfbc65727a0458d9",
       "recordCounts": {
-        "questions": 21241
+        "questions": 13616
       }
     },
     "the-climb-easy-2": {
       "file": "/data/football-knowledge-the-climb-easy-2.cc0.json",
-      "bytes": 14574436,
-      "sha256": "d49c8b51a11e800d05d9d8510f57bd9a4e4d4ede2f06da9c07a6f73a768064c4",
+      "bytes": 9042473,
+      "sha256": "b09ca463d44861cdf234d4166058f2086d5e4b50780f9c1875c32a23f7114bd9",
       "recordCounts": {
-        "questions": 21241
+        "questions": 13615
       }
     },
     "the-climb-medium": {
       "file": "/data/football-knowledge-the-climb-medium.cc0.json",
-      "bytes": 5961656,
-      "sha256": "e8ee8ad78238aca853bc1b371d14505f07f76823e999d8eb0f104de75ab8f9ce",
+      "bytes": 10943815,
+      "sha256": "f893e0d1d624dd6a62f45a6f87b26d4c8bddcf4653bbe5c62cbb6079f0191d65",
       "recordCounts": {
-        "questions": 8678
+        "questions": 16026
       }
     },
     "the-climb-hard": {
       "file": "/data/football-knowledge-the-climb-hard.cc0.json",
-      "bytes": 2999161,
-      "sha256": "977a7784967cb527d63a5dc108cb7036fb443c3ce9ee1864705cb0a9a8902d03",
+      "bytes": 7856030,
+      "sha256": "f17c149650f365f458f5c2318264b3886545d703380c44901de9a7bb31143bca",
       "recordCounts": {
-        "questions": 4400
+        "questions": 11680
       }
     },
     "the-climb-extreme": {
       "file": "/data/football-knowledge-the-climb-extreme.cc0.json",
-      "bytes": 1258982,
-      "sha256": "9d8eb9c7c8315bf7fa778fae325038c8dc979ed1ba60f06ae15396a45ad7f5fe",
+      "bytes": 1667078,
+      "sha256": "f5884ebb84773539af77784240ef706ec07b3a6f7aea33ac557e817335244a1a",
       "recordCounts": {
-        "questions": 1844
+        "questions": 2467
       }
     },
     "timed-quiz-easy-1": {
       "file": "/data/football-knowledge-timed-quiz-easy-1.cc0.json",
-      "bytes": 14441527,
-      "sha256": "5860053b79abedb1898dccd0164d0279b9213030acec85bff611166fe8621f3d",
+      "bytes": 9424771,
+      "sha256": "618c84beb727be5ecf08e4ecbb3b0255d137b9d2f78bb0892301aefeee0ccf95",
       "recordCounts": {
-        "questions": 21151
+        "questions": 13518
       }
     },
     "timed-quiz-easy-2": {
       "file": "/data/football-knowledge-timed-quiz-easy-2.cc0.json",
-      "bytes": 14504740,
-      "sha256": "ed0c1a9ad46a5077d17db05a09911b80e470489bf162b59c80daaab6ae10fd73",
+      "bytes": 8972626,
+      "sha256": "c9eb23670109dd9baa6102be0f0ba60b876071a0842fd06a94dba0fc492b8b44",
       "recordCounts": {
-        "questions": 21151
+        "questions": 13517
       }
     },
     "timed-quiz-medium": {
       "file": "/data/football-knowledge-timed-quiz-medium.cc0.json",
-      "bytes": 6100096,
-      "sha256": "8ce8ecada91029c096bd56e2bffda57fba46661e2ceaa0868c814e6d099bb8e3",
+      "bytes": 11101737,
+      "sha256": "bbf28803154572204e8fe1e96359fbc93212a9d7f5aeff1ae7d9d54f8910fedf",
       "recordCounts": {
-        "questions": 8880
+        "questions": 16226
       }
     },
     "timed-quiz-hard": {
       "file": "/data/football-knowledge-timed-quiz-hard.cc0.json",
-      "bytes": 2968172,
-      "sha256": "e2bfc14cd1f5eb4dc2502fa2c6eeda9afca1951dab437ed61fe7088e5a22c466",
+      "bytes": 7901628,
+      "sha256": "35c56e7c0d85e01373c0102f84d973c05e82dd8dd8e6c1fccd71ad2a22d1af7a",
       "recordCounts": {
-        "questions": 4359
+        "questions": 11739
       }
     },
     "timed-quiz-extreme": {
       "file": "/data/football-knowledge-timed-quiz-extreme.cc0.json",
-      "bytes": 1273046,
-      "sha256": "ab6a28b0c7e6b49274140a0c115da7a12817266ebffd14edc9eeb17847a3410c",
+      "bytes": 1620710,
+      "sha256": "65c3f26d3d916252b040224d42663960a7db91a448254a25cc73fdf7bbaa1636",
       "recordCounts": {
-        "questions": 1864
+        "questions": 2405
       }
     },
     "the-reveal": {
@@ -228,8 +228,8 @@
     },
     "goal-packs": {
       "file": "/data/football-knowledge-goal-packs.cc0.json",
-      "bytes": 2038414,
-      "sha256": "f4ba0e734ea0e8604a2f43f5890f0c5dfc863d12c3b18424760637c9ce2b3375",
+      "bytes": 2038413,
+      "sha256": "52c0d5e09ffd6a38f6acc0dcb08c675d5a1c87101770798b7d69487a60c7019b",
       "recordCounts": {
         "lowballPairs": 750,
         "ladderPacks": 750,
@@ -246,8 +246,8 @@
     },
     "career-history": {
       "file": "/data/football-knowledge-career-history.cc0.json",
-      "bytes": 9320993,
-      "sha256": "8b49882da5ae07df66ec917f434f3081bf7b974761a67c4ad8c5ed0cb5be63e7",
+      "bytes": 9320665,
+      "sha256": "0515ea7a77cdf479d3e4434b045e002beda14e6d5487403383067b2c1b178fda",
       "recordCounts": {
         "players": 7169,
         "linkUpPacks": 750
