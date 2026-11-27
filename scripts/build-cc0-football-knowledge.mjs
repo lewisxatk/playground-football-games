@@ -454,32 +454,31 @@ function makeClubNationGridPacks(careerPlayers,englishClubNames,target=500){
    club.nations.add(norm(nation));clubNationCounts.set(keyClub,club);
   }
  }
- const eligible=[...clubNationCounts.values()].filter(club=>club.nations.size>=4).sort((a,b)=>b.nations.size-a.nations.size).slice(0,36);
+ const eligible=[...clubNationCounts.values()].filter(club=>club.nations.size>=4).sort((a,b)=>b.nations.size-a.nations.size).slice(0,48);
  if(eligible.length<4)return[];
  const packs=[],seen=new Set();
- for(let seed=1;seed<12000&&packs.length<target;seed++){
+ for(let seed=1;seed<30000&&packs.length<target;seed++){
   const clubs=seededShuffle(eligible,seed*7919).slice(0,4);
-  if(new Set(clubs.map(club=>norm(club.name))).size!==4)continue;
+  if(new Set(clubs.map(club=>clubKey(club.name))).size!==4)continue;
   const commonNations=[...new Set(clubs.flatMap(club=>[...club.nations]))]
-   .filter(nation=>clubs.every(club=>(buckets.get(clubKey(club.name)+":"+nation)||[]).length>0));
+   .filter(nation=>clubs.every(club=>(buckets.get(clubKey(club.name)+":"+nation)||[]).length>=3));
   if(commonNations.length<4)continue;
   const nations=seededShuffle(commonNations,seed*104729).slice(0,4);
-  const used=new Set(),answers=[];
-  let valid=true;
+  const answers=[];let valid=true;
   for(const club of clubs){
    const row=[];
    for(const nation of nations){
-    const candidates=seededShuffle(buckets.get(clubKey(club.name)+":"+nation)||[],seed+club.name.length*nation.length+row.length*31);
-    const answer=candidates.find(player=>!used.has(player.id));
-    if(!answer){valid=false;break;}
-    used.add(answer.id);row.push([answer.id]);
+    const candidates=seededShuffle(buckets.get(clubKey(club.name)+":"+nation)||[],seed+club.name.length*nation.length+row.length*31)
+      .slice(0,Math.min(20,buckets.get(clubKey(club.name)+":"+nation).length)).map(player=>player.id);
+    if(candidates.length<3||new Set(candidates).size!==candidates.length){valid=false;break;}
+    row.push(candidates);
    }
    if(!valid)break;answers.push(row);
   }
-  if(!valid||used.size!==16)continue;
-  const signature=clubs.map(club=>norm(club.name)).join("|")+"|"+nations.join("|")+"|"+answers.flat(2).join(",");
+  if(!valid)continue;
+  const signature=clubs.map(club=>clubKey(club.name)).join("|")+"|"+nations.join("|")+"|"+answers.flat(2).join(",");
   if(seen.has(signature))continue;seen.add(signature);
-  packs.push({id:id("club-nation-grid",signature),clubs:clubs.map(club=>club.name),countries:nations,answers,source:SOURCES.wikidata.url,licence:"CC0-1.0"});
+  packs.push({id:id("premier-league-nation-grid",signature),clubs:clubs.map(club=>club.name),countries:nations,answers,source:SOURCES.wikidata.url,licence:"CC0-1.0"});
  }
  return packs;
 }
@@ -550,7 +549,8 @@ const uniqueFootleAnswers=[...new Set(footle.flatMap(p=>[p.name,...(p.aliases||[
 const cards=new Map();for(const m of lineups)for(const name of m.starters){const k=norm(name),r=cards.get(k)||{id:id("wc-player",k),name,worldCups:[],teams:[],matchIds:[]};if(!r.worldCups.includes(m.year))r.worldCups.push(m.year);if(!r.teams.includes(m.team))r.teams.push(m.team);if(!r.matchIds.includes(m.id))r.matchIds.push(m.id);cards.set(k,r)}
 const clubConnections=makeConnections(clubs);
 const playerConnections=makePlayerConnections(players);
-const gridPacks=makeClubNationGridPacks(careerPlayers,englishClubNames,500);
+const premierLeagueClubNames=new Set(englishMatches.filter(match=>match.competition==="Premier League").flatMap(match=>[match.home,match.away]).map(clubKey));
+const gridPacks=makeClubNationGridPacks(careerPlayers,premierLeagueClubNames,500);
 const strands=makeStrandsPacks(players);
 const report={generatedAt:TODAY,policy:"CC0-only source whitelist; Wikidata career snapshot is live-query data with retrieved timestamp",wikidataCareerImport:wikidataCareerImport.meta,counts:{players:players.length,clubs:clubs.length,wikidataCareerRows:wikidataCareerImport.meta.rawRows,wikidataCareerPlayers:careerPlayers.length,careerFileCandidates:careerFileCandidates.length,cultHeroCandidates:cultHeroCandidates.length,linkUpPacks:linkUpPacks.length,footlePlayerRecords:footle.length,footleAnswers:uniqueFootleAnswers.length,worldCupLineups:lineups.length,worldCupPlayerCards:cards.size,worldCupQuestions:validQuiz.length,internationalMatches:internationalMatches.length,englishMatches:englishMatches.length,europeanClubMatches:europeanClubMatches.length,totalMatchFacts:allMatches.length,englishDomesticMatchFacts:allMatches.filter(match=>match.region==="ENGLISH_DOMESTIC").length,internationalMatchFacts:allMatches.filter(match=>match.region!=="ENGLISH_DOMESTIC").length,internationalGoalEvents:internationalGoals.meta.uniqueGoalEvents,eligibleScoringEvents:internationalGoals.meta.acceptedGoalEvents,ownGoalsExcluded:internationalGoals.meta.ownGoalsExcluded,duplicateGoalRows:internationalGoals.meta.duplicateGoalRows,internationalGoalScorers:internationalGoals.meta.uniqueScorers,internationalScorersForGames:internationalGoals.meta.eligibleScorers,lowballPacks:internationalGoalPacks.lowball.length,ladderPacks:internationalGoalPacks.ladder.length,football501Packs:internationalGoalPacks.football501.length,climbQuestions:internationalQuiz.climb.length,timedQuizQuestions:internationalQuiz.timed.length,connectionsPacks:playerConnections.length,gridPacks:gridPacks.length,strandsPacks:strands.length,clubCountryPacks:clubConnections.length},games:{footle:{unit:"unique five-letter surname",count:uniqueFootleAnswers.length,ready:uniqueFootleAnswers.length>=500,integrated:true},"the-climb":{unit:"question",count:internationalQuiz.climb.length,ready:internationalQuiz.climb.length>=500,integrated:true},"timed-quiz":{unit:"question",count:internationalQuiz.timed.length,ready:internationalQuiz.timed.length>=500,integrated:true},connections:{unit:"puzzle-pack",count:playerConnections.length,ready:playerConnections.length>=500,integrated:true},"missing-xi":{unit:"puzzle-pack",count:lineups.length,ready:lineups.length>=500,integrated:true},"tournament-nation":{unit:"puzzle-pack",count:lineups.length,ready:lineups.length>=500,integrated:true},"the-reveal":{unit:"player-card",count:cards.size,ready:cards.size>=500,integrated:true},"link-up":{unit:"puzzle-pack",count:linkUpPacks.length,ready:linkUpPacks.length>=500,integrated:linkUpPacks.length>=500,reason:linkUpPacks.length>=500?undefined:"Wikidata career overlap pool currently below 500 packs"}, "career-file":{unit:"player-card",count:careerFileCandidates.length,ready:careerFileCandidates.length>=500,integrated:careerFileCandidates.length>=500,reason:careerFileCandidates.length>=500?undefined:"Wikidata career pool currently below 500 eligible players"}, "cult-hero":{unit:"player-card",count:cultHeroCandidates.length,ready:cultHeroCandidates.length>=500,integrated:cultHeroCandidates.length>=500,reason:cultHeroCandidates.length>=500?undefined:"Wikidata career pool currently below 500 eligible players"},strands:{unit:"puzzle-pack",count:strands.length,ready:strands.length>=500,integrated:true},"football-grid":{unit:"puzzle-pack",count:gridPacks.length,ready:gridPacks.length>=500,integrated:true,format:"English club × national flag"},lowball:{unit:"challenge-pack",count:internationalGoalPacks.lowball.length,ready:internationalGoalPacks.lowball.length>=500,integrated:true,metric:"recorded senior international goals"},ladder:{unit:"challenge-pack",count:internationalGoalPacks.ladder.length,ready:internationalGoalPacks.ladder.length>=500,integrated:true,metric:"recorded senior international goals"},"football-501":{unit:"challenge-pack",count:internationalGoalPacks.football501.length,ready:internationalGoalPacks.football501.length>=500,integrated:true,metric:"recorded senior international goals"},"draft-xi":{unit:"candidate-player",count:positionPlayers.length,ready:positionPlayers.length>=500,integrated:true,metric:"position, international goals and World Cup starts; draft credits are game values"},"scout-signal":{unit:"player-card",count:positionPlayers.length,ready:positionPlayers.length>=500,integrated:true,metric:"position, nation, age band, international goals and World Cup starts"}}};
 for(const [k,n] of [["players",players.length],["Footle answers",uniqueFootleAnswers.length],["World Cup lineups",lineups.length],["World Cup player cards",cards.size],["World Cup questions",validQuiz.length],["The Climb questions",internationalQuiz.climb.length],["Timed Quiz questions",internationalQuiz.timed.length],["International goal scorers",goalPlayers.length],["Positioned stat players",positionPlayers.length],["Connections packs",playerConnections.length],["Football Grid packs",gridPacks.length],["Strands packs",strands.length],["Lowball packs",internationalGoalPacks.lowball.length],["Ladder packs",internationalGoalPacks.ladder.length],["Football 501 packs",internationalGoalPacks.football501.length],["English domestic matches",englishMatches.length],["UEFA club matches",europeanClubMatches.length],["Career File candidates",careerFileCandidates.length],["Cult Hero candidates",cultHeroCandidates.length],["Link Up packs",linkUpPacks.length]])if(n<500)throw new Error(k+" below 500: "+n);
@@ -572,7 +572,7 @@ for(const pack of playerConnections){
  if(groups.length!==4||groups.some(group=>group.memberIds?.length!==4)||members.length!==16||!uniqueValues(members))throw new Error("Connections pack is not four distinct groups of four: "+pack.id);
 }
 for(const pack of gridPacks){
- if(pack.clubs.length!==4||pack.countries.length!==4||pack.answers.length!==4||pack.answers.some(row=>row.length!==4||row.some(cell=>cell.length!==1||!uniqueValues(cell)))||new Set(pack.answers.flat(2)).size!==16)throw new Error("Football Grid pack has an incomplete cell: "+pack.id);
+ if(pack.clubs.length!==4||pack.countries.length!==4||pack.answers.length!==4||pack.answers.some(row=>row.length!==4||row.some(cell=>cell.length<3||!uniqueValues(cell))))throw new Error("Football Grid pack has an incomplete cell or too few verified players: "+pack.id);
 }
 for(const pack of strands){
  const words=[pack.spangram,...pack.words];
