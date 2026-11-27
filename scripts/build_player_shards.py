@@ -305,7 +305,7 @@ def build_rows(manifest: dict[str, Any], files: dict[str, Any]) -> list[dict[str
     LEFT JOIN club_rollup cl ON cl.wikidata_qid=c.current_club_qid
     LEFT JOIN stat_source_rollup ss ON ss.player_qid=c.player_id
     WHERE c.appearances >= 20
-    ORDER BY lower(c.name), c.player_id
+    ORDER BY hash(c.player_id), c.player_id
     """
     cursor = conn.execute(query)
     columns = [d[0] for d in cursor.description]
@@ -361,7 +361,7 @@ def build_rows(manifest: dict[str, Any], files: dict[str, Any]) -> list[dict[str
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output", default="public/data/player-shards")
+    parser.add_argument("--output", default="public/data/player-pool")
     parser.add_argument("--shard-size", type=int, default=BATCH_SHARD_SIZE)
     parser.add_argument("--cache", default=".cache/openfootballbase-data.tar.gz")
     args = parser.parse_args()
@@ -396,48 +396,58 @@ def main() -> None:
     shutil.rmtree(output, ignore_errors=True)
     output.mkdir(parents=True, exist_ok=True)
     shards: list[dict[str, Any]] = []
+    shards: list[dict[str, Any]] = []
     for shard_number, offset in enumerate(range(0, len(rows), args.shard_size)):
         chunk = rows[offset : offset + args.shard_size]
-        filename = f"players-{shard_number:03d}.json"
-        payload = json.dumps(chunk, ensure_ascii=False, separators=(",", ":"), sort_keys=False).encode("utf-8")
+        filename = "players-" + str(shard_number).zfill(3) + ".json"
+        payload = json.dumps({
+            "releaseTag": release.get("tag_name"),
+            "source": "OpenFootballBase-Data",
+            "licence": "CC BY-SA 4.0",
+            "players": chunk,
+        }, ensure_ascii=False, separators=(",", ":"), sort_keys=False).encode("utf-8")
         target = output / filename
         target.write_bytes(payload)
         shards.append({
             "file": filename,
             "count": len(chunk),
+            "bytes": len(payload),
             "sha256": hashlib.sha256(payload).hexdigest(),
-            "firstName": chunk[0]["name"],
-            "lastName": chunk[-1]["name"],
         })
 
+    caveats = [
+        "Career infobox appearances/goals and national caps are unverified source values.",
+        "Career statistics by club/season/competition are only available for a subset of players and are also unverified.",
+        "Missing statistics remain null and must not be treated as verified zeroes.",
+        "Transfer fees are not part of this source and are supplied separately.",
+        "Nationality and position come from the latest available squad record and may be blank.",
+        "Latest club league/country metadata describes the upstream club record, not necessarily the player's historical season.",
+        "Some unidentified players have name-based keys and cannot always be distinguished from namesakes.",
+        "Wikipedia-derived records are CC BY-SA 4.0; Wikidata-derived fields are CC0. Career spells retain page and revision provenance where available.",
+    ]
     index = {
-        "format": 1,
-        "generatedAt": release.get("published_at") or release.get("created_at"),
-        "sourceRelease": release.get("tag_name"),
-        "sourceReleaseUrl": release.get("html_url"),
+        "version": 1,
+        "source": "OpenFootballBase-Data",
+        "sourceUrl": "https://github.com/florentfougeres/OpenFootballBase-Data",
+        "licence": "CC BY-SA 4.0",
+        "releaseTag": release.get("tag_name"),
+        "releaseUrl": release.get("html_url"),
         "sourceAssetSha256": expected,
-        "source": "OpenFootballBase-Data career, stat_club, national, player_profile, birth, club and squad Parquet tables",
-        "dataLicence": "Wikipedia-derived records CC BY-SA 4.0 with source page/revision attribution; Wikidata-derived records CC0",
-        "warnings": [
-            "Career infobox appearances/goals and national caps are unverified source values.",
-            "Career statistics by club/season/competition are only available for a subset of players and are also unverified.",
-            "Missing statistics are exported with coverage counts; they must not be treated as verified zeroes.",
-            "Latest club league/country metadata describes the upstream club record, not necessarily the player's historical season.",
-            "Some unidentified players have name-based keys and cannot always be distinguished from namesakes.",
-            "Player positions and nationality are taken from the latest available squad record and may be blank.",
-        ],
+        "generatedAt": release.get("published_at") or release.get("created_at"),
         "playerCount": len(rows),
+        "playersWithSeasonStats": sum(1 for row in rows if row.get("stats")),
         "shardSize": args.shard_size,
         "shardCount": len(shards),
+        "caveats": caveats,
         "shards": shards,
     }
-    index_path = output / "index.json"
-    index_path.write_text(json.dumps(index, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    index_path = output / "manifest.json"
+    index_path.write_text(json.dumps(index, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps({
         "sourceRelease": index["sourceRelease"],
         "playerCount": len(rows),
         "shardCount": len(shards),
-        "index": str(index_path),
+        "manifest": str(index_path),
         "totalBytes": sum((output / shard["file"]).stat().st_size for shard in shards) + index_path.stat().st_size,
         "sample": rows[:3],
     }, ensure_ascii=False, default=str))
