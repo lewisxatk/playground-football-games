@@ -845,7 +845,7 @@ function buildArchiveLinkUpQuestions(players:GamePlayer[],index:GridClubIndex,se
  const premier=buildFor(index.premierLeagueClubs,"PREMIER LEAGUE");
  if(premier.length>=10)return premier;
  const english=buildFor(index.englishLeagueClubs,"ENGLISH LEAGUES");
- return premier.length?premier:english;
+ return english.length>=premier.length?english:premier;
 }
 type ArchiveLinkQuestion={start:GamePlayer;end:GamePlayer;answer:GamePlayer;startClub:string;endClub:string;options:GamePlayer[]};
 function buildArchiveLinkUpQuestions(players:GamePlayer[],index:GridClubIndex|null,seed:number):ArchiveLinkQuestion[]{
@@ -1253,8 +1253,8 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const retry=()=>{setRetryToken(value=>value+1);reset(mode,difficulty);};
  return <Frame account={account} game="link-up" eyebrow="SHARED TEAM-MATES / TEN CONNECTIONS" title="THE LINK UP." description="Connect two players through one team-mate with overlapping spells at English clubs. Premier League clubs are prioritised, with other English leagues used when needed. Four progressive hints help you through." number="11" mode={mode} setMode={m=>reset(m)}>
  {done&&mode==="daily"?<Success title="TEN LINKS COMPLETE." detail="Today's ten-question Link Up challenge is banked. Ten practice runs are available each day on this device." button="PRACTICE" onAgain={()=>reset("practice")}/>:
-  loading&&pool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.4,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>CONNECTING ENGLISH CAREERS</b><span>Loading dated player-club spells from the season-by-season archive. First load may take a moment.</span></div>:
-  error&&pool.length===0?<Card className="arc-feedback"><b>ENGLISH PLAYER ARCHIVE UNAVAILABLE</b><p>{error}</p><button className="arc-button" onClick={retry}>RETRY PLAYER ARCHIVE ↗</button></Card>:
+  loading?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.4,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>CONNECTING ENGLISH CAREERS</b><span>Loading dated player-club spells from the season-by-season archive. First load may take a moment.</span></div>:
+  error?<Card className="arc-feedback"><b>ENGLISH PLAYER ARCHIVE UNAVAILABLE</b><p>{error}</p><button className="arc-button" onClick={retry}>RETRY PLAYER ARCHIVE ↗</button></Card>:
   practiceLimitReached?<Card className="arc-result"><small>PRACTICE LIMIT REACHED</small><h2>THAT'S TEN RUNS.</h2><p>You have completed ten free ten-question Link Up runs today on this device. The allowance resets at 00:00 GMT.</p></Card>:
   finished?<Success title="FULL-TIME." detail={"You scored "+score+" points across "+questions.length+" connections."+(mode==="practice"?" Practice run "+practiceUsed+" of 10 used today.":"")} button="NEW TEN-LINK RUN" onAgain={()=>reset(mode)}/>:
   questions.length!==10||!q?<Card className="arc-feedback"><b>{error?"ENGLISH PLAYER ARCHIVE UNAVAILABLE":"NOT ENOUGH VERIFIED ENGLISH LINKS FOR A FULL TEN-QUESTION RUN"}</b><p>{error||"The season-by-season archive did not produce ten unique, unambiguous teammate links. Retry to rotate the player sample or try another difficulty."}</p><button className="arc-button" onClick={retry}>RETRY LINK ARCHIVE ↗</button></Card>:
