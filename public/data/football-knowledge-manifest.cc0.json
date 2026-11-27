@@ -1,5 +1,6 @@
 {
   "schemaVersion": 1,
+  "buildPipelineVersion": 2,
   "generatedAt": "2026-11-27",
   "idPolicy": "Stable SHA-256-derived IDs from canonicalised names or source-scoped fact keys; source IDs retained where supplied.",
   "licencePolicy": "CC0-1.0 data only; no third-party crests, photographs, portraits or copied quiz wording.",
