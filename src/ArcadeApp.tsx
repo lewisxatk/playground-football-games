@@ -685,7 +685,7 @@ function ConnectionsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
 
 type GridDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
 const GRID_LEVELS:GridDifficulty[]=["EASY","STANDARD","HARD","EXTREME"];
-const gridClubKey=(value:string)=>normalise(value).replace(/^(?:associationfootballclub|footballclub|fc|afc)/,"").replace(/(?:associationfootballclub|footballclub|fc|afc)$/,"");
+const gridClubKey=(value:string)=>normalise(value.replace(/&/g,"and")).replace(/and/g,"").replace(/^(?:associationfootballclub|footballclub|fc|afc)/,"").replace(/(?:associationfootballclub|footballclub|fc|afc)$/,"");
 function hasUniqueGridAssignment(rows:GamePlayer[][][]):boolean{
  const cells=rows.flat().map((players,index)=>({index,players:[...new Map(players.map(player=>[player.archiveId,player])).values()]}));
  if(cells.length!==16||cells.some(cell=>cell.players.length===0))return false;
