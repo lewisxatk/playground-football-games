@@ -70,13 +70,16 @@ function validateShard<K extends FootballKnowledgeKey>(key:K,value:unknown):Foot
  if(key==="goal-events"&&list("events").some(event=>{const row=event as Record<string,unknown>;return !row.id||!row.date||!row.scorer||typeof row.ownGoal!=="boolean"}))throw new Error("An international goal event is incomplete.");
  if(key==="world-cup"){
   const lineups=list("lineups") as Record<string,unknown>[];
-  if(lineups.some(row=>!row.id||!Array.isArray(row.starters)||row.starters.length!==11||new Set(row.starters as string[]).size!==11)||list("questions").length<500||list("playerCards").length<500)throw new Error("The World Cup master shard failed its line-up/question/player checks.");
+  if(lineups.some(row=>!row.id||!Array.isArray(row.starters)||row.starters.length!==11||new Set(row.starters as string[]).size!==11))throw new Error("The World Cup line-up shard contains a malformed starting XI.");
+ }
+ if(key==="the-reveal"){
+  const cards=list("playerCards") as Record<string,unknown>[];
+  if(cards.length<500||cards.some(card=>!card.id||!card.name||!Array.isArray(card.worldCups)||!Array.isArray(card.teams)))throw new Error("The Reveal player-card shard is incomplete or malformed.");
  }
  if(key==="career-history"){
   const players=list("players") as Record<string,unknown>[];
   if(players.some(player=>!player.id||!player.qid||!Array.isArray(player.spells)))throw new Error("A Wikidata career profile is missing its QID or dated membership records.");
-  if(list("careerFileCandidates").length!==players.length||list("cultHeroCandidates").length!==players.length)throw new Error("The career candidate indexes do not match the canonical career profiles.");
-  if(list("linkUpPacks").some(pack=>{const row=pack as Record<string,unknown>;return !row.id||!row.answerPlayerId||!Array.isArray(row.optionPlayerIds)||(row.optionPlayerIds as unknown[]).length!==6;}))throw new Error("A Wikidata Link Up puzzle is malformed.");
+  if(list("linkUpPacks").length<500||list("linkUpPacks").some(pack=>{const row=pack as Record<string,unknown>;return !row.id||!row.answerPlayerId||!Array.isArray(row.optionPlayerIds)||(row.optionPlayerIds as unknown[]).length!==6;}))throw new Error("The Wikidata Link Up puzzle shard is incomplete or malformed.");
  }
  if(key==="connections"&&list("players").length<500)throw new Error("The CC0 connections player list is incomplete.");
  if(key==="football-grid"&&list("players").length<500)throw new Error("The CC0 grid player list is incomplete.");
