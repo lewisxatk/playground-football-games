@@ -440,7 +440,7 @@ function makeGridPacks(players){
  return packs;
 }
 
-const clubKey=value=>norm(value).replace(/\\b(?:association football club|football club|fc|afc)\\b/g," ").replace(/\\s+/g," ").trim();
+const clubKey=value=>norm(value).replace(/\b(?:association football club|football club|fc|afc)\b/g," ").replace(/\s+/g," ").trim();
 function makeClubNationGridPacks(careerPlayers,englishClubNames,target=500){
  const buckets=new Map(),clubNationCounts=new Map();
  for(const player of careerPlayers){
@@ -469,7 +469,7 @@ function makeClubNationGridPacks(careerPlayers,englishClubNames,target=500){
   for(const club of clubs){
    const row=[];
    for(const nation of nations){
-    const candidates=seededShuffle(buckets.get(norm(club.name)+":"+nation)||[],seed+club.name.length*nation.length+row.length*31);
+    const candidates=seededShuffle(buckets.get(clubKey(club.name)+":"+nation)||[],seed+club.name.length*nation.length+row.length*31);
     const answer=candidates.find(player=>!used.has(player.id));
     if(!answer){valid=false;break;}
     used.add(answer.id);row.push([answer.id]);
