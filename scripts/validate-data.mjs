@@ -73,7 +73,7 @@ try {
 
 
 const questionBank = JSON.parse(await readFile(new URL("../public/data/question-bank.json", import.meta.url), "utf8"));
-assert.equal(questionBank.version, 2, "Question bank version mismatch");
+assert.equal(questionBank.version, 3, "Question bank version mismatch");
 assert.equal(questionBank.source, "OpenFootballBase-Data", "Question bank source metadata mismatch");
 assert.equal(questionBank.meta?.targetPerTier, 800, "Question bank target must be at least 750 per tier");
 for (const tier of ["EASY", "MEDIUM", "HARD", "EXTREME"]) {
@@ -96,7 +96,7 @@ for (const tier of ["EASY", "MEDIUM", "HARD", "EXTREME"]) {
     assert.ok(Object.hasOwn(regions, question.region), "Question has an invalid regional classification");
     regions[question.region]++;
     if (tier === "EASY") {
-      assert.ok(["PLAYER BASICS", "PLAYER & CLUBS", "LEAGUES"].includes(question.category),
+      assert.ok(["PLAYER BASICS", "PLAYER & CLUBS"].includes(question.category),
         "Easy questions must use accessible player, club or league basics");
       assert.ok(!/earliest career|earliest.*club|career.?goal total|international caps/i.test(question.question),
         "Easy questions must not use obscure career-history or advanced-stat templates");
