@@ -7,7 +7,6 @@ import {
 import { ClubBadge, CountryFlag } from "./ClubBadge";
 
 import { cc0CareerToArchiveGamePlayer } from "./cc0CareerAdapter";
-import { getWorldCupLineups } from "./tournamentNationData";
 import type { ArchiveGamePlayer, ArchiveCareerSpell, ArchiveGameStat } from "./careerFileData";
 import CareerFilePage from "./CC0CareerFilePage";
 import CultHeroPage from "./CultHeroPage";
@@ -1033,13 +1032,12 @@ type MissingDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
 const MISSING_LEVELS:MissingDifficulty[]=["EASY","STANDARD","HARD","EXTREME"];
 function MissingXIPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();const [difficulty,setDifficulty]=useState<MissingDifficulty>("STANDARD");
- const [data,setData]=useState<Awaited<ReturnType<typeof getWorldCupLineups>>|null>(null);
- const [loadError,setLoadError]=useState("");const [attempts,setAttempts]=useState(0);const [end,setEnd]=useState(false);const [won,setWon]=useState(false);
+ const {data:worldCupData,loading,error,retry}=useFootballKnowledge("world-cup");const [attempts,setAttempts]=useState(0);const [end,setEnd]=useState(false);const [won,setWon]=useState(false);
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
  const done=account.daily[utcDay()]?.["missing-xi"]!==undefined;
  const seed=mode==="daily"?"MISSING-XI:"+utcDay()+":"+difficulty:"MISSING-XI:PRACTICE:"+practiceSeed+":"+difficulty;
- useEffect(()=>{let live=true;getWorldCupLineups().then(v=>{if(live)setData(v);}).catch(e=>{if(live)setLoadError(e instanceof Error?e.message:"World Cup line-ups unavailable.");});return()=>{live=false;};},[]);
- const lineups=useMemo(()=>data?.matches.filter(m=>m.starters.length===11&&m.year>=1982&&m.year<=2022)??[],[data]);
+
+ const lineups=useMemo(()=>worldCupData?.lineups.filter(m=>m.starters.length===11&&m.year>=1982&&m.year<=2022)??[],[worldCupData]);
  const match=useMemo(()=>lineups.length?lineups[hashSeed(seed+":match")%lineups.length]:null,[lineups,seed]);
  const missingIndex=match?hashSeed(seed+":missing")%11:0;
  const missingPlayer=match?.starters[missingIndex]??"";
@@ -1062,8 +1060,8 @@ function MissingXIPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
  };
  return <Frame account={account} game="missing-xi" eyebrow="HISTORIC STARTING XI / ONE NAME REMOVED" title="MISSING XI." description="A real World Cup starting line-up from 1982–2022. Ten names remain on the pitch. Find the missing starter." number="12" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
  {done&&mode==="daily"?<Success title="LINE-UP COMPLETE." detail="Today's starting XI has been solved. Unlimited random World Cup practice is open." button="PRACTICE XI" onAgain={()=>{setMode("practice");reset("practice");}}/>:
-  loadError?<Card className="arc-feedback"><b>WORLD CUP DATA UNAVAILABLE</b><p>{loadError}</p><button className="arc-button" onClick={()=>{setLoadError("");getWorldCupLineups().then(setData).catch(e=>setLoadError(String(e)));}}>RETRY LINE-UPS ↗</button></Card>:
-  !match?<Card className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>OPENING THE WORLD CUP ARCHIVE</b><span>LOADING MATCHES AND STARTING ELEVENS…</span></Card>:
+  error?<Card className="arc-feedback"><b>WORLD CUP DATA UNAVAILABLE</b><p>{error}</p><button className="arc-button" onClick={retry}>RETRY LINE-UPS ↗</button></Card>:
+  loading||!match?<Card className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>OPENING THE WORLD CUP ARCHIVE</b><span>LOADING MATCHES AND STARTING ELEVENS…</span></Card>:
   <Card className="missing-game">
    <div className="arc-game-meta"><span>FIFA WORLD CUP · {match.year}</span><b>{3-attempts} ATTEMPTS LEFT</b></div>
    <div className="grid-difficulty">{MISSING_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{difficultyLabel(level)}</button>)}</div>
@@ -1256,8 +1254,7 @@ const TOURNAMENT_LEVELS: TournamentDifficulty[]=["EASY","STANDARD","HARD","EXTRE
 function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();
  const [difficulty,setDifficulty]=useState<TournamentDifficulty>("STANDARD");
- const [data,setData]=useState<Awaited<ReturnType<typeof getWorldCupLineups>>|null>(null);
- const [loadError,setLoadError]=useState("");
+ const {data:worldCupData,loading,error,retry}=useFootballKnowledge("world-cup");
  const [attempts,setAttempts]=useState(0);
  const [ended,setEnded]=useState(false);
  const [won,setWon]=useState(false);
@@ -1266,24 +1263,13 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
  const [practicePlays,setPracticePlays]=useState<Record<string,number>>(()=>{
    try{const value=JSON.parse(localStorage.getItem(tournamentUsageKey)||"{}");return value&&typeof value==="object"?value:{};}catch{return {};}
  });
- useEffect(()=>{try{localStorage.setItem(tournamentUsageKey,JSON.stringify(practicePlays));}catch{/* practice allowance is best effort on this device */}},[practicePlays]);
- const practiceCount=practicePlays[utcDay()]??0;
- const [practiceRunActive,setPracticeRunActive]=useState(false);
- const practiceLimitReached=mode==="practice"&&practiceCount>=5&&!practiceRunActive;
- const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
- const done=account.daily[utcDay()]?.["tournament-nation"]!==undefined;
- const seed=mode==="daily"?"TOURNAMENT:"+utcDay()+":"+difficulty:"TOURNAMENT:PRACTICE:"+practiceSeed+":"+difficulty;
- useEffect(()=>{
-   let live=true;
-   getWorldCupLineups().then(value=>{if(live)setData(value);}).catch(error=>{if(live)setLoadError(error instanceof Error?error.message:"Tournament data unavailable.");});
-   return()=>{live=false;};
- },[]);
+
  const match=useMemo(()=>{
-   if(!data?.matches.length)return null;
-   const eligible=data.matches.filter(item=>item.year>=1982&&item.year<=2022&&item.starters.length===11);
+   if(!worldCupData?.lineups.length)return null;
+   const eligible=worldCupData.lineups.filter(item=>item.year>=1982&&item.year<=2022&&item.starters.length===11);
    return eligible.length?eligible[hashSeed(seed+":match")%eligible.length]??null:null;
- },[data,seed]);
- const teams=useMemo(()=>data?[...new Set(data.matches.map(item=>item.team).filter(Boolean))]:[],[data]);
+ },[worldCupData,seed]);
+ const teams=useMemo(()=>worldCupData?[...new Set(worldCupData.lineups.map(item=>item.team).filter(Boolean))]:[],[worldCupData]);
  const optionCount=difficulty==="EASY"?3:difficulty==="STANDARD"?4:difficulty==="HARD"?6:8;
  const options=useMemo(()=>{
    if(!match)return[];
@@ -1318,8 +1304,8 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
  return <Frame account={account} game="tournament-nation" eyebrow="WORLD CUP ARCHIVE / STARTING XI" title="TOURNAMENT NATION." description="Identify the country from a historic World Cup starting XI. Reveal a few player names, use the match context, and work out the team." number="15" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
  {done&&mode==="daily"?<Success title="NATION IDENTIFIED." detail="Today's tournament challenge is complete. Five CC0 World Cup practice runs are also available each day." button="PRACTICE" onAgain={()=>{setMode("practice");reset("practice");}}/>:
   practiceLimitReached?<Card className="arc-result"><small>DAILY PRACTICE LIMIT</small><h2>FIVE MATCHES PLAYED.</h2><p>You have used all five free Tournament Nation practice runs today. The allowance resets at 00:00 GMT.</p></Card>:
-  loadError?<Card className="arc-feedback"><b>TOURNAMENT DATA UNAVAILABLE</b><p>{loadError}</p><button className="arc-button" onClick={()=>{setLoadError("");getWorldCupLineups().then(setData).catch(error=>setLoadError(String(error)));}}>RETRY DATA ↗</button></Card>:
-  !match||!data?<Card className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>OPENING THE WORLD CUP ARCHIVE</b><span>Loading 1982–2022 starting line-ups.</span></Card>:
+  error?<Card className="arc-feedback"><b>TOURNAMENT DATA UNAVAILABLE</b><p>{error}</p><button className="arc-button" onClick={retry}>RETRY DATA ↗</button></Card>:
+  loading||!match||!worldCupData?<Card className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>OPENING THE WORLD CUP ARCHIVE</b><span>Loading 1982–2022 starting line-ups.</span></Card>:
   <Card className="tournament-game">
    <div className="arc-game-meta"><span>FIFA WORLD CUP · {match.year}</span><b>{maxGuesses-attempts} GUESSES LEFT · {mode==="practice"?Math.max(0,5-practiceCount)+" RUNS LEFT TODAY":"DAILY GAME"}</b></div>
    <div className="grid-difficulty">{TOURNAMENT_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{difficultyLabel(level)}</button>)}</div>
