@@ -77,6 +77,8 @@ type GamePlayer = Player & {
   leagueApps:number;
   leagueGoals:number;
   leagueGoalSeasons:number;
+  leagueAssists:number;
+  leagueAssistSeasons:number;
   statSeasons:number;
   firstYear:number|null;
   lastYear:number|null;
@@ -111,7 +113,7 @@ function archivePlayerToGamePlayer(p:ArchiveGamePlayer):GamePlayer{
     careerAppsRecorded:(p.careerAppearanceRows??0)>0,careerGoalsRecorded:(p.careerGoalRows??0)>0,
     leagueAppsRecorded:(p.leagueAppearanceRows??0)>0,leagueGoalsRecorded:(p.leagueGoalRows??0)>0,
     careerApps:p.appearances,careerGoals:p.goals,leagueApps:p.leagueAppearances,
-    leagueGoals:p.leagueGoals,leagueGoalSeasons:p.leagueGoalSeasons,statSeasons:p.seasons,firstYear:p.firstYear,lastYear:p.lastYear,
+    leagueGoals:p.leagueGoals,leagueGoalSeasons:p.leagueGoalSeasons,leagueAssists:p.leagueAssists??0,leagueAssistSeasons:p.leagueAssistSeasons??0,statSeasons:p.seasons,firstYear:p.firstYear,lastYear:p.lastYear,
     caps:p.caps,internationalGoals:p.internationalGoals,birthDate:p.birthDate,
     currentCountry:p.currentCountry,currentDivision:p.currentDivision
   };
@@ -387,7 +389,7 @@ function DraftPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:n
    ...PLAYER_DATABASE.find(x=>normalise(x.name)===normalise(p.name))!,
    name:p.name,surname:p.name.split(" ").slice(-1)[0],position:p.pos as Player["position"],
    club:"Starter roster",league:"Starter game",active:true,ageBand:"Unknown",clubs:["Starter roster"],aliases:[p.name],
-   archiveId:"fallback-"+i,careerSpells:[],seasonStats:[],careerAppsRecorded:false,careerGoalsRecorded:false,leagueAppsRecorded:false,leagueGoalsRecorded:false,careerApps:0,careerGoals:0,leagueApps:0,leagueGoals:0,leagueGoalSeasons:0,
+   archiveId:"fallback-"+i,careerSpells:[],seasonStats:[],careerAppsRecorded:false,careerGoalsRecorded:false,leagueAppsRecorded:false,leagueGoalsRecorded:false,careerApps:0,careerGoals:0,leagueApps:0,leagueGoals:0,leagueGoalSeasons:0,leagueAssists:0,leagueAssistSeasons:0,
    statSeasons:0,firstYear:null,lastYear:null,caps:null,internationalGoals:null,birthDate:"",currentCountry:"",currentDivision:null,
    cost:p.cost,rating:60
  } as DraftCandidate)),[]);
@@ -1554,11 +1556,11 @@ function ScoutSignalPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
  type SignalKey="nationality"|"careerClub"|"latestClub"|"position"|"league"|"ageBand";
  const sharedClubs=(p:GamePlayer)=>p.clubs.filter(c=>target.clubs.some(t=>normalise(t)===normalise(c)));
  const category=(key:SignalKey,p:GamePlayer)=>{
-   if(key==="nationality")return p.nationality===target.nationality;
+   if(key==="nationality")return Boolean(p.nationality&&p.nationality!=="Unlisted")&&p.nationality===target.nationality;
    if(key==="careerClub")return sharedClubs(p).length>0;
-   if(key==="latestClub")return normalise(p.club)===normalise(target.club);
-   if(key==="position")return p.position===target.position;
-   if(key==="league")return p.league===target.league;
+   if(key==="latestClub")return Boolean(p.club&&p.club!=="Unknown club")&&normalise(p.club)===normalise(target.club);
+   if(key==="position")return Boolean(p.position)&&p.position===target.position;
+   if(key==="league")return Boolean(p.league&&p.league!=="Unlisted")&&p.league===target.league;
    return p.ageBand===target.ageBand&&p.ageBand!=="Unknown";
  };
  const attrs:[SignalKey,string][]=[["nationality","NATION"],["careerClub","SHARED CLUB"],["latestClub","LATEST CLUB"],["position","POSITION"],["league","LEAGUE"],["ageBand","AGE BAND"]];
