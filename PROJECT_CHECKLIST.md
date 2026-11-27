@@ -1,6 +1,6 @@
 # PLAYGROUND — Master Build Checklist & Handover
 
-**Last audited:** 2026-11-27 09:40 UTC  
+**Last audited:** 2026-11-27 12:04 UTC  
 **Repository:** https://github.com/lewisxatk/playground-football-games  
 **Production:** https://playground-football-games.pages.dev  
 **Purpose:** This file is the persistent project memory and source of truth for implementation status. Update it at the end of every development batch. Do not mark a task complete merely because a route or visual mock-up exists; the behaviour must be implemented and build-tested.
@@ -14,9 +14,9 @@
 
 ## 0. Current verified baseline
 
-**Verified production commit:** 'd2bd46983dcb27a4df497104aab0beaf5e4124fc'  
-**Latest successful production deployment:** 'b8b42f73-ad9f-437e-892c-2bec1ff5de81'  
-**Build and deploy:** GitHub Actions run [45975239424](https://github.com/lewisxatk/playground-football-games/actions/runs/45975239424) passed; Cloudflare Pages build and deploy stages both succeeded.
+**Verified production commit:** '03c738e3f31d63b5f02d66d88d75dc50e2efb18b'  
+**Latest successful production deployment:** '080c98c9-1d0b-4d61-bf4a-6ffe734c6d8a'  
+**Build and deploy:** GitHub Actions run [45995395088](https://github.com/lewisxatk/playground-football-games/actions/runs/45995395088) passed; Cloudflare Pages build and deploy stages both succeeded. Preview: https://080c98c9.playground-football-games.pages.dev.
 
 - [x] Sixteen game routes and a 16-tile home directory exist: Lowball, The Climb, Draft XI, Career File, Footle, Connections, Football Grid, Ladder, The Reveal, Football 501, Link Up, Missing XI, Football Strands, Scout Signal, Tournament Nation and The Quick Quiz.
 - [x] The shared home/menu/navigation shell, unique per-game colour palettes and display-heading fonts, responsive layouts and Motion/CSS/SVG animation system are implemented.
@@ -406,3 +406,33 @@ At the end of every implementation update:
 - [!] No full real-iPhone manual QA or multi-user multiplayer test has been performed in this tool session. Production builds and automated data checks passing do not replace real-device testing.
 
 **Next actions:** (1) prototype a compact build-time/edge-served player shard, (2) integrate transfer-fee data with canonical player matching, (3) audit all game route behaviour and difficulty levels, (4) retain source/coverage notices for every derived statistic, (5) build the separate head-to-head room service only after solo-game QA.
+
+
+## 16. Latest continuation and recovery audit (2026-11-27, 11:40–12:04 UTC)
+
+- [x] Recovered the actual current main branch rather than relying on the prior chat's claimed checkpoint. Main branch was inspected through commit history, source files, CI run details and Cloudflare Pages deployment metadata.
+- [x] Confirmed the current static player archive is present in production source: 60,711 OpenFootballBase-Data player records in 61 checksum-verified shards, release `data-1.26.0`. The shared archive hook selects static shards first, samples up to 1,600 game-ready records and caches the result in memory/IndexedDB; the older remote DuckDB/Parquet route remains a fallback if static assets fail.
+- [x] Confirmed the question-bank generator builds 3,200 source-derived questions: 800 each for EASY, MEDIUM, HARD and EXTREME, with 600 English-region and 200 international-region questions per tier. The data validator checks tier counts, region counts, unique IDs, five distinct options, answer inclusion, explanations/source notes, and excludes career-history/advanced-stat templates from EASY.
+- [x] Improved EASY eligibility to major-division players with a meaningful recorded career footprint (100 appearances, 25 goals, 15 caps or 15 league goals). This is a source-based accessibility filter, not a guarantee that every player is famous or universally recognisable.
+- [x] Corrected country/league classification so Scottish and other non-English UK records do not leak into the English pool unless English competition metadata supports that classification. Career File's region balancing and quiz-bank region diagnostics were tightened.
+- [x] Standardised visible tier labels to MEDIUM / STANDARD where appropriate.
+- [x] Added animated correct-answer / goal-reveal feedback to Who's Got More and shared arcade feedback styles.
+- [x] Tournament Nation now reports the number of club clues actually matched against the selected XI, rather than presenting the intended clue count as if every club were resolved. Exact name/year matches only; unverified clubs remain unrecorded.
+- [x] Career File transfer-feed failure handling now distinguishes blocked/unavailable data, states that no points were deducted, and leaves the player identity/career clues playable. This is graceful failure handling, **not** a fix for the upstream 403.
+- [x] Footle input now advertises a mobile Go key, requests character capitalisation, disables autocomplete/spellcheck, and routes Enter / Go / NumpadEnter through the form's native `requestSubmit()` path. The on-screen Enter button remains available.
+- [x] GitHub Actions run [45995395088](https://github.com/lewisxatk/playground-football-games/actions/runs/45995395088) passed: install, question-bank generation, data validation and production build.
+- [x] Cloudflare Pages production deployment `080c98c9-1d0b-4d61-bf4a-6ffe734c6d8a` for commit `03c738e3f31d63b5f02d66d88d75dc50e2efb18b` completed successfully. Preview: https://080c98c9.playground-football-games.pages.dev. Stable production URL: https://playground-football-games.pages.dev.
+- [!] Footle Enter behaviour has been code-hardened and build/deploy verified, but has **not** yet been manually exercised on the user's iPhone Safari keyboard. Do not claim a physical-device test.
+- [!] The quiz pool is generated from source player/career records, not 3,200 individually researched general football trivia facts. EASY is filtered to established major-division player records but still needs a human recognisability audit and real playtesting.
+- [!] The transfer CSV endpoint has previously returned 403 in the user's screenshot. The current app explains this without charging points, but the source has not been made reliably downloadable or replaced with a separately verified feed. Dataset documentation describes 141,538 transfers across 41,734 players, 50 leagues and 2005–2024 under CC BY 4.0; the endpoint/access problem remains.
+- [!] Tournament Nation's club resolver still relies on exact normalized player-name and tournament-year overlap; many records may legitimately show no club match. The count is now honest, but historical coverage needs improving from a reliable source.
+- [!] No real-device iPhone Safari / desktop acceptance test has been completed for all 16 routes. CI confirms build and data validation, not end-to-end interaction quality.
+- [!] No live multiplayer rooms, server-side account sync or cross-device cloud saves have been implemented; Locker Room remains local with JSON export/restore.
+
+**Next actions (priority):**
+1. Run the live Footle keyboard flow on iPhone Safari; verify both software-keyboard Go and the on-screen Enter button, including valid and invalid surnames.
+2. Review actual EASY quiz draws for recognisable names and remove ambiguous/outdated club metadata; add a separate researched general-football trivia pool only with source citations per fact.
+3. Replace or reliably serve the blocked transfer-history CSV without bypassing provider restrictions; test actual player matching and fee semantics.
+4. Improve Tournament Nation's historical club matching with canonical player identity and dated spells where available; keep missing clues explicit.
+5. Complete a structured desktop/iPhone test matrix across all 16 games (loading, difficulty, daily/practice, timers, touch, scoring, reduced motion and no-repeat behaviour).
+
