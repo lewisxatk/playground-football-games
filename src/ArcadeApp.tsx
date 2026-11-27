@@ -857,7 +857,7 @@ function LadderPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
 function RevealPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
- const [reveal,setReveal]=useState(0);const [guess,setGuess]=useState("");const [tries,setTries]=useState(0);const [end,setEnd]=useState(false);const [won,setWon]=useState(false);
+ const [reveal,setReveal]=useState(0);const [guess,setGuess]=useState("");const [tries,setTries]=useState(0);const [end,setEnd]=useState(false);const [won,setWon]=useState(false);const [guessFeedback,setGuessFeedback]=useState("");
  const done=account.daily[utcDay()]?.["the-reveal"]!==undefined;
  const seed=mode==="daily"?"REVEAL:"+utcDay():"REVEAL:PRACTICE:"+practiceSeed;
  const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,4200);
@@ -871,16 +871,17 @@ function RevealPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
    {label:"Recorded appearances",value:target.careerApps.toLocaleString("en-GB")},
    {label:"Recorded goals",value:target.careerGoals.toLocaleString("en-GB")}
  ].filter(c=>Boolean(c.value)): [];
- const score=Math.max(0,1000-(Math.max(0,reveal-1)*100)-tries*45);
+ const score=Math.max(0,1000-reveal*100-tries*45);
  const restart=(newMode:Mode=mode)=>{
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
-   setReveal(0);setGuess("");setTries(0);setEnd(false);setWon(false);
+   setReveal(0);setGuess("");setTries(0);setEnd(false);setWon(false);setGuessFeedback("");
  };
  const submit=(e:FormEvent)=>{
    e.preventDefault();if(end||!guess.trim()||!target)return;
    const next=tries+1;setTries(next);
-   if(acceptedName(guess,[target.name,target.surname,...target.aliases])){setWon(true);setEnd(true);if(mode==="daily")onDaily("the-reveal",score);}
-   else if(next>=8){setEnd(true);if(mode==="daily")onDaily("the-reveal",0);}
+   if(acceptedName(guess,[target.name,target.surname,...target.aliases])){setWon(true);setEnd(true);setGuessFeedback("Correct — the player is identified.");if(mode==="daily")onDaily("the-reveal",score);}
+   else if(next>=8){setEnd(true);setGuessFeedback("No guesses left. The player is revealed below.");if(mode==="daily")onDaily("the-reveal",0);}
+   else setGuessFeedback("Not this time. Try the surname or full name again.");
    setGuess("");
  };
  const showNext=()=>{if(reveal<clues.length-1)setReveal(v=>v+1);};
@@ -894,6 +895,7 @@ function RevealPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
    <div className="reveal-clues">{clues.slice(0,reveal+1).map((c,i)=><motion.p key={c.label} initial={{opacity:0,x:-8}} animate={{opacity:1,x:0}}><span>0{i+1}</span><b>{c.label}:</b> {c.value}</motion.p>)}</div>
    <div className="reveal-actions"><button className="arc-quiet" onClick={showNext} disabled={reveal>=clues.length-1||end}>REVEAL NEXT CLUE −100 PTS</button><span>{clues.length-reveal-1} CLUES HIDDEN</span></div>
    <form className="arc-guess-form" onSubmit={submit}><input value={guess} onChange={e=>setGuess(e.target.value)} placeholder="Full name or surname…" disabled={end}/><button className="arc-button" disabled={!guess.trim()||end}>LOCK IN ↗</button></form>
+   {guessFeedback&&!end&&<p className="reveal-guess-feedback">{guessFeedback}</p>}
    {end&&<div className="arc-feedback"><b>{won?"GOT THEM.": "THE PLAYER WAS "+target.name}</b><p>{won?"You identified the archive player.":"The target's recorded career was "+target.clubs.join(" → ")+ "."}</p><button className="arc-button" onClick={()=>restart(mode)}>NEXT PLAYER ↗</button></div>}
    <p className="arc-muted">Career totals and club spells reflect available archive records; they are not guaranteed complete for every player.</p>
   </Card>}
@@ -979,7 +981,7 @@ function FiveOhOnePage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
 type LinkDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
 type GeneratedLink={start:GamePlayer;end:GamePlayer;answer:GamePlayer;startClub:string;endClub:string;options:GamePlayer[]};
 
-function makeLinkQuestions(pool:GamePlayer[],seed:number):GeneratedLink[]{
+function makeLinkQuestions(pool:GamePlayer[],seed:number,difficulty:LinkDifficulty="STANDARD"):GeneratedLink[]{
  const bounds=(spell:ArchiveCareerSpell):[number,number]|null=>{
    let start=spell.startYear??null,end=spell.endYear??null;
    if(start===null&&end===null){
@@ -1011,8 +1013,9 @@ function makeLinkQuestions(pool:GamePlayer[],seed:number):GeneratedLink[]{
      const pairs=startOptions.flatMap(start=>endOptions.filter(end=>end.archiveId!==start.archiveId).map(end=>({start,end})));
      if(!pairs.length)continue;
      const pair=shuffle(pairs,seed+result.length*31+answer.archiveId.length)[0];
-     const decoys=shuffle(pool.filter(p=>p.archiveId!==answer.archiveId&&p.archiveId!==pair.start.archiveId&&p.archiveId!==pair.end.archiveId),seed+result.length*47).slice(0,3);
-     if(decoys.length<3)continue;
+     const choiceCount=difficulty==="EASY"?3:difficulty==="STANDARD"?4:difficulty==="HARD"?5:6;
+     const decoys=shuffle(pool.filter(p=>p.archiveId!==answer.archiveId&&p.archiveId!==pair.start.archiveId&&p.archiveId!==pair.end.archiveId),seed+result.length*47).slice(0,choiceCount-1);
+     if(decoys.length<choiceCount-1)continue;
      found={start:pair.start,end:pair.end,answer,startClub:first.club,endClub:second.club,options:shuffle([answer,...decoys],seed+result.length*59)};
    }
    if(found)result.push(found);
@@ -1041,8 +1044,14 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const pool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
  const questions=useMemo(()=>{
    if(pool.length<20)return [];
-   const generated=makeLinkQuestions(pool,hashSeed(seed+":"+difficulty));
-   const unique=Array.from(new Map(generated.map(q=>[q.answer.archiveId,q])).values());
+   const generated=makeLinkQuestions(pool,hashSeed(seed+":"+difficulty),difficulty);
+   const familiar=new Set(PLAYER_DATABASE.map(player=>normalise(player.name)));
+   const easyCandidates=generated.filter(q=>familiar.has(normalise(q.answer.name))&&familiar.has(normalise(q.start.name))&&familiar.has(normalise(q.end.name)));
+   const careerFloor=difficulty==="EXTREME"?5:difficulty==="HARD"?3:difficulty==="STANDARD"?2:0;
+   const byCareerDepth=generated.filter(q=>q.answer.careerSpells.length>=careerFloor);
+   const selected=difficulty==="EASY"&&easyCandidates.length>=10?easyCandidates:
+     difficulty!=="EASY"&&byCareerDepth.length>=10?byCareerDepth:generated;
+   const unique=Array.from(new Map(selected.map(q=>[q.answer.archiveId,q])).values());
    return unique.slice(0,10);
  },[pool,seed,difficulty]);
  const q=questions[index];
@@ -1099,7 +1108,7 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
   finished?<Success title="FULL-TIME." detail={"You scored "+score+" points across "+questions.length+" connections."+(mode==="practice"?" Practice run "+practiceUsed+" of 10 used today.":"")} button="NEW TEN-LINK RUN" onAgain={()=>reset(mode)}/>:
   questions.length!==10||!q?<Card className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NOT ENOUGH VERIFIED LINKS FOR A FULL TEN-QUESTION RUN"}</b><p>{error||"The current player sample did not produce ten unique, unambiguous bridge players. Draw a fresh practice set or retry the archive."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY LINK ARCHIVE ↗</button></Card>:
   <Card className="link-game">
-   {mode==="practice"&&<div className="grid-difficulty">{(["EASY","STANDARD","HARD","EXTREME"] as LinkDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{difficultyLabel(level)}</button>)}</div>}
+   {mode==="practice"&&<div className="grid-difficulty">{(["EASY","STANDARD","HARD","EXTREME"] as LinkDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{level==="STANDARD"?"MEDIUM / STANDARD":level}</button>)}</div>}
    <div className="arc-game-meta"><span>{mode==="daily"?"DAILY LINK":"PRACTICE · "+difficulty} · QUESTION {index+1}/10</span><b>{score.toLocaleString("en-GB")} PTS</b></div>
    <div className="link-score-row"><span>QUESTION VALUE</span><b>{currentPoints.toLocaleString("en-GB")} / 1,000</b><span>{wrongCount} WRONG · {hintCount} HINTS</span></div>
    <div className="link-bridge">
@@ -1107,7 +1116,7 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
     <i>↔</i>
     <div><small>END PLAYER</small><strong>{q.end.name}</strong><span className="link-club-evidence"><ClubBadge name={q.endClub} size={22}/>{q.endClub}</span></div>
    </div>
-   <div className="link-evidence"><span>FIND THE ONE PLAYER WHO OVERLAPPED BOTH ENDPOINTS.</span><b>ARCHIVE WINDOW / {q.startClub} + {q.endClub}</b></div>
+   <div className="link-evidence"><span>FIND THE ONE PLAYER WHO OVERLAPPED BOTH ENDPOINTS. · {q.options.length} OPTIONS</span><b>ARCHIVE WINDOW / {q.startClub} + {q.endClub}</b></div>
    {!answered&&!failed&&<div className="missing-options">{q.options.map(p=><button type="button" key={p.archiveId} onClick={()=>submit(p.name)} disabled={!canGuess}>{p.name}</button>)}</div>}
    {notice&&<p className={"link-notice "+(answered?"correct":"")}>{notice}</p>}
    {hintCount>0&&!answered&&<div className="link-hint"><small>HINT {hintCount}/3 · −100 PTS</small><b>{["NATION","POSITION","CAREER / CLUB COUNT"][hintCount-1]}: {hintValue}</b></div>}
