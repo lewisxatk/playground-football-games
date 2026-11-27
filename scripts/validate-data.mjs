@@ -13,7 +13,7 @@ const ids = new Set();
 for (const match of worldCup.matches) {
   assert.ok(match.id && !ids.has(match.id), "World Cup line-up IDs must be present and unique");
   ids.add(match.id);
-  assert.ok(match.year >= 1980 && match.year <= 2022, "World Cup year outside supported range");
+  assert.ok(match.year >= 1980 && match.year <= 2026, "World Cup year outside supported range");
   assert.ok(match.team && match.opponent && match.round, "World Cup record missing match context");
   assert.ok(Array.isArray(match.starters) && match.starters.length === 11, "Every record must contain exactly 11 starters");
   assert.ok(match.starters.every(name => typeof name === "string" && name.trim()), "Starter names cannot be blank");
