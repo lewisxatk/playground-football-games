@@ -70,3 +70,28 @@ try {
     throw error;
   }
 }
+
+
+const questionBank = JSON.parse(await readFile(new URL("../public/data/question-bank.json", import.meta.url), "utf8"));
+assert.equal(questionBank.version, 2, "Question bank version mismatch");
+assert.equal(questionBank.source, "OpenFootballBase-Data", "Question bank source metadata mismatch");
+assert.equal(questionBank.meta?.targetPerTier, 800, "Question bank target must be at least 750 per tier");
+for (const tier of ["EASY", "MEDIUM", "HARD", "EXTREME"]) {
+  const questions = questionBank.tiers?.[tier];
+  const distribution = questionBank.meta?.distribution?.[tier];
+  assert.ok(Array.isArray(questions) && questions.length >= 750, tier + " must contain at least 750 questions");
+  assert.deepEqual(distribution, { english: 600, international: 200, total: 800 }, tier + " must preserve the 75/25 regional balance");
+  assert.equal(questions.length, distribution.total, tier + " count must match metadata");
+  const ids = new Set();
+  for (const question of questions) {
+    assert.ok(question.id && !ids.has(question.id), tier + " question IDs must be unique");
+    ids.add(question.id);
+    assert.equal(question.tier, tier, "Question tier mismatch");
+    assert.ok(question.playerId && question.question && question.answer, "Question is missing core fields");
+    assert.ok(Array.isArray(question.options) && question.options.length === 5, "Every quiz question must have five options");
+    assert.ok(question.options.includes(question.answer), "Every question must include its answer in the options");
+    assert.equal(new Set(question.options).size, 5, "Answer options must be unique");
+    assert.ok(question.explanation && question.source, "Question needs an explanation and source note");
+  }
+}
+console.log(" - 3,200 curated quiz questions: 800 per tier, 75% English clubs / 25% other leagues");
