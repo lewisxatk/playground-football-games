@@ -51,3 +51,8 @@ The feature branch adds reusable CSS/Motion interactions for the homepage hero, 
 ## CULT HERO — Big Five recognition pool
 
 CULT HERO now starts from a curated recognisable-player roster covering the Premier League, La Liga, Bundesliga, Serie A and Ligue 1. A daily five tries to include one eligible player from each league. A player is only used when the existing archive has nationality, position and three distinct dated club records; missing source details are not fabricated. The roster is a first curated batch, not an exhaustive current squad database.
+
+
+## Content and data audit
+
+See [the 27 November 2026 content and data audit](./docs/CONTENT_AND_DATA_AUDIT_2026-11-27.md) for the split between the 100-question development seed and 3,200 archive-derived prompts, current QA limitations, and the CC0-only source policy.
