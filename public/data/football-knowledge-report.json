@@ -1,0 +1,109 @@
+{
+  "generatedAt": "2026-11-27",
+  "policy": "CC0-only pinned source whitelist; licence does not guarantee factual accuracy",
+  "counts": {
+    "players": 32093,
+    "clubs": 560,
+    "footleAnswers": 30842,
+    "worldCupLineups": 1312,
+    "worldCupPlayerCards": 3722,
+    "worldCupQuestions": 1312,
+    "connectionsPacks": 500
+  },
+  "games": {
+    "footle": {
+      "unit": "answer",
+      "count": 30842,
+      "ready": true
+    },
+    "the-climb": {
+      "unit": "question",
+      "count": 1312,
+      "ready": true
+    },
+    "timed-quiz": {
+      "unit": "question",
+      "count": 1312,
+      "ready": true
+    },
+    "connections": {
+      "unit": "puzzle-pack",
+      "count": 500,
+      "ready": true
+    },
+    "missing-xi": {
+      "unit": "puzzle-pack",
+      "count": 1312,
+      "ready": true
+    },
+    "tournament-nation": {
+      "unit": "puzzle-pack",
+      "count": 1312,
+      "ready": true
+    },
+    "the-reveal": {
+      "unit": "player-card",
+      "count": 3722,
+      "ready": true
+    },
+    "link-up": {
+      "unit": "puzzle-pack",
+      "count": 1312,
+      "ready": true
+    },
+    "strands": {
+      "unit": "puzzle-pack",
+      "count": 0,
+      "ready": false,
+      "reason": "needs word-search board generator and unique-solution QA"
+    },
+    "football-grid": {
+      "unit": "puzzle-pack",
+      "count": 0,
+      "ready": false,
+      "reason": "needs verified player-club intersections"
+    },
+    "lowball": {
+      "unit": "challenge-pack",
+      "count": 0,
+      "ready": false,
+      "reason": "needs scoped numeric player/club records"
+    },
+    "ladder": {
+      "unit": "challenge-pack",
+      "count": 0,
+      "ready": false,
+      "reason": "needs scoped numeric player/club records"
+    },
+    "football-501": {
+      "unit": "challenge-pack",
+      "count": 0,
+      "ready": false,
+      "reason": "needs scoped numeric player/club records"
+    },
+    "draft-xi": {
+      "unit": "challenge-pack",
+      "count": 0,
+      "ready": false,
+      "reason": "needs verified positions and pricing"
+    },
+    "career-file": {
+      "unit": "player-card",
+      "count": 0,
+      "ready": false,
+      "reason": "needs dated career spells"
+    },
+    "cult-hero": {
+      "unit": "player-card",
+      "count": 0,
+      "ready": false,
+      "reason": "needs dated club-spell histories"
+    },
+    "scout-signal": {
+      "unit": "player-card",
+      "count": 0,
+      "ready": false,
+      "reason": "needs verified positions and player attributes"
+    }
+  }
+}
