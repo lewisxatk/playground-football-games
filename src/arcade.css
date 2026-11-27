@@ -499,3 +499,32 @@
   .link-score-row{gap:6px 10px;font-size:9px}
   .link-tools{display:grid;grid-template-columns:1fr}
 }
+
+
+/* Football Strands: retro matchday programme / arcade letter board. */
+.arc-strands{--ap:#dce8d6;--ai:#172c25;--ag:#e9c45c;--ao:#d66b42;background:radial-gradient(ellipse at 50% 0%,#f3f0d8 0%,#dce8d6 55%,#c7d8c8 100%)}
+.arc-strands .arc-heading-line h1{font-family:'Teko','Barlow Condensed',sans-serif;letter-spacing:-.045em;text-transform:uppercase}
+.arc-strands .strands-game{max-width:680px;background:#172c25;color:#f3f0d8;border:2px solid #e9c45c;box-shadow:8px 9px 0 #0b1b15}
+.arc-strands .strands-game .arc-game-meta{color:#e9c45c;border-bottom:1px solid #647466;padding-bottom:12px}
+.arc-strands .strands-theme{background:#263f32;border:1px solid #718765;border-left:5px solid #e9c45c;padding:17px}
+.arc-strands .strands-theme small{color:#e9c45c;font-size:9px}
+.arc-strands .strands-theme strong{font:900 clamp(25px,5vw,36px)/1 'Teko','Barlow Condensed',sans-serif;letter-spacing:.04em;color:#fff7df}
+.arc-strands .strands-theme span{color:#c7d3bd;font-size:11px;line-height:1.5}
+.arc-strands .strands-grid{max-width:510px;aspect-ratio:6/8;background:repeating-linear-gradient(0deg,#244432 0 12.5%,#294a37 12.5% 25%);border:2px solid #9aaa79;border-radius:3px;padding:12px;gap:6px;box-shadow:inset 0 0 0 4px #12261d}
+.arc-strands .strands-grid button{border-radius:3px;border:1px solid #9aaa79;background:#f3efd9;color:#1a3026;font:900 clamp(17px,3.6vw,25px)/1 'Teko','Barlow Condensed',sans-serif;box-shadow:0 3px 0 #0d2118;letter-spacing:.02em}
+.arc-strands .strands-grid button.selected{background:#e9c45c;color:#182d23;border-color:#fff0a7;transform:translateY(-2px)}
+.arc-strands .strands-grid button.found{background:#4e8b67;color:#fff;border-color:#a8d0a7;box-shadow:0 0 0 2px #c5e5a8}
+.arc-strands .strands-grid button.spangram{background:#e9c45c;color:#182d23;border-color:#fff0a7}
+.arc-strands .strands-grid button.hinted{position:relative;z-index:2;outline:3px solid #f5a14b;outline-offset:1px;box-shadow:0 0 0 5px #f5a14b55,0 0 18px #ffd36a;animation:strandsScoutPulse 1.2s ease-in-out infinite alternate}
+.arc-strands .strands-actions{align-items:center;flex-wrap:wrap}
+.arc-strands .strands-actions .arc-button{background:#e9c45c;color:#172c25;border-color:#fff0a7}
+.arc-strands .strands-bonus-meter{display:grid;grid-template-columns:1fr auto;gap:5px 10px;padding:12px 14px;background:#263f32;border:1px solid #647d65;color:#f3efd9}
+.arc-strands .strands-bonus-meter b{font:900 15px 'Teko',sans-serif;letter-spacing:.1em;color:#e9c45c}
+.arc-strands .strands-bonus-meter span{font-size:9px;font-weight:900;letter-spacing:.08em}
+.arc-strands .strands-bonus-meter small{grid-column:1/-1;color:#c7d3bd;font-size:9px;letter-spacing:.08em}
+.arc-strands .strands-bonus-list{padding:10px;background:#263f32;color:#e9c45c;font-size:10px;font-weight:900;line-height:1.6;overflow-wrap:anywhere}
+.arc-strands .strands-feedback{background:#e9c45c;color:#172c25;font-size:11px}
+.arc-strands .arc-muted{color:#d4decf}
+.arc-strands .strands-legend{color:#d4decf;font-size:9px}
+@keyframes strandsScoutPulse{from{outline-offset:1px;filter:brightness(1)}to{outline-offset:4px;filter:brightness(1.14)}}
+@media(max-width:620px){.arc-strands .strands-grid{max-width:100%;padding:8px;gap:4px}.arc-strands .strands-grid button{font-size:clamp(18px,4.4vw,24px)}.arc-strands .strands-bonus-meter{grid-template-columns:1fr}.arc-strands .strands-bonus-meter span{font-size:8px}}
