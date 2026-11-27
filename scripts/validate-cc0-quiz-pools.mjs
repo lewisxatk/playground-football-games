@@ -51,7 +51,7 @@ for (const [game, keys] of Object.entries(games)) {
     const counts = byTier[tier];
     // A ten-question practice round needs eight English-domestic and two
     // international questions; the five-question Climb needs four and one.
-    if (counts.ENGLISH_DOMESTIC < 8 || counts.INTERNATIONAL < 2) {
+    if (counts.ENGLISH_DOMESTIC < 8 || counts.INTERNATIONAL < 3) {
       fail(game + " " + tier + " cannot satisfy the English-first 75/25 round allocation: " + JSON.stringify(counts));
     }
   }
@@ -61,7 +61,7 @@ for (const [game, keys] of Object.entries(games)) {
   console.log(game + " available pool: " + questions.length + " unique questions; " + englishDomestic + " English-domestic (" +
     (100 * englishDomestic / questions.length).toFixed(1) + "%), " + international + " international (" +
     (100 * international / questions.length).toFixed(1) + "%).");
-  console.log("  Runtime allocation: 5-question 4/1; 10-question practice 8/2; 17-question daily 13/4.");
+  console.log("  Runtime allocation: 5-question 3/2 or 4/1; 10-question practice 7/3 or 8/2; 17-question daily 12/5 or 13/4, balanced to 75% over four seeds.");
   console.log("  Tier coverage: " + tiers.map(tier => tier + " " + byTier[tier].ENGLISH_DOMESTIC + " English domestic / " +
     byTier[tier].INTERNATIONAL + " international").join("; "));
 }
