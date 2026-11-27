@@ -155,9 +155,23 @@ const hardEligible = player => (player.careerGoalRows ?? player.goalRows ?? 0) >
 const extremeEligible = player => number(player.firstYear) !== null ||
   number(player.internationalGoals) !== null || number(player.appearances) !== null || (player.spells?.length ?? 0) >= 2;
 
+const diagnostics = {
+  regionPlayers: { ENGLISH: 0, INTERNATIONAL: 0, UNCLASSIFIED: 0 },
+  easyEligible: { ENGLISH: 0, INTERNATIONAL: 0 },
+  countrySamples: new Map(),
+  leagueSamples: new Map(),
+  clubSamples: new Map()
+};
 for (const player of players) {
   if (!isUsablePlayer(player)) continue;
   const region = regionOf(player);
+  diagnostics.regionPlayers[region ?? "UNCLASSIFIED"]++;
+  const countryKey = String(player.currentCountry ?? "(blank)");
+  const leagueKey = String(player.currentLeague ?? "(blank)");
+  const clubKey = String(player.currentClub ?? "(blank)");
+  diagnostics.countrySamples.set(countryKey, (diagnostics.countrySamples.get(countryKey) ?? 0) + 1);
+  diagnostics.leagueSamples.set(leagueKey, (diagnostics.leagueSamples.get(leagueKey) ?? 0) + 1);
+  diagnostics.clubSamples.set(clubKey, (diagnostics.clubSamples.get(clubKey) ?? 0) + 1);
   if (!region) continue;
   const careerClubs = unique(player.clubs ?? []);
   const latestClub = String(player.currentClub ?? "").trim();
@@ -177,6 +191,7 @@ for (const player of players) {
   const spellCount = (player.spells ?? []).length;
 
   if (easyEligible(player)) {
+    diagnostics.easyEligible[region]++;
     if (nationality) add("EASY", player, region, "nationality", "PLAYER BASICS",
       "Which nationality is listed for " + player.name + "?", nationality, nationalities,
       player.name + " is listed with " + nationality + " nationality. The question uses the archive's latest available squad record.");
@@ -250,9 +265,14 @@ for (const tier of ["EASY", "MEDIUM", "HARD", "EXTREME"]) {
   const english = pools[tier].ENGLISH.sort((a, b) => stableNumber(a.id) - stableNumber(b.id)).slice(0, ENGLISH_TARGET);
   const international = pools[tier].INTERNATIONAL.sort((a, b) => stableNumber(a.id) - stableNumber(b.id)).slice(0, INTERNATIONAL_TARGET);
   if (english.length < ENGLISH_TARGET || international.length < INTERNATIONAL_TARGET) {
+    const top = map => [...map.entries()].sort((a,b) => b[1] - a[1]).slice(0,18).map(([value,count]) => value + " (" + count + ")");
     throw new Error(tier + " bank shortfall: " + english.length + "/" + ENGLISH_TARGET +
       " English and " + international.length + "/" + INTERNATIONAL_TARGET +
-      " international questions. Add data/templates; do not silently lower the 75/25 target.");
+      " international questions. Diagnostics: regionPlayers=" + JSON.stringify(diagnostics.regionPlayers) +
+      "; easyEligible=" + JSON.stringify(diagnostics.easyEligible) +
+      "; countries=" + top(diagnostics.countrySamples).join(", ") +
+      "; leagues=" + top(diagnostics.leagueSamples).join(", ") +
+      "; clubs=" + top(diagnostics.clubSamples).join(", "));
   }
   tiers[tier] = shuffled([...english, ...international], "PLAYGROUND-QUESTION-BANK-V2:" + tier);
   distribution[tier] = { english: english.length, international: international.length, total: tiers[tier].length };
