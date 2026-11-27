@@ -73,7 +73,7 @@ async function parseInternationalGoals(players){
  for(const row of rows){
   const date=String(row.date||"").trim(),team=String(row.team||"").trim(),scorer=String(row.scorer||"").trim();
   const home=String(row.home_team||"").trim(),away=String(row.away_team||"").trim(),minute=String(row.minute||"").trim();
-  if(!date||!team||!scorer||!/^\\d{4}-\\d{2}-\\d{2}$/.test(date))continue;
+  if(!date||!team||!scorer||!/^\d{4}-\d{2}-\d{2}$/.test(date))continue;
   const ownGoal=["true","1","yes"].includes(String(row.own_goal||"").trim().toLowerCase());
   const penalty=["true","1","yes"].includes(String(row.penalty||"").trim().toLowerCase());
   const eventKey=[date,norm(home),norm(away),norm(team),norm(scorer),minute,String(penalty),String(ownGoal)].join("|");
