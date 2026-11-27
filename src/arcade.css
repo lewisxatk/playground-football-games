@@ -108,3 +108,12 @@
 .arc-missing-xi .arc-heading-line h1{font-family:'Archivo Black',sans-serif;letter-spacing:-.07em}
 .arc-strands .arc-heading-line h1{font-family:'Bebas Neue',sans-serif;letter-spacing:.01em}
 .arc-scout-signal .arc-heading-line h1{font-family:'Space Grotesk',sans-serif;letter-spacing:-.08em}
+
+.footle-keyboard{display:grid;gap:6px;max-width:520px;margin:14px auto 0;user-select:none}
+.footle-key-row{display:flex;justify-content:center;gap:5px}
+.footle-key-row button{flex:1;min-width:0;max-width:42px;height:43px;border:1px solid #bfc2b5;border-radius:4px;background:#e9e8df;color:#1d241f;font-size:12px;font-weight:900;cursor:pointer;touch-action:manipulation}
+.footle-key-row button.correct{background:#6c914c;border-color:#6c914c;color:white}
+.footle-key-row button.present{background:#d2a947;border-color:#c59e3c;color:white}
+.footle-key-row button.absent{background:#7b8178;border-color:#70766d;color:white}
+.footle-key-row button.wide-key{max-width:64px;flex:1.5;font-size:8px;letter-spacing:.04em}
+.footle-key-row button:disabled{opacity:.45;cursor:default}
