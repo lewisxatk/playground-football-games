@@ -300,8 +300,11 @@ function makeWikidataLinkPacks(careerPlayers,target=750){
   for(let i=0;i<spells.length&&!found;i++)for(let j=i+1;j<spells.length&&!found;j++){
    const first=spells[i],second=spells[j];
    if(first.clubQid===second.clubQid)continue;
-   const startCandidates=(byClub.get(first.clubQid)||[]).filter(x=>x.player.id!==answer.id&&overlaps(first,x.spell));
-   const endCandidates=(byClub.get(second.clubQid)||[]).filter(x=>x.player.id!==answer.id&&overlaps(second,x.spell));
+   // Keep the proposed bridge player in both candidate sets so the
+   // intersection can prove that this player is the unique connection.
+   // Endpoints are excluded later when selecting the two displayed stars.
+   const startCandidates=(byClub.get(first.clubQid)||[]).filter(x=>overlaps(first,x.spell));
+   const endCandidates=(byClub.get(second.clubQid)||[]).filter(x=>overlaps(second,x.spell));
    // Find the bridge by set intersection first; avoid the previous O(A×B)
    // Cartesian product across every pair of players at two busy clubs.
    const startById=new Map(startCandidates.map(x=>[x.player.id,x]));
