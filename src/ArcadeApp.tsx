@@ -7,7 +7,7 @@ import {
 import { ClubBadge, CountryFlag } from "./ClubBadge";
 import { useArchivePlayers } from "./useArchivePlayers";
 import { getWorldCupLineups } from "./tournamentNationData";
-import type { ArchiveGamePlayer, ArchiveCareerSpell } from "./careerFileData";
+import type { ArchiveGamePlayer, ArchiveCareerSpell, ArchiveGameStat } from "./careerFileData";
 import CareerFilePage from "./CareerFilePage";
 import { getCareerClubsAtYear } from "./careerFileData";
 import "./arcade.css";
