@@ -463,20 +463,26 @@ def main() -> None:
     ]
     index = {
         "version": 1,
+        "format": "playground-player-shards-v1",
         "source": "OpenFootballBase-Data",
         "sourceUrl": "https://github.com/florentfougeres/OpenFootballBase-Data",
-        "licence": "CC BY-SA 4.0",
+        "sourceRelease": release.get("tag_name"),
+        "sourceReleaseUrl": release.get("html_url"),
+        "licence": "CC BY-SA 4.0 (Wikipedia-derived text); Wikidata-derived fields are CC0",
+        "dataLicence": "CC BY-SA 4.0",
         "releaseTag": release.get("tag_name"),
         "releaseUrl": release.get("html_url"),
         "sourceAssetSha256": expected,
         "generatedAt": release.get("published_at") or release.get("created_at"),
         "playerCount": len(rows),
-        "playersWithSeasonStats": sum(1 for row in rows if row.get("stats")),
+        "playersWithSeasonStats": sum(1 for row in rows if row.get("seasonStats")),
         "shardSize": args.shard_size,
         "shardCount": len(shards),
+        "warnings": caveats,
         "caveats": caveats,
         "shards": shards,
     }
+    index_path = output / "index.json"
     index_path = output / "manifest.json"
     index_path.write_text(json.dumps(index, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps({
