@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   PLAYER_DATABASE, FOOTBALL_GROUPS, LEAGUE_GOALS, CAREER_FILES, STRANDS_PACKS,
@@ -81,7 +81,7 @@ function GameHeading({eyebrow,title,description,number}:{eyebrow:string;title:st
 function ModeSwitch({mode,setMode,complete}:{mode:Mode;setMode:(m:Mode)=>void;complete:boolean}){
   return <div className="arc-mode-switch"><button className={mode==="daily"?"active":""} onClick={()=>setMode("daily")}>TODAY'S CHALLENGE {complete?"✓":""}</button><button className={mode==="practice"?"active":""} onClick={()=>setMode("practice")}>PRACTICE / UNLIMITED</button><span>DAILY CLOCK · 00:00 GMT</span></div>;
 }
-function Frame({account,children,game,eyebrow,title,description,number,mode,setMode}:{account:Account;children:React.ReactNode;game:GameId;eyebrow:string;title:string;description:string;number:string;mode:Mode;setMode:(m:Mode)=>void}){
+function Frame({account,children,game,eyebrow,title,description,number,mode,setMode}:{account:Account;children:ReactNode;game:GameId;eyebrow:string;title:string;description:string;number:string;mode:Mode;setMode:(m:Mode)=>void}){
   const done=account.daily[utcDay()]?.[game]!==undefined;
   return <div className={"arc-shell arc-"+game}><TopBar account={account}/><main className="arc-main"><GameHeading eyebrow={eyebrow} title={title} description={description} number={number}/><ModeSwitch mode={mode} setMode={setMode} complete={done}/>{children}</main><footer className="arc-footer"><a href="/">PLAYGROUND®</a><span>THE DAILY CHANGES AT 00:00 GMT · ALL SCORES SAVED ON THIS DEVICE</span><a href="/locker-room">LOCKER ROOM ↗</a></footer></div>;
 }
@@ -118,15 +118,15 @@ function AccountPage({account,setAccount}:{account:Account;setAccount:(a:Account
 }
 
 function LowballPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
- const [mode,setMode]=useMode();const [step,setStep]=useState(0);const [score,setScore]=useState(0);const [pick,setPick]=useState<number|null>(null);
+ const [mode,setMode]=useMode();const [step,setStep]=useState(0);const [score,setScore]=useState(0);const [pick,setPick]=useState<number|null>(null);const [runDone,setRunDone]=useState(false);
  const done=account.daily[utcDay()]?.lowball!==undefined;
  const rounds=useMemo(()=>{const bank=shuffle([...LEAGUE_GOALS],mode==="daily"?hashSeed("LOWBALL"+utcDay()):Math.floor(Math.random()*1e9));return Array.from({length:5},(_,i)=>bank.slice(i*2,i*2+2));},[mode]);
  const pair=rounds[step]??rounds[0];const correct=pair[0].value>pair[1].value?0:1;
  const choose=(i:number)=>{if(pick!==null||done&&mode==="daily")return;setPick(i);if(i===correct)setScore(v=>v+100+(step*15));};
- const next=()=>{if(step===4){if(mode==="daily")onDaily("lowball",score);return;}setStep(v=>v+1);setPick(null);};
+ const next=()=>{if(step===4){setRunDone(true);if(mode==="daily")onDaily("lowball",score);return;}setStep(v=>v+1);setPick(null);};
  const restart=()=>{setStep(0);setScore(0);setPick(null);if(mode==="practice")setMode("practice");};
  return <Frame account={account} game="lowball" eyebrow="STAT FACE-OFF / QUICK FIRE" title="WHO'S GOT MORE?" description="Two players. One number. Pick the bigger Premier League goal total." number="01" mode={mode} setMode={m=>{setMode(m);restart();}}>
-  {done&&mode==="daily"?<Success title="DAILY DONE." detail="You've banked today's Lowball challenge. Switch to practice for more duels." button="PRACTICE" onAgain={()=>setMode("practice")}/>:<Card className="lb-panel"><div className="arc-game-meta"><span>DUEL {step+1} / 5</span><b>{score} PTS</b></div><div className="lb-vs"><div className="lb-player"><small>PLAYER A</small><strong>{pair[0].name}</strong><span>{pair[0].value} PL GOALS</span></div><div className="lb-vs-mark">VS</div><div className="lb-player"><small>PLAYER B</small><strong>{pair[1].name}</strong><span>{pair[1].value} PL GOALS</span></div></div><div className="lb-actions">{pair.map((p,i)=><button key={p.name} onClick={()=>choose(i)} disabled={pick!==null} className={pick===i?(i===correct?"correct":"wrong"):""}>MORE GOALS ↗</button>)}</div>{pick!==null&&<div className="arc-feedback"><b>{pick===correct?"YOU CALLED IT.":"NOT QUITE."}</b><p>{pair[correct].name} leads with {pair[correct].value} Premier League goals.</p><button className="arc-button" onClick={next}>{step===4?"BANK SCORE":"NEXT DUEL"} ↗</button></div>}</Card>}
+  {done&&mode==="daily"?<Success title="DAILY DONE." detail="You've banked today's Lowball challenge. Switch to practice for more duels." button="PRACTICE" onAgain={()=>setMode("practice")}/>:runDone?<Success title="FIVE DUELS DONE." detail={"You scored "+score+" points in this run."} button="RUN IT BACK" onAgain={restart}/>:<Card className="lb-panel"><div className="arc-game-meta"><span>DUEL {step+1} / 5</span><b>{score} PTS</b></div><div className="lb-vs"><div className="lb-player"><small>PLAYER A</small><strong>{pair[0].name}</strong><span>{pair[0].value} PL GOALS</span></div><div className="lb-vs-mark">VS</div><div className="lb-player"><small>PLAYER B</small><strong>{pair[1].name}</strong><span>{pair[1].value} PL GOALS</span></div></div><div className="lb-actions">{pair.map((p,i)=><button key={p.name} onClick={()=>choose(i)} disabled={pick!==null} className={pick===i?(i===correct?"correct":"wrong"):""}>MORE GOALS ↗</button>)}</div>{pick!==null&&<div className="arc-feedback"><b>{pick===correct?"YOU CALLED IT.":"NOT QUITE."}</b><p>{pair[correct].name} leads with {pair[correct].value} Premier League goals.</p><button className="arc-button" onClick={next}>{step===4?"BANK SCORE":"NEXT DUEL"} ↗</button></div>}</Card>}
  </Frame>;
 }
 
@@ -180,7 +180,7 @@ function CareerPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  </Frame>;
 }
 
-const WORDS=["SALAH","MESSI","HENRY","TERRY","KANTE","VARDY","FODEN","PIRES","NESTA","KLOSE","KAKA","KROOS","MATA","ROONEY","KANE","SAKA","SON","VIRGIL","GERRARD","CROUCH","ROBBEN","RAMOS"];
+const WORDS=[...new Set([...playerSurnames(),"MALEN","BARRY","DIAZ"])];
 function wordleEval(guess:string,target:string){const result=Array(5).fill("absent");const letters=target.split("");for(let i=0;i<5;i++){if(guess[i]===target[i]){result[i]="correct";letters[i]="";}}for(let i=0;i<5;i++){if(result[i]==="correct")continue;const at=letters.indexOf(guess[i]);if(at>=0){result[i]="present";letters[at]="";}}return result;}
 function FootlePage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();const [target,setTarget]=useState(()=>dailyFootle("daily"));const [typed,setTyped]=useState("");const [guesses,setGuesses]=useState<string[]>([]);const [end,setEnd]=useState(false);const done=account.daily[utcDay()]?.footle!==undefined;
