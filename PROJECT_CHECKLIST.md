@@ -535,3 +535,26 @@ This section records the separate gameplay-rework branch so work is not confused
 - [ ] Build 500+ Link Up shared-career puzzles with a unique valid answer
 - [ ] Split/lazy-load large database shards and measure first-load performance on mobile
 - [ ] Manually spot-check factual accuracy and answer ambiguity across every game before public release
+
+
+## 15. English-first question selection and source audit (2026-11-27)
+
+- [x] Rechecked the actual CC0 match importer: OpenFootball England domestic league/cup matches are classified as `UK`; UEFA club and senior international fixtures are classified as `INTERNATIONAL`. This is a domestic-English vs international split, not a claim that UK national-team fixtures are English domestic football.
+- [x] Found and corrected the runtime selection bug: `makeCC0QuizRound` previously selected only 40% UK questions. It now targets 75% UK domestic content.
+- [x] Daily Quick Quiz allocation is explicit: 13 English-domestic and 4 international questions across 17 questions (76.5%/23.5%, the closest whole-number split).
+- [x] Five-question rounds target 4 English-domestic / 1 international; ten-question practice rounds target 8 / 2.
+- [x] Quiz selection deduplicates by match ID, and the daily round excludes any match already selected earlier in the same round.
+- [x] Added `scripts/validate-cc0-quiz-pools.mjs` to check question IDs, unique match facts, difficulty, region, question wording, five distinct options, one correct answer, source/date provenance, manifest counts and minimum English/international coverage per tier.
+- [x] Wired the new validator into `npm run validate:data`, so CI will fail if any difficulty tier cannot satisfy English-first rounds.
+- [x] Updated The Climb and Quick Quiz descriptions so the English-domestic emphasis is visible in the UI.
+- [x] Researched the 212k+ England Football League Data dataset. It is a CC BY 4.0 candidate with third-party rights reserved, so it is documented for review but not bulk-imported. Official Premier League pages are kept as manual fact-check references only; current terms prohibit commercial database extraction without prior written approval.
+- [!] GitHub Actions must complete on the latest commit before this batch can be called build-verified. Physical iPhone/desktop playtesting is still outstanding.
+- [!] The English-first weighting currently applies to The Climb and Quick Quiz, not every game. Lowball, Ladder and Football 501 still use recorded senior international-goal values and need English player-stat data before they can honestly become English-stat games.
+- [!] The existing 100 curated English-heavy seed questions are still not connected to the CC0 live quiz bank. They remain a separate editorial development file and must not be counted as live content.
+
+**Next actions:**
+1. Check CI for this branch and fix any validator/build failures.
+2. Inspect actual generated question counts by tier and region from the new validator output.
+3. Find a rights-cleared English player-stat source (appearances, goals, assists) or use a verified manual fact ledger; do not scrape Premier League pages.
+4. Expand game-specific English club/player packs, then make Lowball's fan-popularity game a separate mechanic from Who's Got More?
+5. Test all 17 game routes on iPhone Safari and desktop before merging the feature branch into the gameplay branch and then production.
