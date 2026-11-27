@@ -28,10 +28,16 @@ const number = value => value == null || value === "" || !Number.isFinite(Number
 const regionOf = player => {
   const country = normalise(player.currentCountry);
   const league = normalise(player.currentLeague);
-  if (country.includes("england") || country.includes("unitedkingdom") || country.includes("greatbritain") ||
-      league.includes("premierleague") || league.includes("englishfootball")) return "ENGLISH";
-  if (["spain", "italy", "germany", "france"].some(value => country.includes(value)) ||
-      ["laliga", "seriea", "bundesliga", "ligue1"].some(value => league.includes(value))) return "INTERNATIONAL";
+  const englishLeague = ["premierleague", "championship", "leagueone", "leaguetwo",
+    "nationalleague", "englishfootball", "efl", "fa"].some(value => league.includes(value));
+  // UK country metadata does not always distinguish England, Scotland, Wales
+  // and Northern Ireland. Only identify those records as English when their
+  // league metadata identifies an English competition.
+  if (country.includes("england") || englishLeague) return "ENGLISH";
+  if (country.includes("unitedkingdom") || country.includes("greatbritain") || country === "uk" || country === "gb") {
+    return englishLeague ? "ENGLISH" : "INTERNATIONAL";
+  }
+  if (country || league) return "INTERNATIONAL";
   return null;
 };
 const positionLabel = raw => {
@@ -288,8 +294,8 @@ const bank = {
   meta: {
     targetPerTier: TARGET,
     distribution,
-    regionalRule: "Questions are grouped by the country/league of the player's latest recorded club, not the player's nationality.",
-    note: "English share refers to English-club questions. International share is drawn from Spain, Italy, Germany and France league/country metadata."
+    regionalRule: "Questions are grouped by the country/league of the player's latest recorded club, not the player's nationality. United Kingdom records without English league metadata are classified as international because the source does not always distinguish the UK nations.",
+    note: "English share refers to clubs identified as English by their country or league metadata. International share includes other countries and leagues present in the source archive."
   },
   tiers
 };
