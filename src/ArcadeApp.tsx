@@ -304,7 +304,7 @@ function FootlePage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const [typed,setTyped]=useState("");const [guesses,setGuesses]=useState<string[]>([]);const [end,setEnd]=useState(false);
  const done=account.daily[utcDay()]?.footle!==undefined;
  const seed=mode==="daily"?"FOOTLE:"+utcDay():"FOOTLE:PRACTICE:"+practiceSeed;
- const {players:archivePlayers,loading,error}=useArchivePlayers(true,seed,1600);
+ const {players:archivePlayers,loading,error}=useArchivePlayers(true,ARCHIVE_POOL_SEED,1600);
  const bank=useMemo(()=>{
    const archived=archivePlayers.map(p=>{
      const parts=p.name.trim().split(/\s+/).filter(Boolean);
@@ -413,7 +413,7 @@ function ConnectionsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
  const [notice,setNotice]=useState("");const done=account.daily[utcDay()]?.connections!==undefined;
  const seed=mode==="daily"?"CONNECTIONS:"+utcDay():"CONNECTIONS:PRACTICE:"+practiceSeed;
- const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,seed,1600);
+ const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,ARCHIVE_POOL_SEED,1600);
  const pool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
  const groups=useMemo(()=>pool.length>=32?buildConnectionsGroups(pool,difficulty,hashSeed(seed+":"+difficulty)):[],[pool,difficulty,seed]);
  const tilePlayers=useMemo(()=>shuffle(groups.flatMap(g=>g.members),hashSeed(seed+":TILES:"+difficulty)),[groups,seed,difficulty]);
@@ -585,7 +585,7 @@ function LadderPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const [submitted,setSubmitted]=useState(false);
  const done=account.daily[utcDay()]?.ladder!==undefined;
  const seed=mode==="daily"?"LADDER:"+utcDay():"LADDER:PRACTICE:"+practiceSeed;
- const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,seed,1600);
+ const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,ARCHIVE_POOL_SEED,1600);
  const pool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
  const generated=useMemo(()=>pool.length>=5?makeLadderSet(pool,metric,difficulty,hashSeed(seed+":"+metric+":"+difficulty)):[],[pool,metric,difficulty,seed]);
  useEffect(()=>{setPlayers(generated);setSubmitted(false);},[generated]);
@@ -627,7 +627,7 @@ function RevealPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const [reveal,setReveal]=useState(0);const [guess,setGuess]=useState("");const [tries,setTries]=useState(0);const [end,setEnd]=useState(false);const [won,setWon]=useState(false);
  const done=account.daily[utcDay()]?.["the-reveal"]!==undefined;
  const seed=mode==="daily"?"REVEAL:"+utcDay():"REVEAL:PRACTICE:"+practiceSeed;
- const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,seed,1600);
+ const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,ARCHIVE_POOL_SEED,1600);
  const pool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer).filter(p=>p.nationality!=="Unlisted"&&p.clubs.length>=2),[archivePlayers]);
  const target=pool.length?pool[hashSeed(seed+":target")%pool.length]:null;
  const clues=target?[
@@ -679,7 +679,7 @@ function FiveOhOnePage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
  const [busts,setBusts]=useState(0);const [bust,setBust]=useState(false);const [finish,setFinish]=useState(false);const [runBanked,setRunBanked]=useState(false);
  const done=account.daily[utcDay()]?.["football-501"]!==undefined;
  const seed=mode==="daily"?"501:"+utcDay():"501:PRACTICE:"+practiceSeed;
- const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,seed,1600);
+ const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,ARCHIVE_POOL_SEED,1600);
  const pool=useMemo(()=>{
    const mapped=archivePlayers.map(archivePlayerToGamePlayer).map(p=>({
      id:p.archiveId,name:p.name,
@@ -810,7 +810,7 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
  const [guess,setGuess]=useState("");const [tries,setTries]=useState(0);const [end,setEnd]=useState(false);const [won,setWon]=useState(false);const done=account.daily[utcDay()]?.["link-up"]!==undefined;
  const seed=mode==="daily"?"LINK:"+utcDay():"LINK:PRACTICE:"+practiceSeed;
- const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,seed,1600);
+ const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,ARCHIVE_POOL_SEED,1600);
  const pool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
  const questions=useMemo(()=>pool.length>=20?makeLinkQuestions(pool,hashSeed(seed)):[],[pool,seed]);
  const idx=questions.length?hashSeed(seed+":question")%questions.length:0;
@@ -1158,7 +1158,7 @@ function QuickQuizPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
  const [score,setScore]=useState(0);const [seconds,setSeconds]=useState(10);const [typed,setTyped]=useState("");const [typingDone,setTypingDone]=useState(false);const [finished,setFinished]=useState(false);
  const done=account.daily[utcDay()]?.["timed-quiz"]!==undefined;
  const seed=mode==="daily"?"QUIZ:"+utcDay()+":"+difficulty:"QUIZ:PRACTICE:"+practiceSeed+":"+difficulty;
- const {players,loading,error,retry}=useArchivePlayers(true,seed,1600);
+ const {players,loading,error,retry}=useArchivePlayers(true,ARCHIVE_POOL_SEED,1600);
  const pool=useMemo(()=>players.map(archivePlayerToGamePlayer),[players]);
  const questions=useMemo(()=>pool.length>=20?makeTimedQuiz(pool,difficulty,hashSeed(seed)):[],[pool,difficulty,seed]);
  const question=questions[index];
@@ -1295,7 +1295,7 @@ function ScoutSignalPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
  const [end,setEnd]=useState(false);
  const [won,setWon]=useState(false);
  const seed=mode==="daily"?"SCOUT:"+utcDay():"SCOUT:PRACTICE:"+practiceSeed;
- const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,seed,1600);
+ const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,ARCHIVE_POOL_SEED,1600);
  const done=account.daily[utcDay()]?.["scout-signal"]!==undefined;
  const archived=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer)
    .filter(p=>p.nationality!=="Unlisted"&&p.club!=="Unknown club"&&p.clubs.length>0),[archivePlayers]);
