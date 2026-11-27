@@ -783,6 +783,7 @@ function buildArchiveLinkUpQuestions(players:GamePlayer[],index:GridClubIndex,se
   if(!canonical.has(key)||spell.startYear===null)continue;
   const list=byClub.get(key)??[];list.push({player,spell});byClub.set(key,list);
  }
+ const englishPlayerIds=new Set([...byClub.values()].flatMap(entries=>entries.map(entry=>entry.player.archiveId)));
  const usedAnswers=new Set<string>();
  const buildFor=(clubNames:string[],scope:string,maximum:number)=>{
   const allowed=new Set(clubNames.map(gridClubKey));
@@ -801,15 +802,25 @@ function buildArchiveLinkUpQuestions(players:GamePlayer[],index:GridClubIndex,se
     const startById=new Map(startEntries.map(entry=>[entry.player.archiveId,entry]));
     const bridgeIds=[...new Set(endEntries.map(entry=>entry.player.archiveId))].filter(id=>startById.has(id));
     if(bridgeIds.length!==1||bridgeIds[0]!==answer.archiveId)continue;
-    const startChoices=shuffle(startEntries.filter(entry=>entry.player.archiveId!==answer.archiveId),seed+hashSeed(answer.archiveId+firstKey)).slice(0,12);
-    const endChoices=shuffle(endEntries.filter(entry=>entry.player.archiveId!==answer.archiveId),seed+hashSeed(answer.archiveId+secondKey)).slice(0,12);
+    const answerName=normalise(answer.name);
+    const startChoices=shuffle(startEntries.filter(entry=>entry.player.archiveId!==answer.archiveId&&normalise(entry.player.name)!==answerName),seed+hashSeed(answer.archiveId+firstKey)).slice(0,12);
+    const endChoices=shuffle(endEntries.filter(entry=>entry.player.archiveId!==answer.archiveId&&normalise(entry.player.name)!==answerName),seed+hashSeed(answer.archiveId+secondKey)).slice(0,12);
     let pair:{start:GamePlayer;end:GamePlayer}|null=null;
     for(const startEntry of startChoices){
-     const endEntry=endChoices.find(entry=>entry.player.archiveId!==startEntry.player.archiveId);
+     const startName=normalise(startEntry.player.name);
+     const endEntry=endChoices.find(entry=>entry.player.archiveId!==startEntry.player.archiveId&&normalise(entry.player.name)!==startName);
      if(endEntry){pair={start:startEntry.player,end:endEntry.player};break;}
     }
     if(!pair)continue;
-    const decoys=shuffle(players.filter(player=>![answer.archiveId,pair!.start.archiveId,pair!.end.archiveId].includes(player.archiveId)),seed+hashSeed(answer.archiveId+pair.start.archiveId+pair.end.archiveId)).slice(0,5);
+    const excludedNames=new Set([answerName,normalise(pair.start.name),normalise(pair.end.name)]);
+    const decoyMap=new Map<string,GamePlayer>();
+    for(const player of shuffle(players,seed+hashSeed(answer.archiveId+pair.start.archiveId+pair.end.archiveId))){
+     const name=normalise(player.name);
+     if(!englishPlayerIds.has(player.archiveId)||![answer.archiveId,pair.start.archiveId,pair.end.archiveId].includes(player.archiveId)||!name||excludedNames.has(name)||decoyMap.has(name))continue;
+     decoyMap.set(name,player);
+     if(decoyMap.size===5)break;
+    }
+    const decoys=[...decoyMap.values()];
     if(decoys.length<5)continue;
     const startWindow=getTeammateOverlap(answer,pair.start,firstKey),endWindow=getTeammateOverlap(answer,pair.end,secondKey);
     if(!startWindow||!endWindow)continue;
