@@ -1201,9 +1201,9 @@ function makeStrandsBoard(pack:typeof STRANDS_PACKS[number]){
  return {cells,paths,words,spangram:pack.spangram};
 }
 function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
- const [mode,setMode]=useMode();const [boardNo,setBoardNo]=useState(0);const [selected,setSelected]=useState<number[]>([]);const pathRef=useRef<number[]>([]);const [dragging,setDragging]=useState(false);const [found,setFound]=useState<number[]>([]);const [wrong,setWrong]=useState(0);const [nudges,setNudges]=useState(0);const [finished,setFinished]=useState(false);const [notice,setNotice]=useState("");const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));const done=account.daily[utcDay()]?.strands!==undefined;
+ const [mode,setMode]=useMode();const [boardNo,setBoardNo]=useState(0);const [selected,setSelected]=useState<number[]>([]);const pathRef=useRef<number[]>([]);const [dragging,setDragging]=useState(false);const [found,setFound]=useState<number[]>([]);const [wrong,setWrong]=useState(0);const [nudges,setNudges]=useState(0);const [hintedWord,setHintedWord]=useState<number|null>(null);const [finished,setFinished]=useState(false);const [notice,setNotice]=useState("");const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));const done=account.daily[utcDay()]?.strands!==undefined;
  const seed=mode==="daily"?"STRANDS:"+utcDay()+":"+boardNo:"STRANDS:PRACTICE:"+practiceSeed+":"+boardNo;
- const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,1600);
+ const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,4200);
  const pool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
  const dynamicPack=useMemo(()=>pool.length>=30?makeDynamicStrandsPack(pool,hashSeed(seed)):null,[pool,seed]);
  const staticOrder=useMemo(()=>shuffle(STRANDS_PACKS,hashSeed("STRANDS:"+utcDay())),[]);
@@ -1214,7 +1214,8 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
  const beginPath=(cell:number,event:React.PointerEvent<HTMLButtonElement>)=>{
    if(finished||isBlocked(cell))return;
    event.preventDefault();
-   // Avoid pointer capture on the first tile: cross-tile pointerenter is needed for drag selection.
+   // Capture on the board, then hit-test the tile under the pointer for reliable mobile drag selection.
+   try{(event.currentTarget.parentElement as HTMLDivElement|null)?.setPointerCapture(event.pointerId);}catch{/* older browsers may not support capture */}
    pathRef.current=[cell];setSelected([cell]);setDragging(true);setNotice("");
  };
  const extendPath=(cell:number)=>{
@@ -1226,6 +1227,11 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
    if(Math.max(Math.abs(r-rr),Math.abs(c-cc))!==1)return;
    const next=[...path,cell];pathRef.current=next;setSelected(next);
  };
+ const handlePointerMove=(event:React.PointerEvent<HTMLDivElement>)=>{
+   if(!dragging)return;
+   const tile=document.elementFromPoint(event.clientX,event.clientY)?.closest<HTMLElement>("[data-strands-cell]");
+   if(tile){const cell=Number(tile.dataset.strandsCell);if(Number.isInteger(cell))extendPath(cell);}
+ };
  const finishPath=()=>{
    if(!dragging)return;
    setDragging(false);const path=[...pathRef.current];pathRef.current=[];setSelected(path);
@@ -1233,36 +1239,37 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
    const foundIndex=board.words.findIndex((w,idx)=>!solved(idx)&&(w===word||w.split("").reverse().join("")===word));
    if(foundIndex>=0){
      const next=[...found,foundIndex];setFound(next);setSelected([]);setNotice("");
-     if(next.length===9){setFinished(true);if(mode==="daily"&&boardNo===9)onDaily("strands",1000-nudges*80-wrong*15);}
+     if(next.length===9){setFinished(true);if(mode==="daily")onDaily("strands",Math.max(100,1000-nudges*100-wrong*15));}
    }else{setWrong(v=>v+1);setNotice(path.length>1?"No footballer on that path. Try another route.":"Drag through adjacent letters to make a name.");setSelected([]);}
  };
  const cancelPath=()=>{pathRef.current=[];setSelected([]);setDragging(false);};
- const nextBoard=()=>{setBoardNo(v=>v+1);pathRef.current=[];setSelected([]);setFound([]);setWrong(0);setNudges(0);setNotice("");setDragging(false);setFinished(false);};
- const hint=()=>{if(nudges>=3)return;setNudges(v=>v+1);};
+ const nextBoard=()=>{setBoardNo(v=>v+1);pathRef.current=[];setSelected([]);setFound([]);setWrong(0);setNudges(0);setHintedWord(null);setNotice("");setDragging(false);setFinished(false);};
+ const hint=()=>{if(nudges>=3||finished)return;const next=board.paths.findIndex((_path,index)=>!found.includes(index)&&index!==hintedWord);if(next>=0){setHintedWord(next);setNudges(v=>v+1);}};
  const currentDone=found.length===9;
- return <Frame account={account} game="strands" eyebrow="6 × 8 LETTER PUZZLE / 10 BOARDS" title="FOOTBALL STRANDS." description="Drag through touching letters to trace footballer surnames. Find the full-name spangram connecting the grid's edges." number="13" mode={mode} setMode={m=>{setMode(m);setBoardNo(0);if(m==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));pathRef.current=[];setSelected([]);setFound([]);setWrong(0);setNudges(0);setNotice("");setDragging(false);setFinished(false);}}>
- {done&&mode==="daily"?<Success title="TEN BOARDS CLEARED." detail="Your ten-puzzle Strands run is complete. Unlimited archive-generated practice is open." button="PRACTICE STRANDS" onAgain={()=>{setMode("practice");setPracticeSeed(String(Math.floor(Math.random()*1e12)));nextBoard();}}/>:
+ const hintedCells=hintedWord===null?[]:(board.paths[hintedWord]?.slice(0,2)??[]);
+ return <Frame account={account} game="strands" eyebrow="6 × 8 LETTER PUZZLE / DAILY THEME" title="FOOTBALL STRANDS." description="Find eight football names connected by one clear football theme, then trace the spangram that names the connection." number="13" mode={mode} setMode={m=>{setMode(m);setBoardNo(0);if(m==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));pathRef.current=[];setSelected([]);setFound([]);setWrong(0);setNudges(0);setHintedWord(null);setNotice("");setDragging(false);setFinished(false);}}>
+ {done&&mode==="daily"?<Success title="TEN BOARDS CLEARED." detail="Today’s Strands board is complete. Fresh themed practice boards are available." button="PRACTICE STRANDS" onAgain={()=>{setMode("practice");setPracticeSeed(String(Math.floor(Math.random()*1e12)));nextBoard();}}/>:
   <Card className="strands-game">
-   <div className="arc-game-meta"><span>PUZZLE {boardNo+1} / 10</span><b>{found.length}/9 NAMES FOUND</b></div>
-   <div className="strands-theme"><small>THE THEME</small><strong>{pack.theme}</strong><span>{dynamicPack?"Generated from shared club and nationality player groups.":"Curated fallback board while the archive pool is loading."} Drag from letter to letter; diagonal moves are allowed.</span></div>
+   <div className="arc-game-meta"><span>{mode==="daily"?"TODAY’S BOARD":"PRACTICE BOARD "+(boardNo+1)}</span><b>{found.length}/9 NAMES FOUND</b></div>
+   <div className="strands-theme"><small>THE THEME</small><strong>{pack.theme}</strong><span>{dynamicPack?"Every answer belongs to this club or nationality theme.":"Fallback football word board."} Select adjacent letters in any direction; diagonal links are allowed.</span></div>
    {loading&&pool.length===0&&<div className="strands-pool-note">LOADING PLAYER NAMES…</div>}
-   <div className={"strands-grid "+(dragging?"is-dragging":"")} onPointerUp={finishPath} onPointerCancel={cancelPath} onContextMenu={e=>e.preventDefault()}>
+   <div className={"strands-grid "+(dragging?"is-dragging":"")} onPointerMove={handlePointerMove} onPointerUp={finishPath} onPointerCancel={cancelPath} onContextMenu={e=>e.preventDefault()}>
     <svg className="strands-trail" viewBox="0 0 800 600" preserveAspectRatio="none" aria-hidden="true">
      {selected.length>1&&<polyline points={selected.map(cell=>{const row=Math.floor(cell/8),col=cell%8;return ((col+.5)/8*800)+","+((row+.5)/6*600);}).join(" ")} fill="none" stroke="currentColor" strokeWidth="13" strokeLinecap="round" strokeLinejoin="round"/>}
     </svg>
     {board.cells.map((letter,i)=>{
-      const foundWord=found.findIndex(idx=>board.paths[idx].includes(i));const pathIndex=selected.indexOf(i);
-      return <motion.button type="button" key={i} layout onPointerDown={e=>beginPath(i,e)} onPointerEnter={()=>extendPath(i)}
-        className={(pathIndex>=0?"selected ":"")+(foundWord>=0?(foundWord===0?"spangram":"found"):"")}
+      const foundWord=found.findIndex(idx=>board.paths[idx].includes(i));const pathIndex=selected.indexOf(i);const isHinted=hintedCells.includes(i);
+      return <motion.button type="button" key={i} layout onPointerDown={e=>beginPath(i,e)} onPointerEnter={()=>extendPath(i)} data-strands-cell={i}
+        className={(pathIndex>=0?"selected ":"")+(isHinted?" hinted ":"")+(foundWord>=0?(foundWord===0?"spangram":"found"):"")}
         animate={{scale:pathIndex>=0?1.08:1}} transition={{type:"spring",stiffness:430,damping:26}}
         aria-label={"Row "+(Math.floor(i/8)+1)+", column "+(i%8+1)+", letter "+letter}>{letter}</motion.button>;
     })}
    </div>
-   <div className="strands-actions"><button className="arc-quiet" onClick={cancelPath}>CLEAR PATH</button><button className="arc-button" onClick={hint} disabled={nudges>=3}>HINT {nudges}/3</button><button className="arc-quiet" onClick={nextBoard}>SKIP / NEXT ↗</button></div>
+   <div className="strands-actions"><button className="arc-quiet" onClick={cancelPath}>CLEAR PATH</button><button className="arc-button" onClick={hint} disabled={nudges>=3||finished}>HINT −100 PTS ({nudges}/3)</button><button className="arc-quiet" onClick={nextBoard}>SKIP / NEXT ↗</button></div>
    {dragging&&<p className="strands-drag-live">KEEP DRAGGING · RELEASE TO CHECK</p>}
    {notice&&<div className="strands-feedback"><span>{notice}</span><button onClick={cancelPath}>DISMISS</button></div>}
-   {nudges>0&&<p className="arc-muted">Nudge: an unfound name starts with {board.words.find((_word,i)=>!solved(i))?.[0]??"?"} and has {board.words.find((_word,i)=>!solved(i))?.length??5} letters. Each nudge reduces the run score.</p>}
-   {currentDone&&<div className="arc-feedback"><b>BOARD {boardNo+1} COMPLETE.</b><p>SPANGRAM: {board.spangram}</p><button className="arc-button" onClick={boardNo===9?()=>{setFinished(true);if(mode==="daily")onDaily("strands",1000-nudges*80-wrong*15);}:nextBoard}>{boardNo===9?"FINISH TEN-BOARD RUN":"NEXT BOARD ↗"}</button></div>}
+   {hintedWord!==null&&<p className="arc-muted">HINT: the first two letters of {board.words[hintedWord]} are highlighted on the board. The hint costs 100 points.</p>}
+   {currentDone&&<div className="arc-feedback"><b>{mode==="daily"?"DAILY BOARD COMPLETE.":"BOARD COMPLETE."}</b><p>SPANGRAM: {board.spangram} · SCORE: {Math.max(100,1000-nudges*100-wrong*15)}</p>{mode==="practice"&&<button className="arc-button" onClick={nextBoard}>NEXT PUZZLE ↗</button>}</div>}
    <div className="strands-legend"><span><i className="blue"/> FOOTBALLER</span><span><i className="gold"/> SPANGRAM / FULL NAME</span></div>
    {error&&<div className="arc-feedback"><b>ARCHIVE FALLBACK</b><p>Curated Strands packs remain playable while the player pool is unavailable.</p><button className="arc-quiet" onClick={retry}>RETRY ARCHIVE</button></div>}
   </Card>}
