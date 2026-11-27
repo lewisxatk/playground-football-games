@@ -9,6 +9,7 @@ import { ClubBadge, CountryFlag } from "./ClubBadge";
 import { cc0CareerToArchiveGamePlayer } from "./cc0CareerAdapter";
 import type { ArchiveGamePlayer, ArchiveCareerSpell, ArchiveGameStat } from "./careerFileData";
 import CareerFilePage from "./CareerFilePage";
+import { getStaticArchivePlayers } from "./useArchivePlayers";
 import { getArchiveGamePlayers } from "./careerFileData";
 import CultHeroPage from "./CultHeroPage";
 import CultHeroCollectionPage from "./CultHeroCollectionPage";
@@ -754,56 +755,141 @@ function hasUniqueGridAssignment(rows:GamePlayer[][][]):boolean{
  };
  return cells.every((_cell,index)=>place(index,new Set<string>()));
 }
+type GridClubIndex={premierLeagueClubs:string[];englishLeagueClubs:string[]};
+function gridClubKey(value:string){return normalise(value).replace(/^(?:associationfootballclub|footballclub|fc|afc)/,"").replace(/(?:associationfootballclub|footballclub|fc|afc)$/,"");}
+function archivePlayerToGridPlayer(raw:ArchiveGamePlayer):GamePlayer{
+ const birthYear=raw.birthDate?Number(raw.birthDate.slice(0,4)):null;
+ const rawPosition=(raw.position||"").toLowerCase();
+ const position=rawPosition.includes("goalkeeper")?"GK":rawPosition.includes("defender")?"DF":rawPosition.includes("midfielder")?"MF":/(forward|striker|winger)/.test(rawPosition)?"FW":raw.position||"";
+ const base=cc0PlayerToGamePlayer({id:raw.id,name:raw.name,aliases:raw.fullName&&raw.fullName!==raw.name?[raw.fullName]:[],nationalities:[raw.nationality],birthYears:Number.isFinite(birthYear)?[birthYear]:[],positions:[position]});
+ return {...base,club:raw.currentClub||"Unknown club",league:raw.currentLeague||"English football",active:false,clubs:raw.clubs??[],aliases:[raw.name,...(raw.fullName&&raw.fullName!==raw.name?[raw.fullName]:[])],careerSpells:raw.spells??[],seasonStats:raw.seasonStats??raw.stats??[],careerAppsRecorded:(raw.careerAppearanceRows??0)>0,careerGoalsRecorded:(raw.careerGoalRows??0)>0,leagueAppsRecorded:(raw.leagueAppearanceRows??0)>0,leagueGoalsRecorded:(raw.leagueGoalRows??0)>0,careerApps:raw.appearances??0,careerGoals:raw.goals??0,leagueApps:raw.leagueAppearances??0,leagueGoals:raw.leagueGoals??0,leagueGoalSeasons:raw.leagueGoalSeasons??0,leagueAssists:raw.leagueAssists??0,leagueAssistSeasons:raw.leagueAssistSeasons??0,statSeasons:raw.seasons??0,firstYear:raw.firstYear??null,lastYear:raw.lastYear??null,caps:raw.caps??null,internationalGoals:raw.internationalGoals??null,birthDate:raw.birthDate??"",currentCountry:raw.currentCountry??"",currentDivision:raw.currentDivision??null};
+}
+function buildArchiveFootballGrid(players:GamePlayer[],index:GridClubIndex,seed:number,difficulty:GridDifficulty){
+ const clubNames=[...new Set([...(index.premierLeagueClubs??[]),...(index.englishLeagueClubs??[])])];
+ const canonical=new Map<string,string>();
+ for(const club of clubNames){const key=gridClubKey(club);if(key)canonical.set(key,club);}
+ const buckets=new Map<string,GamePlayer[]>(),clubNations=new Map<string,Set<string>>(),clubTotals=new Map<string,number>();
+ for(const player of players){
+  const nation=countryLabel(player.nationality);
+  if(!nation||nation==="Unlisted")continue;
+  for(const spell of player.careerSpells){
+   if(spell.startYear===null&&spell.endYear===null)continue;
+   const club=canonical.get(gridClubKey(spell.club));if(!club)continue;
+   const clubKey=gridClubKey(club),nationKey=normalise(nation),key=clubKey+"|"+nationKey;
+   const list=buckets.get(key)??[];
+   if(!list.some(existing=>existing.archiveId===player.archiveId)){list.push(player);buckets.set(key,list);}
+   const nations=clubNations.get(clubKey)??new Set<string>();nations.add(nationKey);clubNations.set(clubKey,nations);
+   clubTotals.set(clubKey,(clubTotals.get(clubKey)??0)+1);
+  }
+ }
+ const buildFor=(clubList:string[],minimumCellAnswers:number,scope:string)=>{
+  const eligible=[...new Set(clubList)].map(name=>({name,key:gridClubKey(name),total:clubTotals.get(gridClubKey(name))??0,nations:clubNations.get(gridClubKey(name))??new Set<string>()}))
+   .filter(club=>club.nations.size>=4).sort((a,b)=>b.total-a.total);
+  if(eligible.length<4)return null;
+  const cap=difficulty==="EASY"?18:difficulty==="STANDARD"?30:difficulty==="HARD"?48:eligible.length;
+  const pool=difficulty==="EXTREME"?eligible.slice(Math.max(0,eligible.length-cap)):eligible.slice(0,cap);
+  for(let attempt=0;attempt<1800;attempt++){
+   const chosen=shuffle(pool,seed+attempt*7919).slice(0,4);
+   if(chosen.length!==4||new Set(chosen.map(club=>club.key)).size!==4)continue;
+   const common=[...new Set(chosen.flatMap(club=>[...club.nations]))]
+    .filter(nation=>chosen.every(club=>(buckets.get(club.key+"|"+nation)?.length??0)>=minimumCellAnswers));
+   if(common.length<4)continue;
+   const countryOrder=shuffle(common,seed+attempt*104729);
+   const countries=countryOrder.slice(0,4).map(key=>{
+    for(const player of players){const candidate=countryLabel(player.nationality);if(normalise(candidate)===key)return candidate;}
+    return key;
+   });
+   const answers=chosen.map((club,row)=>countries.map((country,col)=>{
+    const key=club.key+"|"+normalise(country);
+    return shuffle(buckets.get(key)??[],seed+attempt*15485863+row*97+col*193).slice(0,40);
+   }));
+   if(answers.some(row=>row.some(cell=>cell.length<minimumCellAnswers))||!hasUniqueGridAssignment(answers))continue;
+   return {clubs:chosen.map(club=>club.name),countries,answers,scope};
+  }
+  return null;
+ };
+ const premier=buildFor(index.premierLeagueClubs,2,"PAST & PRESENT PREMIER LEAGUE");
+ if(premier)return premier;
+ const premierSingle=buildFor(index.premierLeagueClubs,1,"PAST & PRESENT PREMIER LEAGUE");
+ if(premierSingle)return premierSingle;
+ const english=buildFor(index.englishLeagueClubs,2,"ENGLISH LEAGUES");
+ if(english)return english;
+ return buildFor(index.englishLeagueClubs,1,"ENGLISH LEAGUES");
+}
 function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();
  const [difficulty,setDifficulty]=useState<GridDifficulty>("STANDARD");
  const [values,setValues]=useState<string[]>(Array(16).fill(""));
+ const [usedPlayerIds,setUsedPlayerIds]=useState<string[]>([]);
  const [opened,setOpened]=useState<number[]>([]);
  const [active,setActive]=useState<number|null>(null);
  const [guess,setGuess]=useState("");
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
  const [gridNotice,setGridNotice]=useState("");
- const [archiveGridPlayers,setArchiveGridPlayers]=useState<GamePlayer[]>([]);
- const [archiveGridLoading,setArchiveGridLoading]=useState(true);
- const [archiveGridError,setArchiveGridError]=useState("");
- const [gridReload,setGridReload]=useState(0);
+ const [archivePlayers,setArchivePlayers]=useState<ArchiveGamePlayer[]>([]);
+ const [archiveLoading,setArchiveLoading]=useState(true);
+ const [archiveError,setArchiveError]=useState("");
+ const [clubIndex,setClubIndex]=useState<GridClubIndex|null>(null);
+ const [clubIndexLoading,setClubIndexLoading]=useState(true);
+ const [clubIndexError,setClubIndexError]=useState("");
+ const [retryToken,setRetryToken]=useState(0);
  const done=account.daily[utcDay()]?.["football-grid"]!==undefined;
  const seed=mode==="daily"?hashSeed("GRID:"+utcDay()+":"+difficulty):hashSeed("GRID:practice:"+practiceSeed+":"+difficulty);
  useEffect(()=>{
-  let live=true;setArchiveGridLoading(true);setArchiveGridError("");setArchiveGridPlayers([]);
-  getArchiveGamePlayers(4000,mode==="daily"?"PLAYGROUND-GRID:"+utcDay()+":"+gridReload:"PLAYGROUND-GRID:PRACTICE:"+practiceSeed+":"+gridReload)
-   .then(rows=>{if(live){setArchiveGridPlayers(rows.map(archiveGamePlayerToGamePlayer));setArchiveGridLoading(false)}})
-   .catch(error=>{if(live){setArchiveGridError(error instanceof Error?error.message:"The career archive could not be loaded.");setArchiveGridLoading(false)}});
-  return()=>{live=false};
- },[mode,practiceSeed,gridReload]);
- const playerPool=archiveGridPlayers;
- const puzzle=useMemo(()=>makeArchivePremierLeagueGrid(playerPool,seed),[playerPool,seed,difficulty]);
- 
+  let live=true;setArchiveLoading(true);setArchiveError("");
+  getStaticArchivePlayers("FOOTBALL-GRID-ARCHIVE",3200).then(players=>{
+   if(!live)return;
+   if(!players?.length){setArchiveError("The season-by-season player archive could not be loaded.");setArchivePlayers([]);}
+   else setArchivePlayers(players);
+  }).catch(error=>{if(live)setArchiveError(error instanceof Error?error.message:"The player archive could not be loaded.");})
+   .finally(()=>{if(live)setArchiveLoading(false);});
+  return()=>{live=false;};
+ },[retryToken]);
+ useEffect(()=>{
+  let live=true;setClubIndexLoading(true);setClubIndexError("");
+  fetch("/data/football-knowledge-football-grid-clubs.cc0.json",{cache:"force-cache"}).then(response=>{
+   if(!response.ok)throw new Error("The English club index is unavailable ("+response.status+").");
+   return response.json();
+  }).then(data=>{
+   if(live&&Array.isArray(data.premierLeagueClubs)&&Array.isArray(data.englishLeagueClubs))setClubIndex({premierLeagueClubs:data.premierLeagueClubs,englishLeagueClubs:data.englishLeagueClubs});
+   else if(live)throw new Error("The English club index is incomplete.");
+  }).catch(error=>{if(live)setClubIndexError(error instanceof Error?error.message:"The English club index could not be loaded.");})
+   .finally(()=>{if(live)setClubIndexLoading(false);});
+  return()=>{live=false;};
+ },[retryToken]);
+ const playerPool=useMemo(()=>archivePlayers.map(archivePlayerToGridPlayer),[archivePlayers]);
+ const puzzle=useMemo(()=>clubIndex&&playerPool.length?buildArchiveFootballGrid(playerPool,clubIndex,seed,difficulty):null,[clubIndex,playerPool,seed,difficulty]);
+ const loading=archiveLoading||clubIndexLoading;
+ const error=archiveError||clubIndexError;
  const check=()=>{
-   if(active===null||!guess.trim()||!puzzle)return;
-   const row=Math.floor(active/4),col=active%4,accepted=puzzle.answers[row][col],player=archiveGuess(guess,accepted);
-   if(player&&values.some((value,index)=>index!==active&&normalise(value)===normalise(player.name))){setGridNotice("That player is already used in another square. Every grid answer must be a different footballer.");return;}
-   if(player){const label=player.name,next=opened.includes(active)?opened:[...opened,active];setValues(v=>v.map((x,i)=>i===active?label:x));setOpened(next);setActive(null);setGuess("");setGridNotice("");if(next.length===16&&mode==="daily")onDaily("football-grid",Math.max(100,1000-next.length*15));}
-   else setGridNotice("That player does not have a verified Premier League spell at this club and the selected nationality.");
+  if(active===null||!guess.trim()||!puzzle)return;
+  const row=Math.floor(active/4),col=active%4,accepted=puzzle.answers[row][col],guessKey=normalise(guess);
+  const player=accepted.find(candidate=>!usedPlayerIds.includes(candidate.archiveId)&&[candidate.name,candidate.surname,...candidate.aliases].some(alias=>normalise(alias)===guessKey));
+  if(player){
+   const next=[...opened,active];setValues(v=>v.map((value,index)=>index===active?player.name:value));setUsedPlayerIds(ids=>[...ids,player.archiveId]);setOpened(next);setActive(null);setGuess("");setGridNotice("");
+   if(next.length===16&&mode==="daily")onDaily("football-grid",Math.max(100,1000-next.length*15));
+  }else if(accepted.some(candidate=>[candidate.name,candidate.surname,...candidate.aliases].some(alias=>normalise(alias)===guessKey))){setGridNotice("That footballer is already used in another square. Every player can only appear once.");}
+  else setGridNotice("That player does not have a recorded spell at this English club with the selected nationality.");
  };
  const reset=(newMode:Mode=mode,newDifficulty:GridDifficulty=difficulty)=>{
-   setValues(Array(16).fill(""));setOpened([]);setActive(null);setGuess("");setGridNotice("");
-   if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
-   setDifficulty(newDifficulty);
+  setValues(Array(16).fill(""));setUsedPlayerIds([]);setOpened([]);setActive(null);setGuess("");setGridNotice("");
+  if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
+  setDifficulty(newDifficulty);
  };
- return <Frame account={account} game="football-grid" eyebrow="ENGLISH CLUB × NATIONALITY / 4 BY 4" title="FILL THE GRID." description="Sixteen squares. Match a past or present Premier League club badge with a national flag. Enter any player with a verified spell for that club and that nationality." number="07" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
+ const retry=()=>{setRetryToken(value=>value+1);reset(mode,difficulty);};
+ return <Frame account={account} game="football-grid" eyebrow="ENGLISH CLUB × NATIONALITY / 4 BY 4" title="FILL THE GRID." description="Past and present Premier League clubs first, with other English-league clubs used only when needed to make a valid grid. Match each club badge with a national flag. No player can be reused." number="07" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
  {done&&mode==="daily"?<Success title="GRID COMPLETE." detail="All sixteen cells are filled. Try a fresh grid in unlimited practice." button="PRACTICE GRID" onAgain={()=>{setMode("practice");reset("practice");}}/>:
   <Card className="grid-game">
-   <div className="arc-game-meta"><span>16 ANSWERS / 16 CELLS</span><b>{opened.length}/16 FILLED</b></div>
+   <div className="arc-game-meta"><span>{puzzle?.scope??"16 ANSWERS / 16 CELLS"}</span><b>{opened.length}/16 FILLED</b></div>
    <div className="grid-difficulty">{GRID_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{difficultyLabel(level)}</button>)}</div>
-   {archiveGridLoading&&playerPool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>BUILDING YOUR GRID</b><span>Finding past and present Premier League player intersections by club and national flag.</span></div>:
+   {loading?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>BUILDING YOUR GRID</b><span>Loading season-by-season Premier League appearances and verified nationalities. First load may take a moment.</span></div>:
     puzzle?<><div className="football-grid-wrap grid-four"><div className="grid-corner">ENGLISH CLUB ↓<br/>NATION →</div>{puzzle.countries.map(country=><div className="grid-col-head" key={country}><CountryFlag name={country}/><span>{country}</span></div>)}{puzzle.clubs.map((club,ri)=><><div className="grid-row-head" key={"r"+ri}><ClubBadge name={club} size={30}/><b>{club}</b></div>{puzzle.countries.map((country,ci)=>{const id=ri*4+ci,doneCell=opened.includes(id);return <button key={id} className={"grid-cell "+(doneCell?"filled":"")+(active===id?" active":"")} onClick={()=>{setActive(id);setGuess("");setGridNotice("");}}><small>{club} × {country}</small><b>{values[id]||"?"}</b></button>;})}</>)}</div>
-     <div className="grid-game-bottom"><span>{difficulty} · {puzzle.answers.flat().reduce((n,cell)=>n+cell.length,0)} ACCEPTED PLAYER/CELL MATCHES</span>{mode==="practice"&&<button className="arc-quiet" onClick={()=>reset(mode,difficulty)}>NEW GRID ↻</button>}</div>
+     <div className="grid-game-bottom"><span>{difficulty} · {puzzle.answers.flat().reduce((n,cell)=>n+cell.length,0)} ACCEPTED PLAYER/CELL MATCHES</span><button className="arc-quiet" onClick={()=>reset(mode,difficulty)}>NEW GRID ↻</button></div>
      {active!==null&&<div className="grid-answer"><small>{puzzle.clubs[Math.floor(active/4)]} × {puzzle.countries[active%4]}</small><input value={guess} onChange={e=>setGuess(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")check();}} placeholder="Full name or surname…"/><button className="arc-button" onClick={check}>CHECK ↗</button></div>}
      {gridNotice&&<div className="arc-feedback"><b>NOT A MATCH.</b><p>{gridNotice}</p></div>}
-     <p className="arc-muted">Every square is checked against a dated Premier League club spell and recorded nationality. There may be several valid answers per square, but you cannot reuse a footballer in another square. Source: OpenFootballBase-Data archive; season totals are unverified and attribution is shown in Career File.</p>
+     <p className="arc-muted">Every square is checked against a dated Premier League club spell and recorded nationality. There may be several valid answers per square, but you cannot reuse a footballer in another square. Player career archive: OpenFootballBase-Data, CC BY-SA 4.0.</p>
     </>:
-    <div className="arc-feedback"><b>{archiveGridError?"CAREER ARCHIVE UNAVAILABLE":"NO VALID 4×4 GRID IN THIS DRAW"}</b><p>{archiveGridError||"This player sample did not produce sixteen unique Premier League intersections. Draw again to search a fresh sample."}</p><button className="arc-button" onClick={()=>{setGridReload(value=>value+1);reset(mode,difficulty);}}>RETRY / NEW DRAW ↗</button></div>}
+    <div className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NO VALID 4×4 GRID IN THIS DRAW"}</b><p>{error||"This player sample did not produce sixteen verified intersections. Draw again or try another difficulty."}</p><button className="arc-button" onClick={retry}>RETRY / NEW DRAW ↗</button></div>}
   </Card>}
  </Frame>;
 }
