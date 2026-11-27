@@ -33,15 +33,17 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
  const target=useMemo(()=>{
   if(!candidates.length)return null;
   const draw=practiceSeed+"|"+seed+"|"+round;
-  const unused=candidates.filter(player=>!recent.has(player.id));
+  const unused=playMode==="practice"?candidates.filter(player=>!recent.has(player.id)):candidates;
   const source=unused.length?unused:candidates;
+  const draw=playMode==="daily"?seed+"|"+mode:practiceSeed+"|"+seed+"|"+round;
   return [...source].sort((a,b)=>hash(draw+":"+a.id)-hash(draw+":"+b.id))[0]??null;
  },[candidates,practiceSeed,seed,round,recent]);
  const spells=target?[...target.spells].sort((a,b)=>a.startYear-b.startYear||a.club.localeCompare(b.club)):[];
  const visible=spells.filter(spell=>revealed.includes(spell.id)||spells.indexOf(spell)<(mode==="EXTREME"?1:2));
  const unlock=(id:string)=>{if(status!=="playing"||revealed.includes(id))return;setRevealed(previous=>[...previous,id]);setScore(value=>Math.max(0,value-35));};
  const hint=(id:string,value:string)=>{if(status!=="playing"||opened.includes(id))return;setOpened(previous=>[...previous,id]);setNote(value);setScore(previous=>Math.max(0,previous-100));};
- const submit=(event:FormEvent)=>{event.preventDefault();if(!target||!guess.trim()||status!=="playing")return;if(matches(guess,target)){setStatus("won");setNote("FILE CRACKED. The player has been identified.");if(!dailyDone)onDailyComplete?.(score);try{const old=JSON.parse(localStorage.getItem(recentKey)||"[]");localStorage.setItem(recentKey,JSON.stringify([...new Set([...(Array.isArray(old)?old:[]),target.id])].slice(-500)))}catch{};return;}const next=attempts+1;setAttempts(next);setScore(value=>Math.max(0,value-50));setGuess("");setNote("Not that one. Read the dated club history again.");if(next>=10){setStatus("lost");if(!dailyDone)onDailyComplete?.(0);}};
+ const remember=(id:string)=>{try{const old=JSON.parse(localStorage.getItem(recentKey)||"[]");localStorage.setItem(recentKey,JSON.stringify([...new Set([...(Array.isArray(old)?old:[]),id])].slice(-500)))}catch{}};
+ const submit=(event:FormEvent)=>{event.preventDefault();if(!target||!guess.trim()||status!=="playing")return;if(matches(guess,target)){setStatus("won");setNote("FILE CRACKED. The player has been identified.");if(!dailyDone)onDailyComplete?.(score);remember(target.id);return;}const next=attempts+1;setAttempts(next);setScore(value=>Math.max(0,value-50));setGuess("");setNote("Not that one. Read the dated club history again.");if(next>=10){setStatus("lost");if(!dailyDone)onDailyComplete?.(0);remember(target.id);}};
  const next=()=>{if(status==="playing")return;setRound(value=>value+1);setGuess("");setAttempts(0);setScore(1000);setRevealed([]);setOpened([]);setNote("");setStatus("playing");};
  const resetPractice=()=>{setPracticeSeed(Math.random().toString(36).slice(2));setRound(0);setGuess("");setAttempts(0);setScore(1000);setRevealed([]);setOpened([]);setNote("");setStatus("playing");};
  return <main className="cf-page cf-cc0-page" id="top">
