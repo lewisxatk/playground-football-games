@@ -337,7 +337,7 @@ function DraftPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:n
  const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,ARCHIVE_POOL_SEED,1600);
  const archivePool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer)
    .filter(p=>["GK","DEF","MID","FWD"].includes(p.position)&&p.name.trim()&&p.club!=="Unknown club")
-   .map(p=>({...p,cost:draftCost(p),rating:Math.min(99,Math.round(35+Math.sqrt(Math.max(0,p.careerApps))*2+Math.sqrt(Math.max(0,p.careerGoals))*1.5)} as DraftCandidate)),[archivePlayers]);
+   .map(p=>({...p,cost:draftCost(p),rating:Math.min(99,Math.round(35+Math.sqrt(Math.max(0,p.careerApps))*2+Math.sqrt(Math.max(0,p.careerGoals))*1.5))} as DraftCandidate)),[archivePlayers]);
  const fallbackPool=useMemo(()=>FALLBACK_DRAFT.map((p,i)=>({
    ...PLAYER_DATABASE.find(x=>normalise(x.name)===normalise(p.name))!,
    name:p.name,surname:p.name.split(" ").slice(-1)[0],position:p.pos as Player["position"],
