@@ -454,7 +454,14 @@ function makeClubNationGridPacks(careerPlayers,englishClubNames,target=500,prefe
    club.nations.add(norm(nation));clubNationCounts.set(keyClub,club);
   }
  }
- const eligible=[...clubNationCounts.values()].filter(club=>club.nations.size>=4).sort((a,b)=>Number(preferredClubNames.has(clubKey(b.name)))-Number(preferredClubNames.has(clubKey(a.name)))||b.nations.size-a.nations.size).slice(0,48);
+ const eligible=[...clubNationCounts.values()].filter(club=>club.nations.size>=4).sort((a,b)=>Number(preferredClubNames.has(clubKey(b.name)))-Number(preferredClubNames.has(clubKey(a.name)))||b.nations.size-a.nations.size).slice(0,80);
+ let qualifyingClubCombos=0,maxCommonNations=0;
+ for(let a=0;a<eligible.length-3;a++)for(let b=a+1;b<eligible.length-2;b++)for(let d=b+1;d<eligible.length-1;d++)for(let e=d+1;e<eligible.length;e++){
+  const clubs=[eligible[a],eligible[b],eligible[d],eligible[e]];
+  const common=[...new Set(clubs.flatMap(club=>[...club.nations]))].filter(nation=>clubs.every(club=>(buckets.get(clubKey(club.name)+":"+nation)||[]).length>=1));
+  maxCommonNations=Math.max(maxCommonNations,common.length);if(common.length>=4)qualifyingClubCombos++;
+ }
+ console.log("Football Grid eligibility:",JSON.stringify({careerPlayers:careerPlayers.length,englishClubsWithFourNations:eligible.length,englishPlayersWithNationality:careerPlayers.filter(player=>player.nationality).length,clubNationBuckets:buckets.size,qualifyingClubCombos,maxCommonNations,topClubs:eligible.slice(0,8).map(club=>({name:club.name,nations:club.nations.size}))}));
  if(eligible.length<4)return[];
  const packs=[],seen=new Set();
  for(let seed=1;seed<30000&&packs.length<target;seed++){
