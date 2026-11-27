@@ -314,8 +314,8 @@
 .formation-row{position:relative;z-index:1;display:grid;justify-items:center;align-items:center;gap:5px;margin:14px auto}
 .formation-row.keeper{grid-template-columns:1fr}
 .formation-row.keeper .formation-player{grid-column:1}
-.formation-row.defence,.formation-row.midfield{grid-template-columns:repeat(4,minmax(0,1fr))}
-.formation-row.forwards{grid-template-columns:repeat(2,minmax(0,1fr));max-width:56%}
+.formation-row.defence{grid-template-columns:repeat(4,minmax(0,1fr))}
+.formation-row.midfield,.formation-row.forwards{grid-template-columns:repeat(3,minmax(0,1fr));max-width:78%}
 .formation-player{min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;width:100%;animation:missingPlayerIn .45s ease both}
 .formation-shirt{width:39px;height:43px;display:grid;place-items:center;clip-path:polygon(18% 0,38% 11%,62% 11%,82% 0,100% 18%,84% 39%,77% 31%,77% 100%,23% 100%,23% 31%,16% 39%,0 18%);background:linear-gradient(145deg,#f5f1dd,#d4dfc1);border:1px solid #28432d;filter:drop-shadow(2px 3px 0 #142e1855)}
 .formation-shirt b{font:900 16px 'Teko',sans-serif;color:#203725}
@@ -342,7 +342,7 @@
  .missing-matchline{grid-template-columns:1fr}
  .missing-formation-pitch{padding:13px 6px 9px}
  .formation-row{margin:12px auto}
- .formation-row.forwards{max-width:65%}
+ .formation-row.midfield,.formation-row.forwards{max-width:88%}
  .formation-shirt{width:32px;height:36px}
  .formation-club small{font-size:6px}
  .formation-caption{font-size:5px}
