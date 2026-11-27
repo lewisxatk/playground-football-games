@@ -11,7 +11,7 @@ import type { ArchiveGamePlayer, ArchiveCareerSpell, ArchiveGameStat } from "./c
 import CareerFilePage from "./CC0CareerFilePage";
 import CultHeroPage from "./CultHeroPage";
 import CultHeroCollectionPage from "./CultHeroCollectionPage";
-import { useFootballKnowledge, makeCC0QuizRound, makeCC0DailyQuizRound, type CC0QuizTier as QuizTier } from "./footballKnowledge";
+import { useFootballKnowledge, useFootballQuizKnowledge, makeCC0QuizRound, makeCC0DailyQuizRound, type CC0QuizTier as QuizTier } from "./footballKnowledge";
 import "./arcade.css";
 import "./playground-upgrades.css";
 
@@ -369,7 +369,7 @@ function ClimbPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:n
  const [step,setStep]=useState(0);const [lives,setLives]=useState(3);const [score,setScore]=useState(0);const [answer,setAnswer]=useState("");const [ended,setEnded]=useState(false);
  const done=account.daily[utcDay()]?.["the-climb"]!==undefined;
  const seed=mode==="daily"?"CLIMB:"+utcDay()+":"+difficulty:"CLIMB:PRACTICE:"+practiceSeed+":"+difficulty;
- const {data:climbData,loading,error,retry}=useFootballKnowledge("the-climb");
+ const {data:climbData,loading,error,retry}=useFootballQuizKnowledge("the-climb");
  const bank=climbData?.questions??[];
  const questions=useMemo(()=>bank.length?makeCC0QuizRound(bank,difficulty,hashSeed(seed),5):[],[bank,difficulty,seed]);
  const question=questions[step];
@@ -1188,7 +1188,7 @@ function QuickQuizPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
  const [score,setScore]=useState(0);const [seconds,setSeconds]=useState(15);const [typed,setTyped]=useState("");const [typingDone,setTypingDone]=useState(false);const [finished,setFinished]=useState(false);
  const done=account.daily[utcDay()]?.["timed-quiz"]!==undefined;
  const seed=mode==="daily"?"QUIZ:"+utcDay():"QUIZ:PRACTICE:"+practiceSeed+":"+difficulty;
- const {data:quizData,loading,error,retry}=useFootballKnowledge("timed-quiz");
+ const {data:quizData,loading,error,retry}=useFootballQuizKnowledge("timed-quiz");
  const bank=quizData?.questions??[];
  const questions=useMemo(()=>bank.length===0?[]:mode==="daily"?makeCC0DailyQuizRound(bank,hashSeed(seed)):makeCC0QuizRound(bank,difficulty,hashSeed(seed),10),[bank,mode,difficulty,seed]);
  const question=questions[index];
