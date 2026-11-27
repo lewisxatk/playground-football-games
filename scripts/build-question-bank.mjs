@@ -51,6 +51,16 @@ const positionLabel = raw => {
   return "";
 };
 const countryLabels = new Map([
+  // Squad feeds mix country names and three-letter federation codes: publish one canonical UK-English label.
+  ["wal", "Wales"], ["wls", "Wales"], ["eng", "England"], ["sco", "Scotland"], ["nir", "Northern Ireland"],
+  ["esp", "Spain"], ["es", "Spain"], ["ger", "Germany"], ["deu", "Germany"], ["ned", "Netherlands"], ["nld", "Netherlands"],
+  ["ita", "Italy"], ["fra", "France"], ["por", "Portugal"], ["prt", "Portugal"], ["bra", "Brazil"], ["arg", "Argentina"],
+  ["uru", "Uruguay"], ["bel", "Belgium"], ["cro", "Croatia"], ["srb", "Serbia"], ["sui", "Switzerland"], ["che", "Switzerland"],
+  ["civ", "Ivory Coast"], ["kor", "South Korea"], ["jpn", "Japan"], ["usa", "United States"], ["mex", "Mexico"],
+  ["mar", "Morocco"], ["nga", "Nigeria"], ["sen", "Senegal"], ["gha", "Ghana"], ["cmr", "Cameroon"], ["irn", "Iran"],
+  ["aus", "Australia"], ["can", "Canada"], ["den", "Denmark"], ["swe", "Sweden"], ["nor", "Norway"], ["pol", "Poland"],
+  ["ukr", "Ukraine"], ["cze", "Czechia"], ["rou", "Romania"], ["tur", "Türkiye"], ["gre", "Greece"], ["sau", "Saudi Arabia"],
+  ["qat", "Qatar"], ["chn", "China"],
   ["royaumeuni", "United Kingdom"], ["angleterre", "England"], ["ecosse", "Scotland"],
   ["paysdegalles", "Wales"], ["irlandedunord", "Northern Ireland"], ["italie", "Italy"],
   ["allemagne", "Germany"], ["espagne", "Spain"], ["bresil", "Brazil"],
@@ -87,7 +97,7 @@ if (manifest.source !== "OpenFootballBase-Data" || !Array.isArray(manifest.shard
 }
 try {
   const existing = JSON.parse(await readFile(outputPath, "utf8"));
-  if (existing.version === 2 && existing.sourceRelease === manifest.sourceRelease &&
+  if (existing.version === 3 && existing.sourceRelease === manifest.sourceRelease &&
       existing.meta?.targetPerTier === TARGET &&
       ["EASY", "MEDIUM", "HARD", "EXTREME"].every(tier =>
         existing.tiers?.[tier]?.length === TARGET &&
@@ -110,7 +120,7 @@ for (const shard of manifest.shards) {
 if (players.length !== manifest.playerCount) throw new Error("Player count does not match the static archive manifest.");
 
 const clubs = unique(players.flatMap(player => [...(player.clubs ?? []), player.currentClub]));
-const nationalities = unique(players.map(player => player.nationality));
+const nationalities = unique(players.map(player => displayCountry(player.nationality)));
 const leagues = unique(players.map(player => displayLeague(player.currentLeague)));
 const countries = unique(players.map(player => displayCountry(player.currentCountry)));
 const sortedNumbers = values => [...new Set(values.filter(value => value !== null).map(String))].sort((a, b) => Number(a) - Number(b));
@@ -220,7 +230,7 @@ for (const player of players) {
   const careerClubs = unique(player.clubs ?? []);
   const latestClub = String(player.currentClub ?? "").trim();
   const firstClub = String(player.spells?.[0]?.club ?? careerClubs[0] ?? "").trim();
-  const nationality = String(player.nationality ?? "").trim();
+  const nationality = displayCountry(player.nationality);
   const position = positionLabel(player.position);
   const league = displayLeague(player.currentLeague);
   const country = displayCountry(player.currentCountry);
@@ -323,7 +333,7 @@ for (const tier of ["EASY", "MEDIUM", "HARD", "EXTREME"]) {
 }
 
 const bank = {
-  version: 2,
+  version: 3,
   source: manifest.source,
   sourceRelease: manifest.sourceRelease,
   sourceReleaseUrl: manifest.sourceReleaseUrl ?? manifest.releaseUrl,
