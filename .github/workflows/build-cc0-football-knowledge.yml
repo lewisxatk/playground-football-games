@@ -92,6 +92,8 @@ jobs:
           git add -A public/data/football-knowledge-*.cc0.json public/data/football-knowledge.cc0.json public/data/football-knowledge-report.json public/data/football-knowledge-manifest.cc0.json
           if git diff --cached --quiet; then echo "Database already current."; exit 0; fi
           git commit -m "Build pinned CC0 football knowledge database [skip ci]"
+          git fetch origin "${GITHUB_REF_NAME}"
+          git rebase "origin/${GITHUB_REF_NAME}"
           git push origin "HEAD:${GITHUB_REF_NAME}"
       - name: Upload build report
         if: always()
