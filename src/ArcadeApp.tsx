@@ -10,7 +10,7 @@ import { useArchivePlayers } from "./useArchivePlayers";
 import { cc0CareerToArchiveGamePlayer } from "./cc0CareerAdapter";
 import { getWorldCupLineups } from "./tournamentNationData";
 import type { ArchiveGamePlayer, ArchiveCareerSpell, ArchiveGameStat } from "./careerFileData";
-import CareerFilePage from "./CareerFilePage";
+import CareerFilePage from "./CC0CareerFilePage";
 import CultHeroPage from "./CultHeroPage";
 import CultHeroCollectionPage from "./CultHeroCollectionPage";
 import { useFootballKnowledge, makeCC0QuizRound, makeCC0DailyQuizRound, type CC0QuizTier as QuizTier } from "./footballKnowledge";
