@@ -783,6 +783,7 @@ function buildArchiveLinkUpQuestions(players:GamePlayer[],index:GridClubIndex,se
   if(!canonical.has(key)||spell.startYear===null)continue;
   const list=byClub.get(key)??[];list.push({player,spell});byClub.set(key,list);
  }
+ const englishPlayerIds=new Set([...byClub.values()].flatMap(entries=>entries.map(entry=>entry.player.archiveId)));
  const buildFor=(clubNames:string[],scope:string)=>{
   const allowed=new Set(clubNames.map(gridClubKey));
   const ordered=shuffle(players,seed+scope.length*7919+["EASY","STANDARD","HARD","EXTREME"].indexOf(difficulty)*104729);
@@ -808,7 +809,7 @@ function buildArchiveLinkUpQuestions(players:GamePlayer[],index:GridClubIndex,se
      if(endEntry){pair={start:startEntry.player,end:endEntry.player};break;}
     }
     if(!pair)continue;
-    const decoys=shuffle(players.filter(player=>![answer.archiveId,pair!.start.archiveId,pair!.end.archiveId].includes(player.archiveId)),seed+hashSeed(answer.archiveId+pair.start.archiveId+pair.end.archiveId)).slice(0,5);
+    const decoys=shuffle(players.filter(player=>englishPlayerIds.has(player.archiveId)&&![answer.archiveId,pair!.start.archiveId,pair!.end.archiveId].includes(player.archiveId)),seed+hashSeed(answer.archiveId+pair.start.archiveId+pair.end.archiveId)).slice(0,5);
     if(decoys.length<5)continue;
     const startWindow=getTeammateOverlap(answer,pair.start,firstKey),endWindow=getTeammateOverlap(answer,pair.end,secondKey);
     if(!startWindow||!endWindow)continue;
