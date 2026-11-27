@@ -387,3 +387,35 @@ export async function getTransferHints(names: string[]): Promise<Transfer[]> {
   }
   return Array.from(unique.values()).sort((a,b) => a.year.localeCompare(b.year));
 }
+
+export type HistoricalClubRecord={player:string;club:string;startYear:number|null;endYear:number|null};
+const normaliseCareerName=(value:string)=>value.toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
+
+/**
+ * Resolve the club spell recorded for a tournament-year player name.
+ * Exact normalised names only: ambiguous/fuzzy surname guesses are intentionally avoided.
+ * Missing/overlapping archive coverage is surfaced as unknown by the caller.
+ */
+export async function getCareerClubsAtYear(names:string[],year:number):Promise<Map<string,HistoricalClubRecord[]>>{
+  const unique=Array.from(new Set(names.map(normaliseCareerName).filter(Boolean)));
+  const result=new Map<string,HistoricalClubRecord[]>();
+  if(!unique.length||!Number.isFinite(year))return result;
+  const archive=await careerArchive();
+  const values=unique.map(()=>"(?)").join(",");
+  const rows=await archive.query(
+    "WITH wanted(name_key) AS (VALUES "+values+") "+
+    "SELECT cr.player,cr.club_name,cr.start_year,cr.end_year "+
+    "FROM career cr JOIN wanted w ON regexp_replace(lower(cr.player),'[^a-z0-9]','','g')=w.name_key "+
+    "WHERE coalesce(cr.start_year,0)<=? AND coalesce(cr.end_year,cr.start_year,0)>=? "+
+    "ORDER BY cr.player_qid,cr.start_year,cr.seq",
+    [...unique,year,year]
+  );
+  for(const row of rows){
+    const player=String(row.player??"");
+    const key=normaliseCareerName(player);
+    const list=result.get(key)??[];
+    list.push({player,club:String(row.club_name??""),startYear:n(row.start_year),endYear:n(row.end_year)});
+    result.set(key,list);
+  }
+  return result;
+}
