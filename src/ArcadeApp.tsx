@@ -815,49 +815,61 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  </Frame>;
 }
 
-type MissingSpot={name:string;number:string;role:"GK"|"DEF"|"MID"|"FWD"};
-const MISSING_FORMATION:{group:"keeper"|"defence"|"midfield"|"forwards";players:MissingSpot[]}[]=[
- {group:"keeper",players:[{name:"Edwin van der Sar",number:"01",role:"GK"}]},
- {group:"defence",players:[
-  {name:"Patrice Evra",number:"03",role:"DEF"},{name:"Nemanja Vidić",number:"15",role:"DEF"},
-  {name:"Rio Ferdinand",number:"05",role:"DEF"},{name:"Wes Brown",number:"06",role:"DEF"}]},
- {group:"midfield",players:[
-  {name:"Owen Hargreaves",number:"04",role:"MID"},{name:"Michael Carrick",number:"16",role:"MID"},
-  {name:"Paul Scholes",number:"18",role:"MID"},{name:"Cristiano Ronaldo",number:"07",role:"MID"}]},
- {group:"forwards",players:[
-  {name:"Wayne Rooney",number:"10",role:"FWD"},{name:"WHO'S MISSING?",number:"32",role:"FWD"}]}
-];
-const MISSING_OPTIONS=["Carlos Tévez","Ryan Giggs","Nani","Anderson"];
+type MissingDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
+const MISSING_LEVELS:MissingDifficulty[]=["EASY","STANDARD","HARD","EXTREME"];
 function MissingXIPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
- const [mode,setMode]=useMode();const [attempts,setAttempts]=useState(0);const [end,setEnd]=useState(false);const [won,setWon]=useState(false);
- const correct="Carlos Tévez";const done=account.daily[utcDay()]?.["missing-xi"]!==undefined;
- const answer=(value:string)=>{
-   if(end)return;const next=attempts+1;setAttempts(next);
-   if(normalise(value)===normalise(correct)){setWon(true);setEnd(true);if(mode==="daily")onDaily("missing-xi",Math.max(200,1000-(next-1)*250));}
-   else if(next>=3){setEnd(true);if(mode==="daily")onDaily("missing-xi",0);}
+ const [mode,setMode]=useMode();const [difficulty,setDifficulty]=useState<MissingDifficulty>("STANDARD");
+ const [data,setData]=useState<Awaited<ReturnType<typeof getWorldCupLineups>>|null>(null);
+ const [loadError,setLoadError]=useState("");const [attempts,setAttempts]=useState(0);const [end,setEnd]=useState(false);const [won,setWon]=useState(false);
+ const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
+ const done=account.daily[utcDay()]?.["missing-xi"]!==undefined;
+ const seed=mode==="daily"?"MISSING-XI:"+utcDay()+":"+difficulty:"MISSING-XI:PRACTICE:"+practiceSeed+":"+difficulty;
+ useEffect(()=>{let live=true;getWorldCupLineups().then(v=>{if(live)setData(v);}).catch(e=>{if(live)setLoadError(e instanceof Error?e.message:"World Cup line-ups unavailable.");});return()=>{live=false;};},[]);
+ const lineups=useMemo(()=>data?.matches.filter(m=>m.starters.length===11&&m.year>=1982&&m.year<=2022)??[],[data]);
+ const match=useMemo(()=>lineups.length?lineups[hashSeed(seed+":match")%lineups.length]:null,[lineups,seed]);
+ const missingIndex=match?hashSeed(seed+":missing")%11:0;
+ const missingPlayer=match?.starters[missingIndex]??"";
+ const allNames=useMemo(()=>[...new Set(lineups.flatMap(m=>m.starters))],[lineups]);
+ const optionCount=difficulty==="EASY"?4:difficulty==="STANDARD"?4:difficulty==="HARD"?6:8;
+ const options=useMemo(()=>{
+   if(!missingPlayer)return [];
+   const decoys=shuffle(allNames.filter(name=>!match?.starters.includes(name)),hashSeed(seed+":decoys")).slice(0,optionCount-1);
+   return shuffle([missingPlayer,...decoys],hashSeed(seed+":answers"));
+ },[missingPlayer,allNames,match,seed,optionCount]);
+ const rows=match?[[0],[1,2,3,4],[5,6,7],[8,9,10]].map(indexes=>indexes.map(i=>({name:match.starters[i],index:i}))):[];
+ const choose=(value:string)=>{
+   if(end||!match)return;const next=attempts+1;setAttempts(next);
+   if(normalise(value)===normalise(missingPlayer)){setWon(true);setEnd(true);if(mode==="daily")onDaily("missing-xi",Math.max(150,1000-(next-1)*220));}
+   else if(next>=3){setWon(false);setEnd(true);if(mode==="daily")onDaily("missing-xi",0);}
  };
- const restart=()=>{setAttempts(0);setEnd(false);setWon(false);};
- return <Frame account={account} game="missing-xi" eyebrow="HISTORIC LINE-UP / FIND THE NUMBER 32" title="MISSING XI." description="One player has been removed from Manchester United's official 2008 Champions League final starting formation. Fill the shirt." number="12" mode={mode} setMode={m=>{setMode(m);restart();}}>
- {done&&mode==="daily"?<Success title="LINE-UP COMPLETE." detail="Today's historical starting XI is complete. Practice is unlimited." button="PRACTICE XI" onAgain={()=>{setMode("practice");restart();}}/>:
+ const reset=(newMode:Mode=mode,newDifficulty:MissingDifficulty=difficulty)=>{
+   setDifficulty(newDifficulty);setAttempts(0);setEnd(false);setWon(false);
+   if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
+ };
+ return <Frame account={account} game="missing-xi" eyebrow="HISTORIC STARTING XI / ONE NAME REMOVED" title="MISSING XI." description="A real World Cup starting line-up from 1982–2022. Ten names remain on the pitch. Find the missing starter." number="12" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
+ {done&&mode==="daily"?<Success title="LINE-UP COMPLETE." detail="Today's starting XI has been solved. Unlimited random World Cup practice is open." button="PRACTICE XI" onAgain={()=>{setMode("practice");reset("practice");}}/>:
+  loadError?<Card className="arc-feedback"><b>WORLD CUP DATA UNAVAILABLE</b><p>{loadError}</p><button className="arc-button" onClick={()=>{setLoadError("");getWorldCupLineups().then(setData).catch(e=>setLoadError(String(e)));}}>RETRY LINE-UPS ↗</button></Card>:
+  !match?<Card className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>OPENING THE WORLD CUP ARCHIVE</b><span>LOADING MATCHES AND STARTING ELEVENS…</span></Card>:
   <Card className="missing-game">
-   <div className="arc-game-meta"><span>21 MAY 2008 · MOSCOW</span><b>{3-attempts} ATTEMPTS LEFT</b></div>
-   <div className="missing-matchline"><div><small>FINAL</small><strong>MANCHESTER UNITED 1–1 CHELSEA</strong></div><div><small>AFTER EXTRA TIME</small><strong>UNITED WON 6–5 ON PENALTIES</strong></div></div>
+   <div className="arc-game-meta"><span>FIFA WORLD CUP · {match.year}</span><b>{3-attempts} ATTEMPTS LEFT</b></div>
+   <div className="grid-difficulty">{MISSING_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{level}</button>)}</div>
+   <div className="missing-matchline"><div><small>ROUND</small><strong>{match.round||"MATCH"}</strong></div><div><small>OPPONENT</small><strong>{match.opponent}</strong></div><div><small>DATE</small><strong>{match.date}</strong></div><div><small>TEAM</small><strong>??????</strong></div></div>
    <div className="missing-formation-pitch">
     <div className="missing-pitch-markings"><i/><i/><i/><i/></div>
-    {MISSING_FORMATION.map(row=><div className={"formation-row "+row.group} key={row.group}>
-      {row.players.map(player=>{
-        const missing=player.name==="WHO'S MISSING?";
-        return <motion.div className={"formation-player "+(missing?"missing-player-slot":"")} key={player.number} layout>
-          <div className="formation-shirt"><b>{player.number}</b></div>
-          <div className="formation-club"><ClubBadge name="Manchester United" size={19}/><small>{missing?end?correct:"MISSING PLAYER":player.name}</small></div>
-          <span>{player.role}</span>
+    {rows.map((row,rowIndex)=><div className={"formation-row "+["keeper","defence","midfield","forwards"][rowIndex]} key={rowIndex}>
+      {row.map(({name,index})=>{
+        const missing=index===missingIndex;
+        return <motion.div className={"formation-player "+(missing?"missing-player-slot":"")} key={index} layout initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{delay:index*.018}}>
+          <div className="formation-shirt"><b>{missing?"??":String(index+1).padStart(2,"0")}</b></div>
+          <div className="formation-club"><small>{missing?end?missingPlayer:"MISSING PLAYER":name}</small></div>
         </motion.div>;
       })}
     </div>)}
-    <div className="formation-caption"><span>4—4—2 SHAPE / OFFICIAL STARTING XI ORDER</span><span>NO. 32 IS HIDDEN</span></div>
+    <div className="formation-caption"><span>STARTING XI / 10 NAMES SHOWN</span><span>SCHEMATIC PITCH LAYOUT</span></div>
    </div>
-   {!end?<><div className="missing-options">{MISSING_OPTIONS.map(name=><button key={name} onClick={()=>answer(name)}>{name}<i>↗</i></button>)}</div><p className="arc-muted">The question uses the UEFA line-up published for the final on 21 May 2008. The displayed formation is a simplified 4—4—2 layout.</p></>:
-    <div className="arc-feedback"><b>{won?"YOU FOUND THE MISSING PLAYER.":"THE MISSING PLAYER WAS CARLOS TÉVEZ."}</b><p>{won?"A proper piece of Champions League history.":"Tévez started alongside Wayne Rooney in the 2008 final."}</p><button className="arc-button" onClick={restart}>PLAY THE XI AGAIN ↗</button></div>}
+   <p className="arc-muted">The source supplies the starting eleven but not reliable positional coordinates. The pitch is a visual arrangement, not a claim about the historical formation.</p>
+   {!end?<><div className="missing-options">{options.map(name=><button key={name} onClick={()=>choose(name)}>{name}<i>↗</i></button>)}</div><div className="arc-game-foot"><span>{difficulty} · {optionCount} CHOICES</span><span>{lineups.length.toLocaleString("en-GB")} LINE-UP RECORDS</span></div></>:
+    <div className="arc-feedback"><b>{won?"YOU FOUND THE MISSING PLAYER.":"THE MISSING PLAYER WAS "+missingPlayer.toUpperCase()+"."}</b><p>{missingPlayer} started for {match.team} against {match.opponent} in the {match.year} World Cup {match.round}.</p><button className="arc-button" onClick={()=>reset(mode)}>NEXT LINE-UP ↗</button></div>}
   </Card>}
  </Frame>;
 }
