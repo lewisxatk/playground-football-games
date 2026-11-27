@@ -323,6 +323,12 @@ function ScoutSignalPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
 export function ArcadeApp(){
  const [account,setAccount]=useState<Account>(loadAccount);
  useEffect(()=>{try{localStorage.setItem(STORAGE_KEY,JSON.stringify(account));}catch{/* keep the session usable if storage is unavailable */}},[account]);
+ useEffect(()=>{
+   const now=new Date();
+   const nextMidnight=Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()+1);
+   const timer=window.setTimeout(()=>window.location.reload(),Math.max(1000,nextMidnight-Date.now()+50));
+   return ()=>window.clearTimeout(timer);
+ },[]);
  const onDaily=(game:GameId,score:number)=>setAccount(prev=>awardDaily(prev,game,score));
  const path=pageFromPath(window.location.pathname);
  if(path==="locker-room")return <AccountPage account={account} setAccount={setAccount}/>;
