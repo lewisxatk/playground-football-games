@@ -149,3 +149,13 @@ The **England Football League Data** repository reports 212,910 matches from 188
 
 ### What the current QA still does not prove
 It does not fetch every URL, independently recalculate facts from raw match rows, determine whether every distractor is false in the intended scope, prove semantic uniqueness across the full content universe, or establish licence provenance. Those checks must be part of the CC0 source-to-fact pipeline before anything enters live games.
+
+
+## Editorial wording fixes — 27 November 2026
+
+A full pass over the 100 question/answer pairs found two wording/scope issues and corrected them without changing the underlying answers:
+
+- Les Ferdinand's record is now explicitly described as **most non-penalty Premier League goals**. The previous wording could be misread as saying he never scored a penalty.
+- Geoff Hurst's World Cup final hat-trick fact is now scoped as the **first** such hat-trick, with the note that Kylian Mbappé matched the feat in 2022. The previous scope label incorrectly said "only".
+
+The Nwaneri youngest-player question was checked against the current Premier League record list and remains correct. Max Dowman's separate youngest-goalscorer record is not the same record category.
