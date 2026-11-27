@@ -702,7 +702,7 @@ function hasUniqueGridAssignment(rows:GamePlayer[][][]):boolean{
  return cells.every((_cell,index)=>place(index,new Set<string>()));
 }
 type GridClubIndex={premierLeagueClubs:string[];englishLeagueClubs:string[]};
-function gridClubKey(value:string){return normalise(value).replace(/^(?:associationfootballclub|footballclub|fc|afc)/,"").replace(/(?:associationfootballclub|footballclub|fc|afc)$/,"");}
+function gridClubKey(value:string){return String(value??"").toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/&/g," and ").replace(/\b(?:association football club|football club|a\.?f\.?c\.?|f\.?c\.?|the)\b/g," ").replace(/[^a-z0-9]+/g," ").trim().replace(/\s+/g," ");}
 function archivePlayerToGridPlayer(raw:ArchiveGamePlayer):GamePlayer{
  const birthYear=raw.birthDate?Number(raw.birthDate.slice(0,4)):null;
  const rawPosition=(raw.position||"").toLowerCase();
