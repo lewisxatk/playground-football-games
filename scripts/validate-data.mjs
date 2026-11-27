@@ -26,7 +26,7 @@ console.log("Data validation passed:");
 console.log(" -", worldCup.matches.length, "World Cup team line-ups across", worldCup.years.length, "editions");
 console.log(" -", badges.length, "club and national badge SVG paths");
 
-const playerIndexPath = new URL("../public/data/player-shards/index.json", import.meta.url);
+const playerIndexPath = new URL("../public/data/player-shards/manifest.json", import.meta.url);
 try {
   const index = JSON.parse(await readFile(playerIndexPath, "utf8"));
   assert.ok(index.sourceRelease && index.sourceReleaseUrl, "Player index must record its upstream release");
