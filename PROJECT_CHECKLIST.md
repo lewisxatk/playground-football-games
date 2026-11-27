@@ -18,6 +18,7 @@
 - [x] The four original game routes remain: Lowball, The Climb, Draft XI and Career File.
 - [x] Ten added routes remain: Footle, Connections, Football Grid, Ladder, The Reveal, Football 501, Link Up, Missing XI, Strands and Scout Signal.
 - [x] A local Locker Room profile exists: nickname, current/best streak, daily scores and game history stored in browser localStorage.
+- [x] Career File recent-player exclusions now persist in localStorage across refreshes (capped at 600 IDs); full-pool diversity still needs testing.
 - [x] Daily score/streak date uses UTC day boundaries (00:00 UTC, equivalent to GMT midnight; UK BST is one hour ahead).
 - [x] Daily and Practice modes exist on the game framework. Practice is intended to be repeatable and must not award daily streak credit.
 - [x] A shared visual shell, responsive styles, Motion for React and some animated pitch/game elements exist.
@@ -199,10 +200,10 @@
 ## 5. Visual design, accessibility and motion
 
 - [~] PLAYGROUND identity, multiple accent colours, game cards, animated pitch and a few Motion/CSS transitions exist.
-- [ ] Give every game a clearly distinct palette, display font, supporting font, page background, game motif and visual rhythm; do not just recolour a shared generic card.
+- [x] Every current game route now has its own background palette and distinct display heading typeface. Further game-specific layout/illustration work remains.
 - [ ] Keep a consistent navigation/interaction system so each page is still easy to learn.
 - [ ] Improve readability across all games: stronger contrast, minimum comfortable mobile font sizes, clear hierarchy, larger tap targets and no pale grey microcopy for essential instructions.
-- [ ] Prevent iOS input auto-zoom: text inputs/selects used for typing should render at 16px minimum on mobile, with stable viewport and no forced zoom reset hacks.
+- [x] Mobile game input/textarea/select font-size is forced to at least 16px to prevent iOS Safari focus-zoom. Real-device visual verification remains.
 - [ ] Add Motion for React layout/reorder animation, drag feedback, typewriter text, score counters, reveal transitions, goal/ball/crest motion and Strands path trails.
 - [ ] Honour prefers-reduced-motion and keep animations lightweight on mobile.
 - [ ] Use custom CSS/SVG and original vector pitch/ball/scoreboard graphics where practical; avoid generic giant emoji-like artwork and unlicensed third-party motion clips.
@@ -283,3 +284,15 @@ At the end of every implementation update:
 3. Never call a feature done until it is wired to the real data, has passed the build, and has been manually tested where possible.
 4. Keep the next 3–5 concrete actions at the top of the next update.
 5. Do not restart or replace the project. Continue in this repository and preserve working routes/assets.
+
+## 11. Latest implementation log (2026-11-27)
+
+- [x] Added this persistent master tracker and linked it from README (commit `ea869129e3833321da4ebf08e3c17ed3eb7dbcf4`).
+- [x] Scout Signal club crest/flag value cells added (commit `07d6c51f0a74fed6cf2b8cb04a46311289db8727`; CI run 45927424482 passed).
+- [x] iOS-safe 16px form controls and badge/microcopy CSS added (commit `7b5607b790075c2619812e09d184a7e04a6b44d5`; CI run 45927453117 passed).
+- [x] Career File recent-player history persisted across refreshes (commit `c32517b5dedd3d7a2ec7aa4ed7d0f52027ef8898`; CI run 45927522190 passed).
+- [x] Individual page palette and display-font pass added (commit `04ea0152e8222f39287d1f778e2857a1dd02c781`; CI run 45927599317 passed and Cloudflare deploy `4a2618cf-d2cc-4443-a132-ab615d85f135` succeeded).
+- [x] Footle on-screen keyboard with Wordle priority states added (code commit `ef0effe6114b4d7d112651627a8cf5f16bf87a1b`; CI run 45927653789 passed). The following wording/CSS commits are still building at the time of this note.
+- [ ] Wire the archive-backed pool into Scout Signal and the other player-driven games. Do not call the 1,600-row helper a live database feature until it is actually connected to the game routes.
+
+**Next concrete actions:** (1) complete build/deployment verification for the Footle keyboard CSS; (2) replace the small hand-curated player source with a shared cached archive data endpoint; (3) expand and validate dynamic quiz/connection/grid pools; (4) implement 4×4 Grid difficulty; (5) implement Strands pointer/touch drag selection.
