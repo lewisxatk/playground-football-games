@@ -467,3 +467,8 @@ This section records the separate gameplay-rework branch so work is not confused
 - [!] Player cards are typography-led. Real player portraits, club crests and other third-party art are not used in the pack prototype until suitable image rights/asset sources are cleared.
 - [!] The collection and daily scores remain local-browser features; server-authoritative scoring, cloud save, account sync, trading and shared online leaderboards are not implemented.
 - [!] Human playtesting on iPhone Safari and desktop is outstanding. Build/CI validation is recorded below after the branch workflow completes.
+
+
+- [x] Cloudflare Pages preview build and deployment passed for commit `7f27eaf1b410586b2b97d15d0e76f55547685760`; preview: https://8171d457.playground-football-games.pages.dev. Branch preview: https://feat-cult-hero-mystery-pack.playground-football-games.pages.dev.
+- [!] The repository GitHub Actions CI workflow currently filters pull requests targeting `main`; CULT HERO PR #2 intentionally targets the unmerged gameplay-rework branch to preserve the earlier work, so that Actions workflow was not triggered for PR #2. Cloudflare's preview build/deploy check is successful, but this is not a substitute for a separate full CI run.
+- [!] Preview URLs are branch previews only. Production `main` has not been changed or deployed with CULT HERO.
