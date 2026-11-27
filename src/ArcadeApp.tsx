@@ -46,10 +46,10 @@ const GAME_LINKS = [
   {id:"football-501",title:"FOOTBALL 501",sub:"Count down without busting.",tone:"lime",tag:"COUNTDOWN"},
   {id:"link-up",title:"THE LINK UP",sub:"Find the player who connects two stars.",tone:"violet",tag:"CONNECTION"},
   {id:"missing-xi",title:"MISSING XI",sub:"One name is missing from a famous line-up.",tone:"blue",tag:"LINE-UP"},
-  {id:"strands",title:"FOOTBALL STRANDS",sub:"Find the surnames. Find the full-name spangram.",tone:"orange",tag:"WORD SEARCH"},
+  {id:"strands",title:"FOOTBALL STRANDS",sub:"Find players linked by a club or nation. Trace the theme.",tone:"orange",tag:"WORD SEARCH"},
   {id:"scout-signal",title:"SCOUT SIGNAL",sub:"Guess the footballer. Watch the attributes light up.",tone:"pink",tag:"ATTRIBUTE HUNT"},
   {id:"tournament-nation",title:"TOURNAMENT NATION",sub:"Name the country from a historic World Cup starting XI.",tone:"blue",tag:"INTERNATIONAL"},
-  {id:"timed-quiz",title:"THE QUICK QUIZ",sub:"Fifteen questions. Ten seconds each. No VAR.",tone:"orange",tag:"TIMED QUIZ"}
+  {id:"timed-quiz",title:"THE QUICK QUIZ",sub:"17 mixed questions. Up to 30 seconds. No VAR.",tone:"orange",tag:"TIMED QUIZ"}
 ] as const;
 type GameId = typeof GAME_LINKS[number]["id"];
 const normalise = (v:string) => v.toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
@@ -198,10 +198,10 @@ function HomePage({account}:{account:Account}){
       <div className="arc-home-graphic"><div className="arc-graphic-label">THE PLAYGROUND / 16 GAME MODES</div><div className="arc-graphic-pitch"><i className="half"/><i className="centre"/><i className="box-one"/><i className="box-two"/><motion.span className="graphic-ball" animate={{x:[0,32,-20,0],y:[0,-15,8,0],rotate:[0,180,360]}} transition={{duration:5,repeat:Infinity,ease:"easeInOut"}}/></div><div className="arc-graphic-bottom"><span>GUESS / THINK / PLAY</span><b>↗</b><span>16 WAYS TO PLAY</span></div></div>
     </section>
     <section className="arc-daily-strip"><div><small>YOUR DAILY RECORD / UTC</small><strong>{done} <i>/ 16</i></strong><span>GAMES PLAYED TODAY</span></div><div><small>YOUR STREAK</small><strong>{account.streak} <i>days</i></strong><span>BEST {account.bestStreak} DAYS</span></div><div><small>PLAYER NAME</small><strong className="nickname-stat">{account.nickname}</strong><span>LOCAL PLAYER SAVE · {todayPoints(account).toLocaleString("en-GB")} DAILY POINTS</span></div><a href="/locker-room">OPEN LOCKER ROOM ↗</a></section>
-    <section id="all-games" className="arc-game-directory"><div className="arc-section-title"><div><span>01 / THE LINE-UP</span><h2>PICK YOUR<br/><em>GAME.</em></h2></div><p>Every game has its own page. Daily challenges reset together at midnight GMT. Practice whenever you like.</p></div>
+    <section id="all-games" className="arc-game-directory"><div className="arc-section-title"><div><span>01 / THE LINE-UP</span><h2>PICK YOUR<br/><em>GAME.</em></h2></div><p>Every game has its own page. Daily challenges reset at midnight GMT. Practice allowances vary by game.</p></div>
       <div className="arc-home-grid">{GAME_LINKS.map((game,i)=><motion.a href={"/"+game.id} key={game.id} className={"arc-game-tile "+game.tone} whileHover={{y:-5,rotate:i%2?1:-1}} whileTap={{scale:.985}}><div><small>PG / GAME {String(i+1).padStart(2,"0")}</small><span>{game.tag}</span></div><div className="arc-tile-art"><i>{["↗","Ⅲ","XI","?","A","▦","▤","↗","◉","501","↔","11","✳","◎","🏆","⏱"][i]}</i></div><h3>{game.title}</h3><p>{game.sub}</p><b className="arc-tile-arrow">PLAY ↗</b></motion.a>)}</div>
     </section>
-    <section className="arc-home-bottom"><div><small>THE PLAYGROUND / CLUBHOUSE</small><h2>KEEP YOUR<br/><em>RUN GOING.</em></h2><p>Your nickname, daily results and streak stay saved in this browser. Practice is unlimited. No signup. Just get playing.</p><a href="/locker-room" className="arc-button">YOUR LOCKER ROOM ↗</a></div><div className="arc-home-score"><span>🔥</span><strong>{account.streak}</strong><small>DAY STREAK</small></div></section>
+    <section className="arc-home-bottom"><div><small>THE PLAYGROUND / CLUBHOUSE</small><h2>KEEP YOUR<br/><em>RUN GOING.</em></h2><p>Your nickname, daily results and streak stay saved in this browser. No signup. Practice allowances vary by game.</p><a href="/locker-room" className="arc-button">YOUR LOCKER ROOM ↗</a></div><div className="arc-home-score"><span>🔥</span><strong>{account.streak}</strong><small>DAY STREAK</small></div></section>
     </main><footer className="arc-footer"><a href="/">PLAYGROUND®</a><span>FOOTBALL, PLAYED DIFFERENTLY.</span><a href="/locker-room">YOUR ACCOUNT ↗</a></footer></div>;
 }
 
@@ -856,7 +856,7 @@ function RevealPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const [reveal,setReveal]=useState(0);const [guess,setGuess]=useState("");const [tries,setTries]=useState(0);const [end,setEnd]=useState(false);const [won,setWon]=useState(false);
  const done=account.daily[utcDay()]?.["the-reveal"]!==undefined;
  const seed=mode==="daily"?"REVEAL:"+utcDay():"REVEAL:PRACTICE:"+practiceSeed;
- const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,1600);
+ const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,4200);
  const pool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer).filter(p=>p.nationality!=="Unlisted"&&p.clubs.length>=2),[archivePlayers]);
  const target=pool.length?pool[hashSeed(seed+":target")%pool.length]:null;
  const clues=target?[
@@ -1050,8 +1050,8 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
   loading&&pool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.4,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>CONNECTING CAREERS</b><span>Finding overlapping club spells in the archive.</span></div>:
   error&&pool.length===0?<Card className="arc-feedback"><b>PLAYER ARCHIVE UNAVAILABLE</b><p>{error}</p><button className="arc-button" onClick={retry}>RETRY ARCHIVE ↗</button></Card>:
   practiceLimitReached?<Card className="arc-result"><small>PRACTICE LIMIT REACHED</small><h2>THAT'S TEN RUNS.</h2><p>You have completed ten free ten-question Link Up runs today on this device. The allowance resets at 00:00 GMT.</p></Card>:
-  finished?<Success title="FULL-TIME." detail={"You scored "+score+" points across "+questions.length+" connections."+(mode==="practice"?" Practice run "+Math.min(10,practiceUsed+1)+" of 10 used today.":"")} button="NEW TEN-LINK RUN" onAgain={()=>reset(mode)}/>:
-  !q?<Card className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NOT ENOUGH VERIFIED LINKS IN THIS DRAW"}</b><p>{error||"The current player sample did not produce ten unique, unambiguous bridge players. Draw a fresh practice set or retry the archive."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY LINK ARCHIVE ↗</button></Card>:
+  finished?<Success title="FULL-TIME." detail={"You scored "+score+" points across "+questions.length+" connections."+(mode==="practice"?" Practice run "+practiceUsed+" of 10 used today.":"")} button="NEW TEN-LINK RUN" onAgain={()=>reset(mode)}/>:
+  questions.length!==10||!q?<Card className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NOT ENOUGH VERIFIED LINKS FOR A FULL TEN-QUESTION RUN"}</b><p>{error||"The current player sample did not produce ten unique, unambiguous bridge players. Draw a fresh practice set or retry the archive."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY LINK ARCHIVE ↗</button></Card>:
   <Card className="link-game">
    {mode==="practice"&&<div className="grid-difficulty">{(["EASY","STANDARD","HARD","EXTREME"] as LinkDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{level==="MEDIUM"?"MEDIUM / STANDARD":level}</button>)}</div>}
    <div className="arc-game-meta"><span>{mode==="daily"?"DAILY LINK":"PRACTICE · "+difficulty} · QUESTION {index+1}/10</span><b>{score.toLocaleString("en-GB")} PTS</b></div>
@@ -1389,7 +1389,7 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
  const [clubLookupError,setClubLookupError]=useState("");
  const [clubLookupAttempt,setClubLookupAttempt]=useState(0);
  const [attempts,setAttempts]=useState(0);const [ended,setEnded]=useState(false);const [won,setWon]=useState(false);const maxGuesses=5;
- const {players:archiveCareerPlayers,loading:archiveCareerLoading}=useArchivePlayers(true,ARCHIVE_POOL_SEED,4200);
+ const {players:archiveCareerPlayers}=useArchivePlayers(true,ARCHIVE_POOL_SEED,4200);
  const archiveCareerPool=useMemo(()=>archiveCareerPlayers.map(archivePlayerToGamePlayer),[archiveCareerPlayers]);
  const tournamentUsageKey="playground.tournament-nation.practice.v1";
  const [practicePlays,setPracticePlays]=useState<Record<string,number>>(()=>{
@@ -1518,7 +1518,7 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
     </div>)}</div>
     <div className="tournament-xi-caption"><span>FULL STARTING XI / 11 PLAYERS</span><span>{visibleClueCount} / {Math.min(clueCount,match.starters.length)} CLUBS MATCHED / {match.year}</span></div>
    </div>
-   {clubLookupError&&<div className="arc-feedback"><b>CLUB ARCHIVE MATCHING UNAVAILABLE</b><p>{clubLookupError} No unverified club names have been substituted.</p><button className="arc-quiet" onClick={()=>setClubLookupAttempt(value=>value+1)}>RETRY CLUB MATCHING ↻</button></div>}
+   {clubLookupError&&<div className="arc-feedback"><b>{clubRows.size?"PARTIAL CLUB ARCHIVE MATCHING":"CLUB ARCHIVE MATCHING UNAVAILABLE"}</b><p>{clubLookupError} No unverified club names have been substituted.</p><button className="arc-quiet" onClick={()=>setClubLookupAttempt(value=>value+1)}>RETRY CLUB MATCHING ↻</button></div>}
    <p className="arc-muted">{positionsVerified?"Rows use the archive's broad player-position profiles; these are not confirmed match-day coordinates.":"The source supplies the starting eleven but not reliable match-day positions. The shirts use a clearly marked schematic 4-3-3 until enough profile positions are available."} Only exact player-name/year club matches are shown; missing clubs stay unrecorded.</p>
    {!ended?<><div className="tournament-options">{options.map(team=><button key={team} onClick={()=>choose(team)}>{team}<i>↗</i></button>)}</div><div className="arc-game-foot"><span>{difficulty} · {optionCount} NATIONAL TEAMS</span><span>{visibleClueCount} MATCHED / {Math.min(clueCount,match.starters.length)} CLUE SLOTS</span></div></>:
     <div className="arc-feedback"><b>{won?"YOU GOT THE NATION.":"THE NATION WAS "+match.team.toUpperCase()+"."}</b><p>{match.team} started against {match.opponent} at the {match.round} stage of the {match.year} World Cup.</p><button className="arc-button" onClick={()=>reset(mode)}>NEXT TOURNAMENT ↗</button></div>}
