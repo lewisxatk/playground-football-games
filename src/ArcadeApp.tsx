@@ -64,6 +64,7 @@ type GamePlayer = Player & {
   careerGoals:number;
   leagueApps:number;
   leagueGoals:number;
+  leagueGoalSeasons:number;
   statSeasons:number;
   firstYear:number|null;
   lastYear:number|null;
@@ -93,9 +94,9 @@ function archivePlayerToGamePlayer(p:ArchiveGamePlayer):GamePlayer{
     nationality:p.nationality||"Unlisted",position:positionCode(p.position),
     club:p.currentClub||"Unknown club",league:p.currentLeague||p.currentCountry||"Unlisted",
     active:p.lastYear!==null&&p.lastYear>=new Date().getUTCFullYear()-1,
-    ageBand,clubs:p.clubs,aliases:[name,surname,p.fullName].filter(Boolean) as string[],
+    ageBand,clubs:p.clubs,aliases:[name,surname].filter(Boolean),
     archiveId:p.id,careerApps:p.appearances,careerGoals:p.goals,leagueApps:p.leagueAppearances,
-    leagueGoals:p.leagueGoals,statSeasons:p.seasons,firstYear:p.firstYear,lastYear:p.lastYear,
+    leagueGoals:p.leagueGoals,leagueGoalSeasons:p.leagueGoalSeasons,statSeasons:p.seasons,firstYear:p.firstYear,lastYear:p.lastYear,
     caps:p.caps,internationalGoals:p.internationalGoals,birthDate:p.birthDate,
     currentCountry:p.currentCountry,currentDivision:p.currentDivision
   };
