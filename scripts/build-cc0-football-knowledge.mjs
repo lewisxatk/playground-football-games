@@ -220,7 +220,7 @@ function buildInternationalQuiz(matches){
   const source=match.sourceKey==="england"?SOURCES.england:match.sourceKey==="championsLeague"?SOURCES.championsLeague:SOURCES.internationalResults;
   return{id:id("international-question",match.id),factId:match.id,playerId:match.id,tier,region,category:match.tournament,questionType,question,answer,options,explanation,source:source.url+"/blob/"+source.commit+"/"+(match.sourceFile??"results.csv"),matchId:match.id,eventDate:match.date};
  }).filter(Boolean);
- const uk=questions.filter(q=>q.region==="UK").sort((a,b)=>a.id.localeCompare(b.id));
+ const uk=questions.filter(q=>q.region==="ENGLISH_DOMESTIC").sort((a,b)=>a.id.localeCompare(b.id));
  const international=questions.filter(q=>q.region==="INTERNATIONAL").sort((a,b)=>a.id.localeCompare(b.id));
  const split=(items)=>{const a=[],b=[];items.forEach((item,index)=>(index%2?a:b).push(item));return[a,b]};
  const [ukA,ukB]=split(uk),[intA,intB]=split(international);
