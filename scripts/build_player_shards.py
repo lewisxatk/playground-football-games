@@ -327,55 +327,55 @@ def build_rows(manifest: dict[str, Any], files: dict[str, Any]) -> list[dict[str
             break
         for raw in batch:
             row = dict(zip(columns, raw))
-        spells = json_list(row.get("spells_json"))
-        clubs = []
-        for spell in spells:
-            club_name = spell.get("club") if isinstance(spell, dict) else None
-            if club_name and club_name not in clubs:
-                clubs.append(str(club_name))
-        teams = json_list(row.get("teams_json"))
-        rows.append({
-            "id": str(row.get("player_id") or ""),
-            "name": str(row.get("name") or "Unknown player"),
-            "fullName": str(row.get("full_name") or row.get("name") or "Unknown player"),
-            "nationality": str(row.get("nationality") or row.get("senior_team") or ""),
-            "position": str(row.get("position") or ""),
-            "clubs": clubs,
-            "spells": spells,
-            "currentClub": str(row.get("current_club") or ""),
-            "appearances": clean_optional_number(row.get("appearances")),
-            "goals": clean_optional_number(row.get("goals")),
-            "appearanceRows": clean_number(row.get("appearance_rows")),
-            "goalRows": clean_number(row.get("goal_rows")),
-            "careerAppearanceRows": clean_number(row.get("appearance_rows")),
-            "careerGoalRows": clean_number(row.get("goal_rows")),
-            "leagueAppearances": clean_optional_number(row.get("league_appearances")),
-            "leagueGoals": clean_optional_number(row.get("league_goals")),
-            "leagueGoalSeasons": clean_number(row.get("league_goal_seasons")),
-            "leagueAppearanceRows": clean_number(row.get("league_appearance_rows")),
-            "leagueGoalRows": clean_number(row.get("league_goal_rows")),
-            "leagueAssists": clean_number(row.get("league_assists")),
-            "leagueAssistSeasons": clean_number(row.get("league_assist_seasons")),
-            "seasons": clean_number(row.get("seasons")),
-            "stats": json_list(row.get("season_stats_json")),
-            "firstYear": row.get("first_year"),
-            "lastYear": row.get("last_year"),
-            "caps": row.get("caps"),
-            "internationalGoals": row.get("international_goals"),
-            "nationalRows": clean_number(row.get("cap_rows")),
-            "nationalTeams": [str(t) for t in teams if t],
-            "birthDate": str(row.get("birth_date") or ""),
-            "birthPrecision": 11 if row.get("birth_date") else None,
-            "birthPlace": str(row.get("birth_place") or ""),
-            "heightCm": row.get("height_cm"),
-            "currentCountry": str(row.get("current_country") or ""),
-            "currentLeague": str(row.get("current_league") or ""),
-            "currentDivision": row.get("current_division"),
-            "careerSourceTitle": str(row.get("career_source_title") or ""),
-            "careerSourceRevision": row.get("career_source_revision"),
-            "statSourceTitle": str(row.get("stat_source_title") or ""),
-            "statSourceRevision": row.get("stat_source_revision"),
-        })
+            spells = json_list(row.get("spells_json"))
+            clubs = []
+            for spell in spells:
+                club_name = spell.get("club") if isinstance(spell, dict) else None
+                if club_name and club_name not in clubs:
+                    clubs.append(str(club_name))
+            teams = json_list(row.get("teams_json"))
+            rows.append({
+                "id": str(row.get("player_id") or ""),
+                "name": str(row.get("name") or "Unknown player"),
+                "fullName": str(row.get("full_name") or row.get("name") or "Unknown player"),
+                "nationality": str(row.get("nationality") or row.get("senior_team") or ""),
+                "position": str(row.get("position") or ""),
+                "clubs": clubs,
+                "spells": spells,
+                "currentClub": str(row.get("current_club") or ""),
+                "appearances": clean_optional_number(row.get("appearances")),
+                "goals": clean_optional_number(row.get("goals")),
+                "appearanceRows": clean_number(row.get("appearance_rows")),
+                "goalRows": clean_number(row.get("goal_rows")),
+                "careerAppearanceRows": clean_number(row.get("appearance_rows")),
+                "careerGoalRows": clean_number(row.get("goal_rows")),
+                "leagueAppearances": clean_optional_number(row.get("league_appearances")),
+                "leagueGoals": clean_optional_number(row.get("league_goals")),
+                "leagueGoalSeasons": clean_number(row.get("league_goal_seasons")),
+                "leagueAppearanceRows": clean_number(row.get("league_appearance_rows")),
+                "leagueGoalRows": clean_number(row.get("league_goal_rows")),
+                "leagueAssists": clean_number(row.get("league_assists")),
+                "leagueAssistSeasons": clean_number(row.get("league_assist_seasons")),
+                "seasons": clean_number(row.get("seasons")),
+                "stats": json_list(row.get("season_stats_json")),
+                "firstYear": row.get("first_year"),
+                "lastYear": row.get("last_year"),
+                "caps": row.get("caps"),
+                "internationalGoals": row.get("international_goals"),
+                "nationalRows": clean_number(row.get("cap_rows")),
+                "nationalTeams": [str(t) for t in teams if t],
+                "birthDate": str(row.get("birth_date") or ""),
+                "birthPrecision": 11 if row.get("birth_date") else None,
+                "birthPlace": str(row.get("birth_place") or ""),
+                "heightCm": row.get("height_cm"),
+                "currentCountry": str(row.get("current_country") or ""),
+                "currentLeague": str(row.get("current_league") or ""),
+                "currentDivision": row.get("current_division"),
+                "careerSourceTitle": str(row.get("career_source_title") or ""),
+                "careerSourceRevision": row.get("career_source_revision"),
+                "statSourceTitle": str(row.get("stat_source_title") or ""),
+                "statSourceRevision": row.get("stat_source_revision"),
+            })
     conn.close()
     return rows
 
