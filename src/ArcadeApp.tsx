@@ -785,6 +785,7 @@ function buildArchiveLinkUpQuestions(players:GamePlayer[],index:GridClubIndex,se
  }
  const englishPlayerIds=new Set([...byClub.values()].flatMap(entries=>entries.map(entry=>entry.player.archiveId)));
  const usedAnswers=new Set<string>();
+ const decoyCount=difficulty==="EASY"?3:difficulty==="STANDARD"?4:difficulty==="HARD"?5:7;
  const buildFor=(clubNames:string[],scope:string,maximum:number)=>{
   const allowed=new Set(clubNames.map(gridClubKey));
   const ordered=shuffle(players,seed+scope.length*7919);
@@ -818,10 +819,10 @@ function buildArchiveLinkUpQuestions(players:GamePlayer[],index:GridClubIndex,se
      const name=normalise(player.name);
      if(!englishPlayerIds.has(player.archiveId)||[answer.archiveId,pair.start.archiveId,pair.end.archiveId].includes(player.archiveId)||!name||excludedNames.has(name)||decoyMap.has(name))continue;
      decoyMap.set(name,player);
-     if(decoyMap.size===5)break;
+     if(decoyMap.size===decoyCount)break;
     }
     const decoys=[...decoyMap.values()];
-    if(decoys.length<5)continue;
+    if(decoys.length<decoyCount)continue;
     const startWindow=getTeammateOverlap(answer,pair.start,firstKey),endWindow=getTeammateOverlap(answer,pair.end,secondKey);
     if(!startWindow||!endWindow)continue;
     const options=shuffle([answer,...decoys],seed+hashSeed(firstKey+secondKey+answer.archiveId));
