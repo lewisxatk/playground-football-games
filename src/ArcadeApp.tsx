@@ -105,7 +105,6 @@ function archiveGuess(input:string,players:GamePlayer[]):GamePlayer|undefined{
   const key=normalise(input);
   return players.find(p=>[p.name,p.surname,...p.aliases].some(alias=>normalise(alias)===key));
 }
-function playerByName(name:string){return PLAYER_DATABASE.find(p=>normalise(p.name)===normalise(name)||p.aliases.some(a=>normalise(a)===normalise(name)));}
 function acceptedName(input:string,accepted:string[]){const value=normalise(input);return accepted.some(x=>normalise(x)===value);}
 function playerSurnames(){
   const seen=new Set<string>();return PLAYER_DATABASE.map(p=>p.surname).filter(s=>s.length===5&&!seen.has(s)&&Boolean(seen.add(s)));
@@ -337,7 +336,7 @@ function ConnectionsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
 }
 
 type GridDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
-type GridPuzzle={clubs:string[];countries:string[];answers:GamePlayer[][];quality:number};
+type GridPuzzle={clubs:string[];countries:string[];answers:GamePlayer[][][];quality:number};
 const GRID_LEVELS:GridDifficulty[]=["EASY","STANDARD","HARD","EXTREME"];
 function buildGridPuzzle(players:GamePlayer[],difficulty:GridDifficulty,seed:number):GridPuzzle|null{
  const clubCounts=new Map<string,number>(),countryCounts=new Map<string,number>();
@@ -404,7 +403,6 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
    setDifficulty(newDifficulty);
  };
- const unavailable=!loading&&(!puzzle||!playerPool.length);
  return <Frame account={account} game="football-grid" eyebrow="CLUB × NATIONALITY / 4 BY 4" title="FILL THE GRID." description="Sixteen squares. Name a footballer who played for the club and represented the nationality at the top." number="07" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
  {done&&mode==="daily"?<Success title="GRID COMPLETE." detail="All sixteen cells are filled. Try a fresh grid in unlimited practice." button="PRACTICE GRID" onAgain={()=>{setMode("practice");reset("practice");}}/>:
   <Card className="grid-game">
