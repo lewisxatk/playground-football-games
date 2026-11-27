@@ -12,7 +12,6 @@ import type { ArchiveGamePlayer, ArchiveCareerSpell, ArchiveGameStat } from "./c
 import CareerFilePage from "./CareerFilePage";
 import CultHeroPage from "./CultHeroPage";
 import CultHeroCollectionPage from "./CultHeroCollectionPage";
-import { getCareerClubsAtYear } from "./careerFileData";
 import { useFootballKnowledge, makeCC0QuizRound, makeCC0DailyQuizRound, type CC0QuizTier as QuizTier } from "./footballKnowledge";
 import "./arcade.css";
 import "./playground-upgrades.css";
@@ -1354,15 +1353,6 @@ function QuickQuizPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
 
 type TournamentDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
 const TOURNAMENT_LEVELS: TournamentDifficulty[]=["EASY","STANDARD","HARD","EXTREME"];
-const lineupNameKey=(value:string)=>normalise(value);
-function tournamentPositionGroup(raw:string):"keeper"|"defence"|"midfield"|"forwards"|""{
- const value=raw.toLocaleLowerCase();
- if(value.includes("goalkeeper")||value==="gk")return "keeper";
- if(value.includes("defend")||value.includes("back")||value==="def")return "defence";
- if(value.includes("midfield")||value==="mf"||value==="mid")return "midfield";
- if(value.includes("forward")||value.includes("striker")||value.includes("winger")||value.includes("attack")||value==="fwd")return "forwards";
- return "";
-}
 function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();
  const [difficulty,setDifficulty]=useState<TournamentDifficulty>("STANDARD");
