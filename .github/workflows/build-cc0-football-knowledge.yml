@@ -9,6 +9,8 @@ on:
       - "scripts/build-cc0-football-knowledge.mjs"
       - ".github/workflows/build-cc0-football-knowledge.yml"
       - "public/data/worldcup-lineups.json"
+      - "src/ArcadeApp.tsx"
+      - "src/footballKnowledge.ts"
 
 permissions:
   contents: write
@@ -50,6 +52,8 @@ jobs:
           grep -q "CC0 1.0 Universal" .sources/openfootball-clubs/LICENSE.md
       - name: Build canonical database and game pools
         run: node scripts/build-cc0-football-knowledge.mjs
+      - name: Install dependencies and verify full site build
+        run: npm install && npm run build
       - name: Publish generated database to feature branch
         shell: bash
         run: |
