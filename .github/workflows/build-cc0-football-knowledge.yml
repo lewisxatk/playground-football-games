@@ -17,7 +17,7 @@ permissions:
 
 concurrency:
   group: cc0-football-knowledge-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
