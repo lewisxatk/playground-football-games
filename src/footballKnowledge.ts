@@ -10,6 +10,9 @@ export type CC0StatPlayer = {id:string;name:string;value?:number;goals?:number;i
 export type CC0StatPack = {id:string;players:CC0StatPlayer[];metric:string};
 export type CC0DraftPlayer = {id:string;name:string;aliases:string[];positions:string[];nationalities:string[];birthYears:number[];worldCupYears:number[];internationalGoalsRecorded:number;worldCupStarts:number;source:string};
 export type WorldCupPlayerCard = {id:string;name:string;worldCups:number[];teams:string[];matchIds:string[]};
+export type CC0CareerSpell = {id:string;statementId:string;clubId:string;clubQid:string;club:string;startYear:number;endYear:number|null;years:string;source:string;licence:"CC0-1.0"};
+export type CC0CareerPlayer = {id:string;playerId:string;qid:string;name:string;fullName:string;nationality:string;position:string;aliases:string[];birthYears:number[];spells:CC0CareerSpell[];clubs:string[];firstYear:number|null;lastYear:number|null;source:string;licence:"CC0-1.0";sourceItemUrl:string;sourceRetrievedAt:string};
+export type CC0LinkUpPack = {id:string;answerPlayerId:string;startPlayerId:string;endPlayerId:string;startClub:string;startClubId:string;endClub:string;endClubId:string;optionPlayerIds:string[];explanation:string;source:{repo:string;licence:string;url:string};licence:"CC0-1.0"};
 
 type FootballKnowledgeShards = {
  footle:{answers:string[]};
@@ -21,10 +24,11 @@ type FootballKnowledgeShards = {
  "the-reveal":{playerCards:WorldCupPlayerCard[]};
  "goal-packs":{lowballPairs:CC0StatPack[];ladderPacks:CC0StatPack[];football501Packs:CC0StatPack[]};
  "player-stats":{players:CC0DraftPlayer[]};
+ "career-history":{players:CC0CareerPlayer[];careerFileCandidates:CC0CareerPlayer[];cultHeroCandidates:CC0CareerPlayer[];linkUpPacks:CC0LinkUpPack[];meta:{status:string;endpoint:string;retrievedAt:string;rawRows:number;acceptedSpells:number;players:number;eligibleCareerFile:number;eligibleCultHero:number;error:string|null}};
 };
 export type FootballKnowledgeKey=keyof FootballKnowledgeShards;
 const shardCache=new Map<FootballKnowledgeKey,Promise<unknown>>();
-const minimums:Record<FootballKnowledgeKey,number>={footle:500,connections:500,strands:500,"football-grid":500,"the-climb":500,"timed-quiz":500,"the-reveal":500,"goal-packs":500,"player-stats":500};
+const minimums:Record<FootballKnowledgeKey,number>={footle:500,connections:500,strands:500,"football-grid":500,"the-climb":500,"timed-quiz":500,"the-reveal":500,"goal-packs":500,"player-stats":500,"career-history":0};
 
 function validateShard<K extends FootballKnowledgeKey>(key:K,value:unknown):FootballKnowledgeShards[K]{
  if(!value||typeof value!=="object")throw new Error("The CC0 "+key+" content shard is invalid.");
@@ -38,6 +42,7 @@ function validateShard<K extends FootballKnowledgeKey>(key:K,value:unknown):Foot
   key==="timed-quiz"?list("questions").length:
   key==="the-reveal"?list("playerCards").length:
   key==="goal-packs"?Math.min(list("lowballPairs").length,list("ladderPacks").length,list("football501Packs").length):
+  key==="career-history"?list("players").length:
   list("players").length;
  if(count<minimums[key])throw new Error("The CC0 "+key+" shard failed its minimum content check ("+count+").");
  if(key==="connections"&&list("players").length<500)throw new Error("The CC0 connections player list is incomplete.");
