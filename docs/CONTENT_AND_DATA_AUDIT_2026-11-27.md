@@ -137,3 +137,15 @@ The women's international sister dataset reports approximately 11,020 match resu
 ### Optional English-history dataset (not CC0)
 
 The **England Football League Data** repository reports 212,910 matches from 1888 to 26 November 2026 across England's top four tiers. It includes match results, division/tier metadata, club naming history, active periods and points deductions. However, the author's original contribution is CC BY 4.0 (requires attribution) and third-party data/logo rights are reserved. This is a high-value option for deeper EFL content if the project accepts a small data credit, but it is not part of the strict no-licence-obligation shortlist.
+
+
+## Follow-up validation pass — 27 November 2026
+
+- The factual seed had an inconsistent date field: 76 of 100 records used `validAsOf` as the historical match/event date, while the other 24 used it as the review date. This has been corrected by moving those historical dates into optional `eventDate` and setting `validAsOf` to the source check date. All 100 now have `validAsOf: 2026-11-27`; 76 retain an explicit `eventDate`.
+- Strengthened `scripts/validate-football-content.mjs` and the runtime fact validator to check event/verification date semantics, HTTPS source URLs, duplicate underlying fact/scope keys, and accepted-answer aliases appearing in the choices. This catches structural/consistency issues, not factual truth or legal rights.
+- Re-ran the same checks over all 100 records after migration: 100 unique IDs, 100 unique normalised question stems, 100 unique underlying fact/scope keys, 76 event-dated facts, four distinct choices per question and no schema errors.
+- Checked a potentially stale Premier League record carefully: Ethan Nwaneri remains the youngest player to appear in the competition (15 years, 181 days), while Max Dowman holds the separate youngest goalscorer record (16 years, 73 days). These are different categories, so the existing Nwaneri question remains correct. The current official record page and Dowman's dated record report support this distinction. 
+- The live-record check does not authorise bulk import from Premier League pages. For the no-permission content feed, facts should ultimately be recomputed from CC0 source rows. Current official record pages remain manual cross-checks only.
+
+### What the current QA still does not prove
+It does not fetch every URL, independently recalculate facts from raw match rows, determine whether every distractor is false in the intended scope, prove semantic uniqueness across the full content universe, or establish licence provenance. Those checks must be part of the CC0 source-to-fact pipeline before anything enters live games.
