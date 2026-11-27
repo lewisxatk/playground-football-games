@@ -28,8 +28,8 @@ const number = value => value == null || value === "" || !Number.isFinite(Number
 const regionOf = player => {
   const country = normalise(player.currentCountry);
   const league = normalise(player.currentLeague);
-  const englishLeague = ["premierleague", "championship", "leagueone", "leaguetwo",
-    "nationalleague", "englishfootball", "efl", "fa"].some(value => league.includes(value));
+  const englishLeague = league.startsWith("efl") || league.includes("englishfootball") ||
+    ["premierleague", "championship", "leagueone", "leaguetwo", "nationalleague"].includes(league);
   // UK country metadata does not always distinguish England, Scotland, Wales
   // and Northern Ireland. Only identify those records as English when their
   // league metadata identifies an English competition.
@@ -184,9 +184,15 @@ const add = (tier, player, region, idSuffix, category, question, answer, options
   });
 };
 const isUsablePlayer = player => player.id && player.name && player.name !== "Unknown player" && !/^name:/i.test(player.id);
-const easyEligible = player => (number(player.appearances) ?? 0) >= 300 ||
-  (number(player.goals) ?? 0) >= 60 || (number(player.caps) ?? 0) >= 20 ||
-  (number(player.leagueGoals) ?? 0) >= 40;
+const EASY_TOP_LEAGUES = new Set([
+  "premierleague", "fussballbundesliga", "seriea", "primadivisiondeespana",
+  "primeradivisiondeespana", "championnatdefrancedefootball", "primeiraliga",
+  "eredivisie", "superlig", "majorleaguesoccer", "saudiproleague",
+  "campeonatobrasileiroseriea", "ligamx"
+]);
+const easyEligible = player => EASY_TOP_LEAGUES.has(normalise(player.currentLeague)) &&
+  ((number(player.appearances) ?? 0) >= 100 || (number(player.goals) ?? 0) >= 25 ||
+   (number(player.caps) ?? 0) >= 15 || (number(player.leagueGoals) ?? 0) >= 15);
 const mediumEligible = player => (number(player.appearances) ?? 0) >= 120 || (player.clubs?.length ?? 0) >= 3;
 const hardEligible = player => (player.careerGoalRows ?? player.goalRows ?? 0) > 0 ||
   (player.leagueGoalRows ?? 0) > 0 || (player.nationalRows ?? 0) > 0 || (number(player.appearances) ?? 0) >= 80;
