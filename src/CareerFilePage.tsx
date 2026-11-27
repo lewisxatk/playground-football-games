@@ -4,7 +4,7 @@ import { getCandidates, getPlayer, getStatEligibleCandidates, getTransferHints, 
 import { getStaticArchivePlayers } from "./useArchivePlayers";
 import "./career-file.css";
 
-type Mode = "EASY" | "MEDIUM" | "HARD" | "CULT HERO" | "EXTREME";
+type Mode = "EASY" | "MEDIUM" | "HARD" | "EXTREME";
 type Row = { id:string; season:string; club:string; clubKey:string; loan:boolean; apps:number|null; goals:number|null; covered:boolean; spellApps:number|null; spellGoals:number|null };
 type FreeNote = { id:string; label:string; value:string };
 type Hint = { id:string; label:string; cost:number; value:string; available:boolean };
@@ -65,11 +65,10 @@ function archivePlayerCandidate(player:Player,raw:ArchiveGamePlayer):Candidate{
 }
 
 const MODES: { name:Mode; note:string; colour:string }[] = [
-  {name:"EASY",note:"High-career totals and recognisable stars",colour:"lime"},
-  {name:"MEDIUM",note:"Established players with longer club records",colour:"blue"},
-  {name:"HARD",note:"Less obvious careers and shorter records",colour:"orange"},
-  {name:"CULT HERO",note:"Journeymen, fan favourites and longer club lists",colour:"pink"},
-  {name:"EXTREME",note:"Shorter top-flight career footprints",colour:"violet"}
+  {name:"EASY",note:"Famous players with long, well-documented careers",colour:"lime"},
+  {name:"MEDIUM",note:"Established players and recognisable career paths",colour:"blue"},
+  {name:"HARD",note:"Less obvious players and more demanding career clues",colour:"orange"},
+  {name:"EXTREME",note:"Specialist careers, shorter records and fewer obvious clues",colour:"violet"}
 ];
 
 const LEAGUES: {label:string;code:LeagueCode}[] = [
@@ -144,7 +143,6 @@ function fits(c:Candidate,m:Mode){
   if(m==="EASY")return c.apps>=550&&c.clubs>=3;
   if(m==="MEDIUM")return c.apps>=220&&c.clubs>=3;
   if(m==="HARD")return c.apps>=70&&c.clubs>=2;
-  if(m==="CULT HERO")return c.clubs>=4&&c.spells>=4&&c.apps>=55&&c.apps<=900;
   return c.apps>=20&&c.apps<220&&c.clubs>=2;
 }
 function positionLabel(raw:string){
