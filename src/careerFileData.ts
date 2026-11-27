@@ -114,7 +114,7 @@ export type ArchiveGamePlayer = {
   internationalGoals: number | null;
   birthDate: string;
 };
-let gamePoolPromise: Promise<ArchiveGamePlayer[]> | null = null;
+const gamePoolPromises = new Map<string, Promise<ArchiveGamePlayer[]>>();
 
 /**
  * A broad game-ready player sample drawn from OpenFootballBase's career,
@@ -123,6 +123,8 @@ let gamePoolPromise: Promise<ArchiveGamePlayer[]> | null = null;
  * for random player, stats and career clue games.
  */
 export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAMES-2026-01"): Promise<ArchiveGamePlayer[]> {
+  const cacheKey = seed + ":" + limit;
+  let gamePoolPromise = gamePoolPromises.get(cacheKey);
   if (!gamePoolPromise) {
     gamePoolPromise = (async () => {
       const a = await careerArchive();
@@ -192,9 +194,10 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
         birthDate: String(r.birth_date ?? "")
       }));
     })().catch(error => {
-      gamePoolPromise = null;
+      gamePoolPromises.delete(cacheKey);
       throw error;
     });
+    gamePoolPromises.set(cacheKey, gamePoolPromise);
   }
   const rows = await gamePoolPromise;
   return rows.slice(0, limit);
