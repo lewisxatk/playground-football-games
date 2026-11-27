@@ -69,10 +69,12 @@ export default function CultHeroPage({ dailyDone, onDailyComplete }: Props) {
     if (guesses.some(value => normaliseCultHeroAnswer(value) === answer)) return;
 
     const player = current.player;
-    const surname = player.name.trim().split(/\s+/).at(-1) ?? "";
-    const surnameIsUnique = mysteries.filter(item =>
-      normaliseCultHeroAnswer(item.player.name.trim().split(/\s+/).at(-1) ?? "") === normaliseCultHeroAnswer(surname)
-    ).length === 1;
+    const nameParts = player.name.trim().split(/\s+/);
+    const surname = nameParts[nameParts.length - 1] ?? "";
+    const surnameIsUnique = mysteries.filter(item => {
+      const parts = item.player.name.trim().split(/\s+/);
+      return normaliseCultHeroAnswer(parts[parts.length - 1] ?? "") === normaliseCultHeroAnswer(surname);
+    }).length === 1;
     const accepted = [player.name, player.fullName ?? ""];
     if (surnameIsUnique) accepted.push(surname);
     const correct = accepted.some(name => normaliseCultHeroAnswer(name) === answer);
