@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useRef, type FormEvent, type ReactNode } from "react";
 import { motion, AnimatePresence, Reorder } from "motion/react";
 import {
-  PLAYER_DATABASE, FOOTBALL_GROUPS, LEAGUE_GOALS, CAREER_FILES, STRANDS_PACKS,
+  PLAYER_DATABASE, LEAGUE_GOALS, CAREER_FILES, STRANDS_PACKS,
   type Player
 } from "./playerData";
 import { ClubBadge, CountryFlag } from "./ClubBadge";
@@ -366,9 +366,7 @@ function ConnectionsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
  const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,seed,1600);
  const pool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
  const groups=useMemo(()=>pool.length>=32?buildConnectionsGroups(pool,difficulty,hashSeed(seed+":"+difficulty)):[],[pool,difficulty,seed]);
- const all=useMemo(()=>groups.flatMap(g=>g.members.map(p=>p.archiveId)),[groups]);
  const tilePlayers=useMemo(()=>shuffle(groups.flatMap(g=>g.members),hashSeed(seed+":TILES:"+difficulty)),[groups,seed,difficulty]);
- const tileById=useMemo(()=>new Map(tilePlayers.map(p=>[p.archiveId,p])),[tilePlayers]);
  const selectedGroup=()=>groups.findIndex(g=>selected.length===4&&selected.every(id=>g.members.some(p=>p.archiveId===id)));
  const submit=()=>{
    if(selected.length!==4||finished)return;
