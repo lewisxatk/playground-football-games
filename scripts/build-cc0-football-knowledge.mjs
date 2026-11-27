@@ -160,7 +160,16 @@ function makeInternationalGoalPacks(scorers){
 
 function buildInternationalQuiz(matches){
  const scorelines=[...new Set(matches.map(m=>m.homeScore+"-"+m.awayScore))];
- const teams=[...new Set(matches.flatMap(m=>[m.home,m.away]).filter(Boolean))];
+ const allTeams=[...new Set(matches.flatMap(m=>[m.home,m.away]).filter(Boolean))];
+ const teamsBySource=new Map(),teamsByCompetition=new Map();
+ for(const match of matches){
+  const sourceKey=match.sourceKey??"unknown";
+  const sourceTeams=teamsBySource.get(sourceKey)??new Set();
+  sourceTeams.add(match.home);sourceTeams.add(match.away);teamsBySource.set(sourceKey,sourceTeams);
+  const competitionKey=[sourceKey,match.competition??""].join("|");
+  const competitionTeams=teamsByCompetition.get(competitionKey)??new Set();
+  competitionTeams.add(match.home);competitionTeams.add(match.away);teamsByCompetition.set(competitionKey,competitionTeams);
+ }
  const totals=[...new Set(matches.map(m=>String(m.homeScore+m.awayScore)))];
  const margins=[...new Set(matches.map(m=>String(Math.abs(m.homeScore-m.awayScore))))];
  const ukTeams=new Set(["england","scotland","wales","northern ireland"]);
@@ -180,6 +189,10 @@ function buildInternationalQuiz(matches){
  const questions=matches.map(match=>{
   const selector=parseInt(createHash("sha256").update(match.id).digest("hex").slice(0,2),16)%4;
   let answer,question,explanation,options,questionType;
+  const competitionKey=[match.sourceKey??"unknown",match.competition??""].join("|");
+  const competitionPool=teamsByCompetition.get(competitionKey);
+  const sourcePool=teamsBySource.get(match.sourceKey);
+  const teamCandidates=[...(competitionPool?.size>=5?competitionPool:sourcePool??new Set(allTeams))];
   if(selector===0){
    questionType="scoreline";answer=match.homeScore+"-"+match.awayScore;
    question="What was the final score when "+match.home+" played "+match.away+" on "+match.date+"?";
@@ -189,7 +202,7 @@ function buildInternationalQuiz(matches){
    questionType="match-winner";answer=match.homeScore===match.awayScore?"Draw":match.homeScore>match.awayScore?match.home:match.away;
    question="What was the result of the match between "+match.home+" and "+match.away+" on "+match.date+"?";
    explanation=match.home+" "+match.homeScore+"–"+match.awayScore+" "+match.away+". "+(answer==="Draw"?"The match finished level.":answer+" recorded the win.");
-   options=pickOptions(answer,[...teams,"Draw"],match.id);
+   options=pickOptions(answer,[...teamCandidates,"Draw"],match.id);
   }else if(selector===2){
    questionType="total-goals";answer=String(match.homeScore+match.awayScore);
    question="How many goals were scored when "+match.home+" met "+match.away+" on "+match.date+"?";
