@@ -82,8 +82,7 @@ const MODES: { name:Mode; note:string; colour:string }[] = [
 ];
 
 const LEAGUES: {label:string;code:LeagueCode}[] = [
-  {label:"All top five",code:"ALL"},{label:"Premier League",code:"ENG-PL"},{label:"La Liga",code:"ESP-LL"},
-  {label:"Serie A",code:"ITA-SA"},{label:"Bundesliga",code:"DEU-BL"},{label:"Ligue 1",code:"FRA-L1"}
+  {label:"Premier League",code:"ENG-PL"}
 ];
 const clean=(s:string)=>s.toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
 const yearOf=(s:string):number|null=>{const m=s.match(/(?:19|20)\d{2}/);return m?Number(m[0]):null;};
@@ -150,6 +149,7 @@ const ageOf=(p:Player)=>{
 function fits(c:Candidate,m:Mode){
   // Difficulty is based on career footprint, not a short hard-coded celebrity list.
   // The archive remains the source of the career and season rows shown in each file.
+  if(c.statSeasons<2)return false;
   if(m==="EASY")return c.apps>=550&&c.clubs>=3;
   if(m==="MEDIUM")return c.apps>=220&&c.clubs>=3;
   if(m==="HARD")return c.apps>=70&&c.clubs>=2;
@@ -169,7 +169,7 @@ function randomFreeRows(rows:Row[],seed?:string):string[]{
   const selected:Row[]=[];
   for(const row of shuffled){
     if(selected.length>=2)break;
-    if(!selected.some(existing=>existing.clubKey===row.clubKey))selected.push(row);
+    if(!selected.some(existing=>existing.clubKey===row.clubKey)&&!selected.some(existing=>existing.season===row.season))selected.push(row);
   }
   for(const row of shuffled){
     if(selected.length>=2)break;
@@ -224,7 +224,7 @@ function careerHint(p:Player):Hint[]{
 
 export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyDone?:boolean;onDailyComplete?:(score:number)=>void}){
   const [mode,setMode]=useState<Mode>("EASY");
-  const [league,setLeague]=useState<LeagueCode>("ALL");
+  const [league,setLeague]=useState<LeagueCode>("ENG-PL");
   const [pool,setPool]=useState<Candidate[]>([]);
   const [player,setPlayer]=useState<Player|null>(null);
   const [rows,setRows]=useState<Row[]>([]);
@@ -250,7 +250,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
 
   const newPlayer=useCallback(async(deck:Candidate[],selectedMode:Mode)=>{
     const options=deck.filter(c=>fits(c,selectedMode));
-    if(!options.length)throw new Error("There are no candidate files for "+selectedMode+" in this league selection. Try All Top Five or another difficulty.");
+    if(!options.length)throw new Error("There are no candidate files for "+selectedMode+" in this league selection. Try another difficulty.");
     const dailyDraw=!dailyDone;
     const dailySeed="PLAYGROUND-CAREER-FILE:"+new Date().toISOString().slice(0,10)+":"+selectedMode+":"+league;
     const unused=options.filter(c=>!seen.current.has(c.id));
@@ -296,7 +296,8 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
           const record=staticPlayers.current.get(choice.id)??await getPlayer(choice.id);
           const timeline=makeRows(record);
           const free=randomFreeRows(timeline,dailyDraw?dailySeed+":"+choice.id:undefined);
-          if(!timeline.length||free.length<2){lastProblem="This career did not have two complete, matching season-stat clues.";continue;}
+          const freeSeasons=new Set(free.map(id=>timeline.find(row=>row.id===id)?.season).filter(Boolean));
+          if(!timeline.length||free.length<2||freeSeasons.size<2){lastProblem="This career did not have two complete, matching season-stat clues from different seasons.";continue;}
           const note=makeFreeNote(record,dailyDraw?dailySeed+":"+choice.id:undefined);
           setPlayer(record);setRows(timeline);setFreeRows(free);setRevealed(free);setFreeNote(note);
           setOpened(note?[note.id]:[]);setRound(n=>n+1);setStatus("playing");setNote("");
@@ -318,12 +319,13 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
       const seed=isDaily
         ?"PLAYGROUND-CAREER-FILE:"+new Date().toISOString().slice(0,10)+":"+mode+":"+league
         :"PLAYGROUND-CAREER-FILE:PRACTICE:"+String(Date.now())+":"+mode+":"+league;
-      if(league==="ALL"){
-        const rawPlayers=await getStaticArchivePlayers(seed,3200);
-        if(live&&rawPlayers?.length){
-          const mapped=rawPlayers.map(archivePlayerToCareerFile);
-          staticPlayers.current=new Map(mapped.map(player=>[player.id,player]));
-          const list=mapped.map(player=>archivePlayerCandidate(player,rawPlayers.find(raw=>raw.id===player.id)!));
+      const rawPlayers=await getStaticArchivePlayers(seed,3200);
+      if(live&&rawPlayers?.length){
+        const mapped=rawPlayers.map(archivePlayerToCareerFile);
+        staticPlayers.current=new Map(mapped.map(player=>[player.id,player]));
+        const list=mapped.map(player=>archivePlayerCandidate(player,rawPlayers.find(raw=>raw.id===player.id)!))
+          .filter(candidate=>candidate.region==="ENGLISH"&&candidate.statSeasons>=2);
+        if(list.length>=50){
           setPool(list);
           await newPlayer(list,mode);
           return;
@@ -413,7 +415,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     </section>
     {dailyDone&&<div className="cf-daily-complete">TODAY'S CAREER FILE IS BANKED · NEXT FILES ARE PRACTICE</div>}
     <section className="cf-controlbar">
-      <div className="cf-control-title"><span>01 / CHOOSE YOUR COMPETITION</span><strong>WHERE DID THEY PLAY?</strong></div>
+      <div className="cf-control-title"><span>01 / CHOOSE YOUR COMPETITION</span><strong>ENGLISH PREMIER LEAGUE FILES</strong></div>
       <div className="cf-leagues">{LEAGUES.map(x=><button key={x.code} className={league===x.code?"active":""} onClick={()=>setLeague(x.code)}>{x.label}</button>)}</div>
     </section>
     <section className="cf-mode-area">
@@ -477,7 +479,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     </section>
     <section className="cf-bottom-strip"><div><span>THE PLAYGROUND PLAYER ARCHIVE</span><strong>READ THE GAME.<br/>READ THE CAREER.</strong></div>
       <div className="cf-source-credits"><b>DATA & SOURCES</b>
-        <p>Career timelines derive from OpenFootballBase. Its five major-league squad archive begins in 2000/01, although a player’s infobox career may show earlier spells. The playable draw requires at least two club-season stat rows. The documented stat_club source only covers players of Champions League clubs from seven major countries since 2010, so this is a curated playable archive, not every professional footballer. Appearance and goal figures are published as found on English Wikipedia and are explicitly unverified; missing seasons remain blank. Wikipedia text is CC BY-SA 4.0; Wikidata is CC0.</p>
+        <p>This Career File is restricted to Premier League players in the OpenFootballBase-Data archive. Each playable file must have at least two distinct recorded seasons and two free season-stat clues. Appearance and goal figures are shown only where present in the source and remain explicitly unverified; missing seasons stay blank. OpenFootballBase-Data is CC BY-SA 4.0; Wikipedia text is CC BY-SA 4.0; Wikidata is CC0. This is a curated archive, not a complete record of every English-league player.</p>
         <p>Transfer clues use Tiago Cumetti’s Football Transfers Dataset (2005–2024), collected from Transfermarkt pages. It is CC BY 4.0 and includes undisclosed or missing fees. No match does not mean a free transfer.</p>
         <a href="https://github.com/florentfougeres/OpenFootballBase-Data" target="_blank" rel="noreferrer">OPEN FOOTBALL DATA SOURCE ↗</a>
         <a href="https://doi.org/10.5281/zenodo.17921143" target="_blank" rel="noreferrer">TRANSFER DATA / DOI ↗</a>
