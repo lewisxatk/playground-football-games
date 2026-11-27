@@ -947,10 +947,13 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  },[careerData,seed,difficulty]);
  const q=questions[index];
  const currentPoints=Math.max(0,1000-penalty);
+ const answerSpell=(club:string)=>q?.answer.careerSpells.find(spell=>normalise(spell.club)===normalise(club));
+ const spellWindow=(club:string)=>{const spell=answerSpell(club);return spell?spell.startYear+"–"+(spell.endYear??"end date not recorded"):"membership dates not recorded";};
  const hintValue=q?[
-   q.answer.nationality,
+   q.answer.nationality||"Nationality not recorded",
    q.answer.position||"Position not recorded",
-   q.answer.firstYear!==null&&q.answer.lastYear!==null?q.answer.firstYear+"–"+q.answer.lastYear:q.answer.clubs.length+" recorded clubs"
+   q.startClub+": "+spellWindow(q.startClub)+" · "+q.endClub+": "+spellWindow(q.endClub),
+   q.answer.firstYear!==null&&q.answer.lastYear!==null?q.answer.firstYear+"–"+q.answer.lastYear:"Career span not recorded"
  ][hintCount-1]??"": "";
  const canGuess=!answered&&!failed&&(! (wrongCount>=2&&!extraLifeUsed))&&wrongCount<3;
  const completeQuestion=()=>{
@@ -975,7 +978,7 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
    if(next>=3&&extraLifeUsed)setFailed(true);
  };
  const useHint=()=>{
-   if(!q||answered||failed||hintCount>=3)return;
+   if(!q||answered||failed||hintCount>=4)return;
    setHintCount(v=>v+1);setPenalty(v=>v+100);
  };
  const buyExtraLife=()=>{
@@ -991,13 +994,13 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
    setWrongCount(0);setExtraLifeUsed(false);setHintCount(0);setAnswered(false);setFailed(false);setFinished(false);setNotice("");
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
  };
- return <Frame account={account} game="link-up" eyebrow="SHARED TEAM-MATES / TEN CONNECTIONS" title="THE LINK UP." description="Connect two players through one team-mate with overlapping dated club-membership records at both clubs. Solve ten links, spend points carefully on hints and extra lives." number="11" mode={mode} setMode={m=>reset(m)}>
+ return <Frame account={account} game="link-up" eyebrow="SHARED TEAM-MATES / TEN CONNECTIONS" title="THE LINK UP." description="Connect two players through one team-mate with overlapping spells at English clubs. Every link is English-football based, with four progressive hints if you get stuck." number="11" mode={mode} setMode={m=>reset(m)}>
  {done&&mode==="daily"?<Success title="TEN LINKS COMPLETE." detail="Today's ten-question Link Up challenge is banked. Ten practice runs are available each day on this device." button="PRACTICE" onAgain={()=>reset("practice")}/>:
   loading&&pool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.4,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>CONNECTING CAREERS</b><span>Finding verified overlapping club-membership records in the CC0 career archive.</span></div>:
   error&&pool.length===0?<Card className="arc-feedback"><b>CC0 CAREER ARCHIVE UNAVAILABLE</b><p>{error}</p><button className="arc-button" onClick={retry}>RETRY CC0 ARCHIVE ↗</button></Card>:
   practiceLimitReached?<Card className="arc-result"><small>PRACTICE LIMIT REACHED</small><h2>THAT'S TEN RUNS.</h2><p>You have completed ten free ten-question Link Up runs today on this device. The allowance resets at 00:00 GMT.</p></Card>:
   finished?<Success title="FULL-TIME." detail={"You scored "+score+" points across "+questions.length+" connections."+(mode==="practice"?" Practice run "+practiceUsed+" of 10 used today.":"")} button="NEW TEN-LINK RUN" onAgain={()=>reset(mode)}/>:
-  questions.length!==10||!q?<Card className="arc-feedback"><b>{error?"CC0 CAREER ARCHIVE UNAVAILABLE":"NOT ENOUGH VERIFIED CC0 LINKS FOR A FULL TEN-QUESTION RUN"}</b><p>{error||"The CC0 career snapshot did not produce ten unique, unambiguous bridge players. Retry the source or return when the next snapshot is available."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY LINK ARCHIVE ↗</button></Card>:
+  questions.length!==10||!q?<Card className="arc-feedback"><b>{error?"CC0 CAREER ARCHIVE UNAVAILABLE":"NOT ENOUGH VERIFIED CC0 LINKS FOR A FULL TEN-QUESTION RUN"}</b><p>{error||"The English-club career snapshot did not produce ten unique, unambiguous bridge players. Retry the source or return when the next snapshot is available."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY LINK ARCHIVE ↗</button></Card>:
   <Card className="link-game">
    {mode==="practice"&&<div className="grid-difficulty">{(["EASY","STANDARD","HARD","EXTREME"] as LinkDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{level==="STANDARD"?"MEDIUM / STANDARD":level}</button>)}</div>}
    <div className="arc-game-meta"><span>{mode==="daily"?"DAILY LINK":"PRACTICE · "+difficulty} · QUESTION {index+1}/10</span><b><ScoreTicker value={score} suffix=" PTS"/></b></div>
@@ -1010,9 +1013,9 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
    <div className="link-evidence"><span>FIND THE ONE PLAYER WHO OVERLAPPED BOTH ENDPOINTS. · {q.options.length} OPTIONS</span><b>ARCHIVE WINDOW / {q.startClub} + {q.endClub}</b></div>
    {!answered&&!failed&&<div className="missing-options">{q.options.map(p=><button type="button" key={p.archiveId} onClick={()=>submit(p.name)} disabled={!canGuess}>{p.name}</button>)}</div>}
    {notice&&<p className={"link-notice "+(answered?"correct":"")}>{notice}</p>}
-   {hintCount>0&&!answered&&<div className="link-hint"><small>HINT {hintCount}/3 · −100 PTS</small><b>{["NATION","POSITION","CAREER / CLUB COUNT"][hintCount-1]}: {hintValue}</b></div>}
+   {hintCount>0&&!answered&&<div className="link-hint"><small>HINT {hintCount}/4 · −100 PTS</small><b>{["NATION","POSITION","ENGLISH CLUB SPELL WINDOWS","CAREER SPAN"][hintCount-1]}: {hintValue}</b></div>}
    {!answered&&!failed&&<div className="link-tools">
-     <button className="arc-quiet" onClick={useHint} disabled={hintCount>=3}>HINT −100 PTS</button>
+     <button className="arc-quiet" onClick={useHint} disabled={hintCount>=4}>HINT −100 PTS</button>
      {wrongCount>=2&&!extraLifeUsed&&<button className="arc-button" onClick={buyExtraLife}>BUY ONE EXTRA LIFE −100</button>}
      {wrongCount>=3&&<button className="arc-quiet" onClick={skipQuestion}>SKIP WITHOUT REVEAL</button>}
    </div>}
