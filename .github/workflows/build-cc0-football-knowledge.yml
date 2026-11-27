@@ -9,7 +9,6 @@ on:
       - "scripts/build-cc0-football-knowledge.mjs"
       - ".github/workflows/build-cc0-football-knowledge.yml"
       - "public/data/worldcup-lineups.json"
-      - "src/ArcadeApp.tsx"
       - "src/footballKnowledge.ts"
 
 permissions:
