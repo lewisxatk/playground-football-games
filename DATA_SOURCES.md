@@ -59,3 +59,15 @@ CC0 is the closest practical fit for the requested approach: no paid licence, no
 ### Current content-system correction
 
 The 100-question factual seed is a development-only bank and is not the live source for The Climb or Quick Quiz. The separate generated bank has 800 questions per tier (3,200 total) and is archive-template-derived; the underlying appearance/goal/caps statistics are not independently verified. These are different datasets and must not be added together as 3,300 verified questions.
+
+
+### Additional CC0 sources checked on 27 November 2026
+
+- [OpenFootball Players](https://github.com/openfootball/players) publishes CC0-1.0 data for footballers grouped by country, with name, broad position, date of birth, height and birthplace fields in its examples. This is a useful identity/answer pool for Footle, Grid, Connections and player-profile games; it is not a reliable season-stat or career-history source by itself.
+- [OpenFootball Clubs](https://github.com/openfootball/clubs) publishes CC0 public-domain club data including club names, aliases, founding years and stadium associations. Useful for club-history, stadium, nickname and alias facts. Do not treat the club name record as a licence for crest artwork or trademarks.
+- [OpenFootball World Cup](https://github.com/openfootball/worldcup) currently advertises data for the Canada/USA/Mexico 2026 tournament as well as earlier editions and qualifiers. The existing PLAYGROUND XI file still only covers 1982–2022; this repository is a candidate to extend it after the 2026 files are inspected and validated.
+- The sister [women's international results dataset](https://github.com/martj42/womens-international-results) reports around 11,020 results and says all major tournament results should be complete, while friendlies are incomplete. Treat it as a candidate only until its current repository licence file is directly checked and pinned; do not count it as approved solely from a third-party catalogue.
+
+### Useful but not CC0: optional English history expansion
+
+[England Football League Data](https://github.com/seanelvidge/England-football-results) reported 212,910 English league matches from 1888 through 26 November 2026 across the top four tiers, with results, league divisions, historical club names, active periods and point deductions. Its author's original contributions are CC BY 4.0 (attribution required), and the author explicitly reserves third-party source rights and logo rights. This is a very strong EFL/history candidate if the project later accepts a simple attribution credit; it is deliberately **not** part of the strict CC0-only ingestion whitelist.
