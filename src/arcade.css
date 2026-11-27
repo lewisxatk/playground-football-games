@@ -430,3 +430,8 @@
 @media(prefers-reduced-motion:reduce){
   .footle-win:after,.footle-cell.correct,.footle-cell.present,.climb-play .climb-options button.correct,.quiz-options button.correct{animation:none!important}
 }
+
+.difficulty-note{
+  margin:9px 0 13px;color:var(--muted);font-size:10px;font-weight:800;
+  letter-spacing:.055em;line-height:1.5;text-transform:uppercase
+}
