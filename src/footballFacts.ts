@@ -20,7 +20,7 @@ export type FootballFact = {
   question: string;
   answer: string;
   acceptedAnswers: string[];
-  choices?: string[];
+  choices: string[];
   explanation: string;
   competition: string;
   scope: string;
@@ -62,9 +62,11 @@ export function validateFootballFacts(facts: FootballFact[]) {
     if (fact.reviewStatus !== "verified") errors.push(id + ": not approved for live content.");
     if (!Array.isArray(fact.gameModes) || !fact.gameModes.length) errors.push(id + ": no native quiz mode mapping.");
     if (fact.gameModes?.some(mode => !["timed-quiz","the-climb"].includes(mode))) errors.push(id + ": use a game-specific converter before mapping to other games.");
-    if (fact.choices) {
+    if (!Array.isArray(fact.choices) || fact.choices.length !== 4) {
+      errors.push(id + ": every quiz question needs exactly four choices.");
+    } else {
       const choices = fact.choices.map(normaliseFootballAnswer);
-      if (choices.length !== 4 || new Set(choices).size !== 4) errors.push(id + ": needs exactly four distinct choices.");
+      if (new Set(choices).size !== 4) errors.push(id + ": choices must be distinct after normalisation.");
       if (choices.filter(choice => choice === normaliseFootballAnswer(fact.answer)).length !== 1) errors.push(id + ": correct answer must appear exactly once.");
     }
   }
