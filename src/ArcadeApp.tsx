@@ -455,7 +455,7 @@ function wordleEval(guess:string,target:string){const result=Array(5).fill("abse
 function FootlePage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
- const [typed,setTyped]=useState("");const [guesses,setGuesses]=useState<string[]>([]);const [end,setEnd]=useState(false);const [wordError,setWordError]=useState("");
+ const [typed,setTyped]=useState("");const [guesses,setGuesses]=useState<string[]>([]);const [end,setEnd]=useState(false);const [wordError,setWordError]=useState("");const [hinted,setHinted]=useState<number[]>([]);
  const done=account.daily[utcDay()]?.footle!==undefined;
  const seed=mode==="daily"?"FOOTLE:"+utcDay():"FOOTLE:PRACTICE:"+practiceSeed;
  const {players:archivePlayers,loading,error}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,1600);
@@ -475,7 +475,7 @@ function FootlePage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
    if(!bank.includes(word)){setWordError("NOT IN THE PLAYER LIST — TRY A RECORDED FIVE-LETTER SURNAME.");return;}
    setWordError("");
    const next=[...guesses,word];setGuesses(next);setTyped("");
-   if(word===target||next.length===6){setEnd(true);if(mode==="daily")onDaily("footle",word===target?Math.max(100,700-next.length*75):0);}
+   if(word===target||next.length===6){setEnd(true);if(mode==="daily")onDaily("footle",word===target?Math.max(100,700-next.length*75-hinted.length*120):0);}
  };
  const submit=(e:FormEvent)=>{e.preventDefault();submitWord();};
  const keyStatus=(letter:string)=>{
@@ -495,17 +495,23 @@ function FootlePage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
    setTyped("");setGuesses([]);setEnd(false);setWordError("");
  };
  const updateTyped=(value:string)=>{setWordError("");setTyped(value.replace(/[^a-z]/gi,"").slice(0,5));};
+ const hintLetter=()=>{
+   if(hinted.length>=3||end)return;
+   const index=[0,1,2,3,4].find(i=>!hinted.includes(i)&&!guesses.some(word=>word[i]===target[i]));
+   if(index!==undefined)setHinted(old=>[...old,index]);
+ };
+ const scoreAvailable=Math.max(0,700-guesses.length*75-hinted.length*120);
  return <Frame account={account} game="footle" eyebrow="THE FIVE-LETTER FOOTBALL WORD" title="FOOTLE." description="Find the five-letter football surname in six guesses. A fresh shared daily word, plus an archive-backed pool for unlimited practice." number="05" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
  {done&&mode==="daily"?<Success title="TODAY'S FOOTLE IS DONE." detail="One shared daily word. Infinite archive-backed practice is still open." button="UNLIMITED PRACTICE" onAgain={()=>{setMode("practice");restart("practice");}}/>:
   loading&&archivePlayers.length===0?<Card className="footle-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>SCOUTING FIVE-LETTER NAMES</b><span>BUILDING A FRESH WORD BANK FROM THE PLAYER ARCHIVE…</span></Card>:
   <Card className="footle-game">
-   <div className="arc-game-meta"><span>6 GUESSES / 5 LETTERS</span><b>{bank.length} VALID PLAYER SURNAMES</b></div>
+   <div className="arc-game-meta"><span>6 GUESSES / 5 LETTERS</span><b>{scoreAvailable} PTS AVAILABLE</b></div>
    <div className="footle-board">{Array.from({length:6},(_,r)=><div className="footle-row" key={r}>{Array.from({length:5},(_,c)=>{const word=guesses[r];const colour=word?wordleEval(word,target)[c]:"";const character=word?.[c]??(r===guesses.length?typed[c]??"":"");return <motion.div key={r+"-"+c+"-"+character} initial={{opacity:.65,rotateX:character?70:0,y:character?-3:0}} animate={{opacity:1,rotateX:0,y:0}} transition={{duration:.24,delay:word?c*.07:0}} className={"footle-cell "+colour}>{character}</motion.div>;})}</div>)}</div>
    {end&&<motion.div className={"arc-feedback "+(win?"footle-win":"footle-over")} initial={{opacity:0,y:14,scale:.97}} animate={{opacity:1,y:0,scale:1}} transition={{duration:.28}}><b>{win?"GOAL! YOU GOT IT.":"THE WORD WAS "+target}</b><p>{win?"A proper bit of football knowledge. That's in the back of the net.":"One for the next round. Keep your streak alive."}</p>{win&&<motion.span className="footle-goal-ball" initial={{scale:0,rotate:-90}} animate={{scale:1,rotate:0}} transition={{type:"spring",stiffness:260,damping:12}}>⚽</motion.span>}{mode==="practice"&&<button className="arc-button" onClick={()=>restart("practice")}>NEXT WORD ↗</button>}</motion.div>}
    <form className="footle-entry" onSubmit={submit}><input type="text" inputMode="text" enterKeyHint="go" autoCapitalize="characters" autoComplete="off" spellCheck={false} value={typed} onChange={e=>updateTyped(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"||e.key==="Go"||e.key==="NumpadEnter"){e.preventDefault();e.currentTarget.form?.requestSubmit();}}} placeholder="TYPE A 5-LETTER NAME" maxLength={5} disabled={end}/><button className="arc-button" type="submit" disabled={typed.length!==5||end||guesses.includes(typed.toUpperCase())}>ENTER ↵</button></form>
    {wordError&&<p className="footle-word-error" role="status">{wordError}</p>}
    <div className="footle-keyboard" aria-label="On-screen keyboard">{keyRows.map((row,i)=><div className="footle-key-row" key={row}>{row.split("").map(letter=><button type="button" key={letter} className={keyStatus(letter)} aria-label={letter+" key"} onClick={()=>!end&&updateTyped(typed+letter)}>{letter}</button>)}{i===2&&<><button type="button" className="wide-key" onClick={submitWord} disabled={end||typed.length!==5||guesses.includes(typed.toUpperCase())}>ENTER</button><button type="button" className="wide-key" aria-label="Delete last letter" onClick={()=>updateTyped(typed.slice(0,-1))} disabled={end}>⌫</button></>}</div>)}</div>
-   <div className="footle-note">GREEN = RIGHT LETTER / RIGHT PLACE · AMBER = RIGHT LETTER / WRONG PLACE · GREY = NOT IN THE WORD</div>
+   <div className="footle-actions"><button className="arc-quiet" type="button" onClick={hintLetter} disabled={hinted.length>=3||end}>REVEAL A LETTER −120 PTS ({hinted.length}/3)</button><span>{bank.length} VALID PLAYER SURNAMES</span></div>{hinted.length>0&&<p className="arc-muted">HINT: {hinted.map(i=>"position "+(i+1)+" is "+target[i]).join(" · ")}</p>}<div className="footle-note">GREEN = RIGHT LETTER / RIGHT PLACE · AMBER = RIGHT LETTER / WRONG PLACE · GREY = NOT IN THE WORD</div>
    {error&&<p className="arc-muted">The shared player archive is unavailable. The included football surname list remains playable.</p>}
   </Card>}
  </Frame>;
@@ -792,7 +798,14 @@ function LadderPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const seed=mode==="daily"?"LADDER:"+utcDay():"LADDER:PRACTICE:"+practiceSeed;
  const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,1600);
  const pool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
- const generated=useMemo(()=>pool.length>=5?makeLadderSet(pool,metric,difficulty,hashSeed(seed+":"+metric+":"+difficulty)):[],[pool,metric,difficulty,seed]);
+ const familiarNames=useMemo(()=>new Set(PLAYER_DATABASE.map(player=>normalise(player.name))),[]);
+ const easyPool=useMemo(()=>{
+   const familiar=pool.filter(player=>familiarNames.has(normalise(player.name)));
+   if(familiar.length>=5)return familiar;
+   const established=pool.filter(player=>player.careerApps>=250&&player.clubs.length>=2);
+   return established.length>=5?established:pool;
+ },[pool,familiarNames]);
+ const generated=useMemo(()=>pool.length>=5?makeLadderSet(difficulty==="EASY"?easyPool:pool,metric,difficulty,hashSeed(seed+":"+metric+":"+difficulty)):[],[pool,easyPool,metric,difficulty,seed]);
  useEffect(()=>{setPlayers(generated);setSubmitted(false);},[generated]);
  const move=(i:number,dir:number)=>setPlayers(old=>{const next=[...old],j=i+dir;if(j<0||j>=next.length)return old;[next[i],next[j]]=[next[j],next[i]];return next;});
  const expected=[...players].sort((a,b)=>b.value-a.value);
