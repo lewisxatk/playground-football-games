@@ -5,7 +5,6 @@ import {
   type Player
 } from "./playerData";
 import { ClubBadge, CountryFlag } from "./ClubBadge";
-import { useArchivePlayers } from "./useArchivePlayers";
 
 import { cc0CareerToArchiveGamePlayer } from "./cc0CareerAdapter";
 import { getWorldCupLineups } from "./tournamentNationData";
@@ -918,48 +917,6 @@ function FiveOhOnePage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
 type LinkDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
 type GeneratedLink={start:GamePlayer;end:GamePlayer;answer:GamePlayer;startClub:string;endClub:string;options:GamePlayer[]};
 
-function makeLinkQuestions(pool:GamePlayer[],seed:number,difficulty:LinkDifficulty="STANDARD"):GeneratedLink[]{
- const bounds=(spell:ArchiveCareerSpell):[number,number]|null=>{
-   let start=spell.startYear??null,end=spell.endYear??null;
-   if(start===null&&end===null){
-     const years=String(spell.years??"").match(/(?:19|20)\d{2}/g)?.map(Number)??[];
-     if(!years.length)return null;
-     start=Math.min(...years);end=Math.max(...years);
-   }
-   if(start===null)start=end;
-   if(end===null)end=start;
-   return start===null||end===null?null:[Math.min(start,end),Math.max(start,end)];
- };
- const overlaps=(a:ArchiveCareerSpell,b:ArchiveCareerSpell)=>{
-   const x=bounds(a),y=bounds(b);
-   return Boolean(x&&y&&Math.max(x[0],y[0])<=Math.min(x[1],y[1]));
- };
- const byClub=new Map<string,GamePlayer[]>();
- for(const player of pool)for(const club of new Set(player.careerSpells.map(s=>s.club).filter(Boolean))){
-   const list=byClub.get(normalise(club))??[];list.push(player);byClub.set(normalise(club),list);
- }
- const result:GeneratedLink[]=[];
- for(const answer of shuffle(pool,seed)){
-   const spells=answer.careerSpells.filter(s=>s.club&&bounds(s));
-   let found:GeneratedLink|undefined;
-   for(let i=0;i<spells.length&&!found;i++)for(let j=i+1;j<spells.length&&!found;j++){
-     const first=spells[i],second=spells[j];
-     if(normalise(first.club)===normalise(second.club))continue;
-     const startOptions=(byClub.get(normalise(first.club))??[]).filter(p=>p.archiveId!==answer.archiveId&&p.careerSpells.some(s=>normalise(s.club)===normalise(first.club)&&overlaps(first,s)));
-     const endOptions=(byClub.get(normalise(second.club))??[]).filter(p=>p.archiveId!==answer.archiveId&&p.careerSpells.some(s=>normalise(s.club)===normalise(second.club)&&overlaps(second,s)));
-     const pairs=startOptions.flatMap(start=>endOptions.filter(end=>end.archiveId!==start.archiveId).map(end=>({start,end})));
-     if(!pairs.length)continue;
-     const pair=shuffle(pairs,seed+result.length*31+answer.archiveId.length)[0];
-     const choiceCount=difficulty==="EASY"?3:difficulty==="STANDARD"?4:difficulty==="HARD"?5:6;
-     const decoys=shuffle(pool.filter(p=>p.archiveId!==answer.archiveId&&p.archiveId!==pair.start.archiveId&&p.archiveId!==pair.end.archiveId),seed+result.length*47).slice(0,choiceCount-1);
-     if(decoys.length<choiceCount-1)continue;
-     found={start:pair.start,end:pair.end,answer,startClub:first.club,endClub:second.club,options:shuffle([answer,...decoys],seed+result.length*59)};
-   }
-   if(found)result.push(found);
-   if(result.length>=40)break;
- }
- return result;
-}
 
 function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();const [difficulty,setDifficulty]=useState<LinkDifficulty>("STANDARD");
