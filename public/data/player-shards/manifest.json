@@ -1,0 +1,406 @@
+{
+  "version": 1,
+  "format": "playground-player-shards-v1",
+  "source": "OpenFootballBase-Data",
+  "sourceUrl": "https://github.com/florentfougeres/OpenFootballBase-Data",
+  "sourceRelease": "data-1.26.0",
+  "sourceReleaseUrl": "https://github.com/florentfougeres/OpenFootballBase-Data/releases/tag/data-1.26.0",
+  "licence": "CC BY-SA 4.0 (Wikipedia-derived text); Wikidata-derived fields are CC0",
+  "dataLicence": "CC BY-SA 4.0",
+  "releaseTag": "data-1.26.0",
+  "releaseUrl": "https://github.com/florentfougeres/OpenFootballBase-Data/releases/tag/data-1.26.0",
+  "sourceAssetSha256": "f5f9ce5d5efd3732a8e730c7354a5c4e94f19007e37130c2cb67739d0478aabe",
+  "generatedAt": "2026-11-27T10:01:54Z",
+  "playerCount": 60711,
+  "playersWithSeasonStats": 26791,
+  "shardSize": 1000,
+  "shardCount": 61,
+  "warnings": [
+    "Career infobox appearances/goals and national caps are unverified source values.",
+    "Career statistics by club/season/competition are only available for a subset of players and are also unverified.",
+    "Missing statistics remain null and must not be treated as verified zeroes.",
+    "Transfer fees are not part of this source and are supplied separately.",
+    "Nationality and position come from the latest available squad record and may be blank.",
+    "Latest club league/country metadata describes the upstream club record, not necessarily the player's historical season.",
+    "Some unidentified players have name-based keys and cannot always be distinguished from namesakes.",
+    "Wikipedia-derived records are CC BY-SA 4.0; Wikidata-derived fields are CC0. Career spells retain page and revision provenance where available."
+  ],
+  "caveats": [
+    "Career infobox appearances/goals and national caps are unverified source values.",
+    "Career statistics by club/season/competition are only available for a subset of players and are also unverified.",
+    "Missing statistics remain null and must not be treated as verified zeroes.",
+    "Transfer fees are not part of this source and are supplied separately.",
+    "Nationality and position come from the latest available squad record and may be blank.",
+    "Latest club league/country metadata describes the upstream club record, not necessarily the player's historical season.",
+    "Some unidentified players have name-based keys and cannot always be distinguished from namesakes.",
+    "Wikipedia-derived records are CC BY-SA 4.0; Wikidata-derived fields are CC0. Career spells retain page and revision provenance where available."
+  ],
+  "shards": [
+    {
+      "file": "players-000.json",
+      "count": 1000,
+      "bytes": 5239636,
+      "sha256": "31bd9376f3b4ea59e764742662544dc8aacb015e33ab20a35a81bbdf3c89971c"
+    },
+    {
+      "file": "players-001.json",
+      "count": 1000,
+      "bytes": 5286877,
+      "sha256": "f0f686ab0e0c75d8faec60347e31d1bca0b258423cfe7d8c07ec7d539f69af82"
+    },
+    {
+      "file": "players-002.json",
+      "count": 1000,
+      "bytes": 5243234,
+      "sha256": "a151faaaa8a75f455640bbeb05e8c3c6b3744744c44a07f148363e817e3797fb"
+    },
+    {
+      "file": "players-003.json",
+      "count": 1000,
+      "bytes": 5100119,
+      "sha256": "f67d7af1e78480ceb37030d3efc019cebaaf91a7859315ccfa8c1b1895088e01"
+    },
+    {
+      "file": "players-004.json",
+      "count": 1000,
+      "bytes": 5193133,
+      "sha256": "60ef6a0e29a24e4c0612c57aaa18746fd29e919a268e7dc49cbd2d981a14134a"
+    },
+    {
+      "file": "players-005.json",
+      "count": 1000,
+      "bytes": 5073509,
+      "sha256": "05db7ec9478620be4e19ff72da9d2ec23dd3293bcfd481e34e7587431aaf20e3"
+    },
+    {
+      "file": "players-006.json",
+      "count": 1000,
+      "bytes": 5139735,
+      "sha256": "38b58014a3f611e456badb3986c5a36c087033875baeffe99fa9dd545fada241"
+    },
+    {
+      "file": "players-007.json",
+      "count": 1000,
+      "bytes": 5010069,
+      "sha256": "824789b57ce6d68bb8533cc497f7ec1c52afab40101143ada4ff4e1efe4f467d"
+    },
+    {
+      "file": "players-008.json",
+      "count": 1000,
+      "bytes": 5189085,
+      "sha256": "4efe059e4c06724bba69bf50c2d03cdbbde814e9159f168d6fc87f4e86fbe66c"
+    },
+    {
+      "file": "players-009.json",
+      "count": 1000,
+      "bytes": 5207916,
+      "sha256": "fcb1821e7cb082f7c401b4bbd09b215516c25998a311d4a61c67c7bf4d3c1d95"
+    },
+    {
+      "file": "players-010.json",
+      "count": 1000,
+      "bytes": 5191991,
+      "sha256": "cfee3e7acb4603af596c8df1624e3ca565053c1f425c853f8c1bf3325f38e792"
+    },
+    {
+      "file": "players-011.json",
+      "count": 1000,
+      "bytes": 5069671,
+      "sha256": "b8effa360a547eb161be463b1410af2bbb6afeaf05f6c579b447e97fa366f344"
+    },
+    {
+      "file": "players-012.json",
+      "count": 1000,
+      "bytes": 5061484,
+      "sha256": "cccec18badb94bf5ebe95a80976721a62180415fb70fe8de4fa8928c46c2a500"
+    },
+    {
+      "file": "players-013.json",
+      "count": 1000,
+      "bytes": 5393083,
+      "sha256": "50b01c3deaf497901b926e369fd2b14ecf4fe48767ee8c98e8351e0e6e64d5f3"
+    },
+    {
+      "file": "players-014.json",
+      "count": 1000,
+      "bytes": 5133134,
+      "sha256": "5b22170b9a2d75b7dcf9a4f64764f8be4d6a2582aef256705109c296b7fe6a7c"
+    },
+    {
+      "file": "players-015.json",
+      "count": 1000,
+      "bytes": 5176286,
+      "sha256": "7ebb2cc2b02c863b0a941decce1513f4ca4642b6149be29e9492e62d2877a187"
+    },
+    {
+      "file": "players-016.json",
+      "count": 1000,
+      "bytes": 5189233,
+      "sha256": "28f18c6757a936b2a722317272c57bb7354d73aea4fd0d49ec13571b99966d7b"
+    },
+    {
+      "file": "players-017.json",
+      "count": 1000,
+      "bytes": 5028020,
+      "sha256": "3585e863edec74ea51d27a1dcc83b47884760bc76f089727ba41f9d1b67f5dec"
+    },
+    {
+      "file": "players-018.json",
+      "count": 1000,
+      "bytes": 5370542,
+      "sha256": "b9b4dc1429dfc757ceb85f151f8a76f554e6ec7b0b58ca6ca622d27d9203f6e1"
+    },
+    {
+      "file": "players-019.json",
+      "count": 1000,
+      "bytes": 5151921,
+      "sha256": "72b7796cae8d11a990f32700482a1aea33d6b6c3521002e1cac282655503a27a"
+    },
+    {
+      "file": "players-020.json",
+      "count": 1000,
+      "bytes": 5411247,
+      "sha256": "ada9ab2cc64472ccc77d1f306fe43fe49dfc109b5b0a15cedc554f6cdd603d28"
+    },
+    {
+      "file": "players-021.json",
+      "count": 1000,
+      "bytes": 5091336,
+      "sha256": "8120c7849a84dd4a5fdfe94517d5c3ed2df8db9bb54c7e44fa01c797429854b8"
+    },
+    {
+      "file": "players-022.json",
+      "count": 1000,
+      "bytes": 5045339,
+      "sha256": "7bc33e90e6c404b64c1d7475914eb4b4a2c5596ff12f27770f7f5fd8800b8a1f"
+    },
+    {
+      "file": "players-023.json",
+      "count": 1000,
+      "bytes": 5237086,
+      "sha256": "aa6b3d6e3288cebb1f560a379326b609171ddb622fbbaa97fa64bbdaf5be8112"
+    },
+    {
+      "file": "players-024.json",
+      "count": 1000,
+      "bytes": 5096850,
+      "sha256": "bfb98da73d095d714a489c088117fe91c6f274bd3df284a66702da2f7bb78dbc"
+    },
+    {
+      "file": "players-025.json",
+      "count": 1000,
+      "bytes": 5082320,
+      "sha256": "f67d376aad03f71c98545796a2a27576f94a5ead74527b5b4b42d07418736c18"
+    },
+    {
+      "file": "players-026.json",
+      "count": 1000,
+      "bytes": 5162754,
+      "sha256": "c6b60437a3a314b9ff79ba38d9ccbba30968bd0ba206f12e0485e48135201451"
+    },
+    {
+      "file": "players-027.json",
+      "count": 1000,
+      "bytes": 5266758,
+      "sha256": "fe6b5c63f84ee869c73a8fe2b0a99c0465c933f6ea50dd56f95a5d75c7bf8365"
+    },
+    {
+      "file": "players-028.json",
+      "count": 1000,
+      "bytes": 5116002,
+      "sha256": "66d84b269b5726f2e4ce523c0fec62df5baa30fd828aa1d40b41240c11586923"
+    },
+    {
+      "file": "players-029.json",
+      "count": 1000,
+      "bytes": 5419763,
+      "sha256": "6b0a9a367881babeb439b0ced4660a1a7cf99193e84bc5811ac7de1bc9ac9ac2"
+    },
+    {
+      "file": "players-030.json",
+      "count": 1000,
+      "bytes": 5197028,
+      "sha256": "d4868346142d35b80341fe3145c6a14f6d1dbdbf8edb59c1d9df749aac537714"
+    },
+    {
+      "file": "players-031.json",
+      "count": 1000,
+      "bytes": 5309927,
+      "sha256": "6fe1bd78bdb767ae11ce4390b6221f72a3e28879943b0a289c1cc747c84cffd2"
+    },
+    {
+      "file": "players-032.json",
+      "count": 1000,
+      "bytes": 5134232,
+      "sha256": "bbbbedfd6365b1d16bb037856abb8b23377d77f7e570e529bb1a0da5fc515340"
+    },
+    {
+      "file": "players-033.json",
+      "count": 1000,
+      "bytes": 5130336,
+      "sha256": "1ef8415346fd5fa241bfde6113f49e63dad05cf40e5c008b92442ca08d9040c0"
+    },
+    {
+      "file": "players-034.json",
+      "count": 1000,
+      "bytes": 5122116,
+      "sha256": "2f7b1db229c9d8b8ce7c3130c3329a502145daea60ad91ca17be5bdfead2d756"
+    },
+    {
+      "file": "players-035.json",
+      "count": 1000,
+      "bytes": 5328268,
+      "sha256": "10a5b0b0ad6cf2f372881a85d2bb7b0bd1de1cf63d80a4b8090f654bf35e146a"
+    },
+    {
+      "file": "players-036.json",
+      "count": 1000,
+      "bytes": 5328433,
+      "sha256": "d5bbb4db8223b36cde818eaae7f7ee1cbe2ea7c6f7112b225e914a4f62bceeaa"
+    },
+    {
+      "file": "players-037.json",
+      "count": 1000,
+      "bytes": 5289609,
+      "sha256": "6f35e0467f95596a25c6aa4106013166b4678551ecafbb1ebe9cc31807591a21"
+    },
+    {
+      "file": "players-038.json",
+      "count": 1000,
+      "bytes": 5128944,
+      "sha256": "bbd99718a21821dfb707b670096c51cc442488bdcb05bff3ddf147922c3f7ccb"
+    },
+    {
+      "file": "players-039.json",
+      "count": 1000,
+      "bytes": 5148081,
+      "sha256": "4683b74989607c2857ceb56d9d43957f48c81f95bea72a4eb55f3e9b77f26e7f"
+    },
+    {
+      "file": "players-040.json",
+      "count": 1000,
+      "bytes": 5402444,
+      "sha256": "9d0ec3617b65757c92368f8ea131b4d86b03d49cd1097f46545e40e414f2987a"
+    },
+    {
+      "file": "players-041.json",
+      "count": 1000,
+      "bytes": 5352187,
+      "sha256": "d7e01da6321095c78a76d60ac6b26783859b9523d12e500cea0b9c138516178d"
+    },
+    {
+      "file": "players-042.json",
+      "count": 1000,
+      "bytes": 5209411,
+      "sha256": "b4b52510fa4815b6c0e1905a445db962fc06c151c26ee061c01e0cc71c98b570"
+    },
+    {
+      "file": "players-043.json",
+      "count": 1000,
+      "bytes": 5051505,
+      "sha256": "af5a4259922ea69b3c4a456c07137f0cee2c2c82370312296e961acb15f301f4"
+    },
+    {
+      "file": "players-044.json",
+      "count": 1000,
+      "bytes": 5064498,
+      "sha256": "7dee325ccef99b29eb43ef4e449dd1c9020d165aa1d9652a2764ba01fd03ff43"
+    },
+    {
+      "file": "players-045.json",
+      "count": 1000,
+      "bytes": 5179237,
+      "sha256": "57a2fe50b32d7ad40e58730cbad0d9f5f81d0c73c454d0f0e4cb4b3053e50219"
+    },
+    {
+      "file": "players-046.json",
+      "count": 1000,
+      "bytes": 5242497,
+      "sha256": "b63fc7dabdbd933c1d1a2eea70b710c074c256844fc133bc62b776999be71685"
+    },
+    {
+      "file": "players-047.json",
+      "count": 1000,
+      "bytes": 4884254,
+      "sha256": "26a66739794091ae94ab9f62fdd33fc6e9c25544cd0494b88d95ee51d88039bc"
+    },
+    {
+      "file": "players-048.json",
+      "count": 1000,
+      "bytes": 5154057,
+      "sha256": "5c0c5818c89cdbeeefb096a1bba24b05b4db446f1eb32569e20a07f041618d25"
+    },
+    {
+      "file": "players-049.json",
+      "count": 1000,
+      "bytes": 5291335,
+      "sha256": "da2298fa9c7d50d4ead31f0233f8998dbb159aec63dd0f0ca4d4c3596bdc3b91"
+    },
+    {
+      "file": "players-050.json",
+      "count": 1000,
+      "bytes": 5027909,
+      "sha256": "21de9ccf7776371dca2e1fbe2b6812a776babf93d446207b0d17010809e73b73"
+    },
+    {
+      "file": "players-051.json",
+      "count": 1000,
+      "bytes": 5354904,
+      "sha256": "51ac8c57184f927d235afe3672dab25d6d5e52e1661d3ca0e62bf0f05335b1d1"
+    },
+    {
+      "file": "players-052.json",
+      "count": 1000,
+      "bytes": 5164728,
+      "sha256": "bfe5b8edd6c98ea9f1e3a10b2a7e92d2fea243505738e4f1bc2e2dc8608dc12a"
+    },
+    {
+      "file": "players-053.json",
+      "count": 1000,
+      "bytes": 5180482,
+      "sha256": "e703de54c780f79cff2e2db0b2d7ac12d6e1c274035876d904cc8bc23fb9448e"
+    },
+    {
+      "file": "players-054.json",
+      "count": 1000,
+      "bytes": 5093343,
+      "sha256": "91fc7cf9004d585ac297d3260ad47199602348100e43c3c23171b2c8a9beab03"
+    },
+    {
+      "file": "players-055.json",
+      "count": 1000,
+      "bytes": 5136031,
+      "sha256": "5c441f8b178cad3994dbfa4b50fdb608efb03df96956ffd421218ec7dcf92922"
+    },
+    {
+      "file": "players-056.json",
+      "count": 1000,
+      "bytes": 5080422,
+      "sha256": "d8ceb3453cf3c31a2cab0d48e65a3292cc078ed9f5dd3b5e04ca759fed0dbfe1"
+    },
+    {
+      "file": "players-057.json",
+      "count": 1000,
+      "bytes": 5075001,
+      "sha256": "cfef409919d2c0cd7daba9329503c54bf413b53bc51e020bb83aeea83a808634"
+    },
+    {
+      "file": "players-058.json",
+      "count": 1000,
+      "bytes": 5209670,
+      "sha256": "340bfb13451f4ccd292f299670a488d07b604e2974891c559991f03a1ed9639b"
+    },
+    {
+      "file": "players-059.json",
+      "count": 1000,
+      "bytes": 5054111,
+      "sha256": "9f6e2cc42e03b2f275684e26b4f0a1dfdeafe6b077f893c1384f6a3cec53657a"
+    },
+    {
+      "file": "players-060.json",
+      "count": 711,
+      "bytes": 3644048,
+      "sha256": "8fe669e4af3fde7f71e7574ec509f936fd3a00fef09be64edc245c8ab36c3742"
+    }
+  ]
+}
