@@ -120,7 +120,7 @@ function normaliseLegacyQuizRegion(question:CC0QuizQuestion):CC0QuizQuestion{
  if(question.region!=="UK")return question;
  // Older shards used UK for both English domestic fixtures and UK national teams.
  // Their pinned source URL lets us classify them accurately before the refreshed shards land.
- const isEnglishDomestic=/github\\.com\\/openfootball\\/england\\//i.test(question.source??"");
+ const isEnglishDomestic=/github\.com\/openfootball\/england\//i.test(question.source??"");
  return {...question,region:isEnglishDomestic?"ENGLISH_DOMESTIC":"INTERNATIONAL"};
 }
 export function useFootballQuizKnowledge(game:"the-climb"|"timed-quiz"){
