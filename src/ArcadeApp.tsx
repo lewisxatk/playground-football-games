@@ -1145,8 +1145,11 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
  const seed=mode==="daily"?"STRANDS:"+utcDay()+":"+boardNo:"STRANDS:PRACTICE:"+practiceSeed+":"+boardNo;
  const {data:strandsData,loading,error,retry}=useFootballKnowledge("strands");
  const strandsPacks=strandsData?.packs??[];
+ const englishLeaguePacks=useMemo(()=>strandsPacks.filter(pack=>pack.theme==="PLAYERS FROM THE ENGLISH LEAGUES"),[strandsPacks]);
+ const useEnglishLeaguePack=englishLeaguePacks.length>0&&hashSeed(seed+":english-leagues")%100<80;
+ const preferredStrandsPacks=useEnglishLeaguePack?englishLeaguePacks:strandsPacks;
  const staticOrder=useMemo(()=>shuffle(STRANDS_PACKS,hashSeed("STRANDS:"+utcDay())),[]);
- const pack=strandsPacks.length?strandsPacks[hashSeed(seed)%strandsPacks.length]:(mode==="daily"?staticOrder[boardNo%staticOrder.length]:STRANDS_PACKS[hashSeed(seed)%STRANDS_PACKS.length]);
+ const pack=preferredStrandsPacks.length?preferredStrandsPacks[hashSeed(seed)%preferredStrandsPacks.length]:(mode==="daily"?staticOrder[boardNo%staticOrder.length]:STRANDS_PACKS[hashSeed(seed)%STRANDS_PACKS.length]);
  const board=useMemo(()=>makeStrandsBoard(pack),[pack]);
  const solved=(index:number)=>found.includes(index);
  const isBlocked=(cell:number)=>board.paths.some((path,idx)=>solved(idx)&&path.includes(cell));
