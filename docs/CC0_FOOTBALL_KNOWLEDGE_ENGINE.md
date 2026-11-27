@@ -30,7 +30,7 @@ The international-results source is a men's senior full-international dataset. O
 - Match facts use date, home team, away team and tournament as their source-scoped identity.
 - Each generated quiz record has a stable fact ID, source URL, event date, answer, and distinct answer choices.
 - Puzzle packs have stable IDs and game-specific units. A pack is not counted merely because it contains multiple phrasings of one fact.
-- The Climb and Timed Quiz receive separate match partitions so the same match question is not placed in both pools. Each quiz pool is further split into EASY, MEDIUM, HARD and EXTREME files and reassembled by the client loader, avoiding oversized static assets. UK domestic match facts are marked UK and balanced into quiz rounds ahead of international fixtures.
+- The Climb and Timed Quiz receive separate match partitions so the same match question is not placed in both pools. Each quiz pool carries EASY, MEDIUM, HARD and EXTREME tags and is filtered by the client loader. The question generator varies the tested match fact across final score, match winner/draw, total goals and winning margin, rather than repeating one identical scoreline template. UK domestic match facts are marked UK and balanced into quiz rounds ahead of international fixtures.
 
 ## Accuracy and QA
 
