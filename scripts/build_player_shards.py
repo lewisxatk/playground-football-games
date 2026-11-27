@@ -373,7 +373,7 @@ def build_rows(manifest: dict[str, Any], files: dict[str, Any]) -> list[dict[str
                     "leagueAssists": clean_number(row.get("league_assists")),
                     "leagueAssistSeasons": clean_number(row.get("league_assist_seasons")),
                     "seasons": clean_number(row.get("seasons")),
-                    "stats": json_list(row.get("season_stats_json")),
+                    "seasonStats": json_list(row.get("season_stats_json")),
                     "firstYear": row.get("first_year"),
                     "lastYear": row.get("last_year"),
                     "caps": row.get("caps"),
