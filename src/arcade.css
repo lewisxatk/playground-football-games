@@ -171,3 +171,19 @@
  .scout-target-note{flex-wrap:wrap}
  .scout-target-note>small{margin-left:0;width:100%}
 }
+
+/* Premium touch-first controls for archive ranking. */
+.ladder-control-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0}
+.ladder-control-row label{display:flex;align-items:center;gap:8px;font-size:8px;font-weight:900;letter-spacing:.1em}
+.ladder-control-row select{max-width:260px;padding:9px 12px;border:1px solid var(--line);background:var(--ap);color:var(--ai);font-size:12px}
+.ladder-control-row>span{font-size:7px;font-weight:900;letter-spacing:.1em;color:#7b826f}
+.ladder-item{touch-action:pan-y;cursor:grab;transition:background .16s,border-color .16s;user-select:none;-webkit-user-select:none}
+.ladder-item:active{cursor:grabbing}
+.ladder-item .ladder-grab{font-size:7px;font-weight:900;letter-spacing:.08em;color:#7e8b50;white-space:nowrap}
+.ladder-item[style*="z-index"]{background:#e4edce;border-color:var(--ao)}
+.ladder-list{touch-action:pan-y}
+@media(max-width:620px){
+ .ladder-control-row{align-items:flex-start;flex-direction:column}
+ .ladder-control-row select{font-size:16px!important;max-width:100%;width:100%}
+ .ladder-item .ladder-grab{font-size:7px}
+}
