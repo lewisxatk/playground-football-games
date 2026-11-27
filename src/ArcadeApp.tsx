@@ -492,7 +492,7 @@ function FootlePage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const [typed,setTyped]=useState("");const [guesses,setGuesses]=useState<string[]>([]);const [end,setEnd]=useState(false);const [wordError,setWordError]=useState("");const [hinted,setHinted]=useState<number[]>([]);
  const done=account.daily[utcDay()]?.footle!==undefined;
  const seed=mode==="daily"?"FOOTLE:"+utcDay():"FOOTLE:PRACTICE:"+practiceSeed;
- const {players:cc0Players,loading:cc0Loading,error:cc0Error}=useFootballKnowledge();
+ const {players:cc0Players,loading:cc0Loading}=useFootballKnowledge();
  const {players:archivePlayers,loading:archiveLoading,error}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,1600);
  const bank=useMemo(()=>{
    const names=[...cc0Players.map(p=>p.name),...cc0Players.flatMap(p=>p.aliases??[]),...archivePlayers.map(p=>p.name)];
