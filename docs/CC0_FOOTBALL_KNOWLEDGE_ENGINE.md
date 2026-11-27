@@ -1,37 +1,62 @@
-# CC0 football knowledge engine
+# CC0 Football Knowledge Engine
 
-## Source whitelist
+Generated database: `public/data/football-knowledge.cc0.json`
+Machine-readable QA report: `public/data/football-knowledge-report.json`
+Builder: `scripts/build-cc0-football-knowledge.mjs`
+Workflow: `.github/workflows/build-cc0-football-knowledge.yml`
 
-| Source | Pinned revision | Data licence | Intended use |
-|---|---|---|---|
-| [OpenFootball Players](https://github.com/openfootball/players) | `125d20f7cc06cac7e758b40df535a7695632680a` | CC0-1.0 | Player identity, aliases, nationality grouping and birth year where supplied |
-| [OpenFootball Clubs](https://github.com/openfootball/clubs) | `ae3800227c449447b3a337fc0aac79a8f02f4c8b` | CC0-1.0 | Club identity and country grouping |
-| [OpenFootball World Cup line-ups](https://github.com/openfootball/worldcup.json) | Existing repository snapshot | CC0 | Starting XI and match context, 1982–2022 |
+## Licence policy
 
-The workflow checks the upstream `LICENSE.md` files for CC0 before importing. Revisions are pinned for reproducibility. CC0 describes reuse rights, not factual accuracy or completeness.
+This pipeline imports only sources whose data is explicitly published under CC0-1.0. CC0 removes copyright attribution/share-alike obligations for the contributed data, but does not guarantee accuracy or clear separate rights in club crests, photographs, logos, trademarks, or other artwork. No crests, portraits, or copied third-party quiz wording are included.
 
-## IDs and deduplication
+Pinned inputs:
 
-- Stable SHA-256-derived IDs are assigned to normalised player, club and match entities.
-- Accents, case and punctuation are normalised for duplicate matching.
-- Alternate player names are stored as aliases, not separate players.
-- Match facts are scoped by source match ID, date, year, team and opponent.
-- A fact reused by several games is still one underlying fact; each game's playable unit is counted separately.
+| Source | Pinned revision | Use |
+|---|---|---|
+| [OpenFootball players](https://github.com/openfootball/players) | `125d20f7cc06cac7e758b40df535a7695632680a` | Player names, aliases, nationality, birth year and broad position where present |
+| [OpenFootball clubs](https://github.com/openfootball/clubs) | `ae3800227c449447b3a337fc0aac79a8f02f4c8b` | Club identity, aliases, country and stadium metadata |
+| [Mart Jürisoo international results](https://github.com/martj42/international_results) | `ca84241bb3eed854a1956a2fab442fe4daad40dd` | Men's senior international match results and recorded goalscorers |
+| World Cup starting-line-up source | `public/data/worldcup-lineups.json` | Tournament line-ups and player appearance clues; the source file is retained in-repo |
 
-## Output
+The international-results source is a men's senior full-international dataset. It is not a domestic-league database and does not represent every international appearance or goal in every player's career.
 
-The generator writes `public/data/football-knowledge.cc0.json` and `public/data/football-knowledge-report.json`. The report counts game-specific units and marks each game ready only when it has at least 500 units. The GitHub Actions workflow runs against pinned upstream repositories and commits generated data to this feature branch only. It never modifies `main` or deploys production.
+## Identity and duplicate policy
 
-## Honest coverage limits
+- Entity IDs are stable SHA-256-derived identifiers from canonicalised names or source-scoped keys.
+- Player aliases are retained for answer matching; aliases do not create extra players or extra Footle answers.
+- Match facts use date, home team, away team and tournament as their source-scoped identity.
+- Each generated quiz record has a stable fact ID, source URL, event date, answer, and distinct answer choices.
+- Puzzle packs have stable IDs and game-specific units. A pack is not counted merely because it contains multiple phrasings of one fact.
+- The Climb and Timed Quiz receive separate match partitions so the same match question is not placed in both pools.
 
-The CC0 player and club sources can create a large identity pool. World Cup line-ups provide complete XI and match-context records. The current generator creates Footle answer candidates, World Cup quiz facts, Connections club-country packs, XI packs, appearance cards and Link Up candidate packs.
+## Accuracy and QA
 
-It deliberately does not invent data for games that need fields absent from these sources:
+The build checks source licences, stable IDs, duplicate keys, minimum pool sizes, answer-choice uniqueness, pack structure, and required fields. A green build means the data is structurally valid; it does not mean every underlying historical fact has been independently fact-checked.
 
-- Career File and CULT HERO need dated player-club career spells.
-- Scout Signal and Draft XI need sourced positions and reliable player attributes/pricing.
-- Football Grid needs verified player-club membership intersections.
-- Lowball, Ladder and Football 501 need scoped, comparable numeric player/club records.
-- Strands needs a word-search board generator and unique-solution validator.
+Important scope labels:
 
-Those games remain marked incomplete in the report instead of being falsely labelled as having 500 verified packs. The existing OpenFootballBase archive mixes CC BY-SA 4.0 and Wikidata CC0 records, so it is not imported by this CC0-only pipeline.
+- International-goal figures are goals recorded in the pinned source, not guaranteed complete career totals.
+- World Cup appearance clues are based on recorded starting line-ups; they are not a full caps or substitute-appearance record.
+- Position and nationality fields can be missing or inconsistent in open datasets. Missing data must not be converted into a factual zero.
+- No player-club career timeline is inferred from a current club or a single team mention.
+
+## Game coverage
+
+The generated report records the exact count, unit, readiness and live-integration status for each game. At this stage the CC0 pools are integrated into:
+
+- Footle — unique five-letter surnames
+- The Climb and Timed Quiz — source-backed international match questions
+- Connections and Strands — player-identity puzzle packs
+- Football Grid — position × nationality intersections
+- Missing XI and Tournament Nation — World Cup line-ups
+- The Reveal — World Cup player cards and tournament clues
+- Lowball, The Ladder and Football 501 — recorded senior international-goal packs
+- Draft XI and Scout Signal — positioned player records with sourced international/World Cup stats
+
+Career File, Cult Hero and Link Up are deliberately not marked ready in the report yet. They need reliable dated player-club spell histories or verified shared-career links. The old mixed-provenance archive is not silently counted as CC0 content, and no made-up club spells are generated to fill those gaps.
+
+## Build and test
+
+Run `npm run build` to type-check and build the site. The CC0 workflow checks out pinned upstream revisions, verifies their licence files, rebuilds the database, runs the full site build, and publishes the generated database/report only to the feature branch.
+
+The feature branch and draft pull request are isolated from `main`; this work does not deploy or merge to production.
