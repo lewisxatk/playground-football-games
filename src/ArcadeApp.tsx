@@ -163,13 +163,50 @@ function HomePage({account}:{account:Account}){
 
 function AccountPage({account,setAccount}:{account:Account;setAccount:(a:Account)=>void}){
  const [name,setName]=useState(account.nickname);
+ const [saveMessage,setSaveMessage]=useState("");
  const update=(e:FormEvent)=>{e.preventDefault();setAccount({...account,nickname:name.trim().slice(0,18)||"PLAYER 01"});};
+ const exportSave=()=>{
+   const payload={format:"PLAYGROUND-LOCAL-SAVE",version:1,exportedAt:new Date().toISOString(),account};
+   const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+   const url=URL.createObjectURL(blob);const link=document.createElement("a");
+   link.href=url;link.download="playground-save-"+utcDay()+".json";link.click();
+   window.setTimeout(()=>URL.revokeObjectURL(url),1000);
+   setSaveMessage("Your local player card has been exported.");
+ };
+ const importSave=async(e:React.ChangeEvent<HTMLInputElement>)=>{
+   const file=e.target.files?.[0];if(!file)return;
+   try{
+     if(file.size>2_000_000)throw new Error("That save file is unexpectedly large.");
+     const parsed=JSON.parse(await file.text());
+     const incoming=parsed?.format==="PLAYGROUND-LOCAL-SAVE"?parsed.account:parsed;
+     if(!incoming||typeof incoming!=="object"||typeof incoming.nickname!=="string"||
+       !incoming.daily||typeof incoming.daily!=="object"||Array.isArray(incoming.daily)||
+       !incoming.totals||typeof incoming.totals!=="object"||Array.isArray(incoming.totals)||
+       !Number.isFinite(Number(incoming.streak))||!Number.isFinite(Number(incoming.bestStreak)))
+       throw new Error("This file is not a valid PLAYGROUND local save.");
+     const restored:Account={
+       ...EMPTY_ACCOUNT,
+       nickname:incoming.nickname.trim().slice(0,18)||"PLAYER 01",
+       createdAt:typeof incoming.createdAt==="string"?incoming.createdAt:new Date().toISOString(),
+       streak:Math.max(0,Math.floor(Number(incoming.streak))),
+       bestStreak:Math.max(0,Math.floor(Number(incoming.bestStreak))),
+       lastDailyDate:typeof incoming.lastDailyDate==="string"?incoming.lastDailyDate:"",
+       daily:incoming.daily,
+       totals:Object.fromEntries(Object.entries(incoming.totals).map(([key,value])=>[key,Math.max(0,Math.floor(Number(value)||0))]))
+     };
+     setAccount(restored);setName(restored.nickname);
+     setSaveMessage("Save restored on this device. Your streak and scorecard are back.");
+   }catch(problem){
+     setSaveMessage(problem instanceof Error?problem.message:"Could not read this save file.");
+   }finally{e.target.value="";}
+ };
  return <div className="arc-shell arc-locker"><TopBar account={account}/><main className="arc-main"><GameHeading eyebrow="THE CLUBHOUSE / YOUR SAVE" title="LOCKER ROOM." description="Your local player card. Your nickname, daily scores and streak stay in this browser." number="PROFILE"/>
   <Card className="arc-profile-card"><div className="arc-profile-mark">PG</div><div className="arc-profile-details"><small>PLAYER CARD / LOCAL SAVE</small><h2>{account.nickname}</h2><p>PLAYER SINCE {new Date(account.createdAt).toLocaleDateString("en-GB",{month:"long",year:"numeric"})}</p></div><div className="arc-profile-stats"><div><b>{account.streak}</b><span>STREAK</span></div><div><b>{account.bestStreak}</b><span>BEST</span></div><div><b>{Object.values(account.totals).reduce((n,v)=>n+v,0)}</b><span>GAMES</span></div></div></Card>
   <Card><small className="arc-card-kicker">01 / YOUR PLAYER NAME</small><form className="arc-name-form" onSubmit={update}><input value={name} onChange={e=>setName(e.target.value)} maxLength={18} placeholder="Choose a nickname"/><button className="arc-button">SAVE NAME ↗</button></form><p className="arc-muted">This is a local save on this device and browser. It does not currently sync between phones or computers.</p></Card>
   <Card><small className="arc-card-kicker">02 / TODAY'S SCORECARD · {utcDay()} GMT</small><div className="arc-score-list">{GAME_LINKS.map(g=><div key={g.id}><span>{g.title}</span><b>{account.daily[utcDay()]?.[g.id]!==undefined?account.daily[utcDay()][g.id]+" PTS":"NOT PLAYED"}</b></div>)}</div></Card>
   <Card><small className="arc-card-kicker">03 / YOUR RECORD</small><div className="arc-record-grid">{GAME_LINKS.map(g=><div key={g.id}><span>{g.title}</span><strong>{account.totals[g.id]??0}</strong><small>COMPLETIONS</small></div>)}</div></Card>
-  <p className="arc-muted">Daily streaks roll over at exactly 00:00 GMT (UTC), not local phone midnight. Practice rounds do not affect your streak. Clearing browser data can erase this local save.</p>
+  <Card className="arc-save-tools"><small className="arc-card-kicker">04 / BACK UP YOUR PLAYER CARD</small><p className="arc-muted">Export a small JSON backup to move your nickname, streak and game history to another phone or browser. Importing a save replaces the current local player card.</p><div className="arc-save-actions"><button className="arc-button" type="button" onClick={exportSave}>EXPORT LOCAL SAVE ↓</button><label className="arc-button arc-import-button">IMPORT SAVE ↑<input type="file" accept="application/json,.json" onChange={importSave}/></label></div>{saveMessage&&<p className="arc-save-message" role="status">{saveMessage}</p>}</Card>
+  <p className="arc-muted">Daily streaks roll over at exactly 00:00 GMT (UTC), not local phone midnight. Practice rounds do not affect your streak. Clearing browser data can erase this local save; export a backup before changing devices.</p>
  </main><footer className="arc-footer"><a href="/">PLAYGROUND®</a><span>YOUR GAME. YOUR SAVE.</span><a href="/">BACK TO ARCADE ↑</a></footer></div>;
 }
 
