@@ -435,3 +435,13 @@
   margin:9px 0 13px;color:var(--muted);font-size:10px;font-weight:800;
   letter-spacing:.055em;line-height:1.5;text-transform:uppercase
 }
+
+.lb-actions button.correct{
+  animation:pgCorrectPulse .55s ease-out;
+  box-shadow:0 4px 0 #6d8c42,0 0 0 3px rgba(139,170,69,.16);
+}
+.lb-player span{display:inline-block}
+.lb-vs-mark{transition:transform .22s ease,color .22s ease}
+.lb-panel:has(.lb-actions button.correct) .lb-vs-mark{
+  color:#86a746;transform:scale(1.14) rotate(-4deg)
+}
