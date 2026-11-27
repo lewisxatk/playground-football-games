@@ -22,6 +22,7 @@ function CollectionCard({ card, index }: { card: CultHeroCard; index: number }) 
       <div className="ch-owned-monogram">{initials(card.name)}</div>
       <h3>{card.name}</h3>
       <p>{card.nationality} · {card.position}</p>
+      <div className="ch-owned-league">{card.league || "ARCHIVE PLAYER"}</div>
       <div className="ch-owned-clubs">{card.clubs.slice(0, 3).join(" / ") || "Career clubs not recorded"}</div>
     </article>
   );
@@ -33,6 +34,7 @@ export default function CultHeroCollectionPage() {
   const [collection, setCollection] = useState<CultHeroCard[]>(() => readCultHeroCollection());
   const [stage, setStage] = useState<RevealStage>("idle");
   const [pendingPlayer, setPendingPlayer] = useState<ArchiveGamePlayer | null>(null);
+  const [pendingLeague, setPendingLeague] = useState("");
   const [wasAdded, setWasAdded] = useState(false);
   const [statusNote, setStatusNote] = useState("");
 
@@ -40,13 +42,13 @@ export default function CultHeroCollectionPage() {
     if (stage !== "opening" || !pendingPlayer) return;
     const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
     const timer = window.setTimeout(() => {
-      const result = addCultHeroCard(pendingPlayer, "pack");
+      const result = addCultHeroCard(pendingPlayer, "pack", pendingLeague);
       setCollection(result.collection);
       setWasAdded(result.added);
       setStage("revealed");
     }, reducedMotion ? 120 : 2380);
     return () => window.clearTimeout(timer);
-  }, [stage, pendingPlayer]);
+  }, [stage, pendingPlayer, pendingLeague]);
 
   const openPack = () => {
     if (loading || stage === "opening" || eligible.length === 0) return;
@@ -56,6 +58,7 @@ export default function CultHeroCollectionPage() {
     const selected = source[Math.floor(Math.random() * source.length)];
     if (!selected) return;
     setPendingPlayer(selected.player);
+    setPendingLeague(selected.league);
     setWasAdded(false);
     setStatusNote(unseen.length ? "" : "You've collected every player in this current archive sample. This reveal will show a duplicate.");
     setStage("opening");
@@ -128,6 +131,7 @@ export default function CultHeroCollectionPage() {
                   <div className="ch-revealed-copy">
                     <h2>{pendingPlayer.name}</h2>
                     <p>{pendingPlayer.nationality} <span>·</span> {pendingPlayer.position}</p>
+                    <div className="ch-owned-league">{pendingLeague || "BIG FIVE ARCHIVE"}</div>
                     <div className="ch-revealed-clubs">{Array.from(new Set((pendingPlayer.spells ?? []).map(spell => spell.club?.trim()).filter((club): club is string => Boolean(club)))).slice(0, 5).join(" / ")}</div>
                     <div className="ch-revealed-footer"><b>{wasAdded ? "ADDED TO YOUR CABINET" : "ALREADY IN YOUR CABINET"}</b><span>NO. {collection.length.toString().padStart(3, "0")}</span></div>
                   </div>
