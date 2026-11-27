@@ -7,7 +7,7 @@ import {
 import { ClubBadge, CountryFlag } from "./ClubBadge";
 import { useArchivePlayers } from "./useArchivePlayers";
 import { getWorldCupLineups } from "./tournamentNationData";
-import type { ArchiveGamePlayer, ArchiveCareerSpell, ArchiveGameStat } from "./careerFileData";
+import type { ArchiveGamePlayer, ArchiveCareerSpell } from "./careerFileData";
 import CareerFilePage from "./CareerFilePage";
 import { getCareerClubsAtYear } from "./careerFileData";
 import "./arcade.css";
@@ -387,7 +387,7 @@ function DraftPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:n
    ...PLAYER_DATABASE.find(x=>normalise(x.name)===normalise(p.name))!,
    name:p.name,surname:p.name.split(" ").slice(-1)[0],position:p.pos as Player["position"],
    club:"Starter roster",league:"Starter game",active:true,ageBand:"Unknown",clubs:["Starter roster"],aliases:[p.name],
-   archiveId:"fallback-"+i,careerSpells:[],careerApps:0,careerGoals:0,leagueApps:0,leagueGoals:0,leagueGoalSeasons:0,
+   archiveId:"fallback-"+i,careerSpells:[],seasonStats:[],careerAppsRecorded:false,careerGoalsRecorded:false,leagueAppsRecorded:false,leagueGoalsRecorded:false,careerApps:0,careerGoals:0,leagueApps:0,leagueGoals:0,leagueGoalSeasons:0,
    statSeasons:0,firstYear:null,lastYear:null,caps:null,internationalGoals:null,birthDate:"",currentCountry:"",currentDivision:null,
    cost:p.cost,rating:60
  } as DraftCandidate)),[]);
