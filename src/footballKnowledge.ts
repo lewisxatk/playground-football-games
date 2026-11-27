@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 export type CC0QuizTier = "EASY" | "MEDIUM" | "HARD" | "EXTREME";
 
-export type CC0FootballPlayer = {id:string;name:string;aliases:string[];nationalities:string[];birthYears:number[];positions:string[];source:string;sourceCommit:string;licence:"CC0-1.0"};
+export type CC0FootballPlayer = {id:string;name:string;aliases:string[];nationalities:string[];birthYears:number[];positions:string[];source:string;sourceCommit?:string;licence:"CC0-1.0";wikidataId?:string;internationalGoalsRecorded?:number;worldCupStarts?:number;worldCupYears?:number[]};
+export type CC0Club = {id:string;name:string;countries:string[];source:string;sourceCommit:string;licence:"CC0-1.0"};
+export type CC0InternationalMatch = {id:string;date:string;year:number;home:string;away:string;homeScore:number;awayScore:number;tournament:string;city?:string;country?:string;neutral:boolean;source:unknown};
+export type CC0InternationalGoalEvent = {id:string;date:string;year:number;home:string;away:string;team:string;scorer:string;minute:string;penalty:boolean;ownGoal:boolean;eligibleForScorerTotals:boolean;source:unknown};
+export type CC0WorldCupLineup = {id:string;year:number;date:string;team:string;opponent:string;starters:string[];tournament:string;round:string};
 export type CC0ConnectionsPack = {id:string;groups:{name:string;dimension:string;value:string;memberIds:string[]}[]};
 export type CC0StrandsPack = {id:string;spangram:string;words:string[];theme:string};
 export type CC0GridPack = {id:string;positions:string[];countries:string[];answers:string[][][]};
@@ -28,13 +32,13 @@ type FootballKnowledgeShards = {
 };
 export type FootballKnowledgeKey=keyof FootballKnowledgeShards;
 const shardCache=new Map<FootballKnowledgeKey,Promise<unknown>>();
-const minimums:Record<FootballKnowledgeKey,number>={footle:500,connections:500,strands:500,"football-grid":500,"the-climb":500,"timed-quiz":500,"the-reveal":500,"goal-packs":500,"player-stats":500,"career-history":0};
+const minimums:Record<FootballKnowledgeKey,number>={core:500,matches:500,"goal-events":500,"world-cup":500,footle:500,connections:500,strands:500,"football-grid":500,"the-climb":500,"timed-quiz":500,"the-reveal":500,"goal-packs":500,"player-stats":500,"career-history":0};
 
 function validateShard<K extends FootballKnowledgeKey>(key:K,value:unknown):FootballKnowledgeShards[K]{
  if(!value||typeof value!=="object")throw new Error("The CC0 "+key+" content shard is invalid.");
  const data=value as Record<string,unknown>;
  const list=(name:string)=>Array.isArray(data[name])?data[name] as unknown[]:[];
- const count=key==="footle"?list("answers").length:
+ const count=key==="core"?list("players").length:\n  key==="matches"?list("matches").length:\n  key==="goal-events"?list("events").length:\n  key==="world-cup"?list("lineups").length:\n  key==="footle"?list("answers").length:
   key==="connections"?list("packs").length:
   key==="strands"?list("packs").length:
   key==="football-grid"?list("packs").length:
@@ -45,6 +49,18 @@ function validateShard<K extends FootballKnowledgeKey>(key:K,value:unknown):Foot
   key==="career-history"?list("players").length:
   list("players").length;
  if(count<minimums[key])throw new Error("The CC0 "+key+" shard failed its minimum content check ("+count+").");
+ if(key==="core"){
+  if(list("clubs").length<500)throw new Error("The CC0 canonical club directory is incomplete.");
+  const players=list("players") as Record<string,unknown>[],clubs=list("clubs") as Record<string,unknown>[];
+  if(players.some(player=>!player.id||!player.name||player.licence!=="CC0-1.0")||clubs.some(club=>!club.id||!club.name||club.licence!=="CC0-1.0"))throw new Error("A canonical entity is missing its stable ID or CC0 marker.");
+ }
+ if(key==="matches"&&list("matches").some(match=>{const row=match as Record<string,unknown>;return !row.id||!row.date||!row.home||!row.away||!Number.isInteger(row.homeScore)||!Number.isInteger(row.awayScore)}))throw new Error("An international match record is incomplete.");
+ if(key==="goal-events"&&list("events").some(event=>{const row=event as Record<string,unknown>;return !row.id||!row.date||!row.scorer||typeof row.ownGoal!=="boolean"}))throw new Error("An international goal event is incomplete.");
+ if(key==="world-cup"){
+  const lineups=list("lineups") as Record<string,unknown>[];
+  if(lineups.some(row=>!row.id||!Array.isArray(row.starters)||row.starters.length!==11||new Set(row.starters as string[]).size!==11)||list("questions").length<500||list("playerCards").length<500)throw new Error("The World Cup master shard failed its line-up/question/player checks.");
+ }
+ if(key==="career-history"&&(list("players").length<500||list("linkUpPacks").length<500||list("careerFileCandidates").length<500||list("cultHeroCandidates").length<500))throw new Error("The CC0 career shard is below 500 unique playable records.");
  if(key==="connections"&&list("players").length<500)throw new Error("The CC0 connections player list is incomplete.");
  if(key==="football-grid"&&list("players").length<500)throw new Error("The CC0 grid player list is incomplete.");
  if(key==="connections"||key==="football-grid"){
