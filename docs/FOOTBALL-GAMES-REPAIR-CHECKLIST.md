@@ -36,7 +36,8 @@ Rule: after every successful GitHub commit, update this checklist in the next co
 - [x] Fix the Grid retry button to reload the archive data instead of calling a stale, undefined retry handler. Commit: `f7d6f36f0e09949347ece76749a2660a68f0322b`.
 - [ ] Re-run CC0 database generation and confirm the corrected club match produces at least 500 valid Football Grid packs; previous run failed with zero packs.
 - [ ] Link Up: validate ten unique questions; confirm each bridge player genuinely overlaps at both English clubs; review hints, lives and scoring (attempt/extra-life flow fix committed).
-- [ ] Link Up database pool: expand the paginated Wikidata career import; latest build produced only 47 unique bridge puzzles, below the 500 target. Do not weaken unique-bridge evidence to inflate the count.
+- [x] Link Up database pool: replace the single 50,000-row Wikidata career query with up to four deterministic 50,000-row pages (ORDER BY player and statement), retaining P27 nationality labels and deduplicating statements. Commit: `dbb6a8fcc3`.
+- [ ] Confirm the expanded career import generates at least 500 unique Link Up bridge puzzles. Latest pre-pagination build produced 47; do not weaken unique-bridge evidence to inflate the count.
 - [ ] Career File: verify clue accuracy, timeline, aliases, reveal/hint costs and source provenance (Premier League eligibility now uses generated club index).
 - [ ] Review Quick Quiz / The Climb pools and daily/practice allocations against the user's English-domestic preference.
 - [ ] Audit all game pages for empty states, loading/error states, responsive layout, scoring and daily completion.
@@ -71,7 +72,7 @@ Latest relevant implementation commits: `eea008d3bf59c9daf18b968ceb525974301fd4b
 Latest completed football-content validation: success on `d99d59ea3f545c41a2d7558654a406587cfa4fec`; rerun after the Link Up fix.
 The full CC0 database build passed the Football Grid stage after moving it to the static OpenFootballBase archive and generated English-club index. The latest completed generation then failed at Link Up: only 47 unique, unambiguous bridge puzzles were found. Career-history retrieval currently caps at 50,000 Wikidata rows; expand it with deterministic pagination rather than relaxing answer uniqueness. Do not call the build verified until all pools, data validation and site build pass.
 
-Latest data-generator fixes: `2713f3da463fe81e8a77846980ac71da0e51d0a7` (P27 nationality coverage); `0c822718d9` (Strands 500-board fallback).
+Latest data-generator fixes: `2713f3da463fe81e8a77846980ac71da0e51d0a7` (P27 nationality coverage); `0c822718d9` (Strands 500-board fallback); `dbb6a8fcc35bade22960e8bd6fc0f8bc0a920d18` (Wikidata pagination for Link Up).
 Latest Grid runtime fixes: `18b31b793394ed8808fbe5b97ba08bfc79441f44` (club-name normalization); `720b3fba6e` and `1cf67dd5bf` (static archive + generated club index); `ca2904fc9127738b4db1d6abfdd221a336a80df4` (static-shard retry rotation).
 
 Next action: poll the latest GitHub Actions build, inspect Football Grid pack counts and fix any remaining failures, then audit each implemented game and run the full typecheck/validation/build suite.
