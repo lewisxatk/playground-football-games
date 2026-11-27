@@ -190,17 +190,20 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
         "LEFT JOIN club_rollup cl ON cl.wikidata_qid=c.current_club_qid " +
         "WHERE coalesce(st.seasons,0)>=2 AND c.appearances>=20 ORDER BY hash(c.player_qid) LIMIT ?";
       const rows = await a.query(sql, [...ids, limit]);
-      return rows.map((r: any): ArchiveGamePlayer => ({
+      return rows.map((r: any): ArchiveGamePlayer => {
+        const spells = Array.isArray(r.career_spells) ? r.career_spells.map((spell:any)=>({
+          club:String(spell.club??""),
+          startYear:n(spell.start_year),
+          endYear:n(spell.end_year)
+        })).filter((spell:any)=>spell.club).sort((a:any,b:any)=>(a.startYear??9999)-(b.startYear??9999)) : [];
+        const chronologicalClubs = Array.from(new Set(spells.map((spell:any)=>spell.club)));
+        return {
         id: String(r.player_qid),
         name: String(r.name ?? "Unknown player"),
         nationality: String(r.nationality ?? ""),
         position: String(r.position ?? ""),
-        clubs: Array.isArray(r.clubs) ? r.clubs.map(String).filter(Boolean) : [],
-        spells: Array.isArray(r.career_spells) ? r.career_spells.map((spell:any)=>({
-          club:String(spell.club??""),
-          startYear:n(spell.start_year),
-          endYear:n(spell.end_year)
-        })).filter((spell:any)=>spell.club) : [],
+        clubs: chronologicalClubs.length ? chronologicalClubs : (Array.isArray(r.clubs) ? r.clubs.map(String).filter(Boolean) : []),
+        spells,
         currentClub: String(r.current_club ?? ""),
         appearances: Number(r.appearances ?? 0),
         goals: Number(r.goals ?? 0),
@@ -216,7 +219,8 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
         currentCountry: String(r.current_country ?? ""),
         currentLeague: String(r.current_league ?? ""),
         currentDivision: n(r.current_division)
-      }));
+        };
+      });
     })().catch(error => {
       gamePoolPromises.delete(cacheKey);
       throw error;
