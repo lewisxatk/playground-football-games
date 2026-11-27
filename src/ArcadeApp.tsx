@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useState, useRef, type FormEvent, type ReactNode } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   PLAYER_DATABASE, FOOTBALL_GROUPS, LEAGUE_GOALS, CAREER_FILES, STRANDS_PACKS,
@@ -499,17 +499,70 @@ function makeStrandsBoard(pack:typeof STRANDS_PACKS[number]){
  return {cells,paths,words,spangram:pack.spangram};
 }
 function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
- const [mode,setMode]=useMode();const [boardNo,setBoardNo]=useState(0);const [selected,setSelected]=useState<number[]>([]);const [found,setFound]=useState<number[]>([]);const [wrong,setWrong]=useState(0);const [nudges,setNudges]=useState(0);const [finished,setFinished]=useState(false);const done=account.daily[utcDay()]?.strands!==undefined;
+ const [mode,setMode]=useMode();const [boardNo,setBoardNo]=useState(0);const [selected,setSelected]=useState<number[]>([]);const pathRef=useRef<number[]>([]);const [dragging,setDragging]=useState(false);const [found,setFound]=useState<number[]>([]);const [wrong,setWrong]=useState(0);const [nudges,setNudges]=useState(0);const [finished,setFinished]=useState(false);const [notice,setNotice]=useState("");const done=account.daily[utcDay()]?.strands!==undefined;
  const order=useMemo(()=>shuffle(STRANDS_PACKS,hashSeed("STRANDS"+utcDay())),[]);
  const pack=mode==="daily"?order[boardNo%order.length]:STRANDS_PACKS[(boardNo+hashSeed("PRACTICESTRANDS"+boardNo))%STRANDS_PACKS.length];
  const board=useMemo(()=>makeStrandsBoard(pack),[pack]);
  const solved=(index:number)=>found.includes(index);
- const choose=(i:number)=>{if(finished||board.paths.some((path,idx)=>solved(idx)&&path.includes(i)))return;let next=[...selected];if(next.includes(i)){next=next.slice(0,next.indexOf(i)+1);}else if(!next.length){next=[i];}else{const last=next[next.length-1];const r=Math.floor(last/8),c=last%8,rr=Math.floor(i/8),cc=i%8;if(Math.max(Math.abs(r-rr),Math.abs(c-cc))===1)next.push(i);else next=[i];}setSelected(next);const word=next.map(n=>board.cells[n]).join("");const foundIndex=board.words.findIndex((w,idx)=>!solved(idx)&&(w===word||w.split("").reverse().join("")===word));if(foundIndex>=0){const result=[...found,foundIndex];setFound(result);setSelected([]);if(result.length===9){setFinished(true);if(mode==="daily"&&boardNo===9)onDaily("strands",1000-nudges*80-wrong*15);}}};
- const nextBoard=()=>{setBoardNo(v=>v+1);setSelected([]);setFound([]);setWrong(0);setNudges(0);setFinished(false);};
+ const isBlocked=(cell:number)=>board.paths.some((path,idx)=>solved(idx)&&path.includes(cell));
+ const beginPath=(cell:number,event:React.PointerEvent<HTMLButtonElement>)=>{
+   if(finished||isBlocked(cell))return;
+   event.preventDefault();
+   pathRef.current=[cell];setSelected([cell]);setDragging(true);setNotice("");
+ };
+ const extendPath=(cell:number)=>{
+   if(!dragging||finished||isBlocked(cell))return;
+   const path=pathRef.current;
+   const existing=path.indexOf(cell);
+   if(existing>=0){const clipped=path.slice(0,existing+1);pathRef.current=clipped;setSelected(clipped);return;}
+   const last=path[path.length-1];if(last===undefined)return;
+   const r=Math.floor(last/8),c=last%8,rr=Math.floor(cell/8),cc=cell%8;
+   if(Math.max(Math.abs(r-rr),Math.abs(c-cc))!==1)return;
+   const next=[...path,cell];pathRef.current=next;setSelected(next);
+ };
+ const finishPath=()=>{
+   if(!dragging)return;
+   setDragging(false);
+   const path=[...pathRef.current];pathRef.current=[];setSelected(path);
+   const word=path.map(cell=>board.cells[cell]).join("");
+   const foundIndex=board.words.findIndex((w,idx)=>!solved(idx)&&(w===word||w.split("").reverse().join("")===word));
+   if(foundIndex>=0){
+     const next=[...found,foundIndex];setFound(next);setSelected([]);setNotice("");
+     if(next.length===9){setFinished(true);if(mode==="daily"&&boardNo===9)onDaily("strands",1000-nudges*80-wrong*15);}
+   }else{
+     setWrong(v=>v+1);setNotice(path.length>1?"No footballer on that path. Try another route.":"Drag through adjacent letters to make a name.");setSelected([]);
+   }
+ };
+ const cancelPath=()=>{pathRef.current=[];setSelected([]);setDragging(false);};
+ const nextBoard=()=>{setBoardNo(v=>v+1);pathRef.current=[];setSelected([]);setFound([]);setWrong(0);setNudges(0);setNotice("");setFinished(false);};
  const hint=()=>{if(nudges>=3)return;setNudges(v=>v+1);};
  const currentDone=found.length===9;
- return <Frame account={account} game="strands" eyebrow="6 × 8 LETTER PUZZLE / 10 BOARDS" title="FOOTBALL STRANDS." description="Find footballer surnames in the grid. One full player name is the spangram, connecting opposite sides." number="13" mode={mode} setMode={m=>{setMode(m);setBoardNo(0);setSelected([]);setFound([]);setWrong(0);setNudges(0);setFinished(false);}}>
- {done&&mode==="daily"?<Success title="TEN BOARDS CLEARED." detail="Your full ten-puzzle Strands run is complete for today." button="PRACTICE STRANDS" onAgain={()=>setMode("practice")}/>:<Card className="strands-game"><div className="arc-game-meta"><span>PUZZLE {boardNo+1} / 10</span><b>{found.length}/9 NAMES FOUND</b></div><div className="strands-theme"><small>THE THEME</small><strong>{pack.theme}</strong><span>Find all the footballers. The spangram uses their full name.</span></div><div className="strands-grid">{board.cells.map((letter,i)=>{const foundWord=found.findIndex(idx=>board.paths[idx].includes(i));return <button key={i} onClick={()=>choose(i)} className={(selected.includes(i)?"selected ":"")+(foundWord>=0?(foundWord===0?"spangram":"found"):"")}>{letter}</button>;})}</div><div className="strands-actions"><button className="arc-quiet" onClick={()=>setSelected([])}>CLEAR PATH</button><button className="arc-button" onClick={hint} disabled={nudges>=3}>HINT {nudges}/3</button></div>{nudges>0&&<p className="arc-muted">Nudge: an unfound name starts with {board.words.find((_word,i)=>!solved(i))?.[0]??"?"} and has {board.words.find((_word,i)=>!solved(i))?.length??5} letters. Each nudge reduces the run score.</p>}{selected.length>=3&&!board.words.includes(selected.map(i=>board.cells[i]).join(""))&&<div className="strands-feedback"><span>NOT A PLAYER NAME YET.</span><button onClick={()=>{setWrong(v=>v+1);setSelected([]);}}>CLEAR SELECTION</button></div>}{currentDone&&<div className="arc-feedback"><b>BOARD {boardNo+1} COMPLETE.</b><p>{board.words[0]?"SPANGRAM: "+board.words[0]:"All names found."}</p><button className="arc-button" onClick={boardNo===9?()=>{setFinished(true);if(mode==="daily")onDaily("strands",1000-nudges*80-wrong*15);}:nextBoard}>{boardNo===9?"FINISH TEN-BOARD RUN":"NEXT BOARD ↗"}</button></div>}<div className="strands-legend"><span><i className="blue"/> FOOTBALLER</span><span><i className="gold"/> SPANGRAM / FULL NAME</span></div></Card>}
+ return <Frame account={account} game="strands" eyebrow="6 × 8 LETTER PUZZLE / 10 BOARDS" title="FOOTBALL STRANDS." description="Drag through touching letters to trace footballer surnames. Find the full-name spangram connecting the grid's edges." number="13" mode={mode} setMode={m=>{setMode(m);setBoardNo(0);pathRef.current=[];setSelected([]);setFound([]);setWrong(0);setNudges(0);setNotice("");setDragging(false);setFinished(false);}}>
+ {done&&mode==="daily"?<Success title="TEN BOARDS CLEARED." detail="Your ten-puzzle Strands run is complete. Unlimited practice is open." button="PRACTICE STRANDS" onAgain={()=>{setMode("practice");nextBoard();}}/>:
+  <Card className="strands-game">
+   <div className="arc-game-meta"><span>PUZZLE {boardNo+1} / 10</span><b>{found.length}/9 NAMES FOUND</b></div>
+   <div className="strands-theme"><small>THE THEME</small><strong>{pack.theme}</strong><span>Drag from letter to letter. Diagonal moves are allowed; the path must stay connected.</span></div>
+   <div className={"strands-grid "+(dragging?"is-dragging":"")} onPointerUp={finishPath} onPointerCancel={cancelPath} onContextMenu={e=>e.preventDefault()}>
+    <svg className="strands-trail" viewBox="0 0 800 600" preserveAspectRatio="none" aria-hidden="true">
+     {selected.length>1&&<polyline points={selected.map(cell=>{const row=Math.floor(cell/8),col=cell%8;return ((col+.5)/8*800)+","+((row+.5)/6*600);}).join(" ")} fill="none" stroke="currentColor" strokeWidth="13" strokeLinecap="round" strokeLinejoin="round"/>}
+    </svg>
+    {board.cells.map((letter,i)=>{
+      const foundWord=found.findIndex(idx=>board.paths[idx].includes(i));
+      const pathIndex=selected.indexOf(i);
+      return <motion.button type="button" key={i} layout onPointerDown={e=>beginPath(i,e)} onPointerEnter={()=>extendPath(i)} onPointerUp={finishPath}
+        className={(pathIndex>=0?"selected ":"")+(foundWord>=0?(foundWord===0?"spangram":"found"):"")}
+        animate={{scale:pathIndex>=0?1.08:1,rotate:foundWord>=0?0:0}}
+        transition={{type:"spring",stiffness:430,damping:26}}
+        aria-label={"Row "+(Math.floor(i/8)+1)+", column "+(i%8+1)+", letter "+letter}>{letter}</motion.button>;
+    })}
+   </div>
+   <div className="strands-actions"><button className="arc-quiet" onClick={cancelPath}>CLEAR PATH</button><button className="arc-button" onClick={hint} disabled={nudges>=3}>HINT {nudges}/3</button></div>
+   {dragging&&<p className="strands-drag-live">KEEP DRAGGING · RELEASE TO CHECK</p>}
+   {notice&&<div className="strands-feedback"><span>{notice}</span><button onClick={cancelPath}>DISMISS</button></div>}
+   {nudges>0&&<p className="arc-muted">Nudge: an unfound name starts with {board.words.find((_word,i)=>!solved(i))?.[0]??"?"} and has {board.words.find((_word,i)=>!solved(i))?.length??5} letters. Each nudge reduces the run score.</p>}
+   {currentDone&&<div className="arc-feedback"><b>BOARD {boardNo+1} COMPLETE.</b><p>SPANGRAM: {board.spangram}</p><button className="arc-button" onClick={boardNo===9?()=>{setFinished(true);if(mode==="daily")onDaily("strands",1000-nudges*80-wrong*15);}:nextBoard}>{boardNo===9?"FINISH TEN-BOARD RUN":"NEXT BOARD ↗"}</button></div>}
+   <div className="strands-legend"><span><i className="blue"/> FOOTBALLER</span><span><i className="gold"/> SPANGRAM / FULL NAME</span></div>
+  </Card>}
  </Frame>;
 }
 
