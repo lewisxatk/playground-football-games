@@ -27,7 +27,7 @@ export default function CultHeroPage({ dailyDone, onDailyComplete }: Props) {
   const [practiceSeed, setPracticeSeed] = useState(freshPracticeSeed);
   const day = cultHeroUtcDay();
   const poolSeed = mode === "daily" ? "CULT-HERO-DAILY-" + day : "CULT-HERO-PRACTICE-" + practiceSeed;
-  const { players, loading, error, retry } = useArchivePlayers(true, poolSeed, 1600);
+  const { players, loading, error, retry } = useArchivePlayers(true, poolSeed, 8000);
   const mysteries = useMemo(() => buildCultHeroMysteries(players, poolSeed, 5), [players, poolSeed]);
 
   const [roundIndex, setRoundIndex] = useState(0);
@@ -141,7 +141,7 @@ export default function CultHeroPage({ dailyDone, onDailyComplete }: Props) {
           <div className="arc-heading-line">
             <div>
               <h1>CULT HERO<span className="ch-heading-period">.</span></h1>
-              <p>Five players. Five clues each. Find the footballer before the career trail runs cold.</p>
+              <p>Five familiar names across Europe’s big five. Follow the career clues and name each footballer.</p>
             </div>
             <div className="arc-file-no"><small>GAME FILE</small><b>17</b></div>
           </div>
