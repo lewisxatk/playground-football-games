@@ -73,7 +73,7 @@ try {
 
 
 const questionBank = JSON.parse(await readFile(new URL("../public/data/question-bank.json", import.meta.url), "utf8"));
-assert.equal(questionBank.version, 4, "Question bank version mismatch");
+assert.equal(questionBank.version, 5, "Question bank version mismatch");
 assert.equal(questionBank.source, "OpenFootballBase-Data", "Question bank source metadata mismatch");
 assert.equal(questionBank.meta?.targetPerTier, 800, "Question bank target must be at least 750 per tier");
 for (const tier of ["EASY", "MEDIUM", "HARD", "EXTREME"]) {
