@@ -5,6 +5,8 @@ import {
   type Player
 } from "./playerData";
 import { ClubBadge, CountryFlag } from "./ClubBadge";
+import { useArchivePlayers } from "./useArchivePlayers";
+import type { ArchiveGamePlayer } from "./careerFileData";
 import "./arcade.css";
 
 type Mode = "daily" | "practice";
@@ -55,6 +57,54 @@ function awardDaily(account:Account,game:GameId,score:number):Account{
     daily:{...account.daily,[day]:{...existing,[game]:score}},totals:{...account.totals,[game]:(account.totals[game]??0)+1}};
 }
 function todayGames(account:Account){return Object.keys(account.daily[utcDay()]??{}).length;}
+
+type GamePlayer = Player & {
+  archiveId:string;
+  careerApps:number;
+  careerGoals:number;
+  leagueApps:number;
+  leagueGoals:number;
+  statSeasons:number;
+  firstYear:number|null;
+  lastYear:number|null;
+  caps:number|null;
+  internationalGoals:number|null;
+  birthDate:string;
+  currentCountry:string;
+  currentDivision:number|null;
+};
+function positionCode(raw:string):Player["position"]{
+  const p=raw.toUpperCase();
+  if(p.includes("GK")||p.includes("GOALKEEPER"))return "GK";
+  if(p.includes("DF")||p.includes("DEFENDER")||p.includes("BACK"))return "DEF";
+  if(p.includes("MF")||p.includes("MID"))return "MID";
+  if(p.includes("FW")||p.includes("FORWARD")||p.includes("STRIKER"))return "FWD";
+  return "MID";
+}
+function archivePlayerToGamePlayer(p:ArchiveGamePlayer):GamePlayer{
+  const name=p.name.trim();
+  const parts=name.split(/\s+/).filter(Boolean);
+  const surname=parts.slice(-1)[0]??name;
+  const birth=p.birthDate?new Date(p.birthDate+"T00:00:00Z"):null;
+  const age=birth&&!Number.isNaN(birth.getTime())?new Date().getUTCFullYear()-birth.getUTCFullYear():null;
+  const ageBand=age===null?"Unknown":age<20?"Teens":age<30?"20s":age<40?"30s":age<50?"40s":age<60?"50s":"60s+";
+  return {
+    name,surname:surname.toLocaleUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Z]/g,""),
+    nationality:p.nationality||"Unlisted",position:positionCode(p.position),
+    club:p.currentClub||"Unknown club",league:p.currentLeague||p.currentCountry||"Unlisted",
+    active:p.lastYear!==null&&p.lastYear>=new Date().getUTCFullYear()-1,
+    ageBand,clubs:p.clubs,aliases:[name,surname,p.fullName].filter(Boolean) as string[],
+    archiveId:p.id,careerApps:p.appearances,careerGoals:p.goals,leagueApps:p.leagueAppearances,
+    leagueGoals:p.leagueGoals,statSeasons:p.seasons,firstYear:p.firstYear,lastYear:p.lastYear,
+    caps:p.caps,internationalGoals:p.internationalGoals,birthDate:p.birthDate,
+    currentCountry:p.currentCountry,currentDivision:p.currentDivision
+  };
+}
+function archiveGuess(input:string,players:GamePlayer[]):GamePlayer|undefined{
+  const key=normalise(input);
+  return players.find(p=>[p.name,p.surname,...p.aliases].some(alias=>normalise(alias)===key));
+}
+function utcDateSeed(prefix:string){return prefix+":"+utcDay();}
 function playerByName(name:string){return PLAYER_DATABASE.find(p=>normalise(p.name)===normalise(name)||p.aliases.some(a=>normalise(a)===normalise(name)));}
 function acceptedName(input:string,accepted:string[]){const value=normalise(input);return accepted.some(x=>normalise(x)===value);}
 function playerSurnames(){
