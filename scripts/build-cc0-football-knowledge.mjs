@@ -345,13 +345,13 @@ function makePlayerConnections(players){
   const nation=player.nationalities?.[0];if(nation)add("NATIONALITY",nation,player);
   const raw=player.positions?.[0],position=({G:"GOALKEEPER",GK:"GOALKEEPER",D:"DEFENDER",DF:"DEFENDER",M:"MIDFIELDER",MF:"MIDFIELDER",F:"FORWARD",FW:"FORWARD"})[raw]||"";if(position)add("POSITION",position,player);
  }
- const options=[...buckets.values()].map(option=>({...option,members:[...new Set(option.members)]})).filter(option=>option.members.length>=4);
+ const options=[...buckets.values()].map(option=>{const members=[...new Set(option.members)];return {...option,members,memberSet:new Set(members)}}).filter(option=>option.members.length>=4);
  const packs=[],seen=new Set();
  for(let seed=1;seed<30000&&packs.length<500;seed++){
   const ordered=seededShuffle(options,seed*7919+17);let chosen=null,exclusive=null;
   for(let offset=0;offset<=ordered.length-4&&!chosen;offset++){
    const candidate=ordered.slice(offset,offset+4);
-   const groups=candidate.map(option=>{const members=option.members.filter(id=>candidate.every(other=>other.key===option.key||!other.members.includes(id)));return seededShuffle(members,seed*37+option.value.length*13).slice(0,4)});
+   const groups=candidate.map(option=>{const members=option.members.filter(id=>candidate.every(other=>other.key===option.key||!other.memberSet.has(id)));return seededShuffle(members,seed*37+option.value.length*13).slice(0,4)});
    if(groups.every(group=>group.length===4)){chosen=candidate;exclusive=groups;}
   }
   if(!chosen||!exclusive)continue;
