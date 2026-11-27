@@ -43,7 +43,7 @@ That repository-level licence is not a blanket clearance of every underlying clu
 
 ## Strands bonus-word dictionary
 
-The Strands bonus-word checker uses `public/data/english-wordlist.cc0.txt`, filtered from [outparse/english-dictionary-dataset](https://github.com/outparse/english-dictionary-dataset) at its pinned source snapshot. The upstream repository includes a CC0 1.0 Universal licence. Words are used only to validate bonus guesses; the hidden football-player answers remain sourced from the football player/career datasets.
+The Strands bonus-word checker uses `public/data/english-wordlist.cc0.txt`, filtered from [outparse/english-dictionary-dataset](https://github.com/outparse/english-dictionary-dataset), pinned at `4f9141873fa019560b9432411c6e437910f40e28`. The upstream repository includes a CC0 1.0 Universal licence. Words are used only to validate bonus guesses; the hidden football-player answers remain sourced from the football player/career datasets.
 
 ## Animation and UI assets
 
