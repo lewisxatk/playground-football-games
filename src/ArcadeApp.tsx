@@ -39,7 +39,8 @@ const GAME_LINKS = [
   {id:"missing-xi",title:"MISSING XI",sub:"One name is missing from a famous line-up.",tone:"blue",tag:"LINE-UP"},
   {id:"strands",title:"FOOTBALL STRANDS",sub:"Find the surnames. Find the full-name spangram.",tone:"orange",tag:"WORD SEARCH"},
   {id:"scout-signal",title:"SCOUT SIGNAL",sub:"Guess the footballer. Watch the attributes light up.",tone:"pink",tag:"ATTRIBUTE HUNT"},
-  {id:"tournament-nation",title:"TOURNAMENT NATION",sub:"Name the country from a historic World Cup starting XI.",tone:"blue",tag:"INTERNATIONAL"}
+  {id:"tournament-nation",title:"TOURNAMENT NATION",sub:"Name the country from a historic World Cup starting XI.",tone:"blue",tag:"INTERNATIONAL"},
+  {id:"timed-quiz",title:"THE QUICK QUIZ",sub:"Fifteen questions. Ten seconds each. No VAR.",tone:"orange",tag:"TIMED QUIZ"}
 ] as const;
 type GameId = typeof GAME_LINKS[number]["id"];
 const normalise = (v:string) => v.toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
@@ -149,7 +150,7 @@ function HomePage({account}:{account:Account}){
   const done=todayGames(account);
   return <div className="arc-shell arc-home"><TopBar account={account}/><main className="arc-home-main">
     <section className="arc-home-hero"><div><div className="arc-eyebrow"><span/> THE FOOTBALL ARCADE / EST. 2026</div><h1>NO HALF<br/><em>TIME.</em></h1><p>Quick games, proper football knowledge and a reason to come back tomorrow.</p><div className="arc-hero-actions"><a className="arc-button" href="/footle">PLAY TODAY'S FOOTLE ↗</a><a className="arc-text-link" href="#all-games">PICK YOUR GAME ↓</a></div></div>
-      <div className="arc-home-graphic"><div className="arc-graphic-label">THE PLAYGROUND / 15 GAME MODES</div><div className="arc-graphic-pitch"><i className="half"/><i className="centre"/><i className="box-one"/><i className="box-two"/><motion.span className="graphic-ball" animate={{x:[0,32,-20,0],y:[0,-15,8,0],rotate:[0,180,360]}} transition={{duration:5,repeat:Infinity,ease:"easeInOut"}}/></div><div className="arc-graphic-bottom"><span>GUESS / THINK / PLAY</span><b>↗</b><span>15 WAYS TO PLAY</span></div></div>
+      <div className="arc-home-graphic"><div className="arc-graphic-label">THE PLAYGROUND / 16 GAME MODES</div><div className="arc-graphic-pitch"><i className="half"/><i className="centre"/><i className="box-one"/><i className="box-two"/><motion.span className="graphic-ball" animate={{x:[0,32,-20,0],y:[0,-15,8,0],rotate:[0,180,360]}} transition={{duration:5,repeat:Infinity,ease:"easeInOut"}}/></div><div className="arc-graphic-bottom"><span>GUESS / THINK / PLAY</span><b>↗</b><span>16 WAYS TO PLAY</span></div></div>
     </section>
     <section className="arc-daily-strip"><div><small>YOUR DAILY RECORD / UTC</small><strong>{done} <i>/ 14</i></strong><span>GAMES PLAYED TODAY</span></div><div><small>YOUR STREAK</small><strong>{account.streak} <i>days</i></strong><span>BEST {account.bestStreak} DAYS</span></div><div><small>PLAYER NAME</small><strong className="nickname-stat">{account.nickname}</strong><span>LOCAL PLAYER SAVE</span></div><a href="/locker-room">OPEN LOCKER ROOM ↗</a></section>
     <section id="all-games" className="arc-game-directory"><div className="arc-section-title"><div><span>01 / THE LINE-UP</span><h2>PICK YOUR<br/><em>GAME.</em></h2></div><p>Every game has its own page. Daily challenges reset together at midnight GMT. Practice whenever you like.</p></div>
@@ -686,6 +687,127 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
  </Frame>;
 }
 
+
+
+type QuizDifficulty="EASY"|"MEDIUM"|"HARD"|"EXTREME"|"STANDARD";
+type QuizQuestion={tier:Exclude<QuizDifficulty,"STANDARD">;question:string;answer:string;options:string[];explanation:string;source:string};
+function makeTimedQuiz(players:GamePlayer[],difficulty:QuizDifficulty,seed:number):QuizQuestion[]{
+ const tiers:Exclude<QuizDifficulty,"STANDARD">[]=difficulty==="STANDARD"?["EASY","EASY","EASY","EASY","EASY","MEDIUM","MEDIUM","MEDIUM","MEDIUM","MEDIUM","HARD","HARD","HARD","HARD","HARD"]:Array(15).fill(difficulty) as Exclude<QuizDifficulty,"STANDARD">[];
+ const output:QuizQuestion[]=[];
+ const make=(tier:Exclude<QuizDifficulty,"STANDARD">,player:GamePlayer,index:number):QuizQuestion|null=>{
+   let answer="",question="",source="OpenFootballBase player profile / career archive";
+   let fieldPool:string[]=[];
+   let explanation="";
+   if(tier==="EASY"){
+     answer=player.nationality;
+     if(!answer||answer==="Unlisted")return null;
+     question="Which nationality is recorded for "+player.name+"?";
+     fieldPool=players.map(p=>p.nationality).filter(v=>v&&v!=="Unlisted");
+     explanation=player.name+" is listed with "+answer+" nationality in the player profile.";
+   }else if(tier==="MEDIUM"){
+     answer=player.club;
+     if(!answer||answer==="Unknown club")return null;
+     question="Which club is most recently listed in "+player.name+"'s career record?";
+     fieldPool=players.map(p=>p.club).filter(v=>v&&v!=="Unknown club");
+     explanation=player.club+" is the latest club spell recorded for "+player.name+" in this archive.";
+   }else if(tier==="HARD"){
+     answer=player.league;
+     if(!answer||answer==="Unlisted")return null;
+     question="Which league is recorded for "+player.club+" in "+player.name+"'s latest listed club spell?";
+     fieldPool=players.map(p=>p.league).filter(v=>v&&v!=="Unlisted");
+     explanation="The archive lists "+player.club+" in "+answer+" for this player record.";
+   }else{
+     if(player.firstYear===null)return null;
+     answer=Math.floor(player.firstYear/10)*10+"s";
+     question="Which decade does "+player.name+"'s first recorded career year fall in?";
+     fieldPool=players.filter(p=>p.firstYear!==null).map(p=>Math.floor((p.firstYear??0)/10)*10+"s");
+     explanation="The earliest career year recorded for "+player.name+" is "+player.firstYear+", which falls in the "+answer+".";
+     source="OpenFootballBase career history; earliest listed senior club spell";
+   }
+   const wrong=[...new Set(fieldPool.filter(value=>normalise(value)!==normalise(answer)))];
+   if(wrong.length<4)return null;
+   const options=shuffle([answer,...shuffle(wrong,seed+index*31).slice(0,4)],seed+index*101);
+   return {tier,question,answer,options,explanation,source};
+ };
+ const pools:Record<Exclude<QuizDifficulty,"STANDARD">,GamePlayer[]>={
+   EASY:players.filter(p=>p.nationality!=="Unlisted"),
+   MEDIUM:players.filter(p=>p.club!=="Unknown club"),
+   HARD:players.filter(p=>p.league!=="Unlisted"),
+   EXTREME:players.filter(p=>p.firstYear!==null)
+ };
+ tiers.forEach((tier,index)=>{
+   const sorted=pools[tier];
+   const ordered=shuffle(sorted,seed+index*47);
+   let built:QuizQuestion|null=null;
+   for(const p of ordered.slice(0,80)){
+     built=make(tier,p,index);
+     if(built)break;
+   }
+   if(built)output.push(built);
+ });
+ return output;
+}
+function QuickQuizPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
+ const [mode,setMode]=useMode();const [difficulty,setDifficulty]=useState<QuizDifficulty>("STANDARD");
+ const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
+ const [index,setIndex]=useState(0);const [chosen,setChosen]=useState("");const [locked,setLocked]=useState(false);
+ const [score,setScore]=useState(0);const [seconds,setSeconds]=useState(10);const [typed,setTyped]=useState("");const [typingDone,setTypingDone]=useState(false);const [finished,setFinished]=useState(false);
+ const done=account.daily[utcDay()]?.["timed-quiz"]!==undefined;
+ const seed=mode==="daily"?"QUIZ:"+utcDay()+":"+difficulty:"QUIZ:PRACTICE:"+practiceSeed+":"+difficulty;
+ const {players,loading,error,retry}=useArchivePlayers(true,seed,1600);
+ const pool=useMemo(()=>players.map(archivePlayerToGamePlayer),[players]);
+ const questions=useMemo(()=>pool.length>=20?makeTimedQuiz(pool,difficulty,hashSeed(seed)):[],[pool,difficulty,seed]);
+ const question=questions[index];
+ const progress=question?typed.length/question.question.length:0;
+ useEffect(()=>{
+   setIndex(0);setChosen("");setLocked(false);setScore(0);setSeconds(10);setTyped("");setTypingDone(false);setFinished(false);
+ },[difficulty,mode,practiceSeed]);
+ useEffect(()=>{
+   if(!question||finished)return;
+   setTyped("");setTypingDone(false);setSeconds(10);setChosen("");setLocked(false);
+   let cursor=0;
+   const timer=window.setInterval(()=>{
+     cursor+=1;
+     setTyped(question.question.slice(0,cursor));
+     if(cursor>=question.question.length){window.clearInterval(timer);setTypingDone(true);}
+   },24);
+   return()=>window.clearInterval(timer);
+ },[question?.question,finished]);
+ useEffect(()=>{
+   if(!typingDone||locked||finished)return;
+   if(seconds<=0){setLocked(true);setChosen("");return;}
+   const timer=window.setTimeout(()=>setSeconds(v=>Math.max(0,v-1)),1000);
+   return()=>window.clearTimeout(timer);
+ },[typingDone,locked,finished,seconds]);
+ const choose=(value:string)=>{
+   if(!typingDone||locked||finished||!question)return;
+   setChosen(value);setLocked(true);
+   if(value===question.answer)setScore(v=>v+100+(question.tier==="EXTREME"?100:question.tier==="HARD"?50:0));
+ };
+ const next=()=>{
+   if(index+1>=questions.length){setFinished(true);if(mode==="daily")onDaily("timed-quiz",score);return;}
+   setIndex(v=>v+1);
+ };
+ const restart=(newMode:Mode=mode,newDifficulty:QuizDifficulty=difficulty)=>{
+   setDifficulty(newDifficulty);setIndex(0);setChosen("");setLocked(false);setScore(0);setSeconds(10);setTyped("");setTypingDone(false);setFinished(false);
+   if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
+ };
+ const standardCount=questions.length;
+ return <Frame account={account} game="timed-quiz" eyebrow="FIFTEEN QUESTIONS / TEN SECONDS EACH" title="THE QUICK QUIZ." description="A football question arrives like a live commentary feed. Read it, pick one of five answers before the clock runs out." number="16" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
+ {done&&mode==="daily"?<Success title="FULL-TIME." detail="Today's fifteen-question quiz has been banked. Unlimited practice has fresh archive questions." button="PRACTICE QUIZ" onAgain={()=>{setMode("practice");restart("practice");}}/>:
+  loading&&pool.length===0?<Card className="quiz-loading"><motion.div animate={{scale:[1,1.08,1],rotate:[0,12,-12,0]}} transition={{duration:1.4,repeat:Infinity}}>⚽</motion.div><b>THE QUIZMASTER IS PICKING THE QUESTIONS</b><span>BUILDING FROM THE FOOTBALL PLAYER ARCHIVE…</span></Card>:
+  !questions.length?<Card className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NOT ENOUGH VERIFIED FIELDS FOR THIS DRAW"}</b><p>{error||"The current pool did not produce enough questions with five distinct answer choices. Try another difficulty or retry the archive."}</p><button className="arc-button" onClick={retry}>RETRY QUESTION BANK ↗</button></Card>:
+  finished?<Success title="FULL-TIME." detail={"You scored "+score+" points across "+standardCount+" questions."} button="NEW QUIZ" onAgain={()=>restart(mode)}/>:
+  <Card className="quiz-game">
+   <div className="arc-game-meta"><span>{difficulty==="STANDARD"?"5 EASY · 5 MEDIUM · 5 HARD":difficulty+" QUESTION RUN"}</span><b>QUESTION {index+1} / {questions.length}</b></div>
+   <div className="quiz-scoreboard"><div><small>YOUR SCORE</small><strong>{score}</strong></div><div><small>TIER</small><b>{question?.tier}</b></div><div><small>TIME LEFT</small><strong className={seconds<=3?"urgent":""}>{typingDone?seconds:"—"}</strong></div></div>
+   <div className="quiz-question"><div className="quiz-type-cursor"/><h2>{typed}{!typingDone&&<i className="quiz-caret"/>}</h2><div className="quiz-progress"><i style={{width:(progress*100)+"%"}}/></div></div>
+   {typingDone&&<motion.div className="quiz-options" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}}>{question.options.map(option=><button key={option} onClick={()=>choose(option)} disabled={locked} className={locked&&option===question.answer?"correct":locked&&option===chosen?"wrong":""}>{option}</button>)}</motion.div>}
+   {locked&&<div className="arc-feedback"><b>{chosen===question.answer?"CORRECT.":chosen?"NOT THIS TIME.":"TIME'S UP."}</b><p>{question.explanation}</p><small>{question.source}</small><button className="arc-button" onClick={next}>{index+1===questions.length?"SEE FINAL SCORE":"NEXT QUESTION ↗"}</button></div>}
+   <div className="arc-game-foot"><span>ARCHIVE-GENERATED / {question?.source}</span><span>ONE ANSWER / NO SECOND GO</span></div>
+  </Card>}
+ </Frame>;
+}
 
 type TournamentDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
 const TOURNAMENT_LEVELS: TournamentDifficulty[]=["EASY","STANDARD","HARD","EXTREME"];
