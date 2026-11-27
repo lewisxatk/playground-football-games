@@ -494,3 +494,19 @@ This section records the separate gameplay-rework branch so work is not confused
 - [!] Current branch remains a preview-only feature branch; production `main` has not been changed.
 
 **Next acceptance pass:** confirm the final Pages build succeeds; then check homepage, all 17 games, menu navigation, reduced-motion, 320–390px widths, and CULT HERO's five-league daily mix / collection duplicate behaviour in desktop and iPhone Safari.
+
+
+## 15. Content and rights audit — 27 November 2026
+
+- [x] Audited the current branch's theme, separate factual seed, generated quiz bank, validation rules and declared sources. Full findings: `docs/CONTENT_AND_DATA_AUDIT_2026-11-27.md`.
+- [x] Updated `DATA_SOURCES.md` with a CC0/public-domain ingestion whitelist and exclusions.
+- [x] Corrected `docs/FOOTBALL_CONTENT_PLAN.md` to distinguish the 100-question development seed from the separate 3,200-question archive-generated bank.
+- [!] The 100 source-referenced seed questions have no duplicate normalised stems and are close to the UK-first topic mix, but the validator checks structure, not fact truth, answer freshness, source accessibility, distractor truth or source reuse rights. A sample was cross-checked; this is not a 100/100 independent fact certification.
+- [!] The generated 3,200 question pool is template-derived from mixed-provenance OpenFootballBase-Data. Some underlying appearances/goals/caps fields are explicitly unverified or incomplete. Do not describe it as a verified editorial question bank.
+- [!] Current OpenFootballBase player archive mixes Wikipedia-derived CC BY-SA 4.0 data with Wikidata CC0 data. The project should migrate to a CC0-only build for the user's preferred no-fee/no-permission route; do not imply the upstream code's MIT licence clears the underlying mixed data.
+- [!] Transfer CSV provenance and redistribution rights remain unverified; hold transfer hints out of any new commercial data release until the exact source is documented.
+- [!] Club crests remain a separate trademark/artwork rights issue. Keep text fallbacks and original generic graphics.
+- [~] Theme matches the PLAYGROUND chalk/ink/pitch-green/orange editorial direction. Typography still needs consolidation between Cabinet Grotesk, Space Grotesk and multiple imported display families.
+- [ ] Build CC0 source ingestion, pinned snapshots, canonical fact ledger, deterministic fact/question generation, source-row recomputation and game-specific QA before claiming 500+ approved playable items per game.
+
+**Next content acceptance gate:** only count an item after its underlying fact is reproducible from an approved CC0 source row, its answer and distractors pass scope checks, it is unique at fact level, and its target game's complete playable unit passes its own validator.
