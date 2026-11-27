@@ -55,10 +55,10 @@
   "shards": {
     "core": {
       "file": "/data/football-knowledge-core.cc0.json",
-      "bytes": 18799740,
-      "sha256": "50fa5341e518f3883bce4cd4cd2a8e72a94f7e530ed54f7ef2763da106881b97",
+      "bytes": 18800171,
+      "sha256": "9da84568b29d03b98aa920df976008f06e5853730067be8f7daa533ad2fd2d23",
       "recordCounts": {
-        "players": 75224,
+        "players": 75226,
         "clubs": 560
       }
     },
@@ -88,8 +88,8 @@
     },
     "goal-events": {
       "file": "/data/football-knowledge-goal-events.cc0.json",
-      "bytes": 20526589,
-      "sha256": "c00ad4d375df73e956661ea43cd0308608a76184026b3546a8bc1633df9ba3bd",
+      "bytes": 20526588,
+      "sha256": "8ef5db7ea91622d4df3d588eb60b0379a966cba55b67a26a8567f2dd1bd6832f",
       "recordCounts": {
         "events": 47835,
         "scorers": 14839
@@ -114,25 +114,25 @@
     },
     "connections": {
       "file": "/data/football-knowledge-connections.cc0.json",
-      "bytes": 1873931,
-      "sha256": "fe537f0e361d43ac49b1a83cd33f64a56b345ab401e3a4026eb6d706321b6745",
+      "bytes": 1872337,
+      "sha256": "1dda104ff97abd3edcfb4276e26d6be3cf487037b5520cfa456db690d225d82b",
       "recordCounts": {
-        "players": 5048,
+        "players": 5043,
         "packs": 500
       }
     },
     "strands": {
       "file": "/data/football-knowledge-strands.cc0.json",
       "bytes": 110298,
-      "sha256": "bd20d874bc7866b8ea12544cb4f9f83fa50b28fdb9943fde64fc0384159842f0",
+      "sha256": "a5a76e0de2303ac5e3f4cccf993191c8be7b2a8cdbe9069b0d90c5df0f30ebad",
       "recordCounts": {
         "packs": 500
       }
     },
     "football-grid": {
       "file": "/data/football-knowledge-football-grid.cc0.json",
-      "bytes": 2856366,
-      "sha256": "19424ea78fedd41ec8ee5a415475c51c4fee4940c115966acb7ba6be601f15c1",
+      "bytes": 2856296,
+      "sha256": "9c3f31059d78697e7ef033014c6077c0f5bdd44040e338f7650e362cee8b62d1",
       "recordCounts": {
         "players": 7130,
         "packs": 500
@@ -238,16 +238,16 @@
     },
     "player-stats": {
       "file": "/data/football-knowledge-player-stats.cc0.json",
-      "bytes": 901573,
-      "sha256": "5038f7fe32d3b8e4f95eb2e44631e81da74d8bf7675cb20a688416c2ef503230",
+      "bytes": 901330,
+      "sha256": "2adb91b143f70c8b3883a7c4498ae4ded344a09735fc3caa1b88599087c3bbee",
       "recordCounts": {
-        "players": 3715
+        "players": 3714
       }
     },
     "career-history": {
       "file": "/data/football-knowledge-career-history.cc0.json",
-      "bytes": 9320983,
-      "sha256": "89da703e5e0349a6a5fdd76cacd843da1c25e3dc2df547d12150b930e192d268",
+      "bytes": 9320993,
+      "sha256": "8b49882da5ae07df66ec917f434f3081bf7b974761a67c4ad8c5ed0cb5be63e7",
       "recordCounts": {
         "players": 7169,
         "linkUpPacks": 750

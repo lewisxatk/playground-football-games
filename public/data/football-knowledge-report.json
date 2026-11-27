@@ -13,14 +13,14 @@
     "error": null
   },
   "counts": {
-    "players": 75224,
+    "players": 75226,
     "clubs": 560,
     "wikidataCareerRows": 50000,
     "wikidataCareerPlayers": 7169,
     "careerFileCandidates": 7169,
     "cultHeroCandidates": 7169,
     "linkUpPacks": 750,
-    "footlePlayerRecords": 71802,
+    "footlePlayerRecords": 71803,
     "footleAnswers": 6868,
     "worldCupLineups": 1520,
     "worldCupPlayerCards": 4294,
@@ -144,14 +144,14 @@
     },
     "draft-xi": {
       "unit": "candidate-player",
-      "count": 3715,
+      "count": 3714,
       "ready": true,
       "integrated": true,
       "metric": "position, international goals and World Cup starts; draft credits are game values"
     },
     "scout-signal": {
       "unit": "player-card",
-      "count": 3715,
+      "count": 3714,
       "ready": true,
       "integrated": true,
       "metric": "position, nation, age band, international goals and World Cup starts"
