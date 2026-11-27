@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readdir, readFile, writeFile, mkdir, rm } from "node:fs/promises";
 import { resolve, relative } from "node:path";
-const ROOT=process.cwd(), P=resolve(ROOT,".sources/openfootball-players"), C=resolve(ROOT,".sources/openfootball-clubs"), IR=resolve(ROOT,".sources/international-results"), ENGLAND=resolve(ROOT,".sources/openfootball-england"), CHAMPIONS=resolve(ROOT,".sources/openfootball-champions-league");
+const ROOT=process.cwd(), P=resolve(ROOT,".sources/openfootball-players"), C=resolve(ROOT,".sources/openfootball-clubs"), IR=resolve(ROOT,".sources/international-results"), ENGLAND=resolve(ROOT,".sources/openfootball-england"), CHAMPIONS=resolve(ROOT,".sources/openfootball-champions-league"), WORLD_CUP=resolve(ROOT,".sources/openfootball-worldcup");
 const TODAY=new Date().toISOString().slice(0,10), OUT=resolve(ROOT,"public/data");
 const SOURCES={players:{repo:"openfootball/players",commit:"125d20f7cc06cac7e758b40df535a7695632680a",licence:"CC0-1.0",url:"https://github.com/openfootball/players"},clubs:{repo:"openfootball/clubs",commit:"ae3800227c449447b3a337fc0aac79a8f02f4c8b",licence:"CC0-1.0",url:"https://github.com/openfootball/clubs"},worldCup:{repo:"openfootball/worldcup.json",commit:"516d3825c3bd23fdc298c4014e84bde78f2d4965",licence:"CC0-1.0",url:"https://github.com/openfootball/worldcup.json",file:"public/data/worldcup-lineups.json"},internationalResults:{repo:"martj42/international_results",commit:"ca84241bb3eed854a1956a2fab442fe4daad40dd",licence:"CC0-1.0",url:"https://github.com/martj42/international_results",file:"results.csv"},england:{repo:"openfootball/england",commit:"9ee7a0c351805c99cc334478a9bf04b7d0432fec",licence:"CC0-1.0",url:"https://github.com/openfootball/england"},championsLeague:{repo:"openfootball/champions-league",commit:"abfaeddc2ee3d14f99ecc163c9ddb46cb4d67cef",licence:"CC0-1.0",url:"https://github.com/openfootball/champions-league"},wikidata:{repo:"Wikidata",licence:"CC0-1.0",url:"https://www.wikidata.org/wiki/Wikidata:Licensing",endpoint:"https://query-next.wikidata.org/sparql",retrievedAt:TODAY}};
 const norm=s=>String(s??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/&/g," and ").replace(/[^a-z0-9]+/g," ").trim().replace(/\s+/g," ");
@@ -396,7 +396,18 @@ const internationalQuiz=buildInternationalQuiz(allMatches);
 const internationalGoals=await parseInternationalGoals(players);
 const internationalGoalPacks=makeInternationalGoalPacks(internationalGoals.scorers);
 const lineupData=JSON.parse(await readFile(resolve(ROOT,"public/data/worldcup-lineups.json"),"utf8"));
-const lineups=(lineupData.matches||[]).filter(m=>m?.id&&m.team&&m.opponent&&Number.isInteger(m.year)&&Array.isArray(m.starters)&&m.starters.length===11&&new Set(m.starters.map(norm)).size===11).map(match=>({...match,sourceKey:"worldCup"}));
+const legacyLineups=(lineupData.matches||[]).filter(m=>m?.id&&m.team&&m.opponent&&Number.isInteger(m.year)&&Array.isArray(m.starters)&&m.starters.length===11&&new Set(m.starters.map(norm)).size===11).map(match=>({...match,sourceKey:"worldCup",sourceFile:"public/data/worldcup-lineups.json"}));
+const currentWorldCup=JSON.parse(await readFile(resolve(WORLD_CUP,"2026/worldcup-full.json"),"utf8"));
+const currentLineups=(currentWorldCup.matches||[]).flatMap(match=>{
+ const teams=[{team:match.team1,opponent:match.team2,lineup:match.lineup?.[0]},{team:match.team2,opponent:match.team1,lineup:match.lineup?.[1]}];
+ return teams.map(entry=>{
+  const starters=(entry.lineup?.starter||[]).map(player=>player.name).filter(Boolean);
+  if(!entry.team||!entry.opponent||starters.length!==11||new Set(starters.map(norm)).size!==11)return null;
+  const key=["2026",match.date,norm(entry.team),norm(entry.opponent)].join("|");
+  return{id:id("world-cup-lineup",key),year:2026,date:match.date,team:entry.team,opponent:entry.opponent,starters,tournament:"FIFA World Cup",round:match.round||"World Cup 2026",sourceKey:"worldCup",sourceFile:"2026/worldcup-full.json",sourceRow:key};
+ }).filter(Boolean);
+});
+const lineups=[...legacyLineups,...currentLineups];
 
 const playerIndex=new Map(players.map(player=>[norm(player.name),player]));
 const playerById=new Map(players.map(player=>[player.id,player]));
@@ -410,7 +421,7 @@ const statPlayers=players.filter(p=>(p.internationalGoalsRecorded??0)>0||(p.worl
 const positionPlayers=statPlayers.filter(p=>(p.positions||[]).some(pos=>["G","GK","D","DF","M","MF","F","FW"].includes(pos))&&p.nationalities?.length);
 
 const nations=[...new Set(lineups.flatMap(m=>[m.team,m.opponent]))].sort();
-const quiz=lineups.map(m=>{const answer=m.opponent,distractors=nations.filter(n=>norm(n)!==norm(answer)).sort((a,b)=>createHash("sha256").update(m.id+a).digest("hex").localeCompare(createHash("sha256").update(m.id+b).digest("hex"))).slice(0,3);if(distractors.length!==3)return null;const choices=[answer,...distractors].sort((a,b)=>createHash("sha256").update(m.id+a).digest("hex").localeCompare(createHash("sha256").update(m.id+b).digest("hex")));return{id:id("wc-question",m.id),factId:id("wc-match",m.id),question:"Which team did "+m.team+" face in the "+m.year+" FIFA World Cup match on "+m.date+"?",answer,choices,explanation:m.team+" faced "+answer+" in the "+m.year+" FIFA World Cup.",competition:"FIFA World Cup",year:m.year,eventDate:m.date,source:SOURCES.worldCup.url+"/blob/"+SOURCES.worldCup.commit+"/"+m.year+"/worldcup-full.json",sourceKey:"worldCup",sourceRow:m.id}});
+const quiz=lineups.map(m=>{const answer=m.opponent,distractors=nations.filter(n=>norm(n)!==norm(answer)).sort((a,b)=>createHash("sha256").update(m.id+a).digest("hex").localeCompare(createHash("sha256").update(m.id+b).digest("hex"))).slice(0,3);if(distractors.length!==3)return null;const choices=[answer,...distractors].sort((a,b)=>createHash("sha256").update(m.id+a).digest("hex").localeCompare(createHash("sha256").update(m.id+b).digest("hex")));return{id:id("wc-question",m.id),factId:id("wc-match",m.id),question:"Which team did "+m.team+" face in the "+m.year+" FIFA World Cup match on "+m.date+"?",answer,choices,explanation:m.team+" faced "+answer+" in the "+m.year+" FIFA World Cup.",competition:"FIFA World Cup",year:m.year,eventDate:m.date,source:SOURCES.worldCup.url+"/blob/"+SOURCES.worldCup.commit+"/"+(m.sourceFile??(m.year+"/worldcup-full.json")),sourceKey:"worldCup",sourceRow:m.sourceRow??m.id}});
 const validQuiz=quiz.filter(Boolean),footle=players.filter(p=>p.name.length>=4&&p.name.length<=22&&/^[\p{L}][\p{L}'’ .-]+$/u.test(p.name));
 const uniqueFootleAnswers=[...new Set(footle.flatMap(p=>[p.name,...(p.aliases||[])]).map(value=>(value.trim().split(/\s+/).at(-1)||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,"")).filter(word=>word.length===5))].sort();
 const cards=new Map();for(const m of lineups)for(const name of m.starters){const k=norm(name),r=cards.get(k)||{id:id("wc-player",k),name,worldCups:[],teams:[],matchIds:[]};if(!r.worldCups.includes(m.year))r.worldCups.push(m.year);if(!r.teams.includes(m.team))r.teams.push(m.team);if(!r.matchIds.includes(m.id))r.matchIds.push(m.id);cards.set(k,r)}
