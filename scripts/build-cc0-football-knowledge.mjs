@@ -488,7 +488,7 @@ const shards={
  "english-matches":{...common,matches:englishMatches},
  "european-club-matches":{...common,matches:europeanClubMatches},
  "goal-events":{...common,events:internationalGoals.events,scorers:internationalGoals.scorers},
- "world-cup":{...common,lineups,questions:validQuiz,playerCards:[...cards.values()]},
+ "world-cup":{...common,lineups},
  footle:{...common,answers:uniqueFootleAnswers,answerRecords:uniqueFootleAnswers.map(answer=>({id:id("footle-answer",answer),answer,source:SOURCES.players.repo,sourceCommit:SOURCES.players.commit,licence:"CC0-1.0"}))},
  connections:{...common,players:connectionPlayers,packs:playerConnections,clubCountryPacks:clubConnections},
  strands:{...common,packs:strands},
