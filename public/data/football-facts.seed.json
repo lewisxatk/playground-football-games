@@ -4,11 +4,11 @@
   "status": "development-question-bank-not-yet-wired-into-live-games",
   "notes": [
     "Master source-backed factual question bank for PLAYGROUND's quiz-first content rollout.",
-    "Questions are newly written from researched football facts; source pages verify facts and are not copied quiz text.",
+    "Questions are written originally for PLAYGROUND; third-party question wording is not copied.",
     "Difficulty is editorially assigned using recognisability, specificity and historical depth.",
-    "Every record retains competition/statistical scope, valid-as-of date, source URL and review status.",
-    "These are question records for Timed Quiz and The Climb. Other games need purpose-built puzzle-pack converters.",
-    "Records are a development bank and are not yet connected to live gameplay."
+    "Every record retains competition/statistical scope, valid-as-of date, source URL and source checked date.",
+    "These are factual question records for Timed Quiz and The Climb; other games require purpose-built conversions and complete validated packs.",
+    "This is a development bank and is not yet connected to live gameplay."
   ],
   "facts": [
     {
@@ -2570,10 +2570,650 @@
         "timed-quiz",
         "the-climb"
       ]
+    },
+    {
+      "id": "pl-5000th-goal-chris-sutton",
+      "topic": "premier-league",
+      "category": "milestones",
+      "difficulty": "easy",
+      "difficultyReason": "A famous football milestone or foundational competition fact.",
+      "question": "Who scored the 5,000th goal in Premier League history?",
+      "answer": "Chris Sutton",
+      "acceptedAnswers": [
+        "Chris Sutton"
+      ],
+      "choices": [
+        "Chris Sutton",
+        "Les Ferdinand",
+        "Alan Shearer",
+        "Teddy Sheringham"
+      ],
+      "explanation": "Chris Sutton scored the 5,000th Premier League goal for Blackburn Rovers against Leicester City on 7 December 1996.",
+      "competition": "Premier League",
+      "scope": "5,000th Premier League goal",
+      "validAsOf": "1996-12-07",
+      "source": {
+        "name": "Premier League Records: Players",
+        "url": "https://www.premierleague.com/en/news/662064/records-players",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "wc-iniesta-2010-final",
+      "topic": "world-cup",
+      "category": "matches",
+      "difficulty": "easy",
+      "difficultyReason": "A famous football milestone or foundational competition fact.",
+      "question": "Who scored the winning goal in the 2010 FIFA World Cup final?",
+      "answer": "Andrés Iniesta",
+      "acceptedAnswers": [
+        "Andrés Iniesta"
+      ],
+      "choices": [
+        "Andrés Iniesta",
+        "David Villa",
+        "Xavi",
+        "Fernando Torres"
+      ],
+      "explanation": "Andrés Iniesta scored in extra time as Spain beat the Netherlands 1-0 in the final.",
+      "competition": "FIFA World Cup",
+      "scope": "Winning goal in the 2010 men's World Cup final",
+      "validAsOf": "2010-07-11",
+      "source": {
+        "name": "FIFA World Cup history and records",
+        "url": "https://www.fifa.com/en/articles/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "wc-hurst-final-hattrick",
+      "topic": "world-cup",
+      "category": "records",
+      "difficulty": "easy",
+      "difficultyReason": "A famous football milestone or foundational competition fact.",
+      "question": "Who remains the only player to score a hat-trick in a men's FIFA World Cup final?",
+      "answer": "Geoff Hurst",
+      "acceptedAnswers": [
+        "Geoff Hurst"
+      ],
+      "choices": [
+        "Geoff Hurst",
+        "Pelé",
+        "Kylian Mbappé",
+        "Gerd Müller"
+      ],
+      "explanation": "Geoff Hurst scored three times for England against West Germany in the 1966 final.",
+      "competition": "FIFA World Cup",
+      "scope": "Only hat-trick scorer in a men's World Cup final",
+      "validAsOf": "1966-07-30",
+      "source": {
+        "name": "FIFA World Cup history and records",
+        "url": "https://www.fifa.com/en/articles/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "ucl-first-branded-winner-marseille",
+      "topic": "champions-league",
+      "category": "history",
+      "difficulty": "easy",
+      "difficultyReason": "A famous football milestone or foundational competition fact.",
+      "question": "Which club won the first UEFA Champions League-branded competition in 1992/93?",
+      "answer": "Marseille",
+      "acceptedAnswers": [
+        "Marseille"
+      ],
+      "choices": [
+        "Marseille",
+        "AC Milan",
+        "Barcelona",
+        "Ajax"
+      ],
+      "explanation": "Marseille beat AC Milan 1-0 in the 1993 final, winning the first edition played under the UEFA Champions League name.",
+      "competition": "UEFA Champions League",
+      "scope": "Winner of inaugural UEFA Champions League edition, 1992/93",
+      "validAsOf": "1993-05-26",
+      "source": {
+        "name": "UEFA Champions League history",
+        "url": "https://www.uefa.com/uefachampionsleague/history/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "efl-league-cup-most-wins-liverpool",
+      "topic": "english-cups",
+      "category": "trophies",
+      "difficulty": "easy",
+      "difficultyReason": "A famous football milestone or foundational competition fact.",
+      "question": "Which club has won the League Cup the most times, with ten triumphs?",
+      "answer": "Liverpool",
+      "acceptedAnswers": [
+        "Liverpool"
+      ],
+      "choices": [
+        "Liverpool",
+        "Manchester City",
+        "Manchester United",
+        "Chelsea"
+      ],
+      "explanation": "Liverpool have won the League Cup ten times, most recently in 2024.",
+      "competition": "EFL Cup",
+      "scope": "Most League Cup titles, ten",
+      "validAsOf": "2024-02-25",
+      "source": {
+        "name": "EFL Records",
+        "url": "https://www.efl.com/about-the-efl/history/records/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-vardy-eleven-game-streak",
+      "topic": "premier-league",
+      "category": "records",
+      "difficulty": "medium",
+      "difficultyReason": "A familiar subject with a more specific record or season detail.",
+      "question": "Which player scored in 11 consecutive Premier League matches for Leicester City in 2015?",
+      "answer": "Jamie Vardy",
+      "acceptedAnswers": [
+        "Jamie Vardy"
+      ],
+      "choices": [
+        "Jamie Vardy",
+        "Ruud van Nistelrooy",
+        "Mohamed Salah",
+        "Harry Kane"
+      ],
+      "explanation": "Vardy scored in 11 successive Premier League matches from 29 August to 28 November 2015.",
+      "competition": "Premier League",
+      "scope": "Most consecutive Premier League matches scoring, 11",
+      "validAsOf": "2015-11-28",
+      "source": {
+        "name": "Premier League Records: Players",
+        "url": "https://www.premierleague.com/en/news/662064/records-players",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-smallest-title-margin-city",
+      "topic": "premier-league",
+      "category": "clubs",
+      "difficulty": "medium",
+      "difficultyReason": "A familiar subject with a more specific record or season detail.",
+      "question": "Which club won the Premier League on goal difference after finishing level on points with the runners-up in 2011/12?",
+      "answer": "Manchester City",
+      "acceptedAnswers": [
+        "Manchester City"
+      ],
+      "choices": [
+        "Manchester City",
+        "Manchester United",
+        "Chelsea",
+        "Arsenal"
+      ],
+      "explanation": "Manchester City and Manchester United finished on 89 points in 2011/12, with City's goal difference eight better.",
+      "competition": "Premier League",
+      "scope": "Smallest title-winning margin: level on points, decided by +8 goal difference",
+      "validAsOf": "2012-05-13",
+      "source": {
+        "name": "Premier League official records",
+        "url": "https://www.premierleague.com/en/stats/records",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "efl-birmingham-111-points",
+      "topic": "efl",
+      "category": "records",
+      "difficulty": "medium",
+      "difficultyReason": "A familiar subject with a more specific record or season detail.",
+      "question": "Which club set the EFL three-points-for-a-win record with 111 points in League One in 2024/25?",
+      "answer": "Birmingham City",
+      "acceptedAnswers": [
+        "Birmingham City"
+      ],
+      "choices": [
+        "Birmingham City",
+        "Reading",
+        "Wolves",
+        "Leicester City"
+      ],
+      "explanation": "Birmingham City collected 111 points in the 2024/25 League One season, setting the EFL record under the three-points-for-a-win system.",
+      "competition": "English Football League",
+      "scope": "Most points in an EFL season under three-points-for-a-win, 111",
+      "validAsOf": "2025-05-03",
+      "source": {
+        "name": "EFL Records",
+        "url": "https://www.efl.com/about-the-efl/history/records/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "efl-joe-payne-ten-goals",
+      "topic": "efl",
+      "category": "records",
+      "difficulty": "medium",
+      "difficultyReason": "A familiar subject with a more specific record or season detail.",
+      "question": "Who scored a record ten goals in one English Football League match for Luton Town in 1936?",
+      "answer": "Joe Payne",
+      "acceptedAnswers": [
+        "Joe Payne"
+      ],
+      "choices": [
+        "Joe Payne",
+        "Dixie Dean",
+        "George Camsell",
+        "Bunny Bell"
+      ],
+      "explanation": "Joe Payne scored ten times for Luton Town against Bristol Rovers on 13 April 1936.",
+      "competition": "English Football League",
+      "scope": "Most goals by one player in an EFL league match, ten",
+      "validAsOf": "1936-04-13",
+      "source": {
+        "name": "EFL Records",
+        "url": "https://www.efl.com/about-the-efl/history/records/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "bundesliga-sub-goal-petersen",
+      "topic": "bundesliga",
+      "category": "records",
+      "difficulty": "medium",
+      "difficultyReason": "A familiar subject with a more specific record or season detail.",
+      "question": "Which player scored a record 34 Bundesliga goals after coming on as a substitute?",
+      "answer": "Nils Petersen",
+      "acceptedAnswers": [
+        "Nils Petersen"
+      ],
+      "choices": [
+        "Nils Petersen",
+        "Paco Alcácer",
+        "Claudio Pizarro",
+        "Mario Gómez"
+      ],
+      "explanation": "Nils Petersen scored 34 Bundesliga goals as a substitute during his career.",
+      "competition": "Bundesliga",
+      "scope": "Most Bundesliga goals scored as a substitute, 34",
+      "validAsOf": "2026-11-27",
+      "source": {
+        "name": "Bundesliga records",
+        "url": "https://www.bundesliga.com/en/bundesliga/news/bundesliga-records-goals-titles-attendances-for-players-and-clubs-10555",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "ucl-seedorf-three-clubs",
+      "topic": "champions-league",
+      "category": "players",
+      "difficulty": "hard",
+      "difficultyReason": "A specialist statistic or historical detail requiring precise football knowledge.",
+      "question": "Which player is the only one to have won the Champions League with three different clubs?",
+      "answer": "Clarence Seedorf",
+      "acceptedAnswers": [
+        "Clarence Seedorf"
+      ],
+      "choices": [
+        "Clarence Seedorf",
+        "Cristiano Ronaldo",
+        "Samuel Eto'o",
+        "Zlatan Ibrahimović"
+      ],
+      "explanation": "Seedorf won the competition with Ajax in 1995, Real Madrid in 1998 and AC Milan in 2003 and 2007.",
+      "competition": "UEFA Champions League",
+      "scope": "Only player to win the Champions League with three different clubs",
+      "validAsOf": "2007-05-23",
+      "source": {
+        "name": "UEFA Champions League final records and statistics",
+        "url": "https://www.uefa.com/uefachampionsleague/news/0252-0e98c715bb79-dea77f56e2bd-1000--final-records-and-statistics/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "ucl-first-three-time-manager-paisley",
+      "topic": "champions-league",
+      "category": "managers",
+      "difficulty": "hard",
+      "difficultyReason": "A specialist statistic or historical detail requiring precise football knowledge.",
+      "question": "Who became the first manager to win the European Cup three times?",
+      "answer": "Bob Paisley",
+      "acceptedAnswers": [
+        "Bob Paisley"
+      ],
+      "choices": [
+        "Bob Paisley",
+        "Brian Clough",
+        "José Villalonga",
+        "Carlo Ancelotti"
+      ],
+      "explanation": "Bob Paisley won the European Cup with Liverpool in 1977, 1978 and 1981, becoming the first manager to win it three times.",
+      "competition": "European Cup",
+      "scope": "First manager to win the European Cup three times",
+      "validAsOf": "1981-05-27",
+      "source": {
+        "name": "UEFA Champions League final records and statistics",
+        "url": "https://www.uefa.com/uefachampionsleague/news/0252-0e98c715bb79-dea77f56e2bd-1000--final-records-and-statistics/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "efl-fastest-hattrick-hayter",
+      "topic": "efl",
+      "category": "records",
+      "difficulty": "hard",
+      "difficultyReason": "A specialist statistic or historical detail requiring precise football knowledge.",
+      "question": "Who scored the fastest hat-trick in EFL history, taking two minutes and 21 seconds for Bournemouth in 2004?",
+      "answer": "James Hayter",
+      "acceptedAnswers": [
+        "James Hayter"
+      ],
+      "choices": [
+        "James Hayter",
+        "Joe Payne",
+        "Dixie Dean",
+        "Bunny Bell"
+      ],
+      "explanation": "James Hayter scored three times in two minutes and 21 seconds for Bournemouth against Wrexham on 23 February 2004.",
+      "competition": "English Football League",
+      "scope": "Fastest EFL hat-trick, 2 minutes 21 seconds",
+      "validAsOf": "2004-02-23",
+      "source": {
+        "name": "EFL Records",
+        "url": "https://www.efl.com/about-the-efl/history/records/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "wc-pozzo-two-world-cups",
+      "topic": "world-cup",
+      "category": "managers",
+      "difficulty": "hard",
+      "difficultyReason": "A specialist statistic or historical detail requiring precise football knowledge.",
+      "question": "Who remains the only manager to win the men's FIFA World Cup twice?",
+      "answer": "Vittorio Pozzo",
+      "acceptedAnswers": [
+        "Vittorio Pozzo"
+      ],
+      "choices": [
+        "Vittorio Pozzo",
+        "Mário Zagallo",
+        "Franz Beckenbauer",
+        "Marcello Lippi"
+      ],
+      "explanation": "Pozzo coached Italy to World Cup victories in 1934 and 1938.",
+      "competition": "FIFA World Cup",
+      "scope": "Only manager to win two men's World Cup titles",
+      "validAsOf": "1938-06-19",
+      "source": {
+        "name": "FIFA World Cup history and records",
+        "url": "https://www.fifa.com/en/articles/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-chelsea-home-unbeaten-86",
+      "topic": "premier-league",
+      "category": "records",
+      "difficulty": "hard",
+      "difficultyReason": "A specialist statistic or historical detail requiring precise football knowledge.",
+      "question": "Which club holds the record for the longest unbeaten home run in Premier League history, with 86 matches?",
+      "answer": "Chelsea",
+      "acceptedAnswers": [
+        "Chelsea"
+      ],
+      "choices": [
+        "Chelsea",
+        "Liverpool",
+        "Arsenal",
+        "Manchester United"
+      ],
+      "explanation": "Chelsea went 86 Premier League home matches unbeaten between February 2004 and October 2008.",
+      "competition": "Premier League",
+      "scope": "Longest Premier League home unbeaten run, 86 matches",
+      "validAsOf": "2008-10-26",
+      "source": {
+        "name": "Premier League official records",
+        "url": "https://www.premierleague.com/en/stats/records",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-own-goals-richard-dunne",
+      "topic": "premier-league",
+      "category": "records",
+      "difficulty": "extreme",
+      "difficultyReason": "An obscure record or highly specific piece of football history.",
+      "question": "Which player holds the Premier League record for most own goals, with ten?",
+      "answer": "Richard Dunne",
+      "acceptedAnswers": [
+        "Richard Dunne"
+      ],
+      "choices": [
+        "Richard Dunne",
+        "Jamie Carragher",
+        "John Terry",
+        "Martin Škrtel"
+      ],
+      "explanation": "Richard Dunne scored ten own goals in the Premier League across spells with Manchester City, Aston Villa and QPR.",
+      "competition": "Premier League",
+      "scope": "Most Premier League own goals, ten",
+      "validAsOf": "2015-05-24",
+      "source": {
+        "name": "Premier League Records: Players",
+        "url": "https://www.premierleague.com/en/news/662064/records-players",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-consecutive-home-wins-liverpool",
+      "topic": "premier-league",
+      "category": "records",
+      "difficulty": "extreme",
+      "difficultyReason": "An obscure record or highly specific piece of football history.",
+      "question": "Which club holds the record for 24 consecutive Premier League home wins between 2019 and 2020?",
+      "answer": "Liverpool",
+      "acceptedAnswers": [
+        "Liverpool"
+      ],
+      "choices": [
+        "Liverpool",
+        "Manchester City",
+        "Chelsea",
+        "Manchester United"
+      ],
+      "explanation": "Liverpool won 24 consecutive home league matches between February 2019 and July 2020.",
+      "competition": "Premier League",
+      "scope": "Most consecutive Premier League home wins, 24",
+      "validAsOf": "2020-07-11",
+      "source": {
+        "name": "Premier League official records",
+        "url": "https://www.premierleague.com/en/stats/records",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "efl-chesterfield-scoring-streak",
+      "topic": "efl",
+      "category": "records",
+      "difficulty": "extreme",
+      "difficultyReason": "An obscure record or highly specific piece of football history.",
+      "question": "Which club scored in 46 consecutive Football League matches, a record run that began in 1929?",
+      "answer": "Chesterfield",
+      "acceptedAnswers": [
+        "Chesterfield"
+      ],
+      "choices": [
+        "Chesterfield",
+        "Barnsley",
+        "Manchester City",
+        "Sunderland"
+      ],
+      "explanation": "Chesterfield scored in 46 consecutive League games from Christmas Day 1929.",
+      "competition": "English Football League",
+      "scope": "Most consecutive EFL league matches with a goal, 46",
+      "validAsOf": "1930-10-04",
+      "source": {
+        "name": "EFL Records",
+        "url": "https://www.efl.com/about-the-efl/history/records/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "ucl-liverpool-istanbul-half-time",
+      "topic": "champions-league",
+      "category": "matches",
+      "difficulty": "extreme",
+      "difficultyReason": "An obscure record or highly specific piece of football history.",
+      "question": "By how many goals were Liverpool trailing AC Milan at half-time in the 2005 Champions League final?",
+      "answer": "Three",
+      "acceptedAnswers": [
+        "Three"
+      ],
+      "choices": [
+        "One",
+        "Two",
+        "Three",
+        "Four"
+      ],
+      "explanation": "AC Milan led 3-0 at half-time before Liverpool came back to draw 3-3 and win the final on penalties.",
+      "competition": "UEFA Champions League",
+      "scope": "Liverpool's half-time deficit in the 2005 final",
+      "validAsOf": "2005-05-25",
+      "source": {
+        "name": "UEFA Champions League final records and statistics",
+        "url": "https://www.uefa.com/uefachampionsleague/news/0252-0e98c715bb79-dea77f56e2bd-1000--final-records-and-statistics/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "bundesliga-longest-goal-gap-schuster",
+      "topic": "bundesliga",
+      "category": "records",
+      "difficulty": "extreme",
+      "difficultyReason": "An obscure record or highly specific piece of football history.",
+      "question": "Which player had a 4,875-day gap between Bundesliga goals for Cologne and Bayer Leverkusen?",
+      "answer": "Bernd Schuster",
+      "acceptedAnswers": [
+        "Bernd Schuster"
+      ],
+      "choices": [
+        "Bernd Schuster",
+        "Lothar Matthäus",
+        "Klaus Fischer",
+        "Uwe Seeler"
+      ],
+      "explanation": "Bernd Schuster scored for Cologne in 1979/80 and next scored in the Bundesliga for Bayer Leverkusen in 1993/94, 4,875 days later.",
+      "competition": "Bundesliga",
+      "scope": "Longest gap between two Bundesliga goals, 4,875 days",
+      "validAsOf": "1993-10-02",
+      "source": {
+        "name": "Bundesliga records",
+        "url": "https://www.bundesliga.com/en/bundesliga/news/bundesliga-records-goals-titles-attendances-for-players-and-clubs-10555",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
     }
   ],
   "batch": {
-    "id": "uk-football-question-batch-002",
+    "id": "uk-football-question-batch-003",
     "targetTotal": 20,
     "actualTotal": 20,
     "difficultyTargets": {
@@ -2585,8 +3225,8 @@
     "sourceFamilies": [
       "Premier League",
       "EFL",
-      "FIFA",
       "UEFA",
+      "FIFA",
       "Bundesliga"
     ]
   },
@@ -2603,6 +3243,16 @@
     },
     {
       "id": "uk-football-question-batch-002",
+      "actualTotal": 20,
+      "difficultyTargets": {
+        "easy": 5,
+        "medium": 5,
+        "hard": 5,
+        "extreme": 5
+      }
+    },
+    {
+      "id": "uk-football-question-batch-003",
       "actualTotal": 20,
       "difficultyTargets": {
         "easy": 5,
