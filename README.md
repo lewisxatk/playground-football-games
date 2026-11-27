@@ -32,3 +32,13 @@ Cloudflare Workers with Static Assets. Connect this repository to Workers Builds
 The persistent, item-by-item implementation tracker and session handover is in [PROJECT_CHECKLIST.md](./PROJECT_CHECKLIST.md). Update it after every development batch; it is the source of truth for completed and outstanding work.
 
 Data sources, licences and coverage limitations are documented in [DATA_SOURCES.md](./DATA_SOURCES.md). The production site is deployed to Cloudflare Pages at https://playground-football-games.pages.dev.
+
+
+## CULT HERO prototype
+
+The isolated feature branch `feat/cult-hero-mystery-pack-opening` adds two related routes:
+
+- `/cult-hero` — five source-led player mysteries per UTC day, plus unlimited practice. Clues are assembled only from available player profile and dated career-spell fields.
+- `/cult-hero-collection` — a one-card archive pack reveal and local player cabinet. The opening sequence is original CSS/React animation; it does not add a WebGL or GSAP dependency.
+
+Collected cards currently live in browser localStorage. They are not account-synced or shared between devices. Card faces are deliberately typography-led until licensed player portrait assets are available. The pack preview is a development prototype, with no paid packs, currency or trading.
