@@ -96,12 +96,14 @@ export async function getCandidates(league: LeagueCode): Promise<Candidate[]> {
   }));
 }
 
+export type ArchiveCareerSpell={club:string;startYear:number|null;endYear:number|null};
 export type ArchiveGamePlayer = {
   id: string;
   name: string;
   nationality: string;
   position: string;
   clubs: string[];
+  spells: ArchiveCareerSpell[];
   currentClub: string;
   appearances: number;
   goals: number;
@@ -146,6 +148,7 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
         "career_rollup AS (" +
         " SELECT cr.player_qid, any_value(cr.player) AS name, " +
         " list(DISTINCT cr.club_name) AS clubs, " +
+        " list(struct_pack(club := cr.club_name, start_year := cr.start_year, end_year := cr.end_year)) AS career_spells, " +
         " COUNT(DISTINCT cr.club_name) AS club_count, " +
         " SUM(coalesce(cr.apps,0)) AS appearances, SUM(coalesce(cr.goals,0)) AS goals, " +
         " arg_max(cr.club_name, coalesce(cr.end_year,cr.start_year,0)) AS current_club, " +
@@ -190,6 +193,11 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
         nationality: String(r.nationality ?? ""),
         position: String(r.position ?? ""),
         clubs: Array.isArray(r.clubs) ? r.clubs.map(String).filter(Boolean) : [],
+        spells: Array.isArray(r.career_spells) ? r.career_spells.map((spell:any)=>({
+          club:String(spell.club??""),
+          startYear:n(spell.start_year),
+          endYear:n(spell.end_year)
+        })).filter((spell:any)=>spell.club) : [],
         currentClub: String(r.current_club ?? ""),
         appearances: Number(r.appearances ?? 0),
         goals: Number(r.goals ?? 0),
