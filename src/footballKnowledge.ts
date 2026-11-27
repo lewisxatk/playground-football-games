@@ -145,7 +145,7 @@ export function makeCC0QuizRound(
  tier:CC0QuizTier,
  seed:number,
  count=5,
- requestedUKCount=Math.round(count*.75),
+ requestedEnglishCount=Math.round(count*.75),
  excludedMatchIds:ReadonlySet<string>=new Set()
 ):CC0QuizQuestion[]{
  // One match must not appear twice in the same round under different question templates.
@@ -159,9 +159,9 @@ export function makeCC0QuizRound(
  if(!eligible.length)return[];
  const englishDomestic=seededShuffle(eligible.filter(q=>q.region==="ENGLISH_DOMESTIC"),seed+17);
  const international=seededShuffle(eligible.filter(q=>q.region==="INTERNATIONAL"),seed+31);
- const ukCount=Math.max(0,Math.min(count,requestedUKCount,englishDomestic.length));
- const internationalCount=Math.min(count-ukCount,international.length);
- const selected=[...englishDomestic.slice(0,ukCount),...international.slice(0,internationalCount)];
+ const englishCount=Math.max(0,Math.min(count,requestedEnglishCount,englishDomestic.length));
+ const internationalCount=Math.min(count-englishCount,international.length);
+ const selected=[...englishDomestic.slice(0,englishCount),...international.slice(0,internationalCount)];
  const selectedIds=new Set(selected.map(q=>q.id));
  if(selected.length<count){
   const fallback=seededShuffle(eligible.filter(q=>!selectedIds.has(q.id)),seed+43);
@@ -176,16 +176,16 @@ export function makeCC0QuizRound(
 export function makeCC0DailyQuizRound(pool:CC0QuizQuestion[],seed:number):CC0QuizQuestion[]{
  // 17 questions cannot split into an exact 75/25 ratio. 13 English-domestic
  // and 4 international questions is the closest whole-number allocation.
- const plan:{tier:CC0QuizTier;count:number;ukCount:number}[]=[
-  {tier:"EASY",count:5,ukCount:4},
-  {tier:"MEDIUM",count:5,ukCount:4},
-  {tier:"HARD",count:5,ukCount:4},
-  {tier:"EXTREME",count:2,ukCount:1}
+ const plan:{tier:CC0QuizTier;count:number;englishCount:number}[]=[
+  {tier:"EASY",count:5,englishCount:4},
+  {tier:"MEDIUM",count:5,englishCount:4},
+  {tier:"HARD",count:5,englishCount:4},
+  {tier:"EXTREME",count:2,englishCount:1}
  ];
  const selected:CC0QuizQuestion[]=[];
  const usedMatches=new Set<string>();
  plan.forEach((entry,index)=>{
-  const round=makeCC0QuizRound(pool,entry.tier,seed+index*101,entry.count,entry.ukCount,usedMatches);
+  const round=makeCC0QuizRound(pool,entry.tier,seed+index*101,entry.count,entry.englishCount,usedMatches);
   for(const question of round){selected.push(question);usedMatches.add(question.matchId);}
  });
  return seededShuffle(selected,seed+997);
