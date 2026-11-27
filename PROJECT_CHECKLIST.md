@@ -552,7 +552,10 @@ This section records the separate gameplay-rework branch so work is not confused
 - [x] Improved match-winner distractors: prefer clubs/nations from the same competition, then fall back to the same source family instead of mixing English clubs with national teams.
 - [x] Rebalanced English domestic difficulty bands across all eras after validation exposed an empty English Hard pool: 2015+ Easy, 2005–2014 Medium, 1995–2004 Hard, pre-1995 Extreme. Full shard validation must confirm the new counts before merge.
 - [x] Researched the 212k+ England Football League Data dataset. It is a CC BY 4.0 candidate with third-party rights reserved, so it is documented for review but not bulk-imported. Official Premier League pages are kept as manual fact-check references only; current terms prohibit commercial database extraction without prior written approval.
-- [!] GitHub Actions must complete on the latest commit before this batch can be called build-verified. Physical iPhone/desktop playtesting is still outstanding.
+- [x] CC0 rebuild completed successfully in GitHub Actions run `46078531848`: all pinned source/licence checks, database generation, legacy data validation, new CC0 quiz validation and full `tsc -b && vite build` passed. Generated data commit: `594a0f7`.
+- [x] Cloudflare preview for the regenerated database deployed successfully: `https://78e4ceba.playground-football-games.pages.dev`.
+- [x] New report confirms 60,626 English domestic match facts, 54,183 international match facts, 57,404 Climb questions and 57,405 Quick Quiz questions. Both quiz pools pass per-tier English/international availability checks.
+- [!] Physical iPhone/desktop playtesting is still outstanding; production remains on main commit `8caec1b` and has not been changed.
 - [!] The English-first weighting currently applies to The Climb and Quick Quiz, not every game. Lowball, Ladder and Football 501 still use recorded senior international-goal values and need English player-stat data before they can honestly become English-stat games.
 - [!] The existing 100 curated English-heavy seed questions are still not connected to the CC0 live quiz bank. They remain a separate editorial development file and must not be counted as live content.
 
