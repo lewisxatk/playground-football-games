@@ -385,7 +385,12 @@ function parseTransferCsvLine(line: string): string[] {
 
 async function loadTransferIndex(): Promise<TransferIndex> {
   const response = await fetch("/career-data/transfers.csv", { cache: "force-cache" });
-  if (!response.ok || !response.body) throw new Error("Transfer data download failed (" + response.status + ").");
+  if (!response.ok || !response.body) {
+    if (response.status === 403 || response.status === 429 || response.status >= 500) {
+      throw new Error("The optional transfer-history feed is temporarily blocked by its data host (" + response.status + "). No points have been deducted. Player identity, career timeline and all other clues remain available.");
+    }
+    throw new Error("Transfer history is unavailable (" + response.status + "). No points have been deducted.");
+  }
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   const index = new Map<string, Transfer[]>();
