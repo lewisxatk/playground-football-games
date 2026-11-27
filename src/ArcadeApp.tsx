@@ -6,7 +6,9 @@ import {
 } from "./playerData";
 import { ClubBadge, CountryFlag } from "./ClubBadge";
 import { useArchivePlayers } from "./useArchivePlayers";
+import { getWorldCupLineups } from "./tournamentNationData";
 import type { ArchiveGamePlayer } from "./careerFileData";
+import { getCareerClubsAtYear } from "./careerFileData";
 import "./arcade.css";
 
 type Mode = "daily" | "practice";
@@ -28,14 +30,15 @@ const GAME_LINKS = [
   {id:"career-file",title:"CAREER FILE",sub:"Read the club journey. Find the player.",tone:"pink",tag:"MYSTERY"},
   {id:"footle",title:"FOOTLE",sub:"A footballer surname in six tries.",tone:"lime",tag:"WORD GAME"},
   {id:"connections",title:"THE CONNECTION",sub:"Four groups. Sixteen names.",tone:"violet",tag:"PUZZLE"},
-  {id:"football-grid",title:"FOOTBALL GRID",sub:"Nine squares. Nine football answers.",tone:"blue",tag:"GRID"},
+  {id:"football-grid",title:"FOOTBALL GRID",sub:"Sixteen squares. Sixteen football answers.",tone:"blue",tag:"GRID"},
   {id:"ladder",title:"THE LADDER",sub:"Put five players in stat order.",tone:"orange",tag:"RANKING"},
   {id:"the-reveal",title:"THE REVEAL",sub:"Uncover the mystery player, clue by clue.",tone:"pink",tag:"DEDUCTION"},
   {id:"football-501",title:"FOOTBALL 501",sub:"Count down without busting.",tone:"lime",tag:"COUNTDOWN"},
   {id:"link-up",title:"THE LINK UP",sub:"Find the player who connects two stars.",tone:"violet",tag:"CONNECTION"},
   {id:"missing-xi",title:"MISSING XI",sub:"One name is missing from a famous line-up.",tone:"blue",tag:"LINE-UP"},
   {id:"strands",title:"FOOTBALL STRANDS",sub:"Find the surnames. Find the full-name spangram.",tone:"orange",tag:"WORD SEARCH"},
-  {id:"scout-signal",title:"SCOUT SIGNAL",sub:"Guess the footballer. Watch the attributes light up.",tone:"pink",tag:"ATTRIBUTE HUNT"}
+  {id:"scout-signal",title:"SCOUT SIGNAL",sub:"Guess the footballer. Watch the attributes light up.",tone:"pink",tag:"ATTRIBUTE HUNT"},
+  {id:"tournament-nation",title:"TOURNAMENT NATION",sub:"Name the country from a historic World Cup starting XI.",tone:"blue",tag:"INTERNATIONAL"}
 ] as const;
 type GameId = typeof GAME_LINKS[number]["id"];
 const normalise = (v:string) => v.toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
@@ -145,7 +148,7 @@ function HomePage({account}:{account:Account}){
   const done=todayGames(account);
   return <div className="arc-shell arc-home"><TopBar account={account}/><main className="arc-home-main">
     <section className="arc-home-hero"><div><div className="arc-eyebrow"><span/> THE FOOTBALL ARCADE / EST. 2026</div><h1>NO HALF<br/><em>TIME.</em></h1><p>Quick games, proper football knowledge and a reason to come back tomorrow.</p><div className="arc-hero-actions"><a className="arc-button" href="/footle">PLAY TODAY'S FOOTLE ↗</a><a className="arc-text-link" href="#all-games">PICK YOUR GAME ↓</a></div></div>
-      <div className="arc-home-graphic"><div className="arc-graphic-label">THE PLAYGROUND / 14 GAME MODES</div><div className="arc-graphic-pitch"><i className="half"/><i className="centre"/><i className="box-one"/><i className="box-two"/><motion.span className="graphic-ball" animate={{x:[0,32,-20,0],y:[0,-15,8,0],rotate:[0,180,360]}} transition={{duration:5,repeat:Infinity,ease:"easeInOut"}}/></div><div className="arc-graphic-bottom"><span>GUESS / THINK / PLAY</span><b>↗</b><span>14 WAYS TO PLAY</span></div></div>
+      <div className="arc-home-graphic"><div className="arc-graphic-label">THE PLAYGROUND / 15 GAME MODES</div><div className="arc-graphic-pitch"><i className="half"/><i className="centre"/><i className="box-one"/><i className="box-two"/><motion.span className="graphic-ball" animate={{x:[0,32,-20,0],y:[0,-15,8,0],rotate:[0,180,360]}} transition={{duration:5,repeat:Infinity,ease:"easeInOut"}}/></div><div className="arc-graphic-bottom"><span>GUESS / THINK / PLAY</span><b>↗</b><span>15 WAYS TO PLAY</span></div></div>
     </section>
     <section className="arc-daily-strip"><div><small>YOUR DAILY RECORD / UTC</small><strong>{done} <i>/ 14</i></strong><span>GAMES PLAYED TODAY</span></div><div><small>YOUR STREAK</small><strong>{account.streak} <i>days</i></strong><span>BEST {account.bestStreak} DAYS</span></div><div><small>PLAYER NAME</small><strong className="nickname-stat">{account.nickname}</strong><span>LOCAL PLAYER SAVE</span></div><a href="/locker-room">OPEN LOCKER ROOM ↗</a></section>
     <section id="all-games" className="arc-game-directory"><div className="arc-section-title"><div><span>01 / THE LINE-UP</span><h2>PICK YOUR<br/><em>GAME.</em></h2></div><p>Every game has its own page. Daily challenges reset together at midnight GMT. Practice whenever you like.</p></div>
@@ -693,6 +696,81 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
  </Frame>;
 }
 
+
+type TournamentDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
+const TOURNAMENT_LEVELS: TournamentDifficulty[]=["EASY","STANDARD","HARD","EXTREME"];
+const lineupNameKey=(value:string)=>normalise(value);
+function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
+ const [mode,setMode]=useMode();
+ const [difficulty,setDifficulty]=useState<TournamentDifficulty>("STANDARD");
+ const [data,setData]=useState<Awaited<ReturnType<typeof getWorldCupLineups>>|null>(null);
+ const [loadError,setLoadError]=useState("");
+ const [clubRows,setClubRows]=useState<Map<string,string>>(new Map());
+ const [clubsLoading,setClubsLoading]=useState(false);
+ const [attempts,setAttempts]=useState(0);const [ended,setEnded]=useState(false);const [won,setWon]=useState(false);
+ const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
+ const done=account.daily[utcDay()]?.["tournament-nation"]!==undefined;
+ const seed=mode==="daily"?"TOURNAMENT:"+utcDay()+":"+difficulty:"TOURNAMENT:PRACTICE:"+practiceSeed+":"+difficulty;
+ useEffect(()=>{let live=true;getWorldCupLineups().then(v=>{if(live)setData(v);}).catch(e=>{if(live)setLoadError(e instanceof Error?e.message:"Tournament data unavailable.");});return()=>{live=false;};},[]);
+ const match=useMemo(()=>{
+   if(!data?.matches.length)return null;
+   const eligible=data.matches.filter(m=>m.year>=1982&&m.year<=2022&&m.starters.length===11);
+   return eligible[hashSeed(seed+":match")%eligible.length]??null;
+ },[data,seed]);
+ useEffect(()=>{
+   if(!match){setClubRows(new Map());return;}
+   let live=true;setClubsLoading(true);setClubRows(new Map());
+   getCareerClubsAtYear(match.starters,match.year).then(records=>{
+     if(!live)return;const rows=new Map<string,string>();
+     for(const name of match.starters){const found=records.get(lineupNameKey(name))??[];const distinct=[...new Set(found.map(x=>x.club).filter(Boolean))];if(distinct.length===1)rows.set(lineupNameKey(name),distinct[0]);}
+     setClubRows(rows);
+   }).catch(()=>{if(live)setClubRows(new Map());}).finally(()=>{if(live)setClubsLoading(false);});
+   return()=>{live=false;};
+ },[match?.id]);
+ const teams=useMemo(()=>data?[...new Set(data.matches.map(m=>m.team).filter(Boolean))]:[],[data]);
+ const optionCount=difficulty==="EASY"?3:difficulty==="STANDARD"?4:difficulty==="HARD"?6:8;
+ const options=useMemo(()=>{
+   if(!match)return [];
+   const wrong=teams.filter(team=>team!==match.team);
+   return shuffle([match.team,...shuffle(wrong,hashSeed(seed+":wrong")).slice(0,optionCount-1)],hashSeed(seed+":options"));
+ },[match,teams,seed,optionCount]);
+ const clueCount=difficulty==="EASY"?11:difficulty==="STANDARD"?9:difficulty==="HARD"?7:5;
+ const clueNames=match?match.starters.slice(0,clueCount):[];
+ const known=clueNames.filter(name=>clubRows.has(lineupNameKey(name))).length;
+ const choose=(team:string)=>{
+   if(ended||!match)return;const tries=attempts+1;setAttempts(tries);
+   if(team===match.team){setWon(true);setEnded(true);if(mode==="daily")onDaily("tournament-nation",Math.max(150,1000-(tries-1)*220));}
+   else if(tries>=3){setWon(false);setEnded(true);if(mode==="daily")onDaily("tournament-nation",0);}
+ };
+ const reset=(newMode:Mode=mode,newDifficulty:TournamentDifficulty=difficulty)=>{
+   setDifficulty(newDifficulty);setAttempts(0);setEnded(false);setWon(false);
+   if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
+ };
+ return <Frame account={account} game="tournament-nation" eyebrow="WORLD CUP ARCHIVE / STARTING XI" title="TOURNAMENT NATION." description="A historic World Cup starting XI. Each shirt reveals the club recorded for that player at the tournament year. Name the country." number="15" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
+ {done&&mode==="daily"?<Success title="NATION IDENTIFIED." detail="Today's tournament challenge is complete. Practice draws from other recorded World Cup line-ups." button="PRACTICE" onAgain={()=>{setMode("practice");reset("practice");}}/>:
+  loadError?<Card className="arc-feedback"><b>TOURNAMENT DATA UNAVAILABLE</b><p>{loadError}</p><button className="arc-button" onClick={()=>{setLoadError("");getWorldCupLineups().then(setData).catch(e=>setLoadError(String(e)));}}>RETRY DATA ↗</button></Card>:
+  !match||!data?<Card className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>OPENING THE WORLD CUP ARCHIVE</b><span>Loading 1982–2022 starting line-ups.</span></Card>:
+  <Card className="tournament-game">
+   <div className="arc-game-meta"><span>FIFA WORLD CUP · {match.year}</span><b>{3-attempts} GUESSES LEFT</b></div>
+   <div className="grid-difficulty">{TOURNAMENT_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{level}</button>)}</div>
+   <div className="tournament-match"><div><small>TOURNAMENT</small><b>FIFA WORLD CUP {match.year}</b></div><div><small>ROUND</small><b>{match.round||"MATCH"}</b></div><div><small>OPPONENT</small><b>{match.opponent}</b></div><div><small>DATE</small><b>{match.date}</b></div></div>
+   <div className="tournament-pitch"><div className="tournament-pitch-lines"><i/><i/><i/></div>
+    <div className="tournament-xi-grid">{clueNames.map((name,i)=>{
+      const club=clubRows.get(lineupNameKey(name));
+      return <motion.div className={"tournament-shirt t-shirt-"+i} key={name} initial={{opacity:0,y:10,scale:.9}} animate={{opacity:1,y:0,scale:1}} transition={{delay:i*.025}}>
+       <div className="shirt-shape"><b>{String(i+1).padStart(2,"0")}</b></div>
+       <div className="shirt-club">{club?<><ClubBadge name={club} size={22}/><small>{club}</small></>:<small>{clubsLoading?"LOOKING UP CLUB":"CLUB NOT RECORDED"}</small>}</div>
+      </motion.div>;
+    })}</div>
+    <div className="tournament-xi-caption"><span>STARTING XI / {known} OF {clueNames.length} CLUBS MATCHED</span><span>CLUB CLUES / {match.year}</span></div>
+   </div>
+   <p className="arc-muted">The source provides starting-line-up order, not exact on-pitch positions. Club clues appear only where an exact player-name and year overlap is found in the career archive. Unknown clubs are not guessed.</p>
+   {!ended?<><div className="tournament-options">{options.map(team=><button key={team} onClick={()=>choose(team)}>{team}<i>↗</i></button>)}</div><div className="arc-game-foot"><span>{difficulty} · {optionCount} NATIONAL TEAMS</span><span>{clueNames.length} CLUB CLUES SHOWN</span></div></>:
+    <div className="arc-feedback"><b>{won?"YOU GOT THE NATION.":"THE NATION WAS "+match.team.toUpperCase()+"."}</b><p>{match.team} started against {match.opponent} at the {match.round} stage of the {match.year} World Cup.</p><button className="arc-button" onClick={()=>reset(mode)}>NEXT TOURNAMENT ↗</button></div>}
+  </Card>}
+ </Frame>;
+}
+
 function ScoutSignalPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
@@ -792,7 +870,8 @@ export function ArcadeApp(){
   "link-up":<LinkUpPage account={account} onDaily={onDaily}/>,
   "missing-xi":<MissingXIPage account={account} onDaily={onDaily}/>,
   "strands":<StrandsPage account={account} onDaily={onDaily}/>,
-  "scout-signal":<ScoutSignalPage account={account} onDaily={onDaily}/>
+  "scout-signal":<ScoutSignalPage account={account} onDaily={onDaily}/>,
+  "tournament-nation":<TournamentNationPage account={account} onDaily={onDaily}/>
  };
  return pages[path]??<HomePage account={account}/>;
 }
