@@ -118,11 +118,14 @@ export type ArchiveGamePlayer = {
   clubs: string[];
   spells: ArchiveCareerSpell[];
   stats?: ArchiveGameStat[];
+  seasonStats?: ArchiveGameStat[];
   currentClub: string;
   appearances: number;
   goals: number;
   careerAppearanceRows?: number;
   careerGoalRows?: number;
+  leagueAppearanceRows?: number;
+  leagueGoalRows?: number;
   leagueAppearances: number;
   leagueGoals: number;
   leagueGoalSeasons: number;
@@ -146,6 +149,8 @@ export type ArchiveGamePlayer = {
   careerSourceRevision?: number | null;
   statSourceTitle?: string;
   statSourceRevision?: number | null;
+  nationalRows?: number;
+  nationalTeams?: string[];
 };
 const gamePoolPromises = new Map<string, Promise<ArchiveGamePlayer[]>>();
 
