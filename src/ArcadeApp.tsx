@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useRef, type FormEvent, type ReactNode } from "react";
 import { motion, AnimatePresence, Reorder } from "motion/react";
 import {
-  PLAYER_DATABASE, LEAGUE_GOALS, CAREER_FILES, STRANDS_PACKS,
+  PLAYER_DATABASE, LEAGUE_GOALS, STRANDS_PACKS,
   type Player
 } from "./playerData";
 import { ClubBadge, CountryFlag } from "./ClubBadge";
