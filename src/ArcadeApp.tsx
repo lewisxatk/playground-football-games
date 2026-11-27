@@ -1198,11 +1198,12 @@ function makeStrandsBoard(pack:typeof STRANDS_PACKS[number]){
  const cells=Array(48).fill("");const paths:number[][]=[];
  // Both spangram lengths start on the top edge and finish on the bottom edge.
  // The 14-letter route adds a top-edge entry cell, preserving the same terminal.
- const baseSpine=[0,8,16,24,32,40,41,42,43,44,45,46,47];
+ // NYT-style portrait board: 6 columns × 8 rows. The spangram runs top-to-bottom.
+ const baseSpine=[0,6,12,18,24,30,36,42,43,44,45,46,47];
  const spine=pack.spangram.length===14?[1,...baseSpine]:baseSpine;
  const spineSet=new Set(spine);
  const rest:number[]=[];
- for(let r=0;r<5;r++){const cols=Array.from({length:7},(_,i)=>i+1);if(r%2)cols.reverse();for(const c of cols){const cell=r*8+c;if(!spineSet.has(cell))rest.push(cell);}}
+ for(let r=0;r<7;r++){const cols=Array.from({length:5},(_,i)=>i+1);if(r%2)cols.reverse();for(const c of cols){const cell=r*6+c;if(!spineSet.has(cell))rest.push(cell);}}
  const words=[pack.spangram,...pack.words];let at=0;
  words.forEach((word,wi)=>{
    const path=wi===0?spine:rest.slice(at,at+word.length);
@@ -1274,15 +1275,15 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
    <div className="strands-theme"><small>THE THEME</small><strong>{pack.theme}</strong><span>{dynamicPack?"Every answer belongs to this club or nationality theme.":"Fallback football word board."} Select adjacent letters in any direction; diagonal links are allowed.</span></div>
    {loading&&pool.length===0&&<div className="strands-pool-note">LOADING PLAYER NAMES…</div>}
    <div className={"strands-grid "+(dragging?"is-dragging":"")} onPointerMove={handlePointerMove} onPointerUp={finishPath} onPointerCancel={cancelPath} onContextMenu={e=>e.preventDefault()}>
-    <svg className="strands-trail" viewBox="0 0 800 600" preserveAspectRatio="none" aria-hidden="true">
-     {selected.length>1&&<polyline points={selected.map(cell=>{const row=Math.floor(cell/8),col=cell%8;return ((col+.5)/8*800)+","+((row+.5)/6*600);}).join(" ")} fill="none" stroke="currentColor" strokeWidth="13" strokeLinecap="round" strokeLinejoin="round"/>}
+    <svg className="strands-trail" viewBox="0 0 600 800" preserveAspectRatio="none" aria-hidden="true">
+     {selected.length>1&&<polyline points={selected.map(cell=>{const row=Math.floor(cell/8),col=cell%8;return ((col+.5)/6*600)+","+((row+.5)/8*800);}).join(" ")} fill="none" stroke="currentColor" strokeWidth="13" strokeLinecap="round" strokeLinejoin="round"/>}
     </svg>
     {board.cells.map((letter,i)=>{
       const foundWord=found.findIndex(idx=>board.paths[idx].includes(i));const pathIndex=selected.indexOf(i);const isHinted=hintedCells.includes(i);
       return <motion.button type="button" key={i} layout onPointerDown={e=>beginPath(i,e)} onPointerEnter={()=>extendPath(i)} data-strands-cell={i}
         className={(pathIndex>=0?"selected ":"")+(isHinted?" hinted ":"")+(foundWord>=0?(foundWord===0?"spangram":"found"):"")}
         animate={{scale:pathIndex>=0?1.08:1}} transition={{type:"spring",stiffness:430,damping:26}}
-        aria-label={"Row "+(Math.floor(i/8)+1)+", column "+(i%8+1)+", letter "+letter}>{letter}</motion.button>;
+        aria-label={"Row "+(Math.floor(i/6)+1)+", column "+(i%6+1)+", letter "+letter}>{letter}</motion.button>;
     })}
    </div>
    <div className="strands-actions"><button className="arc-quiet" onClick={cancelPath}>CLEAR PATH</button><button className="arc-button" onClick={hint} disabled={nudges>=3||finished}>HINT −100 PTS ({nudges}/3)</button>{mode==="practice"&&<button className="arc-quiet" onClick={nextBoard}>SKIP / NEXT ↗</button>}</div>
