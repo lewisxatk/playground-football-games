@@ -18,7 +18,7 @@ Pinned inputs:
 | [Mart Jürisoo international results](https://github.com/martj42/international_results) | `ca84241bb3eed854a1956a2fab442fe4daad40dd` | Men's senior international match results and recorded goalscorers |
 | [OpenFootball World Cup](https://github.com/openfootball/worldcup.json) | `516d3825c3bd23fdc298c4014e84bde78f2d4965` | Source for the retained 1982–2022 starting-line-up snapshot in `public/data/worldcup-lineups.json` |
 
-The international-results source is a men's senior full-international dataset. It is not a domestic-league database and does not represent every international appearance or goal in every player's career.
+The international-results source is a men's senior full-international dataset. The English source covers Premier League and the top four English tiers, plus FA Cup/EFL Cup seasons available in the pinned repository. Both are results datasets, not full player performance statistics.
 
 ## Identity and duplicate policy
 
@@ -27,7 +27,7 @@ The international-results source is a men's senior full-international dataset. I
 - Match facts use date, home team, away team and tournament as their source-scoped identity.
 - Each generated quiz record has a stable fact ID, source URL, event date, answer, and distinct answer choices.
 - Puzzle packs have stable IDs and game-specific units. A pack is not counted merely because it contains multiple phrasings of one fact.
-- The Climb and Timed Quiz receive separate match partitions so the same match question is not placed in both pools.
+- The Climb and Timed Quiz receive separate match partitions so the same match question is not placed in both pools. UK domestic match facts are marked UK and balanced into quiz rounds ahead of international fixtures.
 
 ## Accuracy and QA
 

@@ -15,6 +15,10 @@ The upstream project reports, as of 14 November 2026, approximately 85,099 playe
 
 Upstream documentation: [repository and source overview](https://github.com/florentfougeres/OpenFootballBase-Data), [data model and caveats](https://github.com/florentfougeres/OpenFootballBase-Data/blob/main/docs/en/data-model.md).
 
+## English domestic match results
+
+The CC0 match bank includes [OpenFootball England](https://github.com/openfootball/england), pinned at `9ee7a0c351805c99cc334478a9bf04b7d0432fec`. The build imports available Premier League, Championship/First Division, League One/Second Division, League Two/Third Division, FA Cup and EFL Cup result files. It skips squad files, RSSSF extracts and duplicate full-season files. Each imported match keeps its season, competition, date, source path, line number and source commit. The current source coverage is not a complete all-time English football archive; exact season/competition counts are written to the generated report.
+
 ## World Cup starting line-ups
 
 The World Cup data file in `public/data/worldcup-lineups.json` is derived from [openfootball/worldcup.json](https://github.com/openfootball/worldcup.json), whose repository publishes its data under CC0 1.0 Universal. PLAYGROUND includes 1,312 team starting-line-up records across the 1982, 1986, 1990, 1994, 1998, 2002, 2006, 2010, 2014, 2018 and 2022 FIFA World Cups.

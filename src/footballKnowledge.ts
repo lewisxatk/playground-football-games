@@ -3,7 +3,7 @@ export type CC0QuizTier = "EASY" | "MEDIUM" | "HARD" | "EXTREME";
 
 export type CC0FootballPlayer = {id:string;name:string;aliases:string[];nationalities:string[];birthYears:number[];positions:string[];source:string;sourceCommit?:string;licence:"CC0-1.0";wikidataId?:string;internationalGoalsRecorded?:number;worldCupStarts?:number;worldCupYears?:number[]};
 export type CC0Club = {id:string;name:string;countries:string[];source:string;sourceCommit:string;licence:"CC0-1.0"};
-export type CC0InternationalMatch = {id:string;date:string;year:number;home:string;away:string;homeScore:number;awayScore:number;tournament:string;city?:string;country?:string;neutral:boolean;source:unknown};
+export type CC0InternationalMatch = {id:string;date:string;year:number;home:string;away:string;homeScore:number;awayScore:number;tournament:string;competition?:string;season?:string;region?:"UK"|"INTERNATIONAL";sourceFile?:string;sourceRow?:string;city?:string;country?:string;neutral:boolean;source:unknown};
 export type CC0InternationalGoalEvent = {id:string;date:string;year:number;home:string;away:string;team:string;scorer:string;minute:string;penalty:boolean;ownGoal:boolean;eligibleForScorerTotals:boolean;source:unknown};
 export type CC0WorldCupLineup = {id:string;year:number;date:string;team:string;opponent:string;starters:string[];tournament:string;round:string};
 export type CC0ConnectionsPack = {id:string;groups:{name:string;dimension:string;value:string;memberIds:string[]}[]};
