@@ -26,14 +26,14 @@ for (const [game, keys] of Object.entries(games)) {
 
   const ids = new Set();
   const matchIds = new Set();
-  const byTier = Object.fromEntries(tiers.map(tier => [tier, { UK: 0, INTERNATIONAL: 0, total: 0 }]));
+  const byTier = Object.fromEntries(tiers.map(tier => [tier, { ENGLISH_DOMESTIC: 0, INTERNATIONAL: 0, total: 0 }]));
   for (const question of questions) {
     if (!question.id || ids.has(question.id)) fail(game + " has a missing or duplicate question ID");
     ids.add(question.id);
     if (!question.factId || !question.matchId || matchIds.has(question.matchId)) fail(game + " repeats or omits an underlying match fact");
     matchIds.add(question.matchId);
     if (!tiers.includes(question.tier)) fail(question.id + " has an invalid difficulty");
-    if (question.region !== "UK" && question.region !== "INTERNATIONAL") fail(question.id + " has an invalid region");
+    if (question.region !== "ENGLISH_DOMESTIC" && question.region !== "INTERNATIONAL") fail(question.id + " has an invalid region");
     if (typeof question.question !== "string" || !question.question.trim().endsWith("?")) fail(question.id + " has an unreadable question stem");
     if (typeof question.answer !== "string" || !question.answer.trim()) fail(question.id + " has no answer");
     if (!Array.isArray(question.options) || question.options.length !== 5) fail(question.id + " must have exactly five answer options");
@@ -51,17 +51,17 @@ for (const [game, keys] of Object.entries(games)) {
     const counts = byTier[tier];
     // A ten-question practice round needs eight English-domestic and two
     // international questions; the five-question Climb needs four and one.
-    if (counts.UK < 8 || counts.INTERNATIONAL < 2) {
+    if (counts.ENGLISH_DOMESTIC < 8 || counts.INTERNATIONAL < 2) {
       fail(game + " " + tier + " cannot satisfy the English-first 75/25 round allocation: " + JSON.stringify(counts));
     }
   }
 
-  const uk = questions.filter(question => question.region === "UK").length;
-  const international = questions.length - uk;
-  console.log(game + ": " + questions.length + " unique questions; " + uk + " English-domestic (" +
+  const englishDomestic = questions.filter(question => question.region === "ENGLISH_DOMESTIC").length;
+  const international = questions.length - englishDomestic;
+  console.log(game + ": " + questions.length + " unique questions; " + englishDomestic + " English-domestic (" +
     (100 * uk / questions.length).toFixed(1) + "%), " + international + " international (" +
     (100 * international / questions.length).toFixed(1) + "%).");
-  console.log("  Tier coverage: " + tiers.map(tier => tier + " " + byTier[tier].UK + " UK / " +
+  console.log("  Tier coverage: " + tiers.map(tier => tier + " " + byTier[tier].ENGLISH_DOMESTIC + " English domestic / " +
     byTier[tier].INTERNATIONAL + " international").join("; "));
 }
 
