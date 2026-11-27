@@ -472,3 +472,25 @@ This section records the separate gameplay-rework branch so work is not confused
 - [x] Cloudflare Pages preview build and deployment passed for commit `7f27eaf1b410586b2b97d15d0e76f55547685760`; preview: https://8171d457.playground-football-games.pages.dev. Branch preview: https://feat-cult-hero-mystery-pack.playground-football-games.pages.dev.
 - [!] The repository GitHub Actions CI workflow currently filters pull requests targeting `main`; CULT HERO PR #2 intentionally targets the unmerged gameplay-rework branch to preserve the earlier work, so that Actions workflow was not triggered for PR #2. Cloudflare's preview build/deploy check is successful, but this is not a substitute for a separate full CI run.
 - [!] Preview URLs are branch previews only. Production `main` has not been changed or deployed with CULT HERO.
+
+
+## 18. PLAYGROUND visual and motion upgrade batch (2026-11-27)
+
+- [x] Added a shared visual upgrade layer in `src/playground-upgrades.css` without introducing a new animation dependency; the existing `motion` package remains the primary React animation tool.
+- [x] Added a restrained homepage hero entrance, stadium-pitch light sweep and animated daily progress/streak figures.
+- [x] Added card shimmer, lift, shadow and icon micro-interactions; every game tile now carries its own game ID class so its card illustration can have a distinct silhouette.
+- [x] Added unique accent palettes for the individual game pages while preserving the shared PLAYGROUND paper-and-ink design system.
+- [x] Added route entrance transitions and animated feedback/result panel entrances, including a success-mark pop and restrained shine.
+- [x] Improved touch sizing, focus-visible states, active feedback and small-screen CULT HERO guess-form layout.
+- [x] Added additional reduced-motion overrides for the new animation layer; no important game state depends on animation.
+- [x] No charts, scouting graphs, WebGL, GSAP, Rive or heavyweight animation libraries were added.
+- [x] Expanded CULT HERO's recognition pool with curated, exact-name rosters spanning Premier League, La Liga, Bundesliga, Serie A and Ligue 1. Daily selection aims for one usable player from each league before filling any remaining slots.
+- [x] Increased CULT HERO's sampled archive window from 1,600 to 8,000 records to improve the chance of finding well-known roster players with enough dated career records for fair clues.
+- [x] Collection pack draws use the same recognisable Big Five pool and avoid duplicate cards until the available pool is exhausted.
+- [!] CULT HERO can only select a player when that name is present in the loaded source archive and the archive provides nationality, position and at least three distinct dated clubs. If a league has no eligible record in the loaded sample, the draw fills from the other verified Big Five names; it does not invent a player or clue.
+- [!] Recognition is a curated starter roster, not a complete current squad list or full historical list for all five leagues. It should be expanded in later data-audited batches.
+- [!] The latest Cloudflare Pages build and deployment are being checked against the final commit. A previous CULT HERO collection build succeeded, but that does not certify the final combined branch.
+- [!] No hands-on iPhone Safari test has been performed in this session. Automated build success does not replace checking the 17 game routes, touch interactions and visual layout on a real phone.
+- [!] Current branch remains a preview-only feature branch; production `main` has not been changed.
+
+**Next acceptance pass:** confirm the final Pages build succeeds; then check homepage, all 17 games, menu navigation, reduced-motion, 320–390px widths, and CULT HERO's five-league daily mix / collection duplicate behaviour in desktop and iPhone Safari.
