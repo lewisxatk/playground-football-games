@@ -200,7 +200,7 @@ function buildInternationalQuiz(matches){
    options=pickOptions(answer,scorelines,match.id);
   }else if(selector===1){
    questionType="match-winner";answer=match.homeScore===match.awayScore?"Draw":match.homeScore>match.awayScore?match.home:match.away;
-   question="What was the result of the match between "+match.home+" and "+match.away+" on "+match.date+"?";
+   question=match.homeScore===match.awayScore?"Did "+match.home+" and "+match.away+" draw on "+match.date+"?":"Which team won when "+match.home+" played "+match.away+" on "+match.date+"?";
    explanation=match.home+" "+match.homeScore+"–"+match.awayScore+" "+match.away+". "+(answer==="Draw"?"The match finished level.":answer+" recorded the win.");
    options=pickOptions(answer,[...teamCandidates,"Draw"],match.id);
   }else if(selector===2){
