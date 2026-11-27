@@ -48,13 +48,18 @@ async function writeCache(key: string, players: ArchiveGamePlayer[]): Promise<vo
 }
 
 type StaticPlayerIndex = {
-  sourceRelease?: string;
+  source?: string;
+  licence?: string;
+  releaseTag?: string;
+  generatedAt?: string;
   sourceAssetSha256?: string;
   playerCount?: number;
   shardSize?: number;
   shardCount?: number;
-  shards?: { file:string; count:number; sha256:string }[];
+  caveats?: string[];
+  shards?: { file:string; count:number; bytes?:number; sha256?:string }[];
 };
+type StaticPlayerShard = { releaseTag:string; source:string; licence:string; players:ArchiveGamePlayer[] };
 let staticIndexPromise:Promise<StaticPlayerIndex|null>|null=null;
 
 function seededHash(value:string):number{
@@ -65,11 +70,12 @@ function seededHash(value:string):number{
 
 async function getStaticIndex():Promise<StaticPlayerIndex|null>{
   if(!staticIndexPromise){
-    staticIndexPromise=fetch("/data/player-shards/index.json",{cache:"force-cache"})
+    staticIndexPromise=fetch("/data/player-pool/manifest.json",{cache:"force-cache"})
       .then(async response=>{
         if(!response.ok)return null;
         const index=await response.json() as StaticPlayerIndex;
-        if(!index.sourceAssetSha256||!Array.isArray(index.shards)||index.shards.length<10||
+        if(index.source!=="OpenFootballBase-Data"||index.licence!=="CC BY-SA 4.0"||
+          !index.releaseTag||!Array.isArray(index.shards)||index.shards.length<32||
           !Number.isFinite(index.playerCount))return null;
         return index;
       }).catch(()=>null);
@@ -80,20 +86,27 @@ async function getStaticIndex():Promise<StaticPlayerIndex|null>{
 async function loadStaticPlayerShard(seed:string,limit:number):Promise<ArchiveGamePlayer[]|null>{
   const index=await getStaticIndex();
   if(!index?.shards?.length)return null;
-  const shard=index.shards[seededHash(seed)%index.shards.length];
-  if(!shard?.file||!Number.isInteger(shard.count))return null;
-  const cacheKey="static:"+index.sourceAssetSha256+":"+shard.file+":"+seed+":"+limit;
+  const needed=Math.max(1,Math.ceil(limit/Math.max(1,index.shardSize??1000)));
+  const start=seededHash(seed)%index.shards.length;
+  const selected=Array.from({length:Math.min(needed,index.shards.length)},(_,i)=>index.shards![(start+i)%index.shards!.length]);
+  const cacheKey="static:"+index.releaseTag+":"+selected.map(shard=>shard.file).join(",")+":"+seed+":"+limit;
   const cached=await readCache(cacheKey);
   if(cached)return cached.slice(0,limit);
-  const response=await fetch("/data/player-shards/"+shard.file,{cache:"force-cache"});
-  if(!response.ok)throw new Error("Static player shard could not be loaded ("+response.status+").");
-  const rows=await response.json() as ArchiveGamePlayer[];
-  if(!Array.isArray(rows)||rows.length!==shard.count)throw new Error("Static player shard count does not match its index.");
-  // Keep shared daily samples identical; a new practice seed picks another
-  // shard and a deterministic subset from within it.
-  const sampled=[...rows].sort((a,b)=>
-    seededHash(seed+":"+a.id)-seededHash(seed+":"+b.id)
-  ).slice(0,limit);
+  const payloads=await Promise.all(selected.map(async shard=>{
+    if(!shard?.file||!Number.isInteger(shard.count))throw new Error("Static player shard metadata is invalid.");
+    const response=await fetch("/data/player-pool/"+shard.file,{cache:"force-cache"});
+    if(!response.ok)throw new Error("Static player shard could not be loaded ("+response.status+").");
+    const payload=await response.json() as StaticPlayerShard;
+    if(payload.releaseTag!==index.releaseTag||!Array.isArray(payload.players)||payload.players.length!==shard.count)
+      throw new Error("Static player shard does not match its release manifest.");
+    return payload.players;
+  }));
+  const all=payloads.flat();
+  const distinct=Array.from(new Map(all.filter(player=>player?.id&&player.name).map(player=>[player.id,player])).values());
+  // The archive shards are hash-distributed. Seeded ordering gives every session
+  // a different draw, while the date seed keeps the Daily draw shared.
+  const sampled=distinct.sort((a,b)=>seededHash(seed+":"+a.id)-seededHash(seed+":"+b.id)).slice(0,limit);
+  if(sampled.length<Math.min(limit,500))throw new Error("Static player sample is too small to start a game.");
   await writeCache(cacheKey,sampled);
   return sampled;
 }
