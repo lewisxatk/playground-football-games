@@ -176,8 +176,7 @@
       ],
       "question": "Who holds the Premier League record for most clean sheets?",
       "acceptedAnswers": [
-        "Petr Cech",
-        "Petr Čech"
+        "Petr Cech"
       ],
       "choices": [
         "Petr Čech",
@@ -529,8 +528,7 @@
       ],
       "question": "Who is the men's FIFA World Cup all-time leading goalscorer?",
       "acceptedAnswers": [
-        "Kylian Mbappe",
-        "Kylian Mbappé"
+        "Kylian Mbappe"
       ],
       "choices": [
         "Kylian Mbappé",
@@ -587,12 +585,12 @@
       "id": "wc-messi-wins",
       "topic": "world-cup",
       "answer": "Lionel Messi",
-      "explanation": "Players with most victories. Men's FIFA World Cup match victories.",
+      "explanation": "Lionel Messi holds the record with 23 World Cup match wins.",
       "competition": "FIFA World Cup",
       "scope": "Men's FIFA World Cup match victories",
       "validAsOf": "2026-11-27",
       "source": {
-        "name": "Players with most victories",
+        "name": "FIFA Players with most World Cup victories",
         "url": "https://www.fifa.com/en/tournaments/mens/worldcup/articles/players-most-wins-victories",
         "checkedAt": "2026-11-27"
       },
@@ -616,7 +614,7 @@
         "timed-quiz",
         "cult-hero"
       ],
-      "question": "Who holds the record for the most wins by a player at the men's FIFA World Cup?",
+      "question": "Who has won the most matches as a player at the men's FIFA World Cup?",
       "acceptedAnswers": [
         "Lionel Messi"
       ],
@@ -625,6 +623,51 @@
         "Cafu",
         "Miroslav Klose",
         "Pelé"
+      ]
+    },
+    {
+      "id": "ucl-1999-final-winner",
+      "topic": "champions-league",
+      "question": "Who scored Manchester United's winning goal in the 1999 Champions League final?",
+      "answer": "Ole Gunnar Solskjær",
+      "acceptedAnswers": [
+        "Ole Gunnar Solskjær",
+        "Ole Gunnar Solskjaer"
+      ],
+      "choices": [
+        "Ole Gunnar Solskjær",
+        "Teddy Sheringham",
+        "David Beckham",
+        "Ryan Giggs"
+      ],
+      "explanation": "Ole Gunnar Solskjær scored in the 93rd minute to complete Manchester United's 2–1 comeback against Bayern Munich.",
+      "competition": "UEFA Champions League",
+      "scope": "1998/99 final: Manchester United 2–1 Bayern Munich",
+      "validAsOf": "1999-05-26",
+      "source": {
+        "name": "UEFA 1998/99 final match report",
+        "url": "https://www.uefa.com/uefachampionsleague/match/56379--bayern-vs-man-utd/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "lowball",
+        "the-climb",
+        "draft-xi",
+        "career-file",
+        "footle",
+        "connections",
+        "football-grid",
+        "ladder",
+        "the-reveal",
+        "football-501",
+        "link-up",
+        "missing-xi",
+        "strands",
+        "scout-signal",
+        "tournament-nation",
+        "timed-quiz",
+        "cult-hero"
       ]
     }
   ]
