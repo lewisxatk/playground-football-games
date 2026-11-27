@@ -539,7 +539,7 @@ This section records the separate gameplay-rework branch so work is not confused
 
 ## 15. English-first question selection and source audit (2026-11-27)
 
-- [x] Rechecked the actual CC0 match importer: OpenFootball England domestic league/cup matches are classified as `UK`; UEFA club and senior international fixtures are classified as `INTERNATIONAL`. This is a domestic-English vs international split, not a claim that UK national-team fixtures are English domestic football.
+- [x] Rechecked and corrected the CC0 match importer: OpenFootball England domestic league/cup matches are classified as `ENGLISH_DOMESTIC`; UEFA club matches and all senior national-team fixtures (including England) are classified as `INTERNATIONAL`.
 - [x] Found and corrected the runtime selection bug: `makeCC0QuizRound` previously selected only 40% UK questions. It now targets 75% UK domestic content.
 - [x] Daily Quick Quiz allocation is explicit: 13 English-domestic and 4 international questions across 17 questions (76.5%/23.5%, the closest whole-number split).
 - [x] Five-question rounds target 4 English-domestic / 1 international; ten-question practice rounds target 8 / 2.
