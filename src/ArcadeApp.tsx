@@ -24,7 +24,7 @@ type Account = {
   totals: Record<string, number>;
 };
 const STORAGE_KEY = "playground.local-account.v1";
-const difficultyLabel=(level:string)=>level==="STANDARD"?"MEDIUM / STANDARD":level;
+const difficultyLabel=(level:string)=>level==="MEDIUM"?"MEDIUM / STANDARD":level;
 const difficultyDescription=(level:string)=>({
  EASY:"Well-known players, major clubs and straightforward football facts.",
  MEDIUM:"Established careers, familiar records and less obvious choices.",
