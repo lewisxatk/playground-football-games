@@ -152,7 +152,7 @@ function careerHint(p:Player):Hint[]{
   ];
 }
 
-export default function CareerFilePage(){
+export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyDone?:boolean;onDailyComplete?:(score:number)=>void}){
   const [mode,setMode]=useState<Mode>("EASY");
   const [league,setLeague]=useState<LeagueCode>("ALL");
   const [pool,setPool]=useState<Candidate[]>([]);
@@ -250,9 +250,9 @@ export default function CareerFilePage(){
   };
   const submit=(event:FormEvent)=>{
     event.preventDefault();if(!player||!guess.trim()||status!=="playing")return;
-    if(matches(guess,player)){setStatus("won");setNote("FILE CRACKED. Nice read.");setGuess("");return;}
+    if(matches(guess,player)){setStatus("won");setNote("FILE CRACKED. Nice read.");setGuess("");if(!dailyDone)onDailyComplete?.(score);return;}
     const next=attempts+1;setAttempts(next);setScore(v=>Math.max(0,v-50));setNote("Not that one. Keep reading the file.");setGuess("");
-    if(next>=10){setStatus("lost");setRevealed(rows.map(r=>r.id));}
+    if(next>=10){setStatus("lost");setRevealed(rows.map(r=>r.id));if(!dailyDone)onDailyComplete?.(0);}
   };
   const next=async()=>{
     if(!pool.length)return;
@@ -293,6 +293,7 @@ export default function CareerFilePage(){
         <motion.div className="cf-orbit-stamp" animate={{rotate:[8,13,8]}} transition={{duration:7,repeat:Infinity}}>SCOUT<br/>THE<br/>STORY</motion.div>
       </div>
     </section>
+    {dailyDone&&<div className="cf-daily-complete">TODAY'S CAREER FILE IS BANKED · NEXT FILES ARE PRACTICE</div>}
     <section className="cf-controlbar">
       <div className="cf-control-title"><span>01 / CHOOSE YOUR COMPETITION</span><strong>WHERE DID THEY PLAY?</strong></div>
       <div className="cf-leagues">{LEAGUES.map(x=><button key={x.code} className={league===x.code?"active":""} onClick={()=>setLeague(x.code)}>{x.label}</button>)}</div>
