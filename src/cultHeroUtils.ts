@@ -120,9 +120,15 @@ const leagueNameKeys = KNOWN_LEAGUES.map(league => ({
   keys: new Set(league.names.map(normaliseCultHeroAnswer))
 }));
 
-function knownLeagueFor(player: ArchiveGamePlayer): string | null {
+function knownLeaguesFor(player: ArchiveGamePlayer): string[] {
   const names = [player.name, player.fullName ?? ""].map(normaliseCultHeroAnswer).filter(Boolean);
-  const matches = leagueNameKeys.filter(league => names.some(name => league.keys.has(name)));
+  return leagueNameKeys
+    .filter(league => names.some(name => league.keys.has(name)))
+    .map(league => league.label);
+}
+
+function knownLeagueFor(player: ArchiveGamePlayer): string | null {
+  const matches = leagueNameKeys.filter(league => knownLeaguesFor(player).includes(league.label));
   if (!matches.length) return null;
 
   const profile = normaliseCultHeroAnswer([player.currentLeague, player.currentCountry].filter(Boolean).join(" "));
@@ -209,9 +215,9 @@ export function buildCultHeroMysteries(
   // the daily set whenever the loaded archive sample contains a usable record.
   const leagueOrder = [...KNOWN_LEAGUES].sort((a, b) => hash(seed + ":" + a.label) - hash(seed + ":" + b.label));
   for (const league of leagueOrder) {
-    const candidate = sorted.find(item => item.league === league.label && !used.has(item.player.id));
+    const candidate = sorted.find(item => knownLeaguesFor(item.player).includes(league.label) && !used.has(item.player.id));
     if (candidate && selected.length < count) {
-      selected.push(candidate);
+      selected.push({ ...candidate, league: league.label });
       used.add(candidate.player.id);
     }
   }
