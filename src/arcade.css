@@ -117,3 +117,57 @@
 .footle-key-row button.absent{background:#7b8178;border-color:#70766d;color:white}
 .footle-key-row button.wide-key{max-width:64px;flex:1.5;font-size:8px;letter-spacing:.04em}
 .footle-key-row button:disabled{opacity:.45;cursor:default}
+
+/* Four-by-four football grid: crest headers, flag headers and compact result tiles. */
+.football-grid-wrap.grid-four{grid-template-columns:minmax(86px,1.2fr) repeat(4,minmax(0,1fr));grid-auto-rows:minmax(92px,auto);gap:6px}
+.grid-four .grid-col-head,.grid-four .grid-row-head{display:flex;flex-direction:column;justify-content:center;gap:5px;min-width:0;padding:7px}
+.grid-four .grid-col-head span,.grid-four .grid-row-head span{font-size:8px;line-height:1.1;text-align:center;overflow-wrap:anywhere}
+.grid-four .grid-cell{min-height:92px}
+.grid-difficulty{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0}
+.grid-difficulty button{border:1px solid var(--line);background:transparent;padding:9px 12px;font-size:8px;font-weight:900;letter-spacing:.08em;cursor:pointer}
+.grid-difficulty button.active{background:var(--ai);color:var(--ap);border-color:var(--ai)}
+.grid-game-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;color:#737c69;font-size:7px;font-weight:900;letter-spacing:.08em}
+.grid-loading,.scout-loading{min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;text-align:center}
+.grid-loading>div,.scout-loading>div{font-size:30px}
+.grid-loading>b,.scout-loading>b{font:900 18px 'Barlow Condensed',sans-serif;letter-spacing:.08em}
+.grid-loading>span,.scout-loading>span{font-size:8px;color:#7b8273;font-weight:800;letter-spacing:.08em}
+.scout-target-note{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}
+.scout-target-note>span,.scout-target-note>small{font-size:7px;font-weight:900;letter-spacing:.1em;color:#77854c}
+.scout-target-note>b{font-size:9px;letter-spacing:.09em}
+.scout-target-note>small{margin-left:auto}
+.lb-loading{min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px}
+.lb-loading-ball{font-size:38px}
+.lb-loading>b{font:900 21px 'Barlow Condensed',sans-serif;letter-spacing:.09em}
+.lb-loading>p{font-size:11px;color:#727a6c}
+.lb-loading>span{font-size:7px;color:#828a7c;font-weight:900;letter-spacing:.1em}
+.lb-streak-meter{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:13px 0 2px}
+.lb-streak-meter span{padding:7px 4px;text-align:center;border-bottom:3px solid #d8d5c9;color:#9a9e91;font-size:7px;font-weight:900;letter-spacing:.08em}
+.lb-streak-meter span.on{border-color:var(--ao);color:var(--ai)}
+.lb-player i{font-size:8px;font-style:normal;color:#7c846e;font-weight:800}
+.lb-data-note{display:flex;align-items:center;gap:8px;margin-top:15px;padding-top:11px;border-top:1px solid var(--line)}
+.lb-data-note>b{white-space:nowrap;font-size:7px;letter-spacing:.08em;color:#758249}
+.lb-data-note>span{font-size:8px;color:#858a7d;line-height:1.35}
+.lb-data-note>button{border:1px solid var(--line);background:transparent;padding:6px 8px;font-size:7px;font-weight:900;white-space:nowrap}
+.strands-grid{position:relative;isolation:isolate;touch-action:none;user-select:none;-webkit-user-select:none}
+.strands-grid.is-dragging{cursor:grabbing}
+.strands-grid button{position:relative;z-index:2;touch-action:none;user-select:none;-webkit-user-select:none}
+.strands-trail{position:absolute;z-index:1;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;color:#b4d7ec;filter:drop-shadow(0 2px 1px #0002)}
+.strands-grid button.selected{background:#b9d6e6;border-color:#649ab5;box-shadow:0 0 0 3px #b9d6e688}
+.strands-drag-live{margin:10px 0 0;font-size:8px;font-weight:900;letter-spacing:.1em;text-align:center;color:#5f8eaa;animation:strandPulse .85s ease-in-out infinite alternate}
+@keyframes strandPulse{from{opacity:.5}to{opacity:1}}
+@media(max-width:620px){
+ .football-grid-wrap.grid-four{grid-template-columns:minmax(66px,.95fr) repeat(4,minmax(0,1fr));grid-auto-rows:minmax(74px,auto);gap:3px}
+ .grid-four .grid-col-head,.grid-four .grid-row-head{padding:4px;gap:3px}
+ .grid-four .grid-col-head span,.grid-four .grid-row-head span{font-size:6px}
+ .grid-four .grid-row-head .pg-club-badge{width:20px!important;height:20px!important}
+ .grid-four .grid-cell{min-height:74px;padding:3px}
+ .grid-four .grid-cell small{font-size:5px;line-height:1.1}
+ .grid-four .grid-cell b{font-size:8px;line-height:1.05}
+ .grid-difficulty{gap:4px}
+ .grid-difficulty button{flex:1;padding:8px 4px;font-size:7px}
+ .grid-game-bottom{font-size:6px}
+ .lb-data-note{align-items:flex-start;flex-wrap:wrap}
+ .lb-data-note>span{flex:1}
+ .scout-target-note{flex-wrap:wrap}
+ .scout-target-note>small{margin-left:0;width:100%}
+}
