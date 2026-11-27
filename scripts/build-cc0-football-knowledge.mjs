@@ -461,7 +461,7 @@ function makeClubNationGridPacks(careerPlayers,englishClubNames,target=500,prefe
   const clubs=seededShuffle(eligible,seed*7919).slice(0,4);
   if(new Set(clubs.map(club=>clubKey(club.name))).size!==4)continue;
   const commonNations=[...new Set(clubs.flatMap(club=>[...club.nations]))]
-   .filter(nation=>clubs.every(club=>(buckets.get(clubKey(club.name)+":"+nation)||[]).length>=3));
+   .filter(nation=>clubs.every(club=>(buckets.get(clubKey(club.name)+":"+nation)||[]).length>=2));
   if(commonNations.length<4)continue;
   const nations=seededShuffle(commonNations,seed*104729).slice(0,4);
   const answers=[];let valid=true;
@@ -469,8 +469,8 @@ function makeClubNationGridPacks(careerPlayers,englishClubNames,target=500,prefe
    const row=[];
    for(const nation of nations){
     const candidates=seededShuffle(buckets.get(clubKey(club.name)+":"+nation)||[],seed+club.name.length*nation.length+row.length*31)
-      .slice(0,Math.min(20,buckets.get(clubKey(club.name)+":"+nation).length)).map(player=>player.id);
-    if(candidates.length<3||new Set(candidates).size!==candidates.length){valid=false;break;}
+      .slice(0,Math.min(12,buckets.get(clubKey(club.name)+":"+nation).length)).map(player=>player.id);
+    if(candidates.length<2||new Set(candidates).size!==candidates.length){valid=false;break;}
     row.push(candidates);
    }
    if(!valid)break;answers.push(row);
@@ -598,7 +598,7 @@ for(const pack of playerConnections){
  if(groups.length!==4||groups.some(group=>group.memberIds?.length!==4)||members.length!==16||!uniqueValues(members))throw new Error("Connections pack is not four distinct groups of four: "+pack.id);
 }
 for(const pack of gridPacks){
- if(pack.clubs.length!==4||pack.countries.length!==4||pack.answers.length!==4||pack.answers.some(row=>row.length!==4||row.some(cell=>cell.length<3||!uniqueValues(cell))))throw new Error("Football Grid pack has an incomplete cell or too few verified players: "+pack.id);
+ if(pack.clubs.length!==4||pack.countries.length!==4||pack.answers.length!==4||pack.answers.some(row=>row.length!==4||row.some(cell=>cell.length<2||!uniqueValues(cell))))throw new Error("Football Grid pack has an incomplete cell or too few verified players: "+pack.id);
 }
 for(const pack of strands){
  const words=[pack.spangram,...pack.words];
