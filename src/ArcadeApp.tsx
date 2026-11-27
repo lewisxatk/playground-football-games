@@ -1369,144 +1369,84 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
  const [difficulty,setDifficulty]=useState<TournamentDifficulty>("STANDARD");
  const [data,setData]=useState<Awaited<ReturnType<typeof getWorldCupLineups>>|null>(null);
  const [loadError,setLoadError]=useState("");
- const [clubRows,setClubRows]=useState<Map<string,string>>(new Map());
- const [positionRows,setPositionRows]=useState<Map<string,string>>(new Map());
- const [clubsLoading,setClubsLoading]=useState(false);
- const [clubLookupError,setClubLookupError]=useState("");
- const [clubLookupAttempt,setClubLookupAttempt]=useState(0);
- const [attempts,setAttempts]=useState(0);const [ended,setEnded]=useState(false);const [won,setWon]=useState(false);const maxGuesses=5;
- const {players:archiveCareerPlayers}=useArchivePlayers(true,ARCHIVE_POOL_SEED,4200);
- const archiveCareerPool=useMemo(()=>archiveCareerPlayers.map(archivePlayerToGamePlayer),[archiveCareerPlayers]);
+ const [attempts,setAttempts]=useState(0);
+ const [ended,setEnded]=useState(false);
+ const [won,setWon]=useState(false);
+ const maxGuesses=5;
  const tournamentUsageKey="playground.tournament-nation.practice.v1";
  const [practicePlays,setPracticePlays]=useState<Record<string,number>>(()=>{
    try{const value=JSON.parse(localStorage.getItem(tournamentUsageKey)||"{}");return value&&typeof value==="object"?value:{};}catch{return {};}
  });
- useEffect(()=>{try{localStorage.setItem(tournamentUsageKey,JSON.stringify(practicePlays));}catch{/* daily cap is best effort on this device */}},[practicePlays]);
+ useEffect(()=>{try{localStorage.setItem(tournamentUsageKey,JSON.stringify(practicePlays));}catch{/* practice allowance is best effort on this device */}},[practicePlays]);
  const practiceCount=practicePlays[utcDay()]??0;
  const [practiceRunActive,setPracticeRunActive]=useState(false);
  const practiceLimitReached=mode==="practice"&&practiceCount>=5&&!practiceRunActive;
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
  const done=account.daily[utcDay()]?.["tournament-nation"]!==undefined;
  const seed=mode==="daily"?"TOURNAMENT:"+utcDay()+":"+difficulty:"TOURNAMENT:PRACTICE:"+practiceSeed+":"+difficulty;
- useEffect(()=>{let live=true;getWorldCupLineups().then(v=>{if(live)setData(v);}).catch(e=>{if(live)setLoadError(e instanceof Error?e.message:"Tournament data unavailable.");});return()=>{live=false;};},[]);
+ useEffect(()=>{
+   let live=true;
+   getWorldCupLineups().then(value=>{if(live)setData(value);}).catch(error=>{if(live)setLoadError(error instanceof Error?error.message:"Tournament data unavailable.");});
+   return()=>{live=false;};
+ },[]);
  const match=useMemo(()=>{
    if(!data?.matches.length)return null;
-   const eligible=data.matches.filter(m=>m.year>=1982&&m.year<=2022&&m.starters.length===11);
-   return eligible[hashSeed(seed+":match")%eligible.length]??null;
+   const eligible=data.matches.filter(item=>item.year>=1982&&item.year<=2022&&item.starters.length===11);
+   return eligible.length?eligible[hashSeed(seed+":match")%eligible.length]??null:null;
  },[data,seed]);
- useEffect(()=>{
-   if(!match){setClubRows(new Map());setPositionRows(new Map());setClubLookupError("");return;}
-   let live=true;setClubsLoading(true);setClubRows(new Map());setPositionRows(new Map());setClubLookupError("");
-   const useStaticFallback=()=>{
-     const clubs=new Map<string,string>(),positions=new Map<string,string>();
-     for(const name of match.starters){
-       const key=lineupNameKey(name);
-       const candidates=archiveCareerPool.filter(player=>lineupNameKey(player.name)===key);
-       const datedClubs=candidates.flatMap(player=>player.careerSpells
-         .filter(spell=>spell.club&&spell.startYear!==null&&spell.startYear<=match.year&&
-           (spell.endYear??spell.startYear)>=match.year)
-         .map(spell=>spell.club.trim()).filter(Boolean));
-       const uniqueClubs=[...new Map(datedClubs.map(club=>[normalise(club),club])).values()];
-       if(uniqueClubs.length===1)clubs.set(key,uniqueClubs[0]);
-       const roles=candidates.map(player=>{const role=positionCode(player.position);return role==="GK"?"Goalkeeper":role==="DEF"?"Defender":role==="MID"?"Midfielder":role==="FWD"?"Forward":"";}).filter(Boolean);
-       const uniqueRoles=[...new Set(roles)];
-       if(uniqueRoles.length===1)positions.set(key,uniqueRoles[0]);
-     }
-     setClubRows(clubs);setPositionRows(positions);
-     setClubLookupError(clubs.size
-       ?"Some clubs were matched from the dated static archive; records without a unique match remain hidden."
-       :"No unique club matches were found in the dated static archive for this XI.");
-   };
-   getCareerClubsAtYear(match.starters,match.year).then(records=>{
-     if(!live)return;
-     const clubs=new Map<string,string>(),positions=new Map<string,string>();
-     for(const name of match.starters){
-       const key=lineupNameKey(name),found=records.get(key)??[];
-       const distinctClubs=[...new Set(found.map(row=>row.club).filter(Boolean))];
-       const distinctPositions=[...new Set(found.map(row=>row.position).filter(Boolean))];
-       if(distinctClubs.length===1)clubs.set(key,distinctClubs[0]);
-       if(distinctPositions.length===1)positions.set(key,distinctPositions[0]);
-     }
-     for(const name of match.starters){
-       const key=lineupNameKey(name);
-       const candidates=archiveCareerPool.filter(player=>lineupNameKey(player.name)===key);
-       if(!clubs.has(key)){
-         const datedClubs=candidates.flatMap(player=>player.careerSpells
-           .filter(spell=>spell.club&&spell.startYear!==null&&spell.startYear<=match.year&&
-             (spell.endYear??spell.startYear)>=match.year)
-           .map(spell=>spell.club.trim()).filter(Boolean));
-         const uniqueClubs=[...new Map(datedClubs.map(club=>[normalise(club),club])).values()];
-         if(uniqueClubs.length===1)clubs.set(key,uniqueClubs[0]);
-       }
-       if(!positions.has(key)){
-         const roles=candidates.map(player=>{const role=positionCode(player.position);return role==="GK"?"Goalkeeper":role==="DEF"?"Defender":role==="MID"?"Midfielder":role==="FWD"?"Forward":"";}).filter(Boolean);
-         const uniqueRoles=[...new Set(roles)];
-         if(uniqueRoles.length===1)positions.set(key,uniqueRoles[0]);
-       }
-     }
-     setClubRows(clubs);setPositionRows(positions);
-     if(clubs.size<match.starters.length)setClubLookupError("Some historic clubs are missing from the archive. Only unique player-and-year matches are shown.");
-   }).catch(()=>{if(live)useStaticFallback();}).finally(()=>{if(live)setClubsLoading(false);});
-   return()=>{live=false;};
- },[match?.id,clubLookupAttempt,archiveCareerPool]);
- const teams=useMemo(()=>data?[...new Set(data.matches.map(m=>m.team).filter(Boolean))]:[],[data]);
+ const teams=useMemo(()=>data?[...new Set(data.matches.map(item=>item.team).filter(Boolean))]:[],[data]);
  const optionCount=difficulty==="EASY"?3:difficulty==="STANDARD"?4:difficulty==="HARD"?6:8;
  const options=useMemo(()=>{
-   if(!match)return [];
+   if(!match)return[];
    const wrong=teams.filter(team=>team!==match.team);
    return shuffle([match.team,...shuffle(wrong,hashSeed(seed+":wrong")).slice(0,optionCount-1)],hashSeed(seed+":options"));
  },[match,teams,seed,optionCount]);
  const clueCount=difficulty==="EASY"?11:difficulty==="STANDARD"?9:difficulty==="HARD"?7:5;
- const clueNames=match?.starters??[];
- const visibleClueCount=clueNames.slice(0,clueCount).filter(name=>clubRows.has(lineupNameKey(name))).length;
  const lineupGroups=useMemo(()=>{
-   if(!match)return [] as {name:string;index:number;role:string;club:string;showClue:boolean}[][];
-   const players=match.starters.map((name,index)=>({
-     name,index,role:positionRows.get(lineupNameKey(name))??"",
-     club:clubRows.get(lineupNameKey(name))??"",showClue:index<clueCount
-   }));
-   const roles=["keeper","defence","midfield","forwards"] as const;
-   const grouped=roles.map(role=>players.filter(p=>tournamentPositionGroup(p.role)===role));
-   const roleCount=grouped.reduce((count,row)=>count+row.length,0);
-   const valid=roleCount===11&&grouped[0].length===1&&grouped[1].length>=3&&grouped[1].length<=5&&grouped[2].length>=2&&grouped[2].length<=5&&grouped[3].length>=1&&grouped[3].length<=4;
-   return valid?grouped:[players.slice(0,1),players.slice(1,5),players.slice(5,8),players.slice(8,11)];
- },[match?.id,positionRows,clubRows,clueCount]);
- const positionsVerified=Boolean(match&&match.starters.every(name=>Boolean(positionRows.get(lineupNameKey(name))))&&
-   lineupGroups[0]?.length===1&&lineupGroups[1]?.length>=3&&lineupGroups[1]?.length<=5&&lineupGroups[2]?.length>=2&&lineupGroups[2]?.length<=5&&lineupGroups[3]?.length>=1);
+   if(!match)return [] as {name:string;index:number;showClue:boolean}[][];
+   const players=match.starters.map((name,index)=>({name,index,showClue:index<clueCount}));
+   return [players.slice(0,4),players.slice(4,8),players.slice(8,11)];
+ },[match?.id,clueCount]);
+ const visibleClueCount=match?Math.min(clueCount,match.starters.length):0;
  const choose=(team:string)=>{
-   if(ended||!match)return;const tries=attempts+1;setAttempts(tries);
-   if(team===match.team){setWon(true);setEnded(true);setPracticeRunActive(false);if(mode==="daily")onDaily("tournament-nation",Math.max(150,1000-(tries-1)*220));}
-   else if(tries>=maxGuesses){setWon(false);setEnded(true);setPracticeRunActive(false);if(mode==="daily")onDaily("tournament-nation",0);}
+   if(ended||!match)return;
+   const tries=attempts+1;setAttempts(tries);
+   if(team===match.team){
+     setWon(true);setEnded(true);setPracticeRunActive(false);
+     if(mode==="daily")onDaily("tournament-nation",Math.max(150,1000-(tries-1)*220));
+   }else if(tries>=maxGuesses){
+     setWon(false);setEnded(true);setPracticeRunActive(false);
+     if(mode==="daily")onDaily("tournament-nation",0);
+   }
  };
  const reset=(newMode:Mode=mode,newDifficulty:TournamentDifficulty=difficulty)=>{
    setDifficulty(newDifficulty);setAttempts(0);setEnded(false);setWon(false);setPracticeRunActive(false);
-   if(newMode==="practice"&&(practicePlays[utcDay()]??0)<5){setPracticePlays(old=>({...old,[utcDay()]:Math.min(5,(old[utcDay()]??0)+1)}));setPracticeRunActive(true);setPracticeSeed(String(Math.floor(Math.random()*1e12)));}
+   if(newMode==="practice"&&(practicePlays[utcDay()]??0)<5){
+     setPracticePlays(old=>({...old,[utcDay()]:Math.min(5,(old[utcDay()]??0)+1)}));
+     setPracticeRunActive(true);setPracticeSeed(String(Math.floor(Math.random()*1e12)));
+   }
  };
- return <Frame account={account} game="tournament-nation" eyebrow="WORLD CUP ARCHIVE / STARTING XI" title="TOURNAMENT NATION." description="Identify the country from a full historic World Cup starting XI. Each shirt gives you a club clue from that tournament year." number="15" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
- {done&&mode==="daily"?<Success title="NATION IDENTIFIED." detail="Today's tournament challenge is complete. Five practice runs are also available each day." button="PRACTICE" onAgain={()=>{setMode("practice");reset("practice");}}/>:
+ return <Frame account={account} game="tournament-nation" eyebrow="WORLD CUP ARCHIVE / STARTING XI" title="TOURNAMENT NATION." description="Identify the country from a historic World Cup starting XI. Reveal a few player names, use the match context, and work out the team." number="15" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
+ {done&&mode==="daily"?<Success title="NATION IDENTIFIED." detail="Today's tournament challenge is complete. Five CC0 World Cup practice runs are also available each day." button="PRACTICE" onAgain={()=>{setMode("practice");reset("practice");}}/>:
   practiceLimitReached?<Card className="arc-result"><small>DAILY PRACTICE LIMIT</small><h2>FIVE MATCHES PLAYED.</h2><p>You have used all five free Tournament Nation practice runs today. The allowance resets at 00:00 GMT.</p></Card>:
-  loadError?<Card className="arc-feedback"><b>TOURNAMENT DATA UNAVAILABLE</b><p>{loadError}</p><button className="arc-button" onClick={()=>{setLoadError("");getWorldCupLineups().then(setData).catch(e=>setLoadError(String(e)));}}>RETRY DATA ↗</button></Card>:
+  loadError?<Card className="arc-feedback"><b>TOURNAMENT DATA UNAVAILABLE</b><p>{loadError}</p><button className="arc-button" onClick={()=>{setLoadError("");getWorldCupLineups().then(setData).catch(error=>setLoadError(String(error)));}}>RETRY DATA ↗</button></Card>:
   !match||!data?<Card className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>OPENING THE WORLD CUP ARCHIVE</b><span>Loading 1982–2022 starting line-ups.</span></Card>:
   <Card className="tournament-game">
    <div className="arc-game-meta"><span>FIFA WORLD CUP · {match.year}</span><b>{maxGuesses-attempts} GUESSES LEFT · {mode==="practice"?Math.max(0,5-practiceCount)+" RUNS LEFT TODAY":"DAILY GAME"}</b></div>
    <div className="grid-difficulty">{TOURNAMENT_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{difficultyLabel(level)}</button>)}</div>
    <div className="tournament-match"><div><small>TOURNAMENT</small><b>FIFA WORLD CUP {match.year}</b></div><div><small>ROUND</small><b>{match.round||"MATCH"}</b></div><div><small>OPPONENT</small><b>{match.opponent}</b></div><div><small>DATE</small><b>{match.date}</b></div></div>
-   <div className="tournament-pitch"><div className="tournament-pitch-lines"><i/><i/><i/></div>
-    <div className="tournament-xi-rows">{lineupGroups.map((row,rowIndex)=><div className={"tournament-xi-row "+["keeper","defence","midfield","forwards"][rowIndex]} key={rowIndex}>
-     {row.map(({name,index,role,club,showClue})=><motion.div className="tournament-shirt" key={name} initial={{opacity:0,y:10,scale:.9}} animate={{opacity:1,y:0,scale:1}} transition={{delay:index*.018}}>
+   <div className="tournament-pitch">
+    <div className="tournament-pitch-lines"><i/><i/><i/></div>
+    <div className="tournament-xi-rows">{lineupGroups.map((row,rowIndex)=><div className="tournament-xi-row" key={rowIndex}>
+     {row.map(({name,index,showClue})=><motion.div className="tournament-shirt" key={name} initial={{opacity:0,y:10,scale:.9}} animate={{opacity:1,y:0,scale:1}} transition={{delay:index*.018}}>
        <div className="shirt-shape"><b>{String(index+1).padStart(2,"0")}</b></div>
-       <div className="shirt-club">
-        {showClue&&club?<><ClubBadge name={club} size={22}/><small>{club}</small></>:
-         <small>{showClue?(clubsLoading?"LOOKING UP CLUB":"CLUB NOT RECORDED"):"CLUE HIDDEN"}</small>}
-        {role&&<i className="shirt-position">{role}</i>}
-       </div>
+       <div className="shirt-club">{showClue?<small>{name}</small>:<small>CLUE HIDDEN</small>}</div>
       </motion.div>)}
     </div>)}</div>
-    <div className="tournament-xi-caption"><span>FULL STARTING XI / 11 PLAYERS</span><span>{visibleClueCount} / {Math.min(clueCount,match.starters.length)} CLUBS MATCHED / {match.year}</span></div>
+    <div className="tournament-xi-caption"><span>FULL STARTING XI / 11 PLAYERS</span><span>{visibleClueCount} / 11 PLAYER NAMES REVEALED</span></div>
    </div>
-   {clubLookupError&&<div className="arc-feedback"><b>{clubRows.size?"PARTIAL CLUB ARCHIVE MATCHING":"CLUB ARCHIVE MATCHING UNAVAILABLE"}</b><p>{clubLookupError} No unverified club names have been substituted.</p><button className="arc-quiet" onClick={()=>setClubLookupAttempt(value=>value+1)}>RETRY CLUB MATCHING ↻</button></div>}
-   <p className="arc-muted">{positionsVerified?"Rows use the archive's broad player-position profiles; these are not confirmed match-day coordinates.":"The source supplies the starting eleven but not reliable match-day positions. The shirts use a clearly marked schematic 4-3-3 until enough profile positions are available."} Only exact player-name/year club matches are shown; missing clubs stay unrecorded.</p>
-   {!ended?<><div className="tournament-options">{options.map(team=><button key={team} onClick={()=>choose(team)}>{team}<i>↗</i></button>)}</div><div className="arc-game-foot"><span>{difficulty} · {optionCount} NATIONAL TEAMS</span><span>{visibleClueCount} MATCHED / {Math.min(clueCount,match.starters.length)} CLUE SLOTS</span></div></>:
+   <p className="arc-muted">All eleven starters, match date, opponent and tournament round come from the CC0 World Cup line-up source. No inferred club history or match-day position clues are used.</p>
+   {!ended?<><div className="tournament-options">{options.map(team=><button key={team} onClick={()=>choose(team)}>{team}<i>↗</i></button>)}</div><div className="arc-game-foot"><span>{difficulty} · {optionCount} NATIONAL TEAMS</span><span>{visibleClueCount} PLAYER NAMES VISIBLE</span></div></>:
     <div className="arc-feedback"><b>{won?"YOU GOT THE NATION.":"THE NATION WAS "+match.team.toUpperCase()+"."}</b><p>{match.team} started against {match.opponent} at the {match.round} stage of the {match.year} World Cup.</p><button className="arc-button" onClick={()=>reset(mode)}>NEXT TOURNAMENT ↗</button></div>}
   </Card>}
  </Frame>;
