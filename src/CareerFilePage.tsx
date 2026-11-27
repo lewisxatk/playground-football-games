@@ -56,9 +56,10 @@ function archivePlayerToCareerFile(raw:ArchiveGamePlayer):Player{
 function archivePlayerCandidate(player:Player,raw:ArchiveGamePlayer):Candidate{
  const country=clean(raw.currentCountry??"");
  const league=clean(raw.currentLeague??"");
- const region:Candidate["region"]=country.includes("england")||country.includes("united kingdom")||league.includes("premier league")?"ENGLISH":
-   ["spain","italy","germany","france"].some(value=>country.includes(value))||
-   ["laliga","seriea","bundesliga","ligue1"].some(value=>league.includes(value))?"INTERNATIONAL":undefined;
+ const englishLeague=["premierleague","championship","leagueone","leaguetwo","nationalleague","englishfootball","efl","fa"].some(value=>league.replace(/[^a-z]/g,"").includes(value));
+ const region:Candidate["region"]=country.includes("england")||englishLeague?"ENGLISH":
+   country.includes("united kingdom")||country.includes("great britain")||country==="uk"||country==="gb"||
+   Boolean(country||league)?"INTERNATIONAL":undefined;
  return {
    id:player.id,
    name:player.name,
