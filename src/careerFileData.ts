@@ -121,6 +121,13 @@ export type ArchiveGamePlayer = {
   leagueAppearances: number;
   leagueGoals: number;
   leagueGoalSeasons: number;
+  leagueAssists?: number;
+  leagueAssistSeasons?: number;
+  fullName?: string;
+  birthPlace?: string;
+  heightCm?: number | null;
+  careerAppearanceRows?: number;
+  careerGoalRows?: number;
   seasons: number;
   firstYear: number | null;
   lastYear: number | null;
@@ -306,16 +313,20 @@ export async function getPlayer(id: string): Promise<Player> {
     "FROM stat_club WHERE player_qid=? AND coalesce(competition_group,'')<>'Total' GROUP BY club,club_link,club_qid,season", [id]);
   const profile = await a.query("SELECT * FROM player_profile WHERE player_qid=? LIMIT 1", [id]);
   const birth = await a.query("SELECT birth_date,precision FROM birth WHERE player_qid=? LIMIT 1", [id]);
-  const national = await a.query("SELECT SUM(caps) caps,SUM(goals) goals,list(team_name) teams FROM national WHERE player_qid=?", [id]);
-  // Position and nationality are optional profile clues. Never scan every season squad file
-  // just to populate them; those files are intentionally excluded from the initial load.
+  const national = await a.query("SELECT SUM(caps) caps,SUM(goals) goals,list(team_name) teams, " +
+    "arg_max(team_name,caps) FILTER (WHERE NOT regexp_matches(team_name,'(?i)\\bU(1[789]|2[0-3])\\b')) AS senior_team " +
+    "FROM national WHERE player_qid=?", [id]);
+  const squadInfo = await a.query("SELECT arg_max(position,try_cast(substr(season,1,4) AS INTEGER)) AS position, " +
+    "arg_max(nationality,try_cast(substr(season,1,4) AS INTEGER)) AS nationality " +
+    "FROM squad WHERE player_qid=?", [id]);
   if (!spells.length) throw new Error("No usable career record for this player. Try the next file.");
-  const first = spells[0], info = profile[0] ?? {}, dob = birth[0] ?? {}, intl = national[0] ?? {};
+  const first = spells[0], info = profile[0] ?? {}, dob = birth[0] ?? {}, intl = national[0] ?? {}, squad = squadInfo[0] ?? {};
   const source = String(first.source_title ?? "");
   const revision = n(first.source_revid);
   return {
     id, name: String(first.player ?? "Unknown"), fullName: String(info.full_name ?? first.player ?? "Unknown"),
-    nationality: String(info.nationality ?? (Array.isArray(intl.teams) ? intl.teams[0] : "") ?? ""), position: String(info.position ?? ""),
+    nationality: String(squad.nationality ?? intl.senior_team ?? ""),
+    position: String(squad.position ?? ""),
     height: n(info.height_cm), birthDate: String(dob.birth_date ?? ""), birthPrecision: n(dob.precision),
     birthplace: String(info.birth_place ?? ""),
     spells: spells.map((r: any) => ({ seq: Number(r.seq ?? 0), years: String(r.years_raw ?? ""),
@@ -452,14 +463,15 @@ export async function getCareerClubsAtYear(names:string[],year:number):Promise<M
   const values=unique.map(()=>"(?)").join(",");
   const rows=await archive.query(
     "WITH wanted(name_key) AS (VALUES "+values+"), profile AS ("+
-    " SELECT player_qid,any_value(position) AS position FROM player_profile GROUP BY player_qid"+
+    " SELECT player_qid,arg_max(position,try_cast(substr(season,1,4) AS INTEGER)) AS position "+
+    " FROM squad WHERE try_cast(substr(season,1,4) AS INTEGER) BETWEEN ? AND ? GROUP BY player_qid"+
     ") "+
     "SELECT cr.player,cr.club_name,cr.start_year,cr.end_year,coalesce(profile.position,'') AS position "+
     "FROM career cr JOIN wanted w ON regexp_replace(strip_accents(lower(cr.player)),'[^a-z0-9]','','g')=w.name_key "+
     "LEFT JOIN profile ON profile.player_qid=cr.player_qid "+
     "WHERE coalesce(cr.start_year,0)<=? AND coalesce(cr.end_year,cr.start_year,0)>=? "+
     "ORDER BY cr.player_qid,cr.start_year,cr.seq",
-    [...unique,year,year]
+    [...unique,year-1,year+1,year,year]
   );
   for(const row of rows){
     const player=String(row.player??"");
