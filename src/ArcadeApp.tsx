@@ -983,7 +983,8 @@ export function ArcadeApp(){
   "missing-xi":<MissingXIPage account={account} onDaily={onDaily}/>,
   "strands":<StrandsPage account={account} onDaily={onDaily}/>,
   "scout-signal":<ScoutSignalPage account={account} onDaily={onDaily}/>,
-  "tournament-nation":<TournamentNationPage account={account} onDaily={onDaily}/>
+  "tournament-nation":<TournamentNationPage account={account} onDaily={onDaily}/>,
+  "timed-quiz":<QuickQuizPage account={account} onDaily={onDaily}/>
  };
  return pages[path]??<HomePage account={account}/>;
 }
