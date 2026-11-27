@@ -56,7 +56,7 @@ The current bank contains **100 question records** with this difficulty balance:
 | World Cup and EURO | 16 | 16% |
 | Other Big Five leagues | 10 | 10% |
 
-The database currently contains 39 distinct source URLs. Every record retains its own source URL and the date it was checked.
+The database currently contains 44 distinct source URLs. Every record retains its own source URL and the date it was checked.
 
 The bank includes straightforward entry questions alongside more distinctive details: early Premier League milestone goals, Portsmouth 7-4 Reading, the 1993 Wimbledon attendance record, a Barnsley play-off final moment, the first FA Cup final's scorer and playing alias, the 2005 Champions League final comeback, and unusual EFL/Bundesliga records.
 
