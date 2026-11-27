@@ -1,6 +1,6 @@
 # CC0 Football Knowledge Engine
 
-Generated game shards: `public/data/football-knowledge-*.cc0.json` (lazy-loaded per game; the 83 MB monolithic file is no longer served)
+Generated master and game shards: `public/data/football-knowledge-*.cc0.json` (lazy-loaded per game; no 83 MB monolithic file is served). The checksummed index is `public/data/football-knowledge-manifest.cc0.json` and the QA summary is `public/data/football-knowledge-report.json`.
 Machine-readable QA report: `public/data/football-knowledge-report.json`
 Builder: `scripts/build-cc0-football-knowledge.mjs`
 Workflow: `.github/workflows/build-cc0-football-knowledge.yml`
