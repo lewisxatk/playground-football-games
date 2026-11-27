@@ -99,9 +99,11 @@ async function loadStaticPlayerShard(seed:string,limit:number):Promise<ArchiveGa
   const payloads=await Promise.all(selected.map(async shard=>{
     const response=await fetch("/data/player-shards/"+shard.file,{cache:"force-cache"});
     if(!response.ok)throw new Error("Static player shard could not be loaded ("+response.status+").");
-    const rows=await response.json() as ArchiveGamePlayer[];
-    if(!Array.isArray(rows)||rows.length!==shard.count)
-      throw new Error("Static player shard count does not match its index.");
+    const payload=await response.json() as {source?:string;releaseTag?:string;licence?:string;players?:ArchiveGamePlayer[]};
+    const rows=payload.players;
+    if(payload.source!=="OpenFootballBase-Data"||payload.releaseTag!==index.sourceRelease||
+      payload.licence!=="CC BY-SA 4.0"||!Array.isArray(rows)||rows.length!==shard.count)
+      throw new Error("Static player shard payload does not match its verified index.");
     return rows;
   }));
   const all=payloads.flat();
