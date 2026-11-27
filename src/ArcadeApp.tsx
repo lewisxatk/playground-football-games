@@ -761,14 +761,14 @@ const MISSING_FORMATION:{group:"keeper"|"defence"|"midfield"|"forwards";players:
 ];
 const MISSING_OPTIONS=["Carlos Tévez","Ryan Giggs","Nani","Anderson"];
 function MissingXIPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
- const [mode,setMode]=useMode();const [chosen,setChosen]=useState("");const [attempts,setAttempts]=useState(0);const [end,setEnd]=useState(false);const [won,setWon]=useState(false);
+ const [mode,setMode]=useMode();const [attempts,setAttempts]=useState(0);const [end,setEnd]=useState(false);const [won,setWon]=useState(false);
  const correct="Carlos Tévez";const done=account.daily[utcDay()]?.["missing-xi"]!==undefined;
  const answer=(value:string)=>{
-   if(end)return;const next=attempts+1;setAttempts(next);setChosen(value);
+   if(end)return;const next=attempts+1;setAttempts(next);
    if(normalise(value)===normalise(correct)){setWon(true);setEnd(true);if(mode==="daily")onDaily("missing-xi",Math.max(200,1000-(next-1)*250));}
    else if(next>=3){setEnd(true);if(mode==="daily")onDaily("missing-xi",0);}
  };
- const restart=()=>{setChosen("");setAttempts(0);setEnd(false);setWon(false);};
+ const restart=()=>{setAttempts(0);setEnd(false);setWon(false);};
  return <Frame account={account} game="missing-xi" eyebrow="HISTORIC LINE-UP / FIND THE NUMBER 32" title="MISSING XI." description="One player has been removed from Manchester United's official 2008 Champions League final starting formation. Fill the shirt." number="12" mode={mode} setMode={m=>{setMode(m);restart();}}>
  {done&&mode==="daily"?<Success title="LINE-UP COMPLETE." detail="Today's historical starting XI is complete. Practice is unlimited." button="PRACTICE XI" onAgain={()=>{setMode("practice");restart();}}/>:
   <Card className="missing-game">
