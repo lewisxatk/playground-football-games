@@ -2,6 +2,11 @@
 
 A distinctive home for quick-fire football games, challenges and daily competitions.
 
+
+## CC0 football knowledge database
+
+The live game content is built from pinned CC0 sources and Wikidata's CC0 structured data. The generated database is split into lazy-loaded files under `public/data/`; see the [content report](public/data/football-knowledge-report.json), [checksummed shard manifest](public/data/football-knowledge-manifest.cc0.json), and [source/accuracy notes](docs/CC0_FOOTBALL_KNOWLEDGE_ENGINE.md). Each static data shard is kept below Cloudflare Pages' 25 MiB per-file limit.
+
 ## Principles
 - Preserve the existing game rules and behaviour when integrating the games.
 - Give the platform a recognisable editorial identity rather than a generic AI-template look.
