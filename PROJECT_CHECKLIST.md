@@ -21,7 +21,7 @@
 - [x] Sixteen game routes and a 16-tile home directory exist: Lowball, The Climb, Draft XI, Career File, Footle, Connections, Football Grid, Ladder, The Reveal, Football 501, Link Up, Missing XI, Football Strands, Scout Signal, Tournament Nation and The Quick Quiz.
 - [x] The shared home/menu/navigation shell, unique per-game colour palettes and display-heading fonts, responsive layouts and Motion/CSS/SVG animation system are implemented.
 - [x] Main arcade body text now uses the loaded Space Grotesk font; the dedicated Career File screen also uses Space Grotesk. Career File mobile input/select/textarea controls now have a 16px minimum to prevent iOS Safari focus zoom.
-- [x] A local Locker Room profile records nickname, daily results, totals and streaks in browser localStorage. This is a local device/browser save, not a synced account.
+- [x] A local Locker Room profile records nickname, daily results, totals and streaks in browser localStorage. JSON export/restore can move that local player card between devices; this is still not live account sync.
 - [x] Daily challenges use UTC date seeds; practice runs use separate session seeds and do not award daily streak credit.
 - [x] The shared archive-backed game pool is connected to Lowball, The Climb, Draft XI, Footle, Connections, Football Grid, Ladder, The Reveal, Football 501, Link Up, Football Strands, The Quick Quiz and Scout Signal. Career File uses its own bounded candidate/profile flow; Tournament Nation and Missing XI use the tournament dataset plus historical career lookups.
 - [x] Each archive-driven practice session uses a fresh seeded cached player sample; the daily pool keeps a stable shared seed. Pools are cached in memory and IndexedDB for seven days.
@@ -223,7 +223,7 @@
 - [~] Daily/practice modes exist across current games, but verify every game banks once only, daily puzzle is deterministic and practice never modifies streak.
 - [ ] Persist recent practice targets locally so refreshes do not immediately repeat a player/puzzle.
 - [ ] Add a calendar/history and best scores/streak record.
-- [ ] Add export/restore local save so a user can move the local profile to another device before cloud accounts exist.
+- [x] Export/restore local save is implemented: the Locker Room exports a versioned JSON backup and validates/imports it on another device. It replaces the current local save; cloud sync remains separate.
 - [ ] Add optional cross-device account sync later, with authentication and server-side persistence; do not imply localStorage is a cloud account.
 - [ ] Test daylight-saving transitions, date changes while a tab is open, multiple games finished on same day and offline storage failure.
 
@@ -393,7 +393,7 @@ At the end of every implementation update:
 4. Carry out a real iPhone Safari and desktop test pass for every game route, focusing on input zoom, scrolling, drag behaviour, loading states, colour contrast and timer behaviour.
 5. Build the head-to-head Games Room as a separate Cloudflare Durable Objects/WebSockets service only after solo rounds and their answer sources are stable; server-authoritative score/timer state and two-device testing are mandatory.
 
-## 14. Latest continuation batch (2026-11-27, 09:40 UTC)
+## 15. Latest continuation batch (2026-11-27, 09:40 UTC)
 
 - [x] Home scoreboard and tile artwork now reflect all 16 game routes (not the former 14); commit `115f281e188e447de6a9f2cd0095d003ec200d7c`, CI run [45975054441](https://github.com/lewisxatk/playground-football-games/actions/runs/45975054441), Pages deployment completed.
 - [x] All 13 archive-driven game hooks now keep the same deterministic pool for Daily, but use a different seed for each Practice run. Each seed uses the existing seven-day IndexedDB cache. This enables fresh 1,600-player slices from different archive samples over repeat sessions, rather than always returning the same fixed 1,600 players. Commit `e8476533890e0cc3276ef0b4ac5197b6fa3af88b`, CI run [45975163359](https://github.com/lewisxatk/playground-football-games/actions/runs/45975163359), Cloudflare production deployment completed in later build sequence.
