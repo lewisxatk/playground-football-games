@@ -19,7 +19,7 @@ function parseCsv(text){
 
 async function parseInternationalResults(){
  const rows=parseCsv(await readFile(resolve(IR,"results.csv"),"utf8")),map=new Map();
- for(const row of rows){const date=row.date,home=row.home_team,away=row.away_team,homeScore=Number(row.home_score),awayScore=Number(row.away_score),tournament=row.tournament;if(!date||!home||!away||row.home_score===""||row.away_score===""||!Number.isInteger(homeScore)||!Number.isInteger(awayScore)||!tournament)continue;const key=[date,norm(home),norm(away),norm(tournament)].join("|");if(map.has(key))continue;map.set(key,{id:id("international-match",key),date,year:Number(date.slice(0,4)),home,away,homeScore,awayScore,tournament,city:row.city,country:row.country,neutral:String(row.neutral).toLowerCase()==="true",source:SOURCES.internationalResults})}
+ for(const row of rows){const date=row.date,home=row.home_team,away=row.away_team,homeScore=Number(row.home_score),awayScore=Number(row.away_score),tournament=row.tournament;if(!date||!home||!away||row.home_score===""||row.away_score===""||!Number.isInteger(homeScore)||!Number.isInteger(awayScore)||!tournament)continue;const key=[date,norm(home),norm(away),norm(tournament)].join("|");if(map.has(key))continue;map.set(key,{id:id("international-match",key),date,year:Number(date.slice(0,4)),home,away,homeScore,awayScore,tournament,city:row.city,country:row.country,neutral:String(row.neutral).toLowerCase()==="true",sourceKey:"internationalResults",sourceFile:"results.csv"})}
  return [...map.values()].sort((a,b)=>a.date.localeCompare(b.date));
 }
 
@@ -60,7 +60,7 @@ async function parseEnglishMatches(){
    if(!home||!away||homeScore>30||awayScore>30)continue;
    const key=[competition,seasonStart,currentDate,norm(home),norm(away)].join("|");if(records.has(key))continue;
    const sourceRow=rel+":"+String(lineIndex+1);
-   records.set(key,{id:id("english-match",key),date:currentDate,year:Number(currentDate.slice(0,4)),home,away,homeScore,awayScore,tournament:competition+" "+seasonStart+"/"+String(seasonEnd).slice(-2),competition,season:seasonStart+"/"+String(seasonEnd).slice(-2),region:"UK",neutral:false,source:SOURCES.england,sourceFile:rel,sourceRow});
+   records.set(key,{id:id("english-match",key),date:currentDate,year:Number(currentDate.slice(0,4)),home,away,homeScore,awayScore,tournament:competition+" "+seasonStart+"/"+String(seasonEnd).slice(-2),competition,season:seasonStart+"/"+String(seasonEnd).slice(-2),region:"UK",neutral:false,sourceKey:"england",sourceFile:rel,sourceRow});
   }
  }
  return [...records.values()].sort((a,b)=>a.date.localeCompare(b.date)||a.competition.localeCompare(b.competition)||a.home.localeCompare(b.home));
@@ -78,7 +78,7 @@ async function parseInternationalGoals(players){
   const penalty=["true","1","yes"].includes(String(row.penalty||"").trim().toLowerCase());
   const eventKey=[date,norm(home),norm(away),norm(team),norm(scorer),minute,String(penalty),String(ownGoal)].join("|");
   if(events.has(eventKey)){duplicates++;continue;}events.add(eventKey);
-  goalEvents.push({id:id("international-goal-event",eventKey),date,year:Number(date.slice(0,4)),home,away,team,scorer,minute,penalty,ownGoal,eligibleForScorerTotals:!ownGoal,source:SOURCES.internationalResults});
+  goalEvents.push({id:id("international-goal-event",eventKey),date,year:Number(date.slice(0,4)),home,away,team,scorer,minute,penalty,ownGoal,eligibleForScorerTotals:!ownGoal,sourceKey:"internationalResults"});
   if(ownGoal){ownGoals++;continue;}
   accepted++;
   let player=aliases.get(norm(scorer));
@@ -132,7 +132,7 @@ function buildInternationalQuiz(matches){
   const options=[answer,...distractors].sort((a,b)=>createHash("sha256").update(match.id+a).digest("hex").localeCompare(createHash("sha256").update(match.id+b).digest("hex")));
   const tier=match.year>=2000?"EASY":match.year>=1980?"MEDIUM":match.year>=1950?"HARD":"EXTREME";
   const region=match.region??(ukTeams.has(norm(match.home))||ukTeams.has(norm(match.away))?"UK":"INTERNATIONAL");
-  return{id:id("international-question",match.id),factId:match.id,playerId:match.id,tier,region,category:match.tournament,question:"What score was recorded when "+match.home+" played "+match.away+" on "+match.date+" in "+match.tournament+"?",answer,options,explanation:match.home+" "+answer.replace("-", "–")+" "+match.away+". Penalty shoot-out scores are not included.",source:(match.source?.url??SOURCES.internationalResults.url)+"/blob/"+(match.source?.commit??SOURCES.internationalResults.commit)+"/"+(match.sourceFile??match.source?.file??"results.csv"),matchId:match.id,eventDate:match.date};
+  return{id:id("international-question",match.id),factId:match.id,playerId:match.id,tier,region,category:match.tournament,question:"What score was recorded when "+match.home+" played "+match.away+" on "+match.date+" in "+match.tournament+"?",answer,options,explanation:match.home+" "+answer.replace("-", "–")+" "+match.away+". Penalty shoot-out scores are not included.",source:(match.sourceKey==="england"?SOURCES.england:SOURCES.internationalResults).url+"/blob/"+(match.sourceKey==="england"?SOURCES.england:SOURCES.internationalResults).commit+"/"+(match.sourceFile??"results.csv"),matchId:match.id,eventDate:match.date};
  }).filter(Boolean);
  const uk=questions.filter(q=>q.region==="UK").sort((a,b)=>a.id.localeCompare(b.id));
  const international=questions.filter(q=>q.region==="INTERNATIONAL").sort((a,b)=>a.id.localeCompare(b.id));
@@ -359,7 +359,7 @@ const internationalQuiz=buildInternationalQuiz(allMatches);
 const internationalGoals=await parseInternationalGoals(players);
 const internationalGoalPacks=makeInternationalGoalPacks(internationalGoals.scorers);
 const lineupData=JSON.parse(await readFile(resolve(ROOT,"public/data/worldcup-lineups.json"),"utf8"));
-const lineups=(lineupData.matches||[]).filter(m=>m?.id&&m.team&&m.opponent&&Number.isInteger(m.year)&&Array.isArray(m.starters)&&m.starters.length===11&&new Set(m.starters.map(norm)).size===11).map(match=>({...match,source:SOURCES.worldCup}));
+const lineups=(lineupData.matches||[]).filter(m=>m?.id&&m.team&&m.opponent&&Number.isInteger(m.year)&&Array.isArray(m.starters)&&m.starters.length===11&&new Set(m.starters.map(norm)).size===11).map(match=>({...match,sourceKey:"worldCup"}));
 
 const playerIndex=new Map(players.map(player=>[norm(player.name),player]));
 const playerById=new Map(players.map(player=>[player.id,player]));
@@ -423,7 +423,8 @@ const gridPlayers=players.filter(player=>gridIds.has(player.id));
 const positionPlayerRows=positionPlayers.map(p=>({id:p.id,name:p.name,aliases:p.aliases||[],positions:p.positions,nationalities:p.nationalities,birthYears:p.birthYears,worldCupYears:p.worldCupYears||[],internationalGoalsRecorded:p.internationalGoalsRecorded??0,worldCupStarts:p.worldCupStarts??0,source:p.source}));
 const shards={
  core:{...common,players,clubs},
- matches:{...common,matches:allMatches,internationalMatches,englishMatches},
+ matches:{...common,matches:internationalMatches},
+ "english-matches":{...common,matches:englishMatches},
  "goal-events":{...common,events:internationalGoals.events,scorers:internationalGoals.scorers},
  "world-cup":{...common,lineups,questions:validQuiz,playerCards:[...cards.values()]},
  footle:{...common,answers:uniqueFootleAnswers},
