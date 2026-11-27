@@ -35,7 +35,8 @@ Rule: after every successful GitHub commit, update this checklist in the next co
 
 ## Database and quality
 - [ ] Audit CC0 source manifests, licences, stable IDs, provenance, deduplication and generated shard counts.
-- [x] Add Football Grid generator diagnostics and expand the eligible English-club search from 48 to 80 clubs. Commit: `3fa6e5da15`; generation result still pending because its first workflow run was cancelled by later pushes.
+- [x] Add Football Grid generator diagnostics and expand the eligible English-club search from 48 to 80 clubs. Commit: `3fa6e5da15`.
+- [x] Fix the underlying nationality-coverage gap: query Wikidata P27 nationalities, retain all returned nationalities per player, and bucket English-club spells against every recorded nationality. Commit: `2713f3da46`; the next full build must confirm this produces at least 500 valid grids.
 - [ ] Check for duplicate or contradictory question facts across all game pools.
 - [ ] Confirm no invented facts, unsupported club memberships, misleading international labels or incorrect answer choices.
 - [ ] Update validators to enforce the intended English-first allocation and game-specific data invariants.
@@ -60,6 +61,8 @@ Latest completed commits:
 
 Latest relevant implementation commits: `eea008d3bf59c9daf18b968ceb525974301fd4ba` (archive-backed Premier League Grid player pool); `f7d6f36f0e09949347ece76749a2660a68f0322b` (Grid retry handler). `6de5c53f6e4e3f1e418020bf136a543239927f1d` (club suffix normalisation fix). `199a453e743fc5af6eda18d97fed2cfc99a56250` (Link Up attempt/extra-life flow); `61c7a1f4d03dd02a743d5718ffd9396852c268d6` (Football Grid unique-solution feasibility).
 Latest completed football-content validation: success on `d99d59ea3f545c41a2d7558654a406587cfa4fec`; rerun after the Link Up fix.
-The full CC0 database build previously failed at canonical generation with `Football Grid packs below 500: 0`. A diagnostic/wider-club-search patch is committed as `3fa6e5da15`; a run for a newer head is pending. Several database-build runs were cancelled by newer pushes, so do not call the build verified until a non-cancelled successful run is observed.
+The full CC0 database build previously failed at canonical generation with `Football Grid packs below 500: 0`. Diagnostics showed 7,171 career players but only 779 with a nationality and only 2 English clubs meeting the four-nationality threshold. Commit `2713f3da46` enriches career profiles with Wikidata P27 nationality statements and uses all nationalities per player. The next full build must confirm grid pack generation and then complete data validation + site build. Several database-build runs were cancelled by newer pushes; do not call the build verified until a non-cancelled successful run is observed.
 
-Next action: poll the latest GitHub Actions runs, fix any failures, then audit each implemented game and run the full typecheck/validation/build suite.
+Latest data-generator fix: `2713f3da463fe81e8a77846980ac71da0e51d0a7`.
+
+Next action: poll the latest GitHub Actions build, inspect Football Grid pack counts and fix any remaining failures, then audit each implemented game and run the full typecheck/validation/build suite.
