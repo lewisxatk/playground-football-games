@@ -141,6 +141,8 @@ const nationRegions = [
 ].map(group => new Set(group.map(normalise)));
 const nationalityOptions = answer => {
   const key = normalise(answer);
+  const ukNations = new Set(["england","wales","scotland","northernireland","republicofireland"]);
+  if (ukNations.has(key)) return nationalities.filter(label => ukNations.has(normalise(label)));
   const region = nationRegions.find(group => group.has(key));
   const close = region ? nationalities.filter(label => region.has(normalise(label))) : [];
   return close.length >= 5 ? close : nationalities;
