@@ -169,7 +169,7 @@ for (const player of players) {
     if (league) add("MEDIUM", player, region, "latest-league", "LEAGUES",
       "Which league is listed for " + player.name + "'s latest recorded club?", league, leagues,
       "The archive associates " + latestClub + " with " + league + " in its latest club metadata.");
-    if (country) add("MEDIUM", player, region, "club-country", "LEAGUES",
+    if (country && latestClub) add("MEDIUM", player, region, "club-country", "LEAGUES",
       "Which country is listed for " + latestClub + " in " + player.name + "'s latest club record?", country, countries,
       "The source's latest-club metadata associates " + latestClub + " with " + country + ".");
   }
