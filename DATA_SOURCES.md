@@ -102,3 +102,20 @@ The legacy mixed-provenance OpenFootballBase question-bank generator and runtime
 - The Premier League's own statistics documentation states that player appearances, goals, assists and discipline data begin in 1992/93, while many detailed event metrics begin in 2006/07. This is a useful coverage boundary when evaluating a separately licensed statistics provider: https://www.premierleague.com/en/stats/clarification.
 
 **Decision:** keep the live ingestion whitelist CC0/public domain for now. Do not mix a CC BY compilation or restricted Premier League website data into the CC0 shards. The next high-value English expansion should be a separately verified, rights-cleared player-stat source, not a larger match-results file alone.
+
+
+## English player-stat source audit — 27 November 2026
+
+The main remaining English-football gap is competition-scoped player statistics (Premier League/EFL appearances, goals, assists, minutes and cards). The following candidates were checked:
+
+| Candidate | Reported coverage | Decision |
+|---|---|---|
+| [PL History Dashboard](https://github.com/ethankaufman/PL-History-Dashboard) | 355,716 player-match rows, 5,112 players and 34 Premier League seasons (1992/93–2025/26), including goals, assists, minutes and cards. The project says it collects the Premier League's public stats service and supplements it with other sources. | Do not import yet. No explicit data-reuse licence was verified; it includes official PL-derived data, Wikipedia-derived material and club/player artwork with separate rights. |
+| [mshodge/epl-stats](https://github.com/mshodge/epl-stats) | Scraper/export for Premier League player career totals: appearances, goals, assists, clean sheets, wins and clubs. | Do not import yet. It scrapes the official PL website and no explicit redistribution licence was verified. |
+| [imadeddine-belkat/Premier-League-Stats](https://github.com/imadeddine-belkat/Premier-League-Stats) | Historical PL archive from 2008/09 onward with per-player match and season statistics, plus FPL data. | Do not import yet. Official-feed provenance is described, but a clear licence for redistribution of the underlying PL data was not established. |
+| [ISAR CRAN package EPL datasets](https://cran.r-project.org/package=ISAR) | Published 2023/24 and 2024/25 season datasets with appearances, starts, goals, assists, minutes and other metrics. | Research lead only. The package's software licence does not by itself prove that every underlying third-party statistics field is licensed for commercial redistribution. |
+| [2025/26 Premier League CSV](https://github.com/Matthew-Duran/Premier-League-Stats-CSV) | One-season scraped player statistics file. | Not approved: one-commit data drop with no clear dataset licence/provenance record. |
+
+The official Premier League statistics documentation confirms that appearances, goals and assists are available from 1992/93, while many detailed metrics begin in 2006/07. Its current website terms reserve copyright/database rights and prohibit commercial database extraction without prior written approval. These pages are suitable for human spot-checking, not bulk scraping.
+
+**Decision:** do not silently import any of these player-stat dumps into the CC0 database. The practical options are (1) obtain a clearly licensed provider feed, (2) contact the relevant rights holder for permission, or (3) continue with CC0-derived match facts and only use player statistics when their source and reuse basis are independently verified. No paid source has been added.
