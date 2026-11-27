@@ -51,6 +51,16 @@ const positionLabel = raw => {
   return "";
 };
 const countryLabels = new Map([
+  // Squad feeds mix country names and three-letter federation codes: publish one canonical UK-English label.
+  ["wal", "Wales"], ["wls", "Wales"], ["eng", "England"], ["sco", "Scotland"], ["nir", "Northern Ireland"],
+  ["esp", "Spain"], ["es", "Spain"], ["ger", "Germany"], ["deu", "Germany"], ["ned", "Netherlands"], ["nld", "Netherlands"],
+  ["ita", "Italy"], ["fra", "France"], ["por", "Portugal"], ["prt", "Portugal"], ["bra", "Brazil"], ["arg", "Argentina"],
+  ["uru", "Uruguay"], ["bel", "Belgium"], ["cro", "Croatia"], ["srb", "Serbia"], ["sui", "Switzerland"], ["che", "Switzerland"],
+  ["civ", "Ivory Coast"], ["kor", "South Korea"], ["korea", "South Korea"], ["korearepublic", "South Korea"], ["jpn", "Japan"], ["usa", "United States"], ["mex", "Mexico"],
+  ["mar", "Morocco"], ["nga", "Nigeria"], ["sen", "Senegal"], ["gha", "Ghana"], ["cmr", "Cameroon"], ["irn", "Iran"],
+  ["aus", "Australia"], ["can", "Canada"], ["den", "Denmark"], ["swe", "Sweden"], ["nor", "Norway"], ["pol", "Poland"],
+  ["ukr", "Ukraine"], ["cze", "Czechia"], ["rou", "Romania"], ["tur", "Türkiye"], ["gre", "Greece"], ["sau", "Saudi Arabia"],
+  ["qat", "Qatar"], ["chn", "China"], ["cog", "Republic of the Congo"], ["republiqueducongo", "Republic of the Congo"], ["congo", "Republic of the Congo"], ["gnb", "Guinea-Bissau"], ["guineabissau", "Guinea-Bissau"], ["cod", "DR Congo"], ["democraticrepublicofthecongo", "DR Congo"], ["hnd", "Honduras"], ["hon", "Honduras"], ["crc", "Costa Rica"], ["ecu", "Ecuador"], ["par", "Paraguay"], ["chi", "Chile"], ["bol", "Bolivia"], ["per", "Peru"], ["jam", "Jamaica"], ["pan", "Panama"], ["egy", "Egypt"], ["alg", "Algeria"], ["tun", "Tunisia"], ["rsa", "South Africa"], ["isl", "Iceland"], ["aut", "Austria"], ["hun", "Hungary"], ["slo", "Slovenia"], ["svk", "Slovakia"], ["fin", "Finland"], ["irl", "Republic of Ireland"], ["alb", "Albania"], ["mkd", "North Macedonia"], ["bos", "Bosnia and Herzegovina"], ["mne", "Montenegro"], ["kos", "Kosovo"], ["est", "Estonia"], ["lva", "Latvia"], ["ltu", "Lithuania"], ["bul", "Bulgaria"], ["isr", "Israel"], ["uzb", "Uzbekistan"], ["tha", "Thailand"], ["ind", "India"],
   ["royaumeuni", "United Kingdom"], ["angleterre", "England"], ["ecosse", "Scotland"],
   ["paysdegalles", "Wales"], ["irlandedunord", "Northern Ireland"], ["italie", "Italy"],
   ["allemagne", "Germany"], ["espagne", "Spain"], ["bresil", "Brazil"],
@@ -62,7 +72,19 @@ const countryLabels = new Map([
 ]);
 const displayCountry = value => {
   const raw = String(value ?? "").trim();
-  return countryLabels.get(normalise(raw)) ?? raw;
+  if (!raw) return "";
+  const stripped = raw
+    .replace(/^(?:drapeau de la|drapeau de|vlag van|flag of|bandera de|flagge von|fahne von)\s+/i, "")
+    .replace(/\s+u-?(?:15|16|17|18|19|20|21|23)\b/ig, "")
+    .trim();
+  const exact = countryLabels.get(normalise(stripped));
+  if (exact) return exact;
+  const firstToken = stripped.split(/[\s,(/-]+/)[0];
+  const code = countryLabels.get(normalise(firstToken));
+  if (code) return code;
+  if (/(?:liga|league|campeonato|division|distrital|championship|nationalteam|youth|academy|reserve)/i.test(stripped) ||
+      /\d{4}\s*[-–/]\s*\d{2,4}/.test(stripped)) return "";
+  return stripped;
 };
 const leagueLabels = new Map([
   ["fussballbundesliga", "Bundesliga"], ["2fussballbundesliga", "2. Bundesliga"],
@@ -87,7 +109,7 @@ if (manifest.source !== "OpenFootballBase-Data" || !Array.isArray(manifest.shard
 }
 try {
   const existing = JSON.parse(await readFile(outputPath, "utf8"));
-  if (existing.version === 2 && existing.sourceRelease === manifest.sourceRelease &&
+  if (existing.version === 5 && existing.sourceRelease === manifest.sourceRelease &&
       existing.meta?.targetPerTier === TARGET &&
       ["EASY", "MEDIUM", "HARD", "EXTREME"].every(tier =>
         existing.tiers?.[tier]?.length === TARGET &&
@@ -110,7 +132,21 @@ for (const shard of manifest.shards) {
 if (players.length !== manifest.playerCount) throw new Error("Player count does not match the static archive manifest.");
 
 const clubs = unique(players.flatMap(player => [...(player.clubs ?? []), player.currentClub]));
-const nationalities = unique(players.map(player => player.nationality));
+const nationalities = unique(players.map(player => displayCountry(player.nationality)).filter(Boolean));
+const nationRegions = [
+  ["England","Wales","Scotland","Northern Ireland","Republic of Ireland","Germany","Spain","France","Italy","Netherlands","Portugal","Belgium","Croatia","Serbia","Switzerland","Denmark","Sweden","Norway","Poland","Ukraine","Czechia","Romania","Türkiye","Greece","Austria","Hungary","Slovenia","Slovakia","Finland","Iceland","Albania","Kosovo","Russia"],
+  ["Brazil","Argentina","Uruguay","Chile","Colombia","Peru","Ecuador","Paraguay","Bolivia","Mexico","United States","Canada","Costa Rica","Panama","Jamaica"],
+  ["Ivory Coast","Nigeria","Senegal","Ghana","Cameroon","Morocco","Egypt","Algeria","Tunisia","South Africa","Mali","Guinea"],
+  ["Japan","South Korea","China","Iran","Saudi Arabia","Qatar","Australia","Uzbekistan","Thailand","India"]
+].map(group => new Set(group.map(normalise)));
+const nationalityOptions = answer => {
+  const key = normalise(answer);
+  const ukNations = new Set(["england","wales","scotland","northernireland","republicofireland"]);
+  if (ukNations.has(key)) return nationalities.filter(label => ukNations.has(normalise(label)));
+  const region = nationRegions.find(group => group.has(key));
+  const close = region ? nationalities.filter(label => region.has(normalise(label))) : [];
+  return close.length >= 5 ? close : nationalities;
+};
 const leagues = unique(players.map(player => displayLeague(player.currentLeague)));
 const countries = unique(players.map(player => displayCountry(player.currentCountry)));
 const sortedNumbers = values => [...new Set(values.filter(value => value !== null).map(String))].sort((a, b) => Number(a) - Number(b));
@@ -191,8 +227,7 @@ const EASY_TOP_LEAGUES = new Set([
   "campeonatobrasileiroseriea", "ligamx"
 ]);
 const easyEligible = player => EASY_TOP_LEAGUES.has(normalise(player.currentLeague)) &&
-  ((number(player.appearances) ?? 0) >= 100 || (number(player.goals) ?? 0) >= 25 ||
-   (number(player.caps) ?? 0) >= 15 || (number(player.leagueGoals) ?? 0) >= 15);
+  (number(player.appearances) ?? 0) >= 150;
 const mediumEligible = player => (number(player.appearances) ?? 0) >= 120 || (player.clubs?.length ?? 0) >= 3;
 const hardEligible = player => (player.careerGoalRows ?? player.goalRows ?? 0) > 0 ||
   (player.leagueGoalRows ?? 0) > 0 || (player.nationalRows ?? 0) > 0 || (number(player.appearances) ?? 0) >= 80;
@@ -220,7 +255,7 @@ for (const player of players) {
   const careerClubs = unique(player.clubs ?? []);
   const latestClub = String(player.currentClub ?? "").trim();
   const firstClub = String(player.spells?.[0]?.club ?? careerClubs[0] ?? "").trim();
-  const nationality = String(player.nationality ?? "").trim();
+  const nationality = displayCountry(player.nationality);
   const position = positionLabel(player.position);
   const league = displayLeague(player.currentLeague);
   const country = displayCountry(player.currentCountry);
@@ -237,7 +272,7 @@ for (const player of players) {
   if (easyEligible(player)) {
     diagnostics.easyEligible[region]++;
     if (nationality) add("EASY", player, region, "nationality", "PLAYER BASICS",
-      "Which nationality is listed for " + player.name + "?", nationality, nationalities,
+      "Which nationality is listed for " + player.name + "?", nationality, nationalityOptions(nationality),
       player.name + " is listed with " + nationality + " nationality. The question uses the archive's latest available squad record.");
     if (latestClub) add("EASY", player, region, "latest-club", "PLAYER & CLUBS",
       "Which club is listed as " + player.name + "'s latest recorded club?", latestClub, clubs,
@@ -246,12 +281,6 @@ for (const player of players) {
       latestClub ? "Which position group is recorded for " + player.name + " at " + latestClub + "?" : "Which position group is recorded for " + player.name + "?",
       position, ["Goalkeeper", "Defender", "Midfielder", "Forward", "Utility player"],
       player.name + " is listed as a " + position.toLowerCase() + " in the source's squad record.");
-    if (latestClub && league) add("EASY", player, region, "easy-latest-league", "LEAGUES",
-      "Which league is listed for " + latestClub + ", the latest recorded club of " + player.name + "?", league, leagues,
-      "The archive lists " + latestClub + " in " + league + ". This reflects the latest available club metadata.");
-    if (latestClub && country) add("EASY", player, region, "easy-club-country", "LEAGUES",
-      "Which country is listed for " + latestClub + ", the latest recorded club of " + player.name + "?", country, countries,
-      "The archive lists " + latestClub + " in " + country + ". This reflects the latest available club metadata.");
   }
 
   if (mediumEligible(player)) {
@@ -270,16 +299,16 @@ for (const player of players) {
   }
 
   if (hardEligible(player)) {
-    if (recordedLeagueGoals !== null && (player.leagueGoalRows ?? 0) > 0) add("HARD", player, region, "league-goals", "RECORDED STATISTICS",
+    if (recordedLeagueGoals !== null && recordedLeagueGoals > 0 && (player.leagueGoalRows ?? 0) > 0) add("HARD", player, region, "league-goals", "RECORDED STATISTICS",
       "How many league goals are recorded for " + player.name + " across the available club-season rows?", String(recordedLeagueGoals), leagueGoals,
       "The source records " + recordedLeagueGoals + " league goals across the player's available league rows; this is not guaranteed to be a complete career total.", true);
-    if (goals !== null && (player.careerGoalRows ?? player.goalRows ?? 0) > 0) add("HARD", player, region, "career-goals", "RECORDED STATISTICS",
+    if (goals !== null && goals > 0 && (player.careerGoalRows ?? player.goalRows ?? 0) > 0) add("HARD", player, region, "career-goals", "RECORDED STATISTICS",
       "What career-goal total is recorded for " + player.name + " in the source's career rows?", String(goals), careerGoals,
       "The source records " + goals + " career-spell goals for " + player.name + "; coverage is not guaranteed complete.", true);
-    if (recordedCaps !== null && (player.nationalRows ?? 0) > 0) add("HARD", player, region, "international-caps", "INTERNATIONAL RECORD",
+    if (recordedCaps !== null && recordedCaps > 0 && (player.nationalRows ?? 0) > 0) add("HARD", player, region, "international-caps", "INTERNATIONAL RECORD",
       "How many international caps are recorded for " + player.name + "?", String(recordedCaps), caps,
       "The national-team rows record " + recordedCaps + " caps for " + player.name + ". National-team coverage varies.", true);
-    if (appearances !== null && (player.careerAppearanceRows ?? player.appearanceRows ?? 0) > 0) add("HARD", player, region, "career-appearances", "RECORDED STATISTICS",
+    if (appearances !== null && appearances > 0 && (player.careerAppearanceRows ?? player.appearanceRows ?? 0) > 0) add("HARD", player, region, "career-appearances", "RECORDED STATISTICS",
       "What career-appearance total is recorded for " + player.name + " in the source's career rows?", String(appearances), careerApps,
       "The source records " + appearances + " career-spell appearances for " + player.name + "; coverage is not guaranteed complete.", true);
   }
@@ -294,7 +323,7 @@ for (const player of players) {
     if (firstYear !== null && lastYear !== null && lastYear >= firstYear) add("EXTREME", player, region, "career-span", "CAREER CHRONOLOGY",
       "Across how many calendar years does " + player.name + "'s recorded career span?", String(lastYear - firstYear + 1), careerSpans,
       "The available career record runs from " + firstYear + " to " + lastYear + ". This is a span, not necessarily continuous playing years.", true);
-    if (recordedInternationalGoals !== null && (player.nationalRows ?? 0) > 0) add("EXTREME", player, region, "international-goals", "INTERNATIONAL RECORD",
+    if (recordedInternationalGoals !== null && recordedInternationalGoals > 0 && (player.nationalRows ?? 0) > 0) add("EXTREME", player, region, "international-goals", "INTERNATIONAL RECORD",
       "How many international goals are recorded for " + player.name + "?", String(recordedInternationalGoals), internationalGoals,
       "The national-team rows record " + recordedInternationalGoals + " international goals for " + player.name + ". Coverage varies.", true);
     if (clubCount >= 2) add("EXTREME", player, region, "spell-count", "CAREER CHRONOLOGY",
@@ -323,7 +352,7 @@ for (const tier of ["EASY", "MEDIUM", "HARD", "EXTREME"]) {
 }
 
 const bank = {
-  version: 2,
+  version: 5,
   source: manifest.source,
   sourceRelease: manifest.sourceRelease,
   sourceReleaseUrl: manifest.sourceReleaseUrl ?? manifest.releaseUrl,

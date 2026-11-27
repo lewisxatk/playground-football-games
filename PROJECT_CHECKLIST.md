@@ -436,3 +436,19 @@ At the end of every implementation update:
 4. Improve Tournament Nation's historical club matching with canonical player identity and dated spells where available; keep missing clues explicit.
 5. Complete a structured desktop/iPhone test matrix across all 16 games (loading, difficulty, daily/practice, timers, touch, scoring, reduced motion and no-repeat behaviour).
 
+## 17. Arcade gameplay continuation checkpoint (2026-11-27)
+
+This section records the separate gameplay-rework branch so work is not confused with the currently deployed main branch.
+
+- [x] Confirmed branch `fix/arcade-gameplay-rework-2026-11-27` contains the playable-intersection Football Grid generator; it builds candidate club/nation intersections from the player pool rather than assuming every random combination is valid.
+- [x] Confirmed the country canonicalisation layer includes England, Wales, Scotland and Northern Ireland federation codes and strips non-country competition labels from nationality candidates.
+- [x] Confirmed Footle supports native form submission for Enter / Go / NumpadEnter, an on-screen keyboard, letter hints with a points cost, and resets the hint state on restart.
+- [x] Confirmed Quick Quiz has a fixed daily mixed-tier set (5 Easy, 5 Medium, 5 Hard, 2 Extreme) and tier-specific timers (10 / 15 / 25 / 30 seconds).
+- [x] Confirmed Tournament Nation uses five guesses, limits practice to five completed runs per UTC day on the same browser, and persists the count locally.
+- [x] Confirmed Link Up has a ten-run daily practice allowance stored locally.
+- [x] Confirmed Strands supports pointer-based drag selection and its board CSS disables browser touch scrolling/selection on the puzzle surface.
+- [!] GitHub Actions CI run `46006767271` was triggered for checkpoint commit `dce08f3f6da38580376b81221c807a43299a456a`, but GitHub reports it as **cancelled** (not passed). The branch has not been deployed or manually tested on iPhone Safari.
+- [!] Local-storage practice limits are device/browser-local and can be reset by clearing browser storage; they are not account-level enforcement.
+- [!] The 3,200 question bank remains generated from source archive records, not individually hand-researched general football trivia. Easy recognisability still needs human QA.
+
+**Next actions:** open a draft PR to run the full CI pipeline; resolve any type/build/data-validation failures; then test Grid, Footle, Quick Quiz, Tournament Nation, Link Up and Strands on iPhone Safari before promoting the branch to production.
