@@ -193,7 +193,7 @@ export function makeCC0DailyQuizRound(pool:CC0QuizQuestion[],seed:number):CC0Qui
   {tier:"HARD",count:5,englishCount:4},
   {tier:"EXTREME",count:2,englishCount:1}
  ];
- // Three daily rounds use 13/4 and one uses 12/5, giving exactly 75/25 over four days.
+ // Seeded rounding chooses 13/4 for three of four seed buckets and 12/5 for one, targeting 75/25 over repeated daily rounds.
  if(balancedEnglishQuota(17,seed)===12)plan[(seed>>>0)%3].englishCount=3;
  const selected:CC0QuizQuestion[]=[];
  const usedMatches=new Set<string>();
