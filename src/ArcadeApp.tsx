@@ -74,7 +74,6 @@ const countryLabel = (value:string) => {
     fin:"Finland",irl:"Republic of Ireland",alb:"Albania",mkd:"North Macedonia",bos:"Bosnia and Herzegovina",
     mne:"Montenegro",kos:"Kosovo",est:"Estonia",lva:"Latvia",ltu:"Lithuania",bul:"Bulgaria",isr:"Israel",
     uzb:"Uzbekistan",tha:"Thailand",ind:"India",cog:"Republic of the Congo",republiqueducongo:"Republic of the Congo",congo:"Republic of the Congo",gnb:"Guinea-Bissau",guineabissau:"Guinea-Bissau",cod:"DR Congo",democraticrepublicofthecongo:"DR Congo",drapeaufrance:"France",vlagvanjapan:"Japan",
-    republiqueducongo:"Republic of the Congo"
   };
   const first=normalise(stripped.split(/[\s,(/-]+/)[0]??"");
   return labels[key]??labels[first]??stripped;
