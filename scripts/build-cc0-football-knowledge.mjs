@@ -17,7 +17,7 @@ function parseCsv(text){
 }
 
 
-async function parseInternationalResults(){
+async async function parseInternationalResults(){
  const rows=parseCsv(await readFile(resolve(IR,"results.csv"),"utf8")),map=new Map();
  for(const row of rows){const date=row.date,home=row.home_team,away=row.away_team,homeScore=Number(row.home_score),awayScore=Number(row.away_score),tournament=row.tournament;if(!date||!home||!away||row.home_score===""||row.away_score===""||!Number.isInteger(homeScore)||!Number.isInteger(awayScore)||!tournament)continue;const key=[date,norm(home),norm(away),norm(tournament)].join("|");if(map.has(key))continue;map.set(key,{id:id("international-match",key),date,year:Number(date.slice(0,4)),home,away,homeScore,awayScore,tournament,city:row.city,country:row.country,neutral:String(row.neutral).toLowerCase()==="true",sourceKey:"internationalResults",sourceFile:"results.csv"})}
  return [...map.values()].sort((a,b)=>a.date.localeCompare(b.date));
