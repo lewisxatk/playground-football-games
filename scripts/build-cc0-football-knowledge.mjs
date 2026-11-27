@@ -550,7 +550,7 @@ const cultHeroCandidates=careerPlayers.filter(hasMultiSeasonCareer);
 const [internationalMatches,englishMatches,europeanClubMatches]=await Promise.all([parseInternationalResults(),parseEnglishMatches(),parseEuropeanClubMatches()]);
 // The English match archive is the authoritative whitelist for English clubs; do not trust broad Wikidata country labels for game eligibility.
 const englishClubNames=new Set([...clubs.filter(club=>club.countries.some(country=>norm(country)==="england")).map(club=>club.name),...englishMatches.flatMap(match=>[match.home,match.away])].map(clubKey));
-const linkUpPacks=[];
+const linkUpPacks=makeWikidataLinkPacks(careerPlayers,englishClubNames,750);
 const allMatches=[...internationalMatches,...englishMatches,...europeanClubMatches].sort((a,b)=>a.date.localeCompare(b.date));
 const internationalQuiz=buildInternationalQuiz([...englishMatches,...europeanClubMatches.filter(match=>match.competition==="UEFA Champions League")]);
 const internationalGoals=await parseInternationalGoals(players);
