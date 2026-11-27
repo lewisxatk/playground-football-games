@@ -762,6 +762,91 @@ function buildArchiveFootballGrid(players:GamePlayer[],index:GridClubIndex,seed:
  if(english)return english;
  return buildFor(index.englishLeagueClubs,1,"ENGLISH LEAGUES");
 }
+type LinkYearWindow={startYear:number;endYear:number};
+type ArchiveLinkQuestion={start:GamePlayer;end:GamePlayer;answer:GamePlayer;startClub:string;endClub:string;startWindow:LinkYearWindow;endWindow:LinkYearWindow;options:GamePlayer[]};
+function getTeammateOverlap(a:GamePlayer,b:GamePlayer,clubKey:string):LinkYearWindow|null{
+ for(const aSpell of a.careerSpells.filter(spell=>gridClubKey(spell.club)===clubKey&&spell.startYear!==null)){
+  for(const bSpell of b.careerSpells.filter(spell=>gridClubKey(spell.club)===clubKey&&spell.startYear!==null)){
+   const startYear=Math.max(aSpell.startYear!,bSpell.startYear!);
+   const endYear=Math.min(aSpell.endYear??new Date().getUTCFullYear(),bSpell.endYear??new Date().getUTCFullYear());
+   if(startYear<=endYear)return{startYear,endYear};
+  }
+ }
+ return null;
+}
+function buildArchiveLinkUpQuestions(players:GamePlayer[],index:GridClubIndex,seed:number,difficulty:LinkDifficulty):ArchiveLinkQuestion[]{
+ const canonical=new Map<string,string>();
+ for(const club of [...index.premierLeagueClubs,...index.englishLeagueClubs])canonical.set(gridClubKey(club),club);
+ const clubPlayers=new Map<string,Map<string,GamePlayer>>();
+ for(const player of players){
+  for(const spell of player.careerSpells){
+   if(spell.startYear===null)continue;
+   const key=gridClubKey(spell.club);if(!canonical.has(key))continue;
+   const members=clubPlayers.get(key)??new Map<string,GamePlayer>();
+   members.set(player.archiveId,player);clubPlayers.set(key,members);
+  }
+ }
+ const buildFor=(clubNames:string[],scope:string)=>{
+  const clubs=[...new Set(clubNames.map(name=>gridClubKey(name)))]
+   .map(key=>({key,name:canonical.get(key)??key,players:[...(clubPlayers.get(key)?.values()??[])]}))
+   .filter(club=>club.players.length>=8)
+   .sort((a,b)=>b.players.length-a.players.length);
+  const limit=difficulty==="EASY"?14:difficulty==="STANDARD"?24:difficulty==="HARD"?36:clubs.length;
+  const pool=clubs.slice(0,limit);
+  if(pool.length<2)return[];
+  const teammateMaps=new Map<string,Map<string,Set<string>>>();
+  for(const club of pool){
+   const mates=new Map<string,Set<string>>();
+   const list=club.players;
+   for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){
+    if(!getTeammateOverlap(list[i],list[j],club.key))continue;
+    const a=mates.get(list[i].archiveId)??new Set<string>();a.add(list[j].archiveId);mates.set(list[i].archiveId,a);
+    const b=mates.get(list[j].archiveId)??new Set<string>();b.add(list[i].archiveId);mates.set(list[j].archiveId,b);
+   }
+   teammateMaps.set(club.key,mates);
+  }
+  const byId=new Map(players.map(player=>[player.archiveId,player]));
+  const pairs:Array<[typeof pool[number],typeof pool[number]]>=[];
+  for(let i=0;i<pool.length;i++)for(let j=i+1;j<pool.length;j++)pairs.push([pool[i],pool[j]]);
+  const orderedPairs=shuffle(pairs,seed+scope.length*97);
+  const questions:ArchiveLinkQuestion[]=[],seen=new Set<string>();
+  for(let pairIndex=0;pairIndex<orderedPairs.length&&questions.length<350;pairIndex++){
+   const [clubA,clubB]=orderedPairs[pairIndex];
+   const matesA=teammateMaps.get(clubA.key)??new Map<string,Set<string>>();
+   const matesB=teammateMaps.get(clubB.key)??new Map<string,Set<string>>();
+   const starts=shuffle(clubA.players,seed+pairIndex*7919),ends=shuffle(clubB.players,seed+pairIndex*104729);
+   let pairQuestions=0;
+   for(const start of starts){
+    const startMates=matesA.get(start.archiveId);if(!startMates?.size)continue;
+    for(const end of ends){
+     if(start.archiveId===end.archiveId)continue;
+     const endMates=matesB.get(end.archiveId);if(!endMates?.size)continue;
+     const common=[...startMates].filter(id=>id!==start.archiveId&&id!==end.archiveId&&endMates.has(id));
+     if(common.length!==1)continue;
+     const answer=byId.get(common[0]);if(!answer)continue;
+     const startWindow=getTeammateOverlap(start,answer,clubA.key),endWindow=getTeammateOverlap(end,answer,clubB.key);
+     if(!startWindow||!endWindow)continue;
+     const signature=[start.archiveId,end.archiveId,answer.archiveId,clubA.key,clubB.key].join("|");
+     if(seen.has(signature))continue;seen.add(signature);
+     const decoyPool=shuffle([...new Map([...clubA.players,...clubB.players]
+       .filter(player=>![start.archiveId,end.archiveId,answer.archiveId].includes(player.archiveId))
+       .map(player=>[player.archiveId,player])).values()],seed+pairIndex*15485863+pairQuestions);
+     if(decoyPool.length<5)continue;
+     const options=shuffle([answer,...decoyPool.slice(0,5)],seed+pairQuestions*31+pairIndex*193);
+     questions.push({start,end,answer,startClub:clubA.name,endClub:clubB.name,startWindow,endWindow,options});
+     pairQuestions++;
+     if(pairQuestions>=8||questions.length>=350)break;
+    }
+    if(pairQuestions>=8||questions.length>=350)break;
+   }
+  }
+  return questions;
+ };
+ const premier=buildFor(index.premierLeagueClubs,"PREMIER LEAGUE");
+ if(premier.length>=10)return premier;
+ const english=buildFor(index.englishLeagueClubs,"ENGLISH LEAGUES");
+ return premier.length?premier:english;
+}
 function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();
  const [difficulty,setDifficulty]=useState<GridDifficulty>("STANDARD");
