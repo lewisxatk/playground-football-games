@@ -13,6 +13,9 @@ on:
       - "src/ArcadeApp.tsx"
       - "src/CC0CareerFilePage.tsx"
       - "src/CultHeroPage.tsx"
+      - "package.json"
+      - "scripts/validate-data.mjs"
+      - "scripts/validate-cc0-quiz-pools.mjs"
 
 permissions:
   contents: write
@@ -82,8 +85,8 @@ jobs:
           grep -q "CC0 1.0 Universal" .sources/openfootball-champions-league/LICENSE.md
       - name: Build canonical database and game pools
         run: node scripts/build-cc0-football-knowledge.mjs
-      - name: Install dependencies and verify full site build
-        run: npm install && npm run build
+      - name: Install dependencies, validate all data and verify full site build
+        run: npm install && npm run validate:data && npm run build
       - name: Publish generated database to feature branch
         shell: bash
         run: |
