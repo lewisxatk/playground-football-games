@@ -115,7 +115,6 @@ function acceptedName(input:string,accepted:string[]){const value=normalise(inpu
 function playerSurnames(){
   const seen=new Set<string>();return PLAYER_DATABASE.map(p=>p.surname).filter(s=>s.length===5&&!seen.has(s)&&Boolean(seen.add(s)));
 }
-function dailyFootle(mode:Mode){const bank=playerSurnames();return mode==="daily"?bank[hashSeed("FOOTLE:"+utcDay())%bank.length]:bank[Math.floor(Math.random()*bank.length)];}
 function pageFromPath(path:string){return path.replace(/^\/|\/$/g,"").split("/")[0]||"home";}
 
 function Brand(){return <a className="arc-brand" href="/" aria-label="PLAYGROUND home">PLAY<span>GROUND</span><b>®</b></a>;}
@@ -304,7 +303,7 @@ function FootlePage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const [typed,setTyped]=useState("");const [guesses,setGuesses]=useState<string[]>([]);const [end,setEnd]=useState(false);
  const done=account.daily[utcDay()]?.footle!==undefined;
  const seed=mode==="daily"?"FOOTLE:"+utcDay():"FOOTLE:PRACTICE:"+practiceSeed;
- const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,seed,1600);
+ const {players:archivePlayers,loading,error}=useArchivePlayers(true,seed,1600);
  const bank=useMemo(()=>{
    const archived=archivePlayers.map(p=>{
      const parts=p.name.trim().split(/\s+/).filter(Boolean);
