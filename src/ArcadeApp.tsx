@@ -397,7 +397,7 @@ function ClimbPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:n
    <div className="grid-difficulty">{levels.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>restart(mode,level)}>{difficultyLabel(level)}</button>)}</div>
    <p className="difficulty-note">{difficultyDescription(difficulty)}</p>
    <div className="climb-life-track">{[0,1,2].map(i=><i key={i} className={i<lives?"alive":""}/>)}</div>
-   <div className="climb-source-line"><span>{question?.category??"FOOTBALL"}</span><span>{question?.region==="ENGLISH_DOMESTIC"?"ENGLISH DOMESTIC FOOTBALL":"UEFA CLUB FOOTBALL"}</span></div>
+   <div className="climb-source-line"><span>{question?.category??"FOOTBALL"}</span><span>{question?.region==="ENGLISH_DOMESTIC"?"ENGLISH DOMESTIC FOOTBALL":question?.category==="FIFA World Cup"?"FIFA WORLD CUP":"UEFA CHAMPIONS LEAGUE"}</span></div>
    <h2>{ended?"RUN COMPLETE.":question?.question??"No question available."}</h2>
    {ended?<div className="arc-feedback"><p>You climbed {step+1} questions and banked {score} points.</p><button className="arc-button" onClick={()=>restart(mode)}>RUN IT BACK ↻</button></div>:
     <><div className="climb-options">{question?.options.map(option=><motion.button key={option} whileTap={{scale:.985}} onClick={()=>choose(option)} disabled={!!answer} className={answer===option?(option===question.answer?"correct":"wrong"):""}>{option}<i>↗</i></motion.button>)}</div>
@@ -1140,7 +1140,7 @@ function makeStrandsBoard(pack:typeof STRANDS_PACKS[number]){
  return {cells,paths,words,spangram:pack.spangram};
 }
 function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
- const [mode,setMode]=useMode();const [boardNo,setBoardNo]=useState(0);const [selected,setSelected]=useState<number[]>([]);const pathRef=useRef<number[]>([]);const [dragging,setDragging]=useState(false);const [found,setFound]=useState<number[]>([]);const [wrong,setWrong]=useState(0);const [hintedWord,setHintedWord]=useState<number|null>(null);const [bonusWords,setBonusWords]=useState<string[]>([]);const [bonusHintsUsed,setBonusHintsUsed]=useState(0);const [finished,setFinished]=useState(false);const [notice,setNotice]=useState("");const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));const [bonusDictionary,setBonusDictionary]=useState<Set<string>>(()=>new Set());const [dictionaryReady,setDictionaryReady]=useState(false);const done=account.daily[utcDay()]?.strands!==undefined;
+ const [mode,setMode]=useMode();const [boardNo,setBoardNo]=useState(0);const [selected,setSelected]=useState<number[]>([]);const pathRef=useRef<number[]>([]);const [dragging,setDragging]=useState(false);const [found,setFound]=useState<number[]>([]);const [hintedWord,setHintedWord]=useState<number|null>(null);const [bonusWords,setBonusWords]=useState<string[]>([]);const [bonusHintsUsed,setBonusHintsUsed]=useState(0);const [finished,setFinished]=useState(false);const [notice,setNotice]=useState("");const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));const [bonusDictionary,setBonusDictionary]=useState<Set<string>>(()=>new Set());const [dictionaryReady,setDictionaryReady]=useState(false);const done=account.daily[utcDay()]?.strands!==undefined;
  useEffect(()=>{let live=true;fetch("/data/english-wordlist.cc0.txt",{cache:"force-cache"}).then(response=>{if(!response.ok)throw new Error("Dictionary unavailable");return response.text()}).then(content=>{if(live){setBonusDictionary(new Set(content.split(/\s+/).map(word=>word.trim().toLowerCase()).filter(Boolean));setDictionaryReady(true)}}).catch(()=>{if(live)setDictionaryReady(true)});return()=>{live=false}},[]);
  const seed=mode==="daily"?"STRANDS:"+utcDay()+":"+boardNo:"STRANDS:PRACTICE:"+practiceSeed+":"+boardNo;
  const {data:strandsData,loading,error,retry}=useFootballKnowledge("strands");
@@ -1181,7 +1181,7 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
    const foundIndex=board.words.findIndex((w,idx)=>!solved(idx)&&(w===word||w.split("").reverse().join("")===word));
    if(foundIndex>=0){
      const next=[...found,foundIndex];setFound(next);setSelected([]);setNotice("");
-     if(next.length===board.words.length){setFinished(true);if(mode==="daily")onDaily("strands",Math.max(100,1000-wrong*15));}
+     if(next.length===board.words.length){setFinished(true);if(mode==="daily")onDaily("strands",1000);}
    }else if(path.length>=4&&/^[A-Z]+$/.test(word)&&!bonusWords.includes(word)&&bonusWords.length<60&&bonusDictionary.has(word.toLowerCase())){
      const next=[...bonusWords,word];setBonusWords(next);setSelected([]);
      const earned=Math.floor(next.length/3);
@@ -1189,7 +1189,7 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
    }else{setNotice(!dictionaryReady?"THE WORD CHECKER IS LOADING — TRY AGAIN IN A MOMENT.":path.length>=4?"NOT A RECOGNISED WORD. TRY A DIFFERENT LETTER PATH.":"DRAG THROUGH ADJACENT LETTERS TO MAKE A WORD.");setSelected([]);}
  };
  const cancelPath=()=>{pathRef.current=[];setSelected([]);setDragging(false);};
- const nextBoard=()=>{setBoardNo(v=>v+1);pathRef.current=[];setSelected([]);setFound([]);setWrong(0);setHintedWord(null);setBonusWords([]);setBonusHintsUsed(0);setNotice("");setDragging(false);setFinished(false);};
+ const nextBoard=()=>{setBoardNo(v=>v+1);pathRef.current=[];setSelected([]);setFound([]);setHintedWord(null);setBonusWords([]);setBonusHintsUsed(0);setNotice("");setDragging(false);setFinished(false);};
  const hint=()=>{if(finished)return;if(Math.floor(bonusWords.length/3)<=bonusHintsUsed){setNotice("Find three recognised English words of four or more letters to earn a hint.");return;}const next=board.paths.findIndex((_path,index)=>!found.includes(index)&&index!==hintedWord);if(next>=0){setHintedWord(next);setBonusHintsUsed(v=>v+1);setNotice("SCOUTING REPORT: the full letter path of one hidden theme word is circled.");}};
  const currentDone=found.length===board.words.length;
  const hintedCells=hintedWord===null?[]:(board.paths[hintedWord]??[]);
