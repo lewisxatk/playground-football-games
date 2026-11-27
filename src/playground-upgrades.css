@@ -1,0 +1,90 @@
+/* PLAYGROUND visual upgrade layer — restrained motion, tactile controls and mobile-first polish. */
+.pg-route-stage{min-height:100vh;transform-origin:top center}
+.arc-home-hero{position:relative;isolation:isolate;overflow:hidden;background-image:radial-gradient(ellipse at 86% 18%,rgba(201,244,92,.24),transparent 34%),linear-gradient(112deg,#f3f0e7 0%,#eeeddf 58%,#dce9ce 100%)}
+.arc-home-hero:after{content:"";position:absolute;z-index:0;top:-42%;bottom:-42%;left:-38%;width:24%;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);transform:skewX(-18deg);animation:pgHeroSweep 8s ease-in-out 1.2s infinite}
+.arc-home-hero>div{position:relative;z-index:1}
+.arc-home-hero>div:first-child{animation:pgHomeCopyIn .62s cubic-bezier(.2,.75,.25,1) both}
+.arc-home-hero h1{position:relative;text-wrap:balance}
+.arc-home-hero .arc-eyebrow{animation:pgHomeCopyIn .5s .05s ease-out both}
+.arc-home-graphic{transform-origin:center;animation:pgHomeGraphicIn .72s .12s cubic-bezier(.2,.8,.25,1) both;transition:box-shadow .25s ease,transform .25s ease}
+.arc-home-graphic:hover{box-shadow:12px 13px 0 var(--ai);transform:rotate(0deg) translateY(-3px)}
+.arc-graphic-pitch{isolation:isolate}
+.arc-graphic-pitch:after{content:"";position:absolute;z-index:1;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.15) 49%,transparent 62%);transform:translateX(-110%);animation:pgPitchSweep 5.5s ease-in-out 1.4s infinite}
+.graphic-ball{z-index:2;filter:drop-shadow(0 5px 3px rgba(20,27,25,.2))}
+.arc-daily-strip>div{min-width:0}
+.arc-daily-strip strong{font-variant-numeric:tabular-nums}
+.arc-daily-strip strong i{font-variant-numeric:normal}
+.arc-game-directory{scroll-margin-top:18px}
+.arc-game-tile{isolation:isolate;transition:box-shadow .22s ease,border-color .22s ease,filter .22s ease}
+.arc-game-tile:before{content:"";position:absolute;z-index:0;inset:-1px auto -1px -65%;width:38%;pointer-events:none;background:linear-gradient(100deg,transparent,rgba(255,255,255,.42),transparent);transform:skewX(-17deg);transition:transform .65s cubic-bezier(.2,.7,.2,1)}
+.arc-game-tile:hover:before,.arc-game-tile:focus-visible:before{transform:translateX(390%) skewX(-17deg)}
+.arc-game-tile:hover{box-shadow:8px 9px 0 var(--ai);filter:saturate(1.04)}
+.arc-game-tile>div,.arc-game-tile h3,.arc-game-tile p,.arc-game-tile .arc-tile-arrow{position:relative;z-index:1}
+.arc-tile-art{z-index:1;transition:transform .26s cubic-bezier(.2,.8,.2,1),box-shadow .26s ease}
+.arc-game-tile:hover .arc-tile-art,.arc-game-tile:focus-visible .arc-tile-art{transform:rotate(9deg) scale(1.07);box-shadow:6px 7px 0 rgba(0,0,0,.16)}
+.arc-game-tile:active{filter:saturate(1.08)}
+.arc-game-tile:focus-visible{outline:3px solid var(--ao);outline-offset:4px}
+.arc-tile-arrow{transition:background .18s ease,color .18s ease,transform .18s ease}
+.arc-game-tile:hover .arc-tile-arrow{background:var(--ai);color:var(--ap);transform:translate(-2px,-2px)}
+.arc-menu-button,.arc-menu-links a,.arc-menu-profile,.arc-streak-pill,.ch-top-link,.arc-text-link{transition:background-color .18s ease,color .18s ease,border-color .18s ease,transform .18s ease}
+.arc-menu-button:hover{background:#34442c}
+.arc-menu-links a:hover{background:#edf1e2;color:#3f5c2b}
+.arc-menu-links a:hover i{transform:translate(2px,-2px)}
+.arc-menu-links a i{transition:transform .18s ease}
+.arc-streak-pill:hover{background:var(--ai);color:var(--ap)}
+.arc-button{min-height:44px;box-shadow:0 2px 0 rgba(20,27,25,.1);transition:transform .16s ease,box-shadow .16s ease,background-color .16s ease}
+.arc-button:hover:not(:disabled){box-shadow:0 5px 0 rgba(20,27,25,.14);transform:translateY(-2px)}
+.arc-button:active:not(:disabled){box-shadow:none;transform:translateY(1px) scale(.985)}
+.arc-button:focus-visible,.arc-quiet:focus-visible,.arc-mode-switch button:focus-visible,.arc-shell input:focus-visible{outline:3px solid var(--ao);outline-offset:3px}
+.arc-mode-switch button{min-height:40px;transition:background .18s ease,color .18s ease,transform .18s ease}
+.arc-mode-switch button:active{transform:scale(.98)}
+.arc-card{transition:box-shadow .22s ease,border-color .22s ease}
+.arc-card:focus-within{border-color:color-mix(in srgb,var(--ao) 66%,var(--ai))}
+.arc-page-heading .arc-eyebrow span{animation:pgEyebrowPulse 2.8s ease-in-out infinite}
+.arc-feedback,.arc-result,.ch-feedback,.ch-results-panel,.ch-complete-panel{animation:pgFeedbackIn .34s cubic-bezier(.2,.8,.2,1) both}
+.arc-result-tick{animation:pgTickPop .42s .12s cubic-bezier(.2,.8,.2,1) both}
+.arc-feedback{position:relative;overflow:hidden}
+.arc-feedback:after,.arc-result:after{content:"";position:absolute;top:0;bottom:0;left:-45%;width:25%;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);transform:skewX(-17deg);animation:pgFeedbackShine .75s .16s ease-out both}
+.footle-cell,.grid-cell,.connections-grid button,.climb-options button,.quiz-options button,.missing-options button,.strands-grid button{transition:transform .15s ease,box-shadow .18s ease,background-color .18s ease,border-color .18s ease}
+.grid-cell.filled{animation:pgTilePop .28s cubic-bezier(.2,.8,.2,1) both}
+.connections-grid button:active,.climb-options button:active,.quiz-options button:active,.missing-options button:active{transform:scale(.98)}
+.footle-cell.correct,.footle-cell.present{backface-visibility:hidden}
+.ch-pack-stage{transition:background .3s ease}
+.ch-owned-card{transition:transform .2s ease,box-shadow .2s ease}
+.ch-owned-card:hover{transform:translateY(-4px) rotate(-.4deg);box-shadow:0 12px 24px rgba(20,27,25,.13)}
+.ch-revealed-card{animation:pgCardReveal .48s cubic-bezier(.2,.8,.2,1) both}
+.ch-guess-row .arc-button{min-height:48px}
+@keyframes pgHeroSweep{0%,48%{transform:translateX(0) skewX(-18deg);opacity:0}60%{opacity:1}100%{transform:translateX(650%) skewX(-18deg);opacity:0}}
+@keyframes pgPitchSweep{0%,55%{transform:translateX(-110%)}82%,100%{transform:translateX(130%)}}
+@keyframes pgHomeCopyIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pgHomeGraphicIn{from{opacity:0;transform:translateY(18px) rotate(3deg) scale(.98)}to{opacity:1;transform:translateY(0) rotate(1.2deg) scale(1)}}
+@keyframes pgEyebrowPulse{0%,100%{opacity:1}50%{opacity:.55}}
+@keyframes pgFeedbackIn{from{opacity:0;transform:translateY(12px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes pgTickPop{0%{opacity:0;transform:scale(.55) rotate(-12deg)}75%{opacity:1;transform:scale(1.12) rotate(3deg)}100%{transform:scale(1) rotate(0)}}
+@keyframes pgFeedbackShine{from{transform:translateX(0) skewX(-17deg)}to{transform:translateX(620%) skewX(-17deg)}}
+@keyframes pgTilePop{0%{transform:scale(.94)}70%{transform:scale(1.025)}100%{transform:scale(1)}}
+@keyframes pgCardReveal{from{opacity:0;transform:translateY(18px) rotateY(-8deg) scale(.96)}to{opacity:1;transform:translateY(0) rotateY(0) scale(1)}}
+@media(max-width:900px){
+  .arc-game-tile{min-height:232px}
+  .arc-game-tile:hover{box-shadow:5px 6px 0 var(--ai)}
+}
+@media(max-width:620px){
+  .arc-home-hero{background-image:radial-gradient(ellipse at 90% 15%,rgba(201,244,92,.2),transparent 38%),linear-gradient(112deg,#f3f0e7,#e7eadc)}
+  .arc-home-hero:after{display:none}
+  .arc-home-hero>div:first-child{animation-duration:.42s}
+  .arc-home-graphic{animation-duration:.5s}
+  .arc-home-graphic:hover{transform:rotate(1.2deg)}
+  .arc-game-tile{min-height:220px}
+  .arc-game-tile:hover{filter:none}
+  .arc-mode-switch button{min-height:42px}
+  .arc-menu-links a{min-height:42px}
+  .arc-streak-pill{min-height:38px;display:flex;align-items:center}
+  .arc-top-right{min-width:0}
+  .arc-game-directory{scroll-margin-top:8px}
+  .ch-intro-strip span{font-size:6px;padding:11px 7px;text-align:center}
+  .ch-guess-row{grid-template-columns:1fr}
+  .ch-guess-row .arc-button{width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  .pg-route-stage,.arc-home-hero,.arc-home-hero:after,.arc-home-hero>div:first-child,.arc-home-graphic,.arc-home-graphic:after,.arc-graphic-pitch:after,.arc-game-tile:before,.arc-page-heading .arc-eyebrow span,.arc-feedback,.arc-result,.arc-result-tick,.arc-feedback:after,.arc-result:after,.arc-feedback,.arc-card,.ch-feedback,.ch-results-panel,.ch-complete-panel,.ch-revealed-card,.ch-owned-card,.grid-cell.filled{animation:none!important;transition:none!important;transform:none!important}
+}
