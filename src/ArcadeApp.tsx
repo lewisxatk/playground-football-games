@@ -428,10 +428,10 @@ function DraftPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:n
  const [picked,setPicked]=useState<string[]>([]);const [locked,setLocked]=useState(false);
  const done=account.daily[utcDay()]?.["draft-xi"]!==undefined;
  const seed=mode==="daily"?"DRAFT:"+utcDay()+":"+difficulty:"DRAFT:PRACTICE:"+practiceSeed+":"+difficulty;
- const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,1600);
- const archivePool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer)
-   .filter(p=>["GK","DEF","MID","FWD"].includes(p.position)&&p.name.trim()&&p.club!=="Unknown club")
-   .map(p=>({...p,cost:draftCost(p),rating:Math.min(99,Math.round(35+Math.sqrt(Math.max(0,p.careerApps))*2+Math.sqrt(Math.max(0,p.careerGoals))*1.5))} as DraftCandidate)),[archivePlayers]);
+ const {draftPlayers,loading,error,retry}=useFootballKnowledge();
+ const cc0Pool=useMemo(()=>draftPlayers.map(cc0PlayerToGamePlayer)
+   .filter(p=>["GK","DEF","MID","FWD"].includes(p.position)&&p.nationality!=="Unlisted")
+   .map(p=>({...p,cost:draftCost(p),rating:Math.min(99,Math.round(35+Math.sqrt(Math.max(0,p.careerApps))*2+Math.sqrt(Math.max(0,p.careerGoals))*1.5))} as DraftCandidate)),[draftPlayers]);
  const fallbackPool=useMemo(()=>FALLBACK_DRAFT.map((p,i)=>({
    ...PLAYER_DATABASE.find(x=>normalise(x.name)===normalise(p.name))!,
    name:p.name,surname:p.name.split(" ").slice(-1)[0],position:p.pos as Player["position"],
@@ -440,7 +440,7 @@ function DraftPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:n
    statSeasons:0,firstYear:null,lastYear:null,caps:null,internationalGoals:null,birthDate:"",currentCountry:"",currentDivision:null,
    cost:p.cost,rating:60
  } as DraftCandidate)),[]);
- const basePool=archivePool.length>=25?archivePool:fallbackPool;
+ const basePool=cc0Pool.length>=25?cc0Pool:fallbackPool;
  const roster=useMemo(()=>shuffle(basePool,hashSeed(seed+":ROSTER")).slice(0,72),[basePool,seed]);
  const budget=({EASY:105,STANDARD:85,HARD:75,EXTREME:65} as Record<DraftDifficulty,number>)[difficulty];
  const selected=roster.filter(p=>picked.includes(p.archiveId));
@@ -462,25 +462,25 @@ function DraftPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:n
    setPicked(old=>old.includes(id)?old.filter(x=>x!==id):old.length<11?[...old,id]:old);
  };
  const score=Math.max(0,1000-(spent*4)+selected.reduce((n,p)=>n+Math.floor(p.rating/10),0));
- return <Frame account={account} game="draft-xi" eyebrow="SQUAD BUILDER / 4—3—3" title="PICK YOUR XI." description="Build a 4—3—3 from a fresh archive player pool. Credits are game values based on recorded career output, not market prices or transfer valuations." number="03" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
+ return <Frame account={account} game="draft-xi" eyebrow="SQUAD BUILDER / 4—3—3" title="PICK YOUR XI." description="Build a 4—3—3 from a CC0 international player pool. Credits are game values based on recorded international goals and World Cup starts, not market prices or transfer valuations." number="03" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
  {done&&mode==="daily"?<Success title="SQUAD SUBMITTED." detail="Your daily Draft XI is banked. Unlimited practice draws a fresh squad pool." button="BUILD AGAIN" onAgain={()=>{setMode("practice");reset("practice");}}/>:
   <Card className="draft-game">
    <div className="arc-game-meta"><span>{picked.length} / 11 SELECTED</span><b>{counts.GK} GK · {counts.DEF} DEF · {counts.MID} MID · {counts.FWD} FWD</b></div>
    <div className="grid-difficulty">{DRAFT_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{difficultyLabel(level)}</button>)}</div>
    <div className="draft-budget"><div><small>GAME CREDITS USED</small><strong>{spent}<i> / {budget} credits</i></strong></div><span>{budget-spent} LEFT</span><div className="draft-budget-line"><i style={{width:Math.min(100,spent/budget*100)+"%"}}/></div></div>
-   {loading&&archivePool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>BUILDING THE PLAYER MARKET</b><span>SELECTING A FRESH 4—3—3 PLAYER POOL…</span></div>:
+   {loading&&cc0Pool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>BUILDING THE PLAYER MARKET</b><span>SELECTING A FRESH 4—3—3 PLAYER POOL…</span></div>:
     <div className="draft-game-layout">
      <div className="draft-game-pitch"><span>4 — 3 — 3 / {sortedSelected.length} PLAYERS</span><div className="draft-midline"/><div className="draft-circle"/>
       {sortedSelected.map((p,i)=><div className={"draft-player dp"+i} key={p.archiveId}><b>{p.position}</b><small>{p.surname}</small></div>)}
      </div>
      <div className="draft-pick-list">{roster.map(p=><button key={p.archiveId} onClick={()=>toggle(p.archiveId)} className={picked.includes(p.archiveId)?"chosen":""} disabled={!picked.includes(p.archiveId)&&(picked.length>=11||spent+p.cost>budget||locked)}>
-       <span><b>{p.name}</b><small><ClubBadge name={p.club} size={17}/> {p.club} · {p.position}</small></span><strong>{p.cost}</strong><i>{picked.includes(p.archiveId)?"−":"+"}</i>
+       <span><b>{p.name}</b><small><CountryFlag name={p.nationality}/> {p.nationality} · {p.position}</small></span><strong>{p.cost}</strong><i>{picked.includes(p.archiveId)?"−":"+"}</i>
       </button>)}</div>
     </div>}
    <div className="arc-game-foot"><span>{locked?"YOUR XI IS LOCKED":valid?"SQUAD RULES MET":"1 GK · 4 DEF · 3 MID · 3 FWD REQUIRED"}</span><button className="arc-button" disabled={!valid||locked} onClick={()=>{setLocked(true);if(mode==="daily")onDaily("draft-xi",score);}}>LOCK IN XI ↗</button><button className="arc-quiet" onClick={()=>reset(mode)}>RESET</button><button className="arc-quiet" onClick={()=>{retry();reset(mode);}}>NEW POOL ↻</button></div>
    {locked&&<div className="arc-feedback"><b>SQUAD LOCKED · {score} POINTS</b><p>{spent} of {budget} game credits used. This is a custom game rating, not a real transfer-value ranking.</p><button className="arc-button" onClick={()=>reset(mode)}>BUILD ANOTHER SIDE ↗</button></div>}
-   <p className="arc-muted">{archivePool.length>=25?"Players and clubs are drawn from the shared archive pool.":"The archive pool is unavailable; a small starter roster is active."} Game credits are derived from recorded appearances and goals, where available. They are not monetary fees.</p>
-   {error&&<div className="arc-feedback"><b>ARCHIVE FALLBACK</b><p>{error}</p><button className="arc-quiet" onClick={retry}>RETRY PLAYER POOL</button></div>}
+   <p className="arc-muted">{cc0Pool.length>=25?"Players and positions are drawn from CC0 player and international-stat records.":"The CC0 position pool is unavailable; a small starter roster is active."} Game credits are derived from recorded international goals and World Cup starting appearances. They are not monetary fees.</p>
+   {error&&<div className="arc-feedback"><b>CC0 POOL FALLBACK</b><p>{error}</p><button className="arc-quiet" onClick={retry}>RETRY CC0 PLAYER POOL</button></div>}
   </Card>}
  </Frame>;
 }
