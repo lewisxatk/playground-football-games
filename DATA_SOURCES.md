@@ -21,7 +21,7 @@ The match bank includes [OpenFootball Champions League](https://github.com/openf
 
 ## English domestic match results
 
-The CC0 match bank includes [OpenFootball England](https://github.com/openfootball/england), pinned at `9ee7a0c351805c99cc334478a9bf04b7d0432fec`. The build imports available Premier League, Championship/First Division, League One/Second Division, League Two/Third Division, FA Cup and EFL Cup result files. It skips squad files, RSSSF extracts and duplicate full-season files. Each imported match keeps its season, competition, date, source path, line number and source commit. The current source coverage is not a complete all-time English football archive; exact season/competition counts are written to the generated report.
+The CC0 match bank includes [OpenFootball England](https://github.com/openfootball/england), pinned at `9ee7a0c351805c99cc334478a9bf04b7d0432fec`. The build imports available Premier League, Championship/First Division, League One/Second Division, League Two/Third Division/Fourth Division, FA Cup and EFL Cup result files. It skips squad files, RSSSF extracts and duplicate full-season files. Each imported match keeps its season, competition, date, source path, line number and source commit. The current source coverage is not a complete all-time English football archive; exact season/competition counts are written to the generated report.
 
 ## World Cup starting line-ups
 
