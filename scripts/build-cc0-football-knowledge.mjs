@@ -326,7 +326,7 @@ async function fetchWikidataCareers(players){
 function makeWikidataLinkPacks(careerPlayers,englishClubNames,target=750){
  const byClub=new Map();
  for(const player of careerPlayers)for(const spell of player.spells){
-  if(!englishClubNames.has(norm(spell.club)))continue;
+  if(!englishClubNames.has(clubKey(spell.club)))continue;
   const key=spell.clubQid,list=byClub.get(key)||[];
   if(spell.startYear!==null)list.push({player,spell});
   byClub.set(key,list);
