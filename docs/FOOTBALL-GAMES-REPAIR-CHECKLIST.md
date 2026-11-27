@@ -52,7 +52,7 @@ Rule: after every successful GitHub commit, update this checklist in the next co
 
 ## Final verification
 - [ ] Run `npm run validate:data`.
-- [ ] Run `npm run validate:football-content` (latest run `46084112601` passed on prior head `d99d59ea3f`; rerun after subsequent Link Up fix).
+- [x] Run `npm run validate:football-content` — GitHub Actions run `46085013833` passed on commit `dbb6a8fcc3`. This validates the legacy football question bank; the full generated-data checks remain pending.
 - [ ] Run `npm run typecheck` and `npm run build` (the archive-backed Grid retry handler was fixed before this check).
 - [ ] Review GitHub Actions results and fix failures.
 - [ ] Report exact changed files, commits, checks passed/failed and anything still needing live browser testing.
