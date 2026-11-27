@@ -32,19 +32,16 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: pip
-
-      - name: Cache the upstream data archive
-        uses: actions/cache@v4
-        with:
-          path: .cache/openfootballbase-data.tar.gz
-          key: openfootballbase-data-archive-v1
 
       - name: Install DuckDB
         run: python -m pip install --disable-pip-version-check duckdb==1.4.3
 
       - name: Build and validate compact player shards
-        run: python scripts/build_player_shards.py --output public/data/player-shards --shard-size 1000
+        run: |
+          python scripts/build_player_shards.py --output public/data/player-shards --shard-size 1000
+          npm install
+          npm run validate:data
+          npm run build
 
       - name: Commit updated shard set
         run: |
