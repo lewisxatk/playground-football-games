@@ -55,23 +55,28 @@ type GameId = typeof GAME_LINKS[number]["id"];
 const normalise = (v:string) => v.toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
 
 const countryLabel = (value:string) => {
-  const raw=value.trim();
-  const stripped=raw.replace(/^(?:drapeau de la|drapeau de|vlag van|flag of|bandera de|flagge von)\s+/i,"")
-    .replace(/\s+u(?:15|16|17|18|19|20|21|23)\b/ig,"").trim();
+  const stripped=value.trim()
+    .replace(/^(?:drapeau de la|drapeau de|vlag van|flag of|bandera de|flagge von|fahne von)\\s+/i,"")
+    .replace(/\\s+u-?(?:15|16|17|18|19|20|21|23)\\b/ig,"")
+    .replace(/\\s+\\d{4}\\s*[-–/]\\s*\\d{2,4}.*$/,"").trim();
   const key=normalise(stripped);
   const labels:Record<string,string>={
     eng:"England",wal:"Wales",wls:"Wales",sco:"Scotland",nir:"Northern Ireland",
     esp:"Spain",espana:"Spain",es:"Spain",ger:"Germany",deu:"Germany",ned:"Netherlands",nld:"Netherlands",
     ita:"Italy",fra:"France",por:"Portugal",prt:"Portugal",bra:"Brazil",arg:"Argentina",uru:"Uruguay",
-    bel:"Belgium",cro:"Croatia",srb:"Serbia",sui:"Switzerland",che:"Switzerland",civ:"Ivory Coast",
-    cotedivoire:"Ivory Coast",kor:"South Korea",jpn:"Japan",usa:"United States",mex:"Mexico",mar:"Morocco",
-    nga:"Nigeria",sen:"Senegal",gha:"Ghana",cmr:"Cameroon",irn:"Iran",aus:"Australia",can:"Canada",
-    den:"Denmark",swe:"Sweden",nor:"Norway",pol:"Poland",ukr:"Ukraine",cze:"Czechia",rou:"Romania",
-    tur:"Türkiye",gre:"Greece",sau:"Saudi Arabia",ksa:"Saudi Arabia",qat:"Qatar",chn:"China",
-    hnd:"Honduras",hon:"Honduras",ecu:"Ecuador",chi:"Chile",crc:"Costa Rica",par:"Paraguay",
-    drapeaufrance:"France",vlagvanjapan:"Japan",republiqueducongo:"Republic of the Congo"
+    bel:"Belgium",cro:"Croatia",srb:"Serbia",sui:"Switzerland",che:"Switzerland",civ:"Ivory Coast",cotedivoire:"Ivory Coast",
+    kor:"South Korea",jpn:"Japan",usa:"United States",mex:"Mexico",mar:"Morocco",nga:"Nigeria",sen:"Senegal",
+    gha:"Ghana",cmr:"Cameroon",irn:"Iran",aus:"Australia",can:"Canada",den:"Denmark",swe:"Sweden",nor:"Norway",
+    pol:"Poland",ukr:"Ukraine",cze:"Czechia",rou:"Romania",tur:"Türkiye",gre:"Greece",sau:"Saudi Arabia",
+    ksa:"Saudi Arabia",qat:"Qatar",chn:"China",hnd:"Honduras",hon:"Honduras",crc:"Costa Rica",ecu:"Ecuador",
+    par:"Paraguay",chi:"Chile",bol:"Bolivia",per:"Peru",jam:"Jamaica",pan:"Panama",egy:"Egypt",alg:"Algeria",
+    tun:"Tunisia",rsa:"South Africa",isl:"Iceland",aut:"Austria",hun:"Hungary",slo:"Slovenia",svk:"Slovakia",
+    fin:"Finland",irl:"Republic of Ireland",alb:"Albania",mkd:"North Macedonia",bos:"Bosnia and Herzegovina",
+    mne:"Montenegro",kos:"Kosovo",est:"Estonia",lva:"Latvia",ltu:"Lithuania",bul:"Bulgaria",isr:"Israel",
+    uzb:"Uzbekistan",tha:"Thailand",ind:"India",drapeaufrance:"France",vlagvanjapan:"Japan",
+    republiqueducongo:"Republic of the Congo"
   };
-  const first=normalise(stripped.split(/[\s,(/-]+/)[0]??"");
+  const first=normalise(stripped.split(/[\\s,(/-]+/)[0]??"");
   return labels[key]??labels[first]??stripped;
 };
 const utcDay = () => new Date().toISOString().slice(0,10);
