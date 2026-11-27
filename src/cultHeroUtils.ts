@@ -223,6 +223,8 @@ export function buildCultHeroMysteries(
     }
   }
 
+  if (count === 5 && selected.length < 5) return [];
+
   for (const item of sorted) {
     if (selected.length >= count) break;
     if (!used.has(item.player.id)) {
