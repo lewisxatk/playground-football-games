@@ -173,6 +173,9 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
         "), national_rollup AS (" +
         " SELECT nt.player_qid, SUM(nt.caps) AS caps, SUM(nt.goals) AS international_goals " +
         " FROM national nt JOIN picked p ON p.player_qid=nt.player_qid GROUP BY nt.player_qid" +
+        "), club_rollup AS (" +
+        " SELECT wikidata_qid, any_value(country) AS country, any_value(league) AS league, " +
+        " any_value(division) AS division FROM club GROUP BY wikidata_qid" +
         ") " +
         "SELECT c.player_qid, c.name, c.clubs, c.current_club, c.appearances, c.goals, " +
         "c.first_year, c.last_year, coalesce(c.club_count,0) AS club_count, " +
@@ -413,7 +416,7 @@ export async function getCareerClubsAtYear(names:string[],year:number):Promise<M
   const rows=await archive.query(
     "WITH wanted(name_key) AS (VALUES "+values+") "+
     "SELECT cr.player,cr.club_name,cr.start_year,cr.end_year "+
-    "FROM career cr JOIN wanted w ON regexp_replace(lower(cr.player),'[^a-z0-9]','','g')=w.name_key "+
+    "FROM career cr JOIN wanted w ON regexp_replace(strip_accents(lower(cr.player)),'[^a-z0-9]','','g')=w.name_key "+
     "WHERE coalesce(cr.start_year,0)<=? AND coalesce(cr.end_year,cr.start_year,0)>=? "+
     "ORDER BY cr.player_qid,cr.start_year,cr.seq",
     [...unique,year,year]
