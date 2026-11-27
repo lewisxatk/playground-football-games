@@ -1087,64 +1087,57 @@ function MissingXIPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
 
 function makeStrandsBoard(pack:typeof STRANDS_PACKS[number]){
  const words=[pack.spangram,...pack.words];
- const directions=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
- const placementOrder=[0,...words.map((_word,index)=>index).slice(1).sort((a,b)=>words[b].length-words[a].length)];
- const deterministicShuffle=<T,>(items:T[],seed:number):T[]=>{
-  const copy=[...items];let state=seed>>>0;
+ const baseCycle:Array<[number,number]>=[];
+ for(let col=0;col<6;col++)baseCycle.push([0,col]);
+ for(let row=1;row<8;row++){
+  const cols=row%2===1?[5,4,3,2,1]:[1,2,3,4,5];
+  for(const col of cols)baseCycle.push([row,col]);
+ }
+ baseCycle.push([7,0]);
+ for(let row=6;row>=1;row--)baseCycle.push([row,0]);
+ if(baseCycle.length!==48)throw new Error("Strands Hamiltonian path must cover 48 cells.");
+ const seed=hashSeed(pack.id+":STRANDS");
+ const deterministicShuffle=<T,>(items:T[],value:number):T[]=>{
+  const copy=[...items];let state=value>>>0;
   for(let i=copy.length-1;i>0;i--){state=(Math.imul(state,1664525)+1013904223)>>>0;const j=state%(i+1);[copy[i],copy[j]]=[copy[j],copy[i]];}
   return copy;
  };
- let finalPaths:number[][]|null=null;
- for(let attempt=0;attempt<8&&!finalPaths;attempt++){
-  const seed=hashSeed(pack.id+":STRANDS:"+attempt);
-  const used=new Set<number>(),paths:Array<number[]|undefined>=Array(words.length);
-  let nodes=0;
-  const place=(orderIndex:number):boolean=>{
-   if(orderIndex>=placementOrder.length)return used.size===48;
-   const wordIndex=placementOrder[orderIndex],word=words[wordIndex];
-   const starts=deterministicShuffle(Array.from({length:48},(_,index)=>index),seed+wordIndex*7919);
-   for(const start of starts){
-    if(used.has(start))continue;
-    if(wordIndex===0&&Math.floor(start/6)!==0)continue;
-    const path=[start],local=new Set<number>([start]);
-    const extend=(cell:number,letterIndex:number):boolean=>{
-     nodes++;if(nodes>220000)return false;
-     const remaining=word.length-1-letterIndex,row=Math.floor(cell/6);
-     if(wordIndex===0&&row+remaining<7)return false;
-     if(letterIndex===word.length-1){
-      if(wordIndex===0&&row!==7)return false;
-      for(const point of path)used.add(point);
-      paths[wordIndex]=[...path];
-      if(place(orderIndex+1))return true;
-      for(const point of path)used.delete(point);
-      paths[wordIndex]=undefined;
-      return false;
-     }
-     const col=cell%6;
-     const neighbours=deterministicShuffle(directions.map(([dr,dc])=>({row:row+dr,col:col+dc}))
-      .filter(point=>point.row>=0&&point.row<8&&point.col>=0&&point.col<6)
-      .map(point=>point.row*6+point.col)
-      .filter(point=>!used.has(point)&&!local.has(point)),seed+wordIndex*104729+letterIndex*13007+cell);
-     for(const point of neighbours){
-      path.push(point);local.add(point);
-      if(extend(point,letterIndex+1))return true;
-      path.pop();local.delete(point);
-      if(nodes>220000)return false;
-     }
-     return false;
-    };
-    if(extend(start,0))return true;
-    if(nodes>220000)return false;
-   }
-   return false;
-  };
-  if(place(0))finalPaths=paths as number[][];
+ const layouts=deterministicShuffle([0,1,2,3,4,5,6,7],seed);
+ let orderedCells:number[]|null=null;
+ for(const layout of layouts){
+  const flipH=(layout&1)!==0,flipV=(layout&2)!==0,reverse=(layout&4)!==0;
+  const cycle=baseCycle.map(([row,col])=>[flipV?7-row:row,flipH?5-col:col] as [number,number]);
+  const direction=reverse?-1:1;
+  const starts=deterministicShuffle(Array.from({length:48},(_,index)=>index),seed+layout*101);
+  for(const start of starts){
+   const first=cycle[start],last=cycle[(start+direction*(words[0].length-1)+96)%48];
+   if(first[0]!==0||last[0]!==7)continue;
+   orderedCells=Array.from({length:48},(_,offset)=>{
+    const [row,col]=cycle[(start+direction*offset+96)%48];
+    return row*6+col;
+   });
+   break;
+  }
+  if(orderedCells)break;
  }
- if(!finalPaths||new Set(finalPaths.flat()).size!==48)throw new Error("Could not create a valid hidden-path Strands board for "+pack.id);
+ if(!orderedCells)throw new Error("Could not place the Strands spangram from the top to bottom edge.");
+ const paths:number[][]=Array(words.length);
+ let cursor=0;
+ paths[0]=orderedCells.slice(0,words[0].length);cursor=words[0].length;
+ const remainingWords=deterministicShuffle(words.slice(1),seed+991);
+ const remainingOrder=deterministicShuffle(words.map((_word,index)=>index).slice(1),seed+1997);
+ const byWord=new Map<number,string>();
+ remainingOrder.forEach((index,position)=>byWord.set(index,remainingWords[position]));
+ for(const index of remainingOrder){
+  const word=byWord.get(index)!;
+  paths[index]=orderedCells.slice(cursor,cursor+word.length);
+  cursor+=word.length;
+ }
+ if(cursor!==48||new Set(paths.flat()).size!==48)throw new Error("Strands words do not partition the 6 × 8 board.");
  const cells=Array(48).fill("");
- finalPaths.forEach((path,index)=>words[index].split("").forEach((letter,position)=>{cells[path[position]]=letter;}));
+ paths.forEach((path,index)=>byWord.has(index)?byWord.get(index)!.split("").forEach((letter,position)=>{cells[path[position]]=letter;}):words[index].split("").forEach((letter,position)=>{cells[path[position]]=letter;}));
  if(cells.some(letter=>!letter))throw new Error("A Strands board has an empty letter cell.");
- return {cells,paths:finalPaths,words,spangram:pack.spangram};
+ return {cells,paths,words,spangram:pack.spangram};
 }
 function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();const [boardNo,setBoardNo]=useState(0);const [selected,setSelected]=useState<number[]>([]);const pathRef=useRef<number[]>([]);const [dragging,setDragging]=useState(false);const [found,setFound]=useState<number[]>([]);const [wrong,setWrong]=useState(0);const [hintedWord,setHintedWord]=useState<number|null>(null);const [bonusWords,setBonusWords]=useState<string[]>([]);const [bonusHintsUsed,setBonusHintsUsed]=useState(0);const [finished,setFinished]=useState(false);const [notice,setNotice]=useState("");const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));const [bonusDictionary,setBonusDictionary]=useState<Set<string>>(()=>new Set());const [dictionaryReady,setDictionaryReady]=useState(false);const done=account.daily[utcDay()]?.strands!==undefined;
