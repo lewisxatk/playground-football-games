@@ -97,6 +97,38 @@ export async function getCandidates(league: LeagueCode): Promise<Candidate[]> {
 }
 const n = (v: unknown): number | null => v == null || v === "" ? null : Number(v);
 
+
+/**
+ * Preflight a small random batch of candidates against the season-stat table.
+ * Career File used to fetch six tables for each candidate sequentially; that meant
+ * a mobile device could scan the same Parquet source many times before a file appeared.
+ * This performs one grouped pass for the whole batch and only opens a full profile
+ * after a candidate has at least two usable club/season rows.
+ */
+export async function getStatEligibleCandidates(candidates: Candidate[]): Promise<Candidate[]> {
+  if (!candidates.length) return [];
+  const archive = await careerArchive();
+  const eligible = new Set<string>();
+  const batchSize = 120;
+  for (let offset = 0; offset < candidates.length; offset += batchSize) {
+    const batch = candidates.slice(offset, offset + batchSize);
+    const ids = batch.map(candidate => candidate.id);
+    const marks = ids.map(() => "?").join(",");
+    const rows = await archive.query(
+      "SELECT player_qid, COUNT(DISTINCT coalesce(nullif(club_qid,''), nullif(club_link,''), club) || '|' || season) AS stat_seasons " +
+      "FROM stat_club WHERE player_qid IN (" + marks + ") " +
+      "AND coalesce(competition_group,'') <> 'Total' AND apps IS NOT NULL AND goals IS NOT NULL " +
+      "AND coalesce(trim(season),'') <> '' GROUP BY player_qid " +
+      "HAVING COUNT(DISTINCT coalesce(nullif(club_qid,''), nullif(club_link,''), club) || '|' || season) >= 2",
+      ids
+    );
+    for (const row of rows) eligible.add(String(row.player_qid));
+  }
+  return candidates
+    .filter(candidate => eligible.has(candidate.id))
+    .map(candidate => ({ ...candidate, statSeasons: 2 }));
+}
+
 export async function getPlayer(id: string): Promise<Player> {
   const a = await careerArchive();
   // Run queries sequentially on the shared DuckDB connection; concurrent prepared queries can contend on one connection.
