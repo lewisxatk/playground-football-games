@@ -26,6 +26,7 @@ Rule: after every successful GitHub commit, update this checklist in the next co
 - [x] Link Up: use English-club alias matching and exact overlap-window clues. Commits: `32baeeda0a`, `259f5a9a20`, `c510c76f0c`.
 - [x] Link Up: repair the attempt gate so players get three guesses, can buy a fourth attempt, or skip without revealing the bridge. Commit: `199a453e74`.
 - [x] Career File: Premier League-only eligibility with a two-season minimum, appearance clues and unlockable identity hints. Commits: `41d97fce33`, `cb49370295`.
+- [x] Career File: filter the static archive draw against the generated past/present Premier League club index, retaining the English fallback only if the index is unavailable. Commit: `ae2294da34`.
 
 ## To do — game repairs and verification
 - [ ] Footle: audit answer selection, keyboard feedback, hint costs, scoring and mobile behaviour.
@@ -35,7 +36,7 @@ Rule: after every successful GitHub commit, update this checklist in the next co
 - [x] Fix the Grid retry button to reload the archive data instead of calling a stale, undefined retry handler. Commit: `f7d6f36f0e09949347ece76749a2660a68f0322b`.
 - [ ] Re-run CC0 database generation and confirm the corrected club match produces at least 500 valid Football Grid packs; previous run failed with zero packs.
 - [ ] Link Up: validate ten unique questions; confirm each bridge player genuinely overlaps at both English clubs; review hints, lives and scoring (attempt/extra-life flow fix committed).
-- [ ] Career File: verify clue accuracy, timeline, aliases, reveal/hint costs and source provenance.
+- [ ] Career File: verify clue accuracy, timeline, aliases, reveal/hint costs and source provenance (Premier League eligibility now uses generated club index).
 - [ ] Review Quick Quiz / The Climb pools and daily/practice allocations against the user's English-domestic preference.
 - [ ] Audit all game pages for empty states, loading/error states, responsive layout, scoring and daily completion.
 
