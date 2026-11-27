@@ -10,6 +10,9 @@ on:
       - ".github/workflows/build-cc0-football-knowledge.yml"
       - "public/data/worldcup-lineups.json"
       - "src/footballKnowledge.ts"
+      - "src/ArcadeApp.tsx"
+      - "src/CC0CareerFilePage.tsx"
+      - "src/CultHeroPage.tsx"
 
 permissions:
   contents: write

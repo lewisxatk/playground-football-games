@@ -33,7 +33,6 @@ const difficultyDescription=(level:string)=>({
  HARD:"Tighter statistics, tougher career clues and specialist football knowledge.",
  EXTREME:"Rare records, detailed career chronology and questions for serious obsessives."
 } as Record<string,string>)[level]??"";
-const ARCHIVE_POOL_SEED = "PLAYGROUND-GAME-POOL-2026-11";
 const EMPTY_ACCOUNT: Account = { nickname:"PLAYER 01", createdAt:new Date().toISOString(), streak:0, bestStreak:0, lastDailyDate:"", daily:{}, totals:{} };
 const GAME_LINKS = [
   {id:"lowball",title:"LOWBALL",sub:"Higher or lower. No second guesses.",tone:"lime",tag:"QUICK FIRE"},
@@ -914,9 +913,6 @@ function FiveOhOnePage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
 }
 
 type LinkDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
-type GeneratedLink={start:GamePlayer;end:GamePlayer;answer:GamePlayer;startClub:string;endClub:string;options:GamePlayer[]};
-
-
 function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();const [difficulty,setDifficulty]=useState<LinkDifficulty>("STANDARD");
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
@@ -1254,15 +1250,22 @@ const TOURNAMENT_LEVELS: TournamentDifficulty[]=["EASY","STANDARD","HARD","EXTRE
 function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();
  const [difficulty,setDifficulty]=useState<TournamentDifficulty>("STANDARD");
+ const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
+ const [practiceRunActive,setPracticeRunActive]=useState(false);
  const {data:worldCupData,loading,error,retry}=useFootballKnowledge("world-cup");
  const [attempts,setAttempts]=useState(0);
  const [ended,setEnded]=useState(false);
  const [won,setWon]=useState(false);
  const maxGuesses=5;
+ const done=account.daily[utcDay()]?.["tournament-nation"]!==undefined;
+ const practiceCount=practicePlays[utcDay()]??0;
+ const practiceLimitReached=mode==="practice"&&!ended&&!practiceRunActive&&practiceCount>=5;
+ const seed=mode==="daily"?"TOURNAMENT:"+utcDay():"TOURNAMENT:PRACTICE:"+practiceSeed;
  const tournamentUsageKey="playground.tournament-nation.practice.v1";
  const [practicePlays,setPracticePlays]=useState<Record<string,number>>(()=>{
    try{const value=JSON.parse(localStorage.getItem(tournamentUsageKey)||"{}");return value&&typeof value==="object"?value:{};}catch{return {};}
  });
+ useEffect(()=>{try{localStorage.setItem(tournamentUsageKey,JSON.stringify(practicePlays));}catch{/* keep practice available if storage is disabled */}},[practicePlays]);
 
  const match=useMemo(()=>{
    if(!worldCupData?.lineups.length)return null;
