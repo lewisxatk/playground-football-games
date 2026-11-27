@@ -1121,7 +1121,7 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
   questions.length!==10||!q?<Card className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NOT ENOUGH VERIFIED LINKS FOR A FULL TEN-QUESTION RUN"}</b><p>{error||"The current player sample did not produce ten unique, unambiguous bridge players. Draw a fresh practice set or retry the archive."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY LINK ARCHIVE ↗</button></Card>:
   <Card className="link-game">
    {mode==="practice"&&<div className="grid-difficulty">{(["EASY","STANDARD","HARD","EXTREME"] as LinkDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{level==="STANDARD"?"MEDIUM / STANDARD":level}</button>)}</div>}
-   <div className="arc-game-meta"><span>{mode==="daily"?"DAILY LINK":"PRACTICE · "+difficulty} · QUESTION {index+1}/10</span><b>{score.toLocaleString("en-GB")} PTS</b></div>
+   <div className="arc-game-meta"><span>{mode==="daily"?"DAILY LINK":"PRACTICE · "+difficulty} · QUESTION {index+1}/10</span><b><ScoreTicker value={score} suffix=" PTS"/></b></div>
    <div className="link-score-row"><span>QUESTION VALUE</span><b><ScoreTicker value={currentPoints}/> / 1,000</b><span>{wrongCount} WRONG · {hintCount} HINTS</span></div>
    <div className="link-bridge">
     <div><small>START PLAYER</small><strong>{q.start.name}</strong><span className="link-club-evidence"><ClubBadge name={q.startClub} size={22}/>{q.startClub}</span></div>
