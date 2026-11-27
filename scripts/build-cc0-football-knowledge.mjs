@@ -165,10 +165,17 @@ function buildInternationalQuiz(matches){
  const margins=[...new Set(matches.map(m=>String(Math.abs(m.homeScore-m.awayScore))))];
  const ukTeams=new Set(["england","scotland","wales","northern ireland"]);
  const pickOptions=(answer,candidates,key)=>{
-  const distractors=[...new Set(candidates.map(String).filter(value=>value!==String(answer)))]
-   .sort((a,b)=>createHash("sha256").update(key+a).digest("hex").localeCompare(createHash("sha256").update(key+b).digest("hex"))).slice(0,4);
+  const answerValue=String(answer);
+  if(!Array.isArray(candidates)||candidates.length<5)return null;
+  const seed=parseInt(createHash("sha256").update(key).digest("hex").slice(0,8),16)>>>0;
+  const distractors=[];let index=seed%candidates.length;
+  for(let attempt=0;attempt<candidates.length&&distractors.length<4;attempt++){
+   const value=String(candidates[index]);
+   if(value!==answerValue&&!distractors.includes(value))distractors.push(value);
+   index=(index+1)%candidates.length;
+  }
   if(distractors.length!==4)return null;
-  return [String(answer),...distractors].sort((a,b)=>createHash("sha256").update(key+a).digest("hex").localeCompare(createHash("sha256").update(key+b).digest("hex")));
+  return [answerValue,...distractors].sort((a,b)=>createHash("sha256").update(key+a).digest("hex").localeCompare(createHash("sha256").update(key+b).digest("hex")));
  };
  const questions=matches.map(match=>{
   const selector=parseInt(createHash("sha256").update(match.id).digest("hex").slice(0,2),16)%4;
