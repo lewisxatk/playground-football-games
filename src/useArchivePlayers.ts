@@ -49,15 +49,15 @@ async function writeCache(key: string, players: ArchiveGamePlayer[]): Promise<vo
 
 type StaticPlayerIndex = {
   source?: string;
-  licence?: string;
-  releaseTag?: string;
-  generatedAt?: string;
+  sourceRelease?: string;
+  sourceReleaseUrl?: string;
   sourceAssetSha256?: string;
+  dataLicence?: string;
+  warnings?: string[];
   playerCount?: number;
   shardCount?: number;
-  shards?: { file:string; count:number; bytes?:number; sha256?:string }[];
+  shards?: { file:string; count:number; sha256:string }[];
 };
-type StaticPlayerShard = { releaseTag:string; source:string; licence:string; players:ArchiveGamePlayer[] };
 let staticIndexPromise:Promise<StaticPlayerIndex|null>|null=null;
 
 function seededHash(value:string):number{
@@ -68,12 +68,12 @@ function seededHash(value:string):number{
 
 async function getStaticIndex():Promise<StaticPlayerIndex|null>{
   if(!staticIndexPromise){
-    staticIndexPromise=fetch("/data/player-pool/manifest.json",{cache:"force-cache"})
+    staticIndexPromise=fetch("/data/player-shards/index.json",{cache:"force-cache"})
       .then(async response=>{
         if(!response.ok)return null;
         const index=await response.json() as StaticPlayerIndex;
-        if(index.source!=="OpenFootballBase-Data"||index.licence!=="CC BY-SA 4.0"||
-          !index.releaseTag||!Array.isArray(index.shards)||index.shards.length<32||
+        if(index.source!=="OpenFootballBase-Data"||!index.sourceRelease||!index.sourceAssetSha256||
+          !Array.isArray(index.shards)||index.shards.length<32||
           !Number.isFinite(index.playerCount)||index.shardCount!==index.shards.length)return null;
         return index;
       }).catch(()=>null);
@@ -86,23 +86,23 @@ async function loadStaticPlayerShard(seed:string,limit:number):Promise<ArchiveGa
   if(!index?.shards?.length)return null;
   const start=seededHash(seed)%index.shards.length;
   const selected:NonNullable<StaticPlayerIndex["shards"]>=[];
-  let selectedCount=0;
-  for(let offset=0;offset<index.shards.length&&selectedCount<limit;offset++){
+  let count=0;
+  for(let offset=0;offset<index.shards.length&&count<limit;offset++){
     const shard=index.shards[(start+offset)%index.shards.length];
     if(!shard?.file||!Number.isInteger(shard.count)||shard.count<0)continue;
-    selected.push(shard);selectedCount+=shard.count;
+    selected.push(shard);count+=shard.count;
   }
-  if(!selected.length||selectedCount<Math.min(limit,500))return null;
-  const cacheKey="static:"+index.releaseTag+":"+selected.map(shard=>shard.file).join(",")+":"+seed+":"+limit;
+  if(!selected.length||count<Math.min(limit,500))return null;
+  const cacheKey="static:"+index.sourceAssetSha256+":"+selected.map(shard=>shard.file).join(",")+":"+seed+":"+limit;
   const cached=await readCache(cacheKey);
   if(cached)return cached.slice(0,limit);
   const payloads=await Promise.all(selected.map(async shard=>{
-    const response=await fetch("/data/player-pool/"+shard.file,{cache:"force-cache"});
+    const response=await fetch("/data/player-shards/"+shard.file,{cache:"force-cache"});
     if(!response.ok)throw new Error("Static player shard could not be loaded ("+response.status+").");
-    const payload=await response.json() as StaticPlayerShard;
-    if(payload.releaseTag!==index.releaseTag||!Array.isArray(payload.players)||payload.players.length!==shard.count)
-      throw new Error("Static player shard does not match its release manifest.");
-    return payload.players;
+    const rows=await response.json() as ArchiveGamePlayer[];
+    if(!Array.isArray(rows)||rows.length!==shard.count)
+      throw new Error("Static player shard count does not match its index.");
+    return rows;
   }));
   const all=payloads.flat();
   const distinct=Array.from(new Map(all.filter(player=>player?.id&&player.name).map(player=>[player.id,player])).values());
