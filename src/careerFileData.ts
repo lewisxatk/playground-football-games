@@ -87,7 +87,7 @@ export async function getCandidates(league: LeagueCode): Promise<Candidate[]> {
     "SUM(coalesce(cr.apps,0)) AS apps " +
     "FROM career cr JOIN eligible e ON e.player_qid=cr.player_qid " +
     "GROUP BY cr.player_qid HAVING SUM(coalesce(cr.apps,0))>=20 " +
-    "ORDER BY hash(cr.player_qid) LIMIT 12000";
+    "ORDER BY hash(cr.player_qid) LIMIT 2400";
   const rows = await archive.query(sql, codes);
   return rows.map((r: any) => ({
     id: String(r.candidate_id), name: String(r.player_name ?? ""),
