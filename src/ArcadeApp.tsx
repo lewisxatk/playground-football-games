@@ -1127,64 +1127,6 @@ function MissingXIPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
  </Frame>;
 }
 
-function makeDynamicStrandsPack(players:GamePlayer[],seed:number):typeof STRANDS_PACKS[number]|null{
- const groups:{kind:"CLUB"|"NATION";label:string;members:GamePlayer[]}[]=[];
- const addGroup=(kind:"CLUB"|"NATION",label:string,items:GamePlayer[])=>{
-   const unique=[...new Map(items.map(p=>[p.archiveId,p])).values()];
-   if(unique.length>=6)groups.push({kind,label,members:unique});
- };
- const byClub=new Map<string,{label:string;members:GamePlayer[]}>();
- const byNation=new Map<string,{label:string;members:GamePlayer[]}>();
- for(const p of players){
-   for(const club of p.clubs){
-     const key=normalise(club);if(!key)continue;
-     const group=byClub.get(key)??{label:club,members:[]};
-     group.members.push(p);byClub.set(key,group);
-   }
-   if(p.nationality&&p.nationality!=="Unlisted"){
-     const label=countryLabel(p.nationality),key=normalise(label);
-     const group=byNation.get(key)??{label,members:[]};
-     group.members.push(p);byNation.set(key,group);
-   }
- }
- for(const group of byClub.values())addGroup("CLUB",group.label,group.members);
- for(const group of byNation.values())addGroup("NATION",group.label,group.members);
- const orderedGroups=shuffle(groups,seed);
- for(let groupIndex=0;groupIndex<orderedGroups.length;groupIndex++){
-   const group=orderedGroups[groupIndex];
-   const base=group.label.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,"");
-   const spangramCandidates=group.kind==="NATION"
-     ?[base+"FOOTBALL",base+"PLAYERS"]
-     :[base,base+"FOOTBALL",base+"PLAYERS",base.length===9?base+"FCXI":""].filter(Boolean);
-   const spangram=spangramCandidates.find(word=>word.length===13||word.length===14);
-   if(!spangram)continue;
-   const target=48-spangram.length;
-   const candidates=[...new Set(shuffle(group.members,seed+groupIndex*31)
-     .map(p=>p.surname.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,""))
-     .filter(word=>word.length>=3&&word.length<=8))];
-   if(candidates.length<6)continue;
-   for(let wordCount=6;wordCount<=Math.min(8,candidates.length);wordCount++){
-     const dp:Map<number,string[]>[]=Array.from({length:wordCount+1},()=>new Map<number,string[]>());
-     dp[0].set(0,[]);
-     for(const word of candidates){
-       for(let count=wordCount-1;count>=0;count--){
-         for(const [sum,chosen] of Array.from(dp[count].entries())){
-           const next=sum+word.length;
-           if(next>target||dp[count+1].has(next))continue;
-           dp[count+1].set(next,[...chosen,word]);
-         }
-       }
-     }
-     const words=dp[wordCount].get(target);
-     if(words&&new Set(words).size===wordCount){
-       const theme=group.kind==="CLUB"?"PLAYERS WHO PLAYED FOR "+group.label:"PLAYERS WHO REPRESENTED "+group.label;
-       return {spangram,words,theme};
-     }
-   }
- }
- return null;
-}
-
 function makeStrandsBoard(pack:typeof STRANDS_PACKS[number]){
  const cells=Array(48).fill("");const paths:number[][]=[];
  // Both spangram lengths start on the top edge and finish on the bottom edge.
