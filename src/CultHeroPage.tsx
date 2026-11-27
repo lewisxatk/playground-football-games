@@ -1,8 +1,9 @@
 import { useMemo, useState, type FormEvent } from "react";
-import { useArchivePlayers } from "./useArchivePlayers";
+import { useFootballKnowledge } from "./footballKnowledge";
+import { cc0CareerToArchiveGamePlayer } from "./cc0CareerAdapter";
 import {
   addCultHeroCard,
-  buildCultHeroMysteries,
+  buildCC0CultHeroMysteries,
   cultHeroUtcDay,
   normaliseCultHeroAnswer,
   readCultHeroCollection,
@@ -27,8 +28,9 @@ export default function CultHeroPage({ dailyDone, onDailyComplete }: Props) {
   const [practiceSeed, setPracticeSeed] = useState(freshPracticeSeed);
   const day = cultHeroUtcDay();
   const poolSeed = mode === "daily" ? "CULT-HERO-DAILY-" + day : "CULT-HERO-PRACTICE-" + practiceSeed;
-  const { players, loading, error, retry } = useArchivePlayers(true, poolSeed, 8000);
-  const mysteries = useMemo(() => buildCultHeroMysteries(players, poolSeed, 5), [players, poolSeed]);
+  const { data: careerData, loading, error, retry } = useFootballKnowledge("career-history");
+  const players = useMemo(() => (careerData?.cultHeroCandidates ?? []).map(cc0CareerToArchiveGamePlayer), [careerData]);
+  const mysteries = useMemo(() => buildCC0CultHeroMysteries(players, poolSeed, 5), [players, poolSeed]);
 
   const [roundIndex, setRoundIndex] = useState(0);
   const [clueIndex, setClueIndex] = useState(0);
