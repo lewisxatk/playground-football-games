@@ -29,8 +29,8 @@ type FootballKnowledgeShards = {
  connections:{players:CC0FootballPlayer[];packs:CC0ConnectionsPack[];clubCountryPacks?:unknown[]};
  strands:{packs:CC0StrandsPack[]};
  "football-grid":{players:CC0FootballPlayer[];packs:CC0GridPack[]};
- "the-climb":{questions:CC0QuizQuestion[]};
- "timed-quiz":{questions:CC0QuizQuestion[]};
+ "the-climb-easy":{questions:CC0QuizQuestion[]}; "the-climb-medium":{questions:CC0QuizQuestion[]}; "the-climb-hard":{questions:CC0QuizQuestion[]}; "the-climb-extreme":{questions:CC0QuizQuestion[]};
+ "timed-quiz-easy":{questions:CC0QuizQuestion[]}; "timed-quiz-medium":{questions:CC0QuizQuestion[]}; "timed-quiz-hard":{questions:CC0QuizQuestion[]}; "timed-quiz-extreme":{questions:CC0QuizQuestion[]};
  "the-reveal":{playerCards:WorldCupPlayerCard[]};
  "goal-packs":{lowballPairs:CC0StatPack[];ladderPacks:CC0StatPack[];football501Packs:CC0StatPack[]};
  "player-stats":{players:CC0DraftPlayer[]};
@@ -38,7 +38,8 @@ type FootballKnowledgeShards = {
 };
 export type FootballKnowledgeKey=keyof FootballKnowledgeShards;
 const shardCache=new Map<FootballKnowledgeKey,Promise<unknown>>();
-const minimums:Record<FootballKnowledgeKey,number>={core:500,matches:500,"english-matches":500,"european-club-matches":500,"goal-events":500,"world-cup":500,footle:500,connections:500,strands:500,"football-grid":500,"the-climb":500,"timed-quiz":500,"the-reveal":500,"goal-packs":500,"player-stats":500,"career-history":0};
+const minimums:Record<FootballKnowledgeKey,number>={core:500,matches:500,"english-matches":500,"european-club-matches":500,"goal-events":500,"world-cup":500,footle:500,connections:500,strands:500,"football-grid":500,"the-climb-easy":500,"the-climb-medium":500,"the-climb-hard":500,"the-climb-extreme":500,
+ "timed-quiz-easy":500,"timed-quiz-medium":500,"timed-quiz-hard":500,"timed-quiz-extreme":500,"the-reveal":500,"goal-packs":500,"player-stats":500,"career-history":0};
 
 function validateShard<K extends FootballKnowledgeKey>(key:K,value:unknown):FootballKnowledgeShards[K]{
  if(!value||typeof value!=="object")throw new Error("The CC0 "+key+" content shard is invalid.");
@@ -54,8 +55,7 @@ function validateShard<K extends FootballKnowledgeKey>(key:K,value:unknown):Foot
   key==="connections"?list("packs").length:
   key==="strands"?list("packs").length:
   key==="football-grid"?list("packs").length:
-  key==="the-climb"?list("questions").length:
-  key==="timed-quiz"?list("questions").length:
+  key.startsWith("the-climb-")||key.startsWith("timed-quiz-")?list("questions").length:
   key==="the-reveal"?list("playerCards").length:
   key==="goal-packs"?Math.min(list("lowballPairs").length,list("ladderPacks").length,list("football501Packs").length):
   key==="career-history"?list("players").length:
@@ -113,6 +113,24 @@ export function useFootballKnowledge<K extends FootballKnowledgeKey>(key:K){
   loadFootballKnowledge(key,attempt>0).then(value=>{if(live)setData(value)}).catch(problem=>{if(live)setError(problem instanceof Error?problem.message:"CC0 football database unavailable.")}).finally(()=>{if(live)setLoading(false)});
   return()=>{live=false};
  },[key,attempt]);
+ return {data,loading,error,retry:()=>setAttempt(value=>value+1)};
+}
+
+export function useFootballQuizKnowledge(game:"the-climb"|"timed-quiz"){
+ const [data,setData]=useState<{questions:CC0QuizQuestion[]}|null>(null);
+ const [loading,setLoading]=useState(true);
+ const [error,setError]=useState("");
+ const [attempt,setAttempt]=useState(0);
+ useEffect(()=>{
+  let live=true;setLoading(true);setError("");
+  const tiers=["easy","medium","hard","extreme"] as const;
+  const keys=tiers.map(tier=>(game+"-"+tier) as FootballKnowledgeKey);
+  Promise.all(keys.map(key=>loadFootballKnowledge(key,attempt>0) as Promise<{questions:CC0QuizQuestion[]}>))
+   .then(shards=>{if(live)setData({questions:shards.flatMap(shard=>shard.questions)})})
+   .catch(problem=>{if(live)setError(problem instanceof Error?problem.message:"CC0 football quiz database unavailable.")})
+   .finally(()=>{if(live)setLoading(false)});
+  return()=>{live=false};
+ },[game,attempt]);
  return {data,loading,error,retry:()=>setAttempt(value=>value+1)};
 }
 
