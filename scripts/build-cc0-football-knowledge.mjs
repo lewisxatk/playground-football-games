@@ -233,13 +233,15 @@ async function parsePlayers(){const files=(await walk(P)).filter(p=>/(?:players|
 async function parseClubs(){const files=(await walk(C)).filter(p=>/clubs\.wiki\.txt$/i.test(p));const map=new Map();for(const path of files){const text=await readFile(path,"utf8");let nation=relative(C,path).split(/[\\/]/)[0].replace(/[-_]/g," ");for(const raw of text.split(/\r?\n/)){const line=raw.trim();if(!line)continue;if(/^=\s*/.test(line)){nation=country(line);continue}if(excluded(line)||line.length<3||line.length>100||line.includes("|")||/^(?:club|team|name|country)/i.test(line))continue;const name=line.replace(/\s+#.*$/,"").trim(),key=norm(name);if(!key)continue;const row=map.get(key)||{id:id("club",key),name,countries:[],source:SOURCES.clubs.repo,sourceCommit:SOURCES.clubs.commit,licence:"CC0-1.0"};if(nation&&!row.countries.some(x=>norm(x)===norm(nation)))row.countries.push(nation);map.set(key,row)}}return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name))}
 
 async function fetchWikidataCareers(players){
- const query=`SELECT ?player ?playerLabel ?statement ?club ?clubLabel ?start ?end WHERE {
+ const query=`SELECT ?player ?playerLabel ?statement ?club ?clubLabel ?start ?end
+  (GROUP_CONCAT(DISTINCT ?nationalityLabel; separator="|") AS ?nationalities) WHERE {
   ?player wdt:P106 wd:Q937857; p:P54 ?statement.
   ?statement ps:P54 ?club; pq:P580 ?start.
   OPTIONAL { ?statement pq:P582 ?end. }
+  OPTIONAL { ?player wdt:P27 ?nationality. }
   ?club wdt:P31/wdt:P279* wd:Q476028.
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
- } LIMIT 50000`;
+ } GROUP BY ?player ?playerLabel ?statement ?club ?clubLabel ?start ?end LIMIT 50000`;
  const meta={status:"not-run",endpoint:SOURCES.wikidata.endpoint,retrievedAt:TODAY,rawRows:0,acceptedSpells:0,players:0,eligibleCareerFile:0,eligibleCultHero:0,error:null};
  let bindings=[];
  const endpoints=[SOURCES.wikidata.endpoint,"https://query.wikidata.org/sparql"];
@@ -265,7 +267,15 @@ async function fetchWikidataCareers(players){
 
  const byName=new Map();
  for(const player of players){const key=norm(player.name);if(!key)continue;const list=byName.get(key)||[];list.push(player);byName.set(key,list)}
- const profiles=new Map(),spellsSeen=new Set();
+ const profiles=new Map(),spellsSeen=new Set(),nationalitiesByQid=new Map();
+ for(const row of bindings){
+  const qid=String(row.player?.value??"").split("/").at(-1)||"";
+  const labels=String(row.nationalities?.value??"").split("|").map(value=>value.trim()).filter(Boolean);
+  if(!/^Q\d+$/.test(qid)||!labels.length)continue;
+  const known=nationalitiesByQid.get(qid)||[];
+  for(const label of labels)if(!known.some(value=>norm(value)===norm(label)))known.push(label);
+  nationalitiesByQid.set(qid,known);
+ }
  const dateYear=value=>{
   const match=String(value??"").match(/(?:\+|-)?(\d{4})-/);
   if(!match)return null;const year=Number(match[1]);
@@ -293,7 +303,9 @@ async function fetchWikidataCareers(players){
    }else entity.wikidataId=qid;
    profile={
     id:"wikidata-career_"+qid,playerId:entity.id,qid,name:playerName,fullName:playerName,
-    nationality:entity.nationalities?.[0]??"",position:entity.positions?.[0]??"",
+    nationality:entity.nationalities?.[0]??nationalitiesByQid.get(qid)?.[0]??"",
+    nationalities:[...new Map([...(entity.nationalities??[]),...(nationalitiesByQid.get(qid)??[])].map(value=>[norm(value),value])).values()],
+    position:entity.positions?.[0]??"",
     aliases:[playerName,...(entity.aliases??[])],birthYears:entity.birthYears??[],
     spells:[],source:SOURCES.wikidata.repo,licence:"CC0-1.0",sourceItemUrl:"https://www.wikidata.org/wiki/"+qid,
     sourceRetrievedAt:TODAY
@@ -444,14 +456,17 @@ const clubKey=value=>norm(value).replace(/\b(?:association football club|footbal
 function makeClubNationGridPacks(careerPlayers,englishClubNames,target=500,preferredClubNames=new Set()){
  const buckets=new Map(),clubNationCounts=new Map();
  for(const player of careerPlayers){
-  const nation=player.nationality?.trim();if(!nation)continue;
+  const nations=[...new Map([...(player.nationalities??[]),player.nationality??""].filter(Boolean).map(value=>[norm(value),value])).values()];
+  if(!nations.length)continue;
   for(const spell of player.spells){
    const keyClub=clubKey(spell.club);if(!englishClubNames.has(keyClub))continue;
-   const key=keyClub+":"+norm(nation),list=buckets.get(key)||[];
-   if(!list.some(item=>item.id===player.id))list.push({id:player.id,name:player.name});
-   buckets.set(key,list);
    const club=clubNationCounts.get(keyClub)||{name:spell.club,nations:new Set()};
-   club.nations.add(norm(nation));clubNationCounts.set(keyClub,club);
+   for(const nation of nations){
+    const key=keyClub+":"+norm(nation),list=buckets.get(key)||[];
+    if(!list.some(item=>item.id===player.id))list.push({id:player.id,name:player.name});
+    buckets.set(key,list);club.nations.add(norm(nation));
+   }
+   clubNationCounts.set(keyClub,club);
   }
  }
  const eligible=[...clubNationCounts.values()].filter(club=>club.nations.size>=4).sort((a,b)=>Number(preferredClubNames.has(clubKey(b.name)))-Number(preferredClubNames.has(clubKey(a.name)))||b.nations.size-a.nations.size).slice(0,80);
