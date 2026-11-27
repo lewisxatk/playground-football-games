@@ -397,7 +397,7 @@ function ClimbPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:n
    <div className="grid-difficulty">{levels.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>restart(mode,level)}>{difficultyLabel(level)}</button>)}</div>
    <p className="difficulty-note">{difficultyDescription(difficulty)}</p>
    <div className="climb-life-track">{[0,1,2].map(i=><i key={i} className={i<lives?"alive":""}/>)}</div>
-   <div className="climb-source-line"><span>{question?.category??"FOOTBALL"}</span><span>{question?.region==="UK"?"UK NATIONAL SIDES":"OTHER INTERNATIONAL TEAMS"}</span></div>
+   <div className="climb-source-line"><span>{question?.category??"FOOTBALL"}</span><span>{question?.region==="ENGLISH_DOMESTIC"?"ENGLISH DOMESTIC FOOTBALL":"INTERNATIONAL FOOTBALL"}</span></div>
    <h2>{ended?"RUN COMPLETE.":question?.question??"No question available."}</h2>
    {ended?<div className="arc-feedback"><p>You climbed {step+1} questions and banked {score} points.</p><button className="arc-button" onClick={()=>restart(mode)}>RUN IT BACK ↻</button></div>:
     <><div className="climb-options">{question?.options.map(option=><motion.button key={option} whileTap={{scale:.985}} onClick={()=>choose(option)} disabled={!!answer} className={answer===option?(option===question.answer?"correct":"wrong"):""}>{option}<i>↗</i></motion.button>)}</div>
