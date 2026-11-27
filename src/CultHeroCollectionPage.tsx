@@ -28,8 +28,8 @@ function CollectionCard({ card, index }: { card: CultHeroCard; index: number }) 
 }
 
 export default function CultHeroCollectionPage() {
-  const { players, loading, error, retry } = useArchivePlayers(true, "CULT-HERO-COLLECTION-PACKS-2026-11", 1600);
-  const eligible = useMemo(() => buildCultHeroMysteries(players, "CULT-HERO-COLLECTION-PACKS-2026-11", 1600), [players]);
+  const { players, loading, error, retry } = useArchivePlayers(true, "CULT-HERO-COLLECTION-PACKS-2026-11", 8000);
+  const eligible = useMemo(() => buildCultHeroMysteries(players, "CULT-HERO-COLLECTION-PACKS-2026-11", 8000), [players]);
   const [collection, setCollection] = useState<CultHeroCard[]>(() => readCultHeroCollection());
   const [stage, setStage] = useState<RevealStage>("idle");
   const [pendingPlayer, setPendingPlayer] = useState<ArchiveGamePlayer | null>(null);
