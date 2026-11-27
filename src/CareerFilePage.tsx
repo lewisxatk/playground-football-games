@@ -24,6 +24,11 @@ const clean=(s:string)=>s.toLocaleLowerCase().normalize("NFD").replace(/[\u0300-
 const yearOf=(s:string):number|null=>{const m=s.match(/(?:19|20)\d{2}/);return m?Number(m[0]):null;};
 const fmt=(v:number|null|undefined)=>v==null?"—":v.toLocaleString("en-GB");
 const ordered=(p:Player)=>[...p.spells].sort((a,b)=>(a.start??9999)-(b.start??9999)||a.seq-b.seq);
+function shuffleCandidates<T>(items:T[],limit:number):T[]{
+  const copy=[...items];
+  for(let i=copy.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[copy[i],copy[j]]=[copy[j],copy[i]];}
+  return copy.slice(0,limit);
+}
 function makeRows(p:Player):Row[]{
   const rows:Row[]=[];
   for(const spell of ordered(p)){
@@ -165,37 +170,35 @@ export default function CareerFilePage(){
   const newPlayer=useCallback(async(deck:Candidate[],selectedMode:Mode)=>{
     const options=deck.filter(c=>fits(c,selectedMode));
     if(!options.length)throw new Error("There are no candidate files for "+selectedMode+" in this league selection. Try All Top Five or another difficulty.");
-    let available=options.filter(c=>!seen.current.has(c.id));
-    if(!available.length){seen.current.clear();available=options;setNote("You've worked through this draw. The player pool has been shuffled again.");}
-    const draw=[...available].sort(()=>Math.random()-.5);
+    const unused=options.filter(c=>!seen.current.has(c.id));
+    const source=unused.length?unused:options;
+    if(!unused.length){seen.current.clear();setNote("The draw has cycled. Previously used files are back in the mix.");}
+    // Keep the phone draw bounded: one small eligibility query and at most six
+    // full player lookups. The previous loop could walk thousands of records
+    // before showing a single playable file.
+    const draw=shuffleCandidates(source,72);
     setLoadingPlayer(true);
-    let lastProblem="The archive did not return two complete club-season statistics.";
+    setNote("Picking a fresh file from "+options.length.toLocaleString("en-GB")+" eligible careers…");
     try{
-      // Check up to 120 candidate IDs in one grouped query. This avoids fetching six
-      // profile/stat tables for every failed player on a phone.
-      for(let offset=0;offset<draw.length;offset+=120){
-        const batch=draw.slice(offset,offset+120);
-        setNote("Checking "+Math.min(offset+batch.length,draw.length).toLocaleString("en-GB")+" of "+draw.length.toLocaleString("en-GB")+" possible files…");
-        const eligible=await getStatEligibleCandidates(batch);
-        for(const choice of [...eligible].sort((a,b)=>b.statSeasons-a.statSeasons)){
-          seen.current.add(choice.id);
-          try{
-            const record=await getPlayer(choice.id);
-            const timeline=makeRows(record);
-            if(!timeline.length){lastProblem="The player had no readable career timeline.";continue;}
-            const free=randomFreeRows(timeline);
-            if(free.length<2){lastProblem="The player had fewer than two career rows that match complete season statistics.";continue;}
-            const note=makeFreeNote(record);
-            setPlayer(record);setRows(timeline);setFreeRows(free);setRevealed(free);setFreeNote(note);
-            setOpened(note?[note.id]:[]);setRound(n=>n+1);setStatus("playing");setNote("");
-            return;
-          }catch(problem){
-            lastProblem=problem instanceof Error?problem.message:"Could not read this player's career file.";
-          }
+      const eligible=await getStatEligibleCandidates(draw);
+      const ranked=[...eligible].sort((a,b)=>b.statSeasons-a.statSeasons);
+      let lastProblem="No candidate in this draw had two complete season-stat rows.";
+      for(const choice of ranked.slice(0,6)){
+        seen.current.add(choice.id);
+        try{
+          const record=await getPlayer(choice.id);
+          const timeline=makeRows(record);
+          const free=randomFreeRows(timeline);
+          if(!timeline.length||free.length<2){lastProblem="This career did not have two complete, matching season-stat clues.";continue;}
+          const note=makeFreeNote(record);
+          setPlayer(record);setRows(timeline);setFreeRows(free);setRevealed(free);setFreeNote(note);
+          setOpened(note?[note.id]:[]);setRound(n=>n+1);setStatus("playing");setNote("");
+          return;
+        }catch(problem){
+          lastProblem=problem instanceof Error?problem.message:"Could not read this player's career file.";
         }
-        batch.forEach(candidate=>seen.current.add(candidate.id));
       }
-      throw new Error("No complete "+selectedMode+" player file could be opened. "+lastProblem+" Try another league or difficulty.");
+      throw new Error("This draw did not contain a complete player file. Choose Next Player to draw again. "+lastProblem);
     }finally{setLoadingPlayer(false);}
   },[]);
 
