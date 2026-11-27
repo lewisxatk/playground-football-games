@@ -1,6 +1,6 @@
 # PLAYGROUND — Master Build Checklist & Handover
 
-**Last audited:** 2026-11-27  
+**Last audited:** 2026-11-27 09:40 UTC  
 **Repository:** https://github.com/lewisxatk/playground-football-games  
 **Production:** https://playground-football-games.pages.dev  
 **Purpose:** This file is the persistent project memory and source of truth for implementation status. Update it at the end of every development batch. Do not mark a task complete merely because a route or visual mock-up exists; the behaviour must be implemented and build-tested.
@@ -14,24 +14,31 @@
 
 ## 0. Current verified baseline
 
-- [x] Sixteen individual game routes exist, with a top-right game menu and home arcade directory.
-- [x] The four original game routes remain: Lowball, The Climb, Draft XI and Career File.
-- [x] Twelve added routes now exist: Footle, Connections, Football Grid, Ladder, The Reveal, Football 501, Link Up, Missing XI, Strands, Scout Signal, Tournament Nation and The Quick Quiz.
-- [x] A local Locker Room profile exists: nickname, current/best streak, daily scores and game history stored in browser localStorage.
-- [x] Career File recent-player exclusions now persist in localStorage across refreshes (capped at 600 IDs); full-pool diversity still needs testing.
-- [x] Daily score/streak date uses UTC day boundaries (00:00 UTC, equivalent to GMT midnight; UK BST is one hour ahead).
-- [x] Daily and Practice modes exist on the game framework. Practice is intended to be repeatable and must not award daily streak credit.
-- [x] A shared visual shell, responsive styles, Motion for React and some animated pitch/game elements exist.
-- [x] A club badge index exists at `public/data/club-badges-index.json` (about 4,700 SVG path entries) and `src/ClubBadge.tsx` can resolve a crest with a text fallback.
-- [x] `getArchiveGamePlayers()` exists in `src/careerFileData.ts`. It can query an archive sample and return a player record with career clubs, appearances, goals, league stats, nationality, position, season span, international caps/goals and birth date.
-- [x] Career File now bounds a draw to a smaller random candidate batch and at most six full player lookups; this is a performance guard, not proof that the archive is fast or its draws are diverse enough.
-- [x] Lowball hides the two goal totals until a selection is made.
-- [x] Footle has Wordle-style green/yellow/grey tile states, and its practice selection is random from the current small word list.
-- [x] The latest production commit verified in this audit is `a2eed0d506059a82c1533bc4ae281f7fa3cada79` (“Fix duplicate club badge aliases blocking production builds”). GitHub Actions passed and Cloudflare Pages reported a successful deploy.
-- [~] **Important:** ten data-driven game routes now share one seeded 1,600-player archive pool through `useArchivePlayers` and a seven-day IndexedDB cache. It is a sample of a much larger source, not the whole 85k archive; The Climb and Draft XI still use small curated starter banks.
-- [!] **Important:** the shared pool is still only up to 1,600 sampled players and source coverage is incomplete. The Climb, Draft XI, static Strands packs and some legacy examples remain small/curated; do not describe PLAYGROUND as having a complete or fully audited world-football database.
-- [!] **Important:** no head-to-head room system exists yet.
-- [!] **Important:** no persistent server account exists. Locker Room is device/browser-local and can be lost if browser data is cleared.
+**Verified production commit:** 'd2bd46983dcb27a4df497104aab0beaf5e4124fc'  
+**Latest successful production deployment:** 'b8b42f73-ad9f-437e-892c-2bec1ff5de81'  
+**Build and deploy:** GitHub Actions run [45975239424](https://github.com/lewisxatk/playground-football-games/actions/runs/45975239424) passed; Cloudflare Pages build and deploy stages both succeeded.
+
+- [x] Sixteen game routes and a 16-tile home directory exist: Lowball, The Climb, Draft XI, Career File, Footle, Connections, Football Grid, Ladder, The Reveal, Football 501, Link Up, Missing XI, Football Strands, Scout Signal, Tournament Nation and The Quick Quiz.
+- [x] The shared home/menu/navigation shell, unique per-game colour palettes and display-heading fonts, responsive layouts and Motion/CSS/SVG animation system are implemented.
+- [x] Main arcade body text now uses the loaded Space Grotesk font; the dedicated Career File screen also uses Space Grotesk. Career File mobile input/select/textarea controls now have a 16px minimum to prevent iOS Safari focus zoom.
+- [x] A local Locker Room profile records nickname, daily results, totals and streaks in browser localStorage. This is a local device/browser save, not a synced account.
+- [x] Daily challenges use UTC date seeds; practice runs use separate session seeds and do not award daily streak credit.
+- [x] The shared archive-backed game pool is connected to Lowball, The Climb, Draft XI, Footle, Connections, Football Grid, Ladder, The Reveal, Football 501, Link Up, Football Strands, The Quick Quiz and Scout Signal. Career File uses its own bounded candidate/profile flow; Tournament Nation and Missing XI use the tournament dataset plus historical career lookups.
+- [x] Each archive-driven practice session uses a fresh seeded cached player sample; the daily pool keeps a stable shared seed. Pools are cached in memory and IndexedDB for seven days.
+- [~] Each archive pool returns up to 1,600 game-ready player records from a sampled query against a much larger upstream archive. This is a meaningful game pool, but it is **not** the complete 85k-player source and does not mean every source field exists for every player.
+- [x] The source-backed World Cup file contains 1,312 team starting-XI records from 11 editions (1982–2022), exactly 11 unique starter names per record. CI validates the line-up file and the 4,700+ SVG path badge index.
+- [x] Tournament Nation shows all eleven shirts on a responsive 2D schematic pitch; difficulty changes the number of club clues shown. The career lookup adds club and broad player-position hints only where exact name/year data matches.
+- [x] Missing XI uses the same tournament data, randomises the missing starter and shows a schematic formation. It does not claim that the source contains verified match-day coordinates.
+- [x] The separate DATA_SOURCES.md records upstream sources, licence distinctions and coverage limits. Club badges can still be trademarks; no club endorsement or blanket crest clearance is claimed.
+- [!] No real-player browser session / manual iPhone Safari or desktop acceptance run has been performed in this build batch. CI proves typecheck, data validation and bundling; it does not prove every interaction works on physical devices.
+- [!] No head-to-head room system, server-side user account, or cross-device save sync exists yet.
+- [!] The full upstream player archive is still queried client-side through DuckDB-WASM and remote Parquet on first use. IndexedDB caching makes repeat visits faster, but it is not a generated edge-cached JSON API or a guaranteed instant first load.
+- [!] Transfer hints are sourced from a proxied CSV and indexed on demand. Name matches, fee interpretation, licence and coverage have not yet received a full audit.
+- [!] Dynamic question generation is not the same as a curated/verified question bank containing thousands of independently audited questions. The Climb and Quick Quiz still need wider question QA; player-stat totals and historical club records inherit upstream coverage limitations.
+- [!] Strands has archive-generated 6×8 boards when a valid player-group/spangram fit can be built, with a curated fallback when the generator cannot produce one. Every possible generated path and puzzle needs more automated QA.
+- [!] Full historical positions/formation for tournament games, dedicated verified national-team crests, player portraits and global league coverage remain incomplete.
+
+**How to read earlier sections:** Sections 11–12 below are historical session snapshots. Their older unchecked tasks are superseded by the latest status in Sections 13–14 and should not be treated as the current build state. Update the relevant item in Sections 1–10 when a task is finally verified.
 
 ## 1. Master football data platform
 
@@ -287,6 +294,9 @@ At the end of every implementation update:
 
 ## 11. Latest implementation log (2026-11-27)
 
+> Historical snapshot retained for continuity. Current implementation status is maintained in Sections 0, 13 and 14; older unchecked items below may already have been superseded.
+
+
 - [x] Added this persistent master tracker and linked it from README (commit `ea869129e3833321da4ebf08e3c17ed3eb7dbcf4`).
 - [x] Scout Signal club crest/flag value cells added (commit `07d6c51f0a74fed6cf2b8cb04a46311289db8727`; CI run 45927424482 passed).
 - [x] iOS-safe 16px form controls and badge/microcopy CSS added (commit `7b5607b790075c2619812e09d184a7e04a6b44d5`; CI run 45927453117 passed).
@@ -298,6 +308,9 @@ At the end of every implementation update:
 **Next concrete actions:** (1) complete build/deployment verification for the Footle keyboard CSS; (2) replace the small hand-curated player source with a shared cached archive data endpoint; (3) expand and validate dynamic quiz/connection/grid pools; (4) implement 4×4 Grid difficulty; (5) implement Strands pointer/touch drag selection.
 
 ## 12. Verification update (2026-11-27, continued)
+
+> Historical snapshot retained for continuity. Current implementation status is maintained in Sections 0, 13 and 14; older unchecked items below may already have been superseded.
+
 
 - [x] Scout Signal club crests and nationality flags now render in the attribute feedback cells; matches are green. CI run: https://github.com/lewisxatk/playground-football-games/actions/runs/45927424482
 - [x] Mobile inputs use 16px minimum text size to avoid iOS Safari focus zoom. CI run: https://github.com/lewisxatk/playground-football-games/actions/runs/45927453117
@@ -354,3 +367,29 @@ At the end of every implementation update:
 5. Make the daily/unlimited system and local recent-history semantics consistent across every game; add save export/restore and later cloud sync.
 6. Finish premium component-level art direction, readability and motion QA on actual iPhone and desktop.
 7. Head-to-head Games Room: create a separate Cloudflare Worker + Durable Object rooms service; then join code/lobby/game-picker, server-authoritative rounds, reconnect, room expiry and private 2-device testing.
+
+## 14. Recovery and production verification (2026-11-27, 09:30–09:40 UTC)
+
+- [x] Recovered from the interrupted session by checking the GitHub main branch, checklist, latest commits, CI runs and Cloudflare production deployment before making further changes. No earlier work was reset or overwritten.
+- [x] Fixed Strands drag tracking: removed pointer capture from the starting tile because it prevented the pointer from entering neighbouring tiles during a drag.
+- [x] Corrected the 14-letter Strands spangram route so it begins at the top edge and completes at the opposite edge; the 13-letter route remains edge-to-edge.
+- [x] Extended the historical career lookup to return broad player-profile position metadata alongside club spells that overlap the selected World Cup year. Only exact normalized player-name matches are used.
+- [x] Reworked Tournament Nation to display the complete eleven-shirt pitch. Difficulty reveals 11, 9, 7 or 5 club clues; the pitch uses profile-position groupings only when enough compatible position data exists, otherwise the UI explicitly labels a schematic 4-3-3.
+- [x] Added responsive full-XI pitch and club-clue styling for desktop and mobile.
+- [x] Updated README with the Cloudflare Pages production address and link to data provenance.
+- [x] Added DATA_SOURCES.md documenting OpenFootballBase-Data, openfootball/worldcup.json, the club badge index, licences and caveats.
+- [x] Replaced the unloaded Cabinet Grotesk body font declaration with the already-loaded Space Grotesk family for the main arcade.
+- [x] Aligned the home arcade directory/progress strip with all 16 game routes.
+- [x] Created a new random practice archive shard per practice session while keeping the daily archive sample stable; a shard remains cached for seven days.
+- [x] Fixed the separate Career File screen's mobile iOS focus zoom by raising form-control text to 16px and improving critical mobile microcopy sizes.
+- [x] Latest CI run: [45975239424](https://github.com/lewisxatk/playground-football-games/actions/runs/45975239424) — install, data validation, TypeScript build and Vite production build passed.
+- [x] Latest Cloudflare production deployment: 'b8b42f73-ad9f-437e-892c-2bec1ff5de81', commit 'd2bd46983dcb27a4df497104aab0beaf5e4124fc'. Cloudflare reports build and deploy stages successful. Preview URL: https://b8b42f73.playground-football-games.pages.dev. The stable production alias remains https://playground-football-games.pages.dev.
+- [!] Real-device iPhone Safari interaction/readability testing remains outstanding; this batch has not claimed a physical device test.
+- [!] First-use archive loading still depends on remote DuckDB-WASM/Parquet and needs a lighter generated shard or edge-cache architecture.
+
+**Next work order:**
+1. Design and prototype a compressed static player-data shard export that removes the initial full DuckDB/Parquet scan from the iPhone play path. Preserve field-level missing-data, source and scope metadata; do not turn missing stats into zero.
+2. Audit and normalise the transfer-fee source into player/club-linked hints, keeping raw reported fees separate from cleaned approximate fee values.
+3. QA the question and puzzle generators for distinct distractors, ambiguous names, accidental duplicate answers and valid game-specific difficulty.
+4. Carry out a real iPhone Safari and desktop test pass for every game route, focusing on input zoom, scrolling, drag behaviour, loading states, colour contrast and timer behaviour.
+5. Build the head-to-head Games Room as a separate Cloudflare Durable Objects/WebSockets service only after solo rounds and their answer sources are stable; server-authoritative score/timer state and two-device testing are mandatory.
