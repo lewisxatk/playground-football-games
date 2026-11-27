@@ -23,6 +23,7 @@ type Account = {
   totals: Record<string, number>;
 };
 const STORAGE_KEY = "playground.local-account.v1";
+const ARCHIVE_POOL_SEED = "PLAYGROUND-GAME-POOL-2026-11";
 const EMPTY_ACCOUNT: Account = { nickname:"PLAYER 01", createdAt:new Date().toISOString(), streak:0, bestStreak:0, lastDailyDate:"", daily:{}, totals:{} };
 const GAME_LINKS = [
   {id:"lowball",title:"LOWBALL",sub:"Higher or lower. No second guesses.",tone:"lime",tag:"QUICK FIRE"},
@@ -182,7 +183,7 @@ function LowballPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
  const done=account.daily[utcDay()]?.lowball!==undefined;
  const seed=mode==="daily"?"LOWBALL:"+utcDay():"LOWBALL:PRACTICE:"+practiceSeed;
- const {players:archivePlayers,loading:poolLoading,error:poolError,retry:retryPool}=useArchivePlayers(true,seed,1600);
+ const {players:archivePlayers,loading:poolLoading,error:poolError,retry:retryPool}=useArchivePlayers(true,ARCHIVE_POOL_SEED,1600);
  const archivePool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer)
    .filter(p=>p.leagueGoalSeasons>=2&&p.leagueGoals>=0&&p.name!=="Unknown player"),[archivePlayers]);
  type DuelStatPlayer={name:string;value:number;club:string;seasons:number;id:string};
@@ -476,7 +477,7 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
  const [gridNotice,setGridNotice]=useState("");
  const done=account.daily[utcDay()]?.["football-grid"]!==undefined;
  const seed=mode==="daily"?hashSeed("GRID:"+utcDay()+":"+difficulty):hashSeed("GRID:practice:"+practiceSeed+":"+difficulty);
- const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,mode==="daily"?"GRID:"+utcDay():"GRID:PRACTICE:"+practiceSeed,1600);
+ const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,ARCHIVE_POOL_SEED,1600);
  const playerPool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
  const puzzle=useMemo(()=>playerPool.length>=40?buildGridPuzzle(playerPool,difficulty,seed):null,[playerPool,difficulty,seed]);
  const check=()=>{
