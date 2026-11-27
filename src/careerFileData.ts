@@ -113,6 +113,9 @@ export type ArchiveGamePlayer = {
   caps: number | null;
   internationalGoals: number | null;
   birthDate: string;
+  currentCountry: string;
+  currentLeague: string;
+  currentDivision: number | null;
 };
 const gamePoolPromises = new Map<string, Promise<ArchiveGamePlayer[]>>();
 
@@ -145,6 +148,7 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
         " COUNT(DISTINCT cr.club_name) AS club_count, " +
         " SUM(coalesce(cr.apps,0)) AS appearances, SUM(coalesce(cr.goals,0)) AS goals, " +
         " arg_max(cr.club_name, coalesce(cr.end_year,cr.start_year,0)) AS current_club, " +
+        " arg_max(cr.club_qid, coalesce(cr.end_year,cr.start_year,0)) AS current_club_qid, " +
         " MIN(cr.start_year) AS first_year, MAX(cr.end_year) AS last_year " +
         " FROM career cr JOIN picked p ON p.player_qid=cr.player_qid " +
         " GROUP BY cr.player_qid HAVING SUM(coalesce(cr.apps,0))>=10" +
@@ -168,11 +172,13 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
         "c.first_year, c.last_year, coalesce(c.club_count,0) AS club_count, " +
         "coalesce(st.seasons,0) AS seasons, coalesce(st.league_appearances,0) AS league_appearances, " +
         "coalesce(st.league_goals,0) AS league_goals, coalesce(pp.nationality,'') AS nationality, " +
-        "coalesce(pp.position,'') AS position, b.birth_date, nt.caps, nt.international_goals " +
+        "coalesce(pp.position,'') AS position, b.birth_date, nt.caps, nt.international_goals, " +
+        "coalesce(cl.country,'') AS current_country, coalesce(cl.league,'') AS current_league, cl.division AS current_division " +
         "FROM career_rollup c LEFT JOIN stat_rollup st ON st.player_qid=c.player_qid " +
         "LEFT JOIN profile_rollup pp ON pp.player_qid=c.player_qid " +
         "LEFT JOIN birth_rollup b ON b.player_qid=c.player_qid " +
         "LEFT JOIN national_rollup nt ON nt.player_qid=c.player_qid " +
+        "LEFT JOIN club_rollup cl ON cl.wikidata_qid=c.current_club_qid " +
         "WHERE coalesce(st.seasons,0)>=2 AND c.appearances>=20 ORDER BY hash(c.player_qid) LIMIT ?";
       const rows = await a.query(sql, [...ids, limit]);
       return rows.map((r: any): ArchiveGamePlayer => ({
@@ -191,7 +197,10 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
         lastYear: n(r.last_year),
         caps: n(r.caps),
         internationalGoals: n(r.international_goals),
-        birthDate: String(r.birth_date ?? "")
+        birthDate: String(r.birth_date ?? ""),
+        currentCountry: String(r.current_country ?? ""),
+        currentLeague: String(r.current_league ?? ""),
+        currentDivision: n(r.current_division)
       }));
     })().catch(error => {
       gamePoolPromises.delete(cacheKey);
