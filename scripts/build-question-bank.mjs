@@ -60,7 +60,7 @@ const countryLabels = new Map([
   ["mar", "Morocco"], ["nga", "Nigeria"], ["sen", "Senegal"], ["gha", "Ghana"], ["cmr", "Cameroon"], ["irn", "Iran"],
   ["aus", "Australia"], ["can", "Canada"], ["den", "Denmark"], ["swe", "Sweden"], ["nor", "Norway"], ["pol", "Poland"],
   ["ukr", "Ukraine"], ["cze", "Czechia"], ["rou", "Romania"], ["tur", "Türkiye"], ["gre", "Greece"], ["sau", "Saudi Arabia"],
-  ["qat", "Qatar"], ["chn", "China"],
+  ["qat", "Qatar"], ["chn", "China"], ["hnd", "Honduras"], ["hon", "Honduras"], ["crc", "Costa Rica"], ["ecu", "Ecuador"], ["par", "Paraguay"], ["chi", "Chile"], ["bol", "Bolivia"], ["per", "Peru"], ["jam", "Jamaica"], ["pan", "Panama"], ["egy", "Egypt"], ["alg", "Algeria"], ["tun", "Tunisia"], ["rsa", "South Africa"], ["isl", "Iceland"], ["aut", "Austria"], ["hun", "Hungary"], ["slo", "Slovenia"], ["svk", "Slovakia"], ["fin", "Finland"], ["irl", "Republic of Ireland"], ["alb", "Albania"], ["mkd", "North Macedonia"], ["bos", "Bosnia and Herzegovina"], ["mne", "Montenegro"], ["kos", "Kosovo"], ["est", "Estonia"], ["lva", "Latvia"], ["ltu", "Lithuania"], ["bul", "Bulgaria"], ["isr", "Israel"], ["uzb", "Uzbekistan"], ["tha", "Thailand"], ["ind", "India"],
   ["royaumeuni", "United Kingdom"], ["angleterre", "England"], ["ecosse", "Scotland"],
   ["paysdegalles", "Wales"], ["irlandedunord", "Northern Ireland"], ["italie", "Italy"],
   ["allemagne", "Germany"], ["espagne", "Spain"], ["bresil", "Brazil"],
@@ -72,7 +72,19 @@ const countryLabels = new Map([
 ]);
 const displayCountry = value => {
   const raw = String(value ?? "").trim();
-  return countryLabels.get(normalise(raw)) ?? raw;
+  if (!raw) return "";
+  const stripped = raw
+    .replace(/^(?:drapeau de la|drapeau de|vlag van|flag of|bandera de|flagge von|fahne von)\s+/i, "")
+    .replace(/\s+u(?:15|16|17|18|19|20|21|23)\b/ig, "")
+    .trim();
+  const exact = countryLabels.get(normalise(stripped));
+  if (exact) return exact;
+  const firstToken = stripped.split(/[\s,(/-]+/)[0];
+  const code = countryLabels.get(normalise(firstToken));
+  if (code) return code;
+  if (/(?:liga|league|campeonato|division|distrital|championship|nationalteam|youth|academy|reserve)/i.test(stripped) ||
+      /\d{4}\s*[-–/]\s*\d{2,4}/.test(stripped)) return "";
+  return stripped;
 };
 const leagueLabels = new Map([
   ["fussballbundesliga", "Bundesliga"], ["2fussballbundesliga", "2. Bundesliga"],
@@ -120,7 +132,7 @@ for (const shard of manifest.shards) {
 if (players.length !== manifest.playerCount) throw new Error("Player count does not match the static archive manifest.");
 
 const clubs = unique(players.flatMap(player => [...(player.clubs ?? []), player.currentClub]));
-const nationalities = unique(players.map(player => displayCountry(player.nationality)));
+const nationalities = unique(players.map(player => displayCountry(player.nationality)).filter(Boolean));
 const leagues = unique(players.map(player => displayLeague(player.currentLeague)));
 const countries = unique(players.map(player => displayCountry(player.currentCountry)));
 const sortedNumbers = values => [...new Set(values.filter(value => value !== null).map(String))].sort((a, b) => Number(a) - Number(b));
@@ -201,8 +213,7 @@ const EASY_TOP_LEAGUES = new Set([
   "campeonatobrasileiroseriea", "ligamx"
 ]);
 const easyEligible = player => EASY_TOP_LEAGUES.has(normalise(player.currentLeague)) &&
-  ((number(player.appearances) ?? 0) >= 100 || (number(player.goals) ?? 0) >= 25 ||
-   (number(player.caps) ?? 0) >= 15 || (number(player.leagueGoals) ?? 0) >= 15);
+  (number(player.appearances) ?? 0) >= 150;
 const mediumEligible = player => (number(player.appearances) ?? 0) >= 120 || (player.clubs?.length ?? 0) >= 3;
 const hardEligible = player => (player.careerGoalRows ?? player.goalRows ?? 0) > 0 ||
   (player.leagueGoalRows ?? 0) > 0 || (player.nationalRows ?? 0) > 0 || (number(player.appearances) ?? 0) >= 80;
@@ -256,12 +267,6 @@ for (const player of players) {
       latestClub ? "Which position group is recorded for " + player.name + " at " + latestClub + "?" : "Which position group is recorded for " + player.name + "?",
       position, ["Goalkeeper", "Defender", "Midfielder", "Forward", "Utility player"],
       player.name + " is listed as a " + position.toLowerCase() + " in the source's squad record.");
-    if (latestClub && league) add("EASY", player, region, "easy-latest-league", "LEAGUES",
-      "Which league is listed for " + latestClub + ", the latest recorded club of " + player.name + "?", league, leagues,
-      "The archive lists " + latestClub + " in " + league + ". This reflects the latest available club metadata.");
-    if (latestClub && country) add("EASY", player, region, "easy-club-country", "LEAGUES",
-      "Which country is listed for " + latestClub + ", the latest recorded club of " + player.name + "?", country, countries,
-      "The archive lists " + latestClub + " in " + country + ". This reflects the latest available club metadata.");
   }
 
   if (mediumEligible(player)) {
