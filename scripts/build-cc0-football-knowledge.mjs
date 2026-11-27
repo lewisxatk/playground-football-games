@@ -55,6 +55,31 @@ async function parseInternationalGoals(players){
  const scorers=[...aggregates.values()].sort((a,b)=>b.goals-a.goals||a.name.localeCompare(b.name));
  return {scorers,events:goalEvents,meta:{acceptedGoalEvents:accepted,uniqueGoalEvents:goalEvents.length,duplicateGoalRows:duplicates,ownGoalsExcluded:ownGoals,uniqueScorers:scorers.length,eligibleScorers:scorers.filter(x=>x.goals>=2).length}};
 }
+function makeInternationalGoalPacks(scorers){
+ const eligible=scorers.filter(player=>player.goals>=2),lowball=[],ladder=[],football501=[];
+ const pairSeen=new Set(),ladderSeen=new Set(),checkoutSeen=new Set();
+ if(eligible.length<500)return{lowball,ladder,football501};
+ for(let seed=1;seed<20000&&lowball.length<750;seed++){
+  const draw=seededShuffle(eligible,seed*7919+23),a=draw[0],b=draw[1];
+  if(!a||!b||a.id===b.id||a.goals===b.goals)continue;
+  const signature=[a.id,b.id].sort().join("|");if(pairSeen.has(signature))continue;pairSeen.add(signature);
+  lowball.push({id:id("lowball",signature),players:[a,b].map(p=>({id:p.id,name:p.name,value:p.goals})),metric:"recorded senior international goals",source:SOURCES.internationalResults});
+ }
+ for(let seed=1;seed<20000&&ladder.length<750;seed++){
+  const draw=seededShuffle(eligible,seed*3571+61).slice(0,5);
+  if(draw.length!==5||new Set(draw.map(p=>p.id)).size!==5||new Set(draw.map(p=>p.goals)).size!==5)continue;
+  const signature=draw.map(p=>p.id).sort().join("|");if(ladderSeen.has(signature))continue;ladderSeen.add(signature);
+  ladder.push({id:id("ladder",signature),players:draw.map(p=>({id:p.id,name:p.name,value:p.goals})),metric:"recorded senior international goals",source:SOURCES.internationalResults});
+ }
+ for(let seed=1;seed<20000&&football501.length<750;seed++){
+  const draw=seededShuffle(eligible,seed*2377+83).slice(0,12);
+  if(draw.length!==12||new Set(draw.map(p=>p.id)).size!==12)continue;
+  const signature=draw.map(p=>p.id).sort().join("|");if(checkoutSeen.has(signature))continue;checkoutSeen.add(signature);
+  football501.push({id:id("football-501",signature),players:draw.map(p=>({id:p.id,name:p.name,value:p.goals,label:"RECORDED SENIOR INTERNATIONAL GOALS"})),metric:"recorded senior international goals",source:SOURCES.internationalResults});
+ }
+ return{lowball,ladder,football501};
+}
+
 function buildInternationalQuiz(matches){
  const scorelines=[...new Set(matches.map(m=>m.homeScore+"-"+m.awayScore))];
  const ukTeams=new Set(["england","scotland","wales","northern ireland"]);
