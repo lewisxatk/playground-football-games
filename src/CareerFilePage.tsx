@@ -24,9 +24,15 @@ const clean=(s:string)=>s.toLocaleLowerCase().normalize("NFD").replace(/[\u0300-
 const yearOf=(s:string):number|null=>{const m=s.match(/(?:19|20)\d{2}/);return m?Number(m[0]):null;};
 const fmt=(v:number|null|undefined)=>v==null?"—":v.toLocaleString("en-GB");
 const ordered=(p:Player)=>[...p.spells].sort((a,b)=>(a.start??9999)-(b.start??9999)||a.seq-b.seq);
-function shuffleCandidates<T>(items:T[],limit:number):T[]{
-  const copy=[...items];
-  for(let i=copy.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[copy[i],copy[j]]=[copy[j],copy[i]];}
+function stableHash(value:string):number{
+  let hash=2166136261;
+  for(let i=0;i<value.length;i++){hash^=value.charCodeAt(i);hash=Math.imul(hash,16777619);}
+  return hash>>>0;
+}
+function seededRandom(seed:number){let state=seed>>>0;return()=>{state+=0x6D2B79F5;let t=state;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296;};}
+function shuffleCandidates<T>(items:T[],limit:number,seed?:string):T[]{
+  const copy=[...items];const random=seed?seededRandom(stableHash(seed)):Math.random;
+  for(let i=copy.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[copy[i],copy[j]]=[copy[j],copy[i]];}
   return copy.slice(0,limit);
 }
 const RECENT_PLAYER_KEY="playground.career-file.recent.v1";
@@ -93,9 +99,9 @@ function positionLabel(raw:string){
   if(/FW|FORWARD|STRIKER|ATTACK/.test(value))return "Forward";
   return raw.trim();
 }
-function randomFreeRows(rows:Row[]):string[]{
+function randomFreeRows(rows:Row[],seed?:string):string[]{
   const available=rows.filter(row=>row.covered&&row.apps!==null&&row.goals!==null);
-  const shuffled=[...available].sort(()=>Math.random()-.5);
+  const shuffled=shuffleCandidates(available,available.length,seed);
   const selected:Row[]=[];
   for(const row of shuffled){
     if(selected.length>=2)break;
@@ -107,7 +113,7 @@ function randomFreeRows(rows:Row[]):string[]{
   }
   return selected.map(row=>row.id);
 }
-function makeFreeNote(player:Player):FreeNote|null{
+function makeFreeNote(player:Player,seed?:string):FreeNote|null{
   const career=ordered(player);
   const first=career[0],last=career[career.length-1];
   const broadPosition=positionLabel(player.position);
@@ -116,7 +122,7 @@ function makeFreeNote(player:Player):FreeNote|null{
   if(player.nationality)options.push({id:"nationality",label:"Nationality",value:player.nationality});
   if(first?.start&&last?.end)options.push({id:"span",label:"Career window",value:first.start+"–"+last.end});
   if(!options.length)return null;
-  return options[Math.floor(Math.random()*options.length)];
+  return options[seed?Math.floor(seededRandom(stableHash(seed))()*options.length):Math.floor(Math.random()*options.length)];
 }
 function matches(input:string,p:Player){
   const g=clean(input);if(!g)return false;
@@ -180,27 +186,30 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
   const newPlayer=useCallback(async(deck:Candidate[],selectedMode:Mode)=>{
     const options=deck.filter(c=>fits(c,selectedMode));
     if(!options.length)throw new Error("There are no candidate files for "+selectedMode+" in this league selection. Try All Top Five or another difficulty.");
+    const dailyDraw=!dailyDone;
+    const dailySeed="PLAYGROUND-CAREER-FILE:"+new Date().toISOString().slice(0,10)+":"+selectedMode+":"+league;
     const unused=options.filter(c=>!seen.current.has(c.id));
-    const source=unused.length?unused:options;
-    if(!unused.length){seen.current.clear();persistRecentCareerIds(seen.current);setNote("You have worked through this difficulty and league pool. The player draw has restarted.");}
-    // Keep the phone draw bounded: one small eligibility query and at most six
-    // full player lookups. The previous loop could walk thousands of records
-    // before showing a single playable file.
-    const draw=shuffleCandidates(source,72);
+    const source=dailyDraw?options:(unused.length?unused:options);
+    if(!dailyDraw&&!unused.length){seen.current.clear();persistRecentCareerIds(seen.current);setNote("You have worked through this difficulty and league pool. The player draw has restarted.");}
+    // The first file of each UTC day is deterministic for everyone on the same
+    // difficulty/league. Subsequent files are random practice and avoid repeats.
+    // Keep the phone draw bounded: 72 candidates and at most six full lookups.
+    const dailyCandidates=dailyDraw?[...source].sort((a,b)=>a.id.localeCompare(b.id)):source;
+    const draw=shuffleCandidates(dailyCandidates,72,dailyDraw?dailySeed:undefined);
     setLoadingPlayer(true);
     setNote("Picking a fresh file from "+options.length.toLocaleString("en-GB")+" eligible careers…");
     try{
       const eligible=await getStatEligibleCandidates(draw);
-      const ranked=[...eligible].sort((a,b)=>b.statSeasons-a.statSeasons);
+      const ranked=[...eligible].sort((a,b)=>b.statSeasons-a.statSeasons||a.id.localeCompare(b.id));
       let lastProblem="No candidate in this draw had two complete season-stat rows.";
       for(const choice of ranked.slice(0,6)){
         seen.current.add(choice.id);persistRecentCareerIds(seen.current);
         try{
           const record=await getPlayer(choice.id);
           const timeline=makeRows(record);
-          const free=randomFreeRows(timeline);
+          const free=randomFreeRows(timeline,dailyDraw?dailySeed+":"+choice.id:undefined);
           if(!timeline.length||free.length<2){lastProblem="This career did not have two complete, matching season-stat clues.";continue;}
-          const note=makeFreeNote(record);
+          const note=makeFreeNote(record,dailyDraw?dailySeed+":"+choice.id:undefined);
           setPlayer(record);setRows(timeline);setFreeRows(free);setRevealed(free);setFreeNote(note);
           setOpened(note?[note.id]:[]);setRound(n=>n+1);setStatus("playing");setNote("");
           return;
@@ -210,7 +219,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
       }
       throw new Error("This draw did not contain a complete player file. Choose Next Player to draw again. "+lastProblem);
     }finally{setLoadingPlayer(false);}
-  },[]);
+  },[dailyDone,league]);
 
   useEffect(()=>{
     let live=true;setBusy(true);setError("");
