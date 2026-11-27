@@ -57,16 +57,16 @@ function datedCareer(player: ArchiveGamePlayer) {
 export function isCultHeroEligible(player: ArchiveGamePlayer): boolean {
   const nationality = player.nationality?.trim();
   const position = displayPosition(player.position ?? "");
-  const clubs = new Set((player.spells ?? []).map(spell => spell.club?.trim()).filter(Boolean));
   const career = datedCareer(player);
+  const datedClubs = new Set(career.map(spell => spell.club));
   return Boolean(
     player.id &&
     player.name?.trim() &&
     nationality &&
     !["unknown", "unlisted", "not recorded"].includes(nationality.toLowerCase()) &&
     position &&
-    clubs.size >= 3 &&
-    career.length >= 2
+    datedClubs.size >= 3 &&
+    career.length >= 3
   );
 }
 
@@ -145,7 +145,7 @@ export function addCultHeroCard(
     name: player.name,
     nationality: player.nationality || "Not recorded",
     position: displayPosition(player.position) || "Not recorded",
-    clubs: Array.from(new Set((player.spells ?? []).map(spell => spell.club?.trim()).filter(Boolean))).slice(0, 8),
+    clubs: Array.from(new Set((player.spells ?? []).map(spell => spell.club?.trim()).filter((club): club is string => Boolean(club)))).slice(0, 8),
     collectedAt: new Date().toISOString(),
     source,
   };
