@@ -816,7 +816,7 @@ function buildArchiveLinkUpQuestions(players:GamePlayer[],index:GridClubIndex,se
     const decoyMap=new Map<string,GamePlayer>();
     for(const player of shuffle(players,seed+hashSeed(answer.archiveId+pair.start.archiveId+pair.end.archiveId))){
      const name=normalise(player.name);
-     if(!englishPlayerIds.has(player.archiveId)||![answer.archiveId,pair.start.archiveId,pair.end.archiveId].includes(player.archiveId)||!name||excludedNames.has(name)||decoyMap.has(name))continue;
+     if(!englishPlayerIds.has(player.archiveId)||[answer.archiveId,pair.start.archiveId,pair.end.archiveId].includes(player.archiveId)||!name||excludedNames.has(name)||decoyMap.has(name))continue;
      decoyMap.set(name,player);
      if(decoyMap.size===5)break;
     }
