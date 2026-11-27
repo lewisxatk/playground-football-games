@@ -38,7 +38,7 @@ export async function loadQuestionBank(force = false): Promise<QuestionBank> {
       if (!response.ok) throw new Error("The curated question bank is unavailable (" + response.status + ").");
       const bank = await response.json() as QuestionBank;
       const tiers: QuizTier[] = ["EASY", "MEDIUM", "HARD", "EXTREME"];
-      if (bank.version !== 2 || bank.source !== "OpenFootballBase-Data" ||
+      if (bank.version !== 3 || bank.source !== "OpenFootballBase-Data" ||
           !bank.meta || bank.meta.targetPerTier < 750 || !bank.tiers ||
           tiers.some(tier => {
             const questions = bank.tiers[tier];
@@ -112,4 +112,45 @@ export function makeQuestionRound(bank: QuestionBank, tier: QuizTier, seed: numb
     throw new Error("Not enough distinct players to create the requested 75/25 quiz round.");
   }
   return shuffle([...english, ...international], seed + 307);
+}
+
+
+/** Build the fixed mixed-difficulty daily challenge without repeating a player. */
+export function makeDailyQuizRound(bank: QuestionBank, seed: number): QuizQuestion[] {
+  const plan: { tier: QuizTier; count: number; english: number }[] = [
+    { tier: "EASY", count: 5, english: 4 },
+    { tier: "MEDIUM", count: 5, english: 4 },
+    { tier: "HARD", count: 5, english: 4 },
+    { tier: "EXTREME", count: 2, english: 1 }
+  ];
+  const usedPlayers = new Set<string>();
+  const result: QuizQuestion[] = [];
+  const pick = (tier: QuizTier, region: QuizQuestion["region"], count: number, salt: number) => {
+    const chosen: QuizQuestion[] = [];
+    for (const question of shuffle(bank.tiers[tier].filter(item => item.region === region), seed + salt)) {
+      if (usedPlayers.has(question.playerId)) continue;
+      usedPlayers.add(question.playerId);
+      chosen.push(question);
+      if (chosen.length === count) break;
+    }
+    return chosen;
+  };
+  plan.forEach((entry, index) => {
+    const english = pick(entry.tier, "ENGLISH", entry.english, 101 + index * 29);
+    const international = pick(entry.tier, "INTERNATIONAL", entry.count - entry.english, 211 + index * 37);
+    let batch = [...english, ...international];
+    if (batch.length < entry.count) {
+      const missing = entry.count - batch.length;
+      const fallback = shuffle(bank.tiers[entry.tier], seed + 307 + index * 41)
+        .filter(question => !usedPlayers.has(question.playerId))
+        .slice(0, missing);
+      fallback.forEach(question => usedPlayers.add(question.playerId));
+      batch = [...batch, ...fallback];
+    }
+    if (batch.length !== entry.count) {
+      throw new Error("The daily quiz could not find enough distinct player questions in " + entry.tier + ".");
+    }
+    result.push(...shuffle(batch, seed + 401 + index * 53));
+  });
+  return result;
 }
