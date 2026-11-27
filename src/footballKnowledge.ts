@@ -21,6 +21,7 @@ export type CC0LinkUpPack = {id:string;answerPlayerId:string;startPlayerId:strin
 type FootballKnowledgeShards = {
  core:{players:CC0FootballPlayer[];clubs:CC0Club[]};
  matches:{matches:CC0InternationalMatch[]};
+ "english-matches":{matches:CC0InternationalMatch[]};
  "goal-events":{events:CC0InternationalGoalEvent[];scorers:Record<string,unknown>[]};
  "world-cup":{lineups:CC0WorldCupLineup[];questions:Record<string,unknown>[];playerCards:WorldCupPlayerCard[]};
  footle:{answers:string[]};
@@ -36,7 +37,7 @@ type FootballKnowledgeShards = {
 };
 export type FootballKnowledgeKey=keyof FootballKnowledgeShards;
 const shardCache=new Map<FootballKnowledgeKey,Promise<unknown>>();
-const minimums:Record<FootballKnowledgeKey,number>={core:500,matches:500,"goal-events":500,"world-cup":500,footle:500,connections:500,strands:500,"football-grid":500,"the-climb":500,"timed-quiz":500,"the-reveal":500,"goal-packs":500,"player-stats":500,"career-history":0};
+const minimums:Record<FootballKnowledgeKey,number>={core:500,matches:500,"english-matches":500,"goal-events":500,"world-cup":500,footle:500,connections:500,strands:500,"football-grid":500,"the-climb":500,"timed-quiz":500,"the-reveal":500,"goal-packs":500,"player-stats":500,"career-history":0};
 
 function validateShard<K extends FootballKnowledgeKey>(key:K,value:unknown):FootballKnowledgeShards[K]{
  if(!value||typeof value!=="object")throw new Error("The CC0 "+key+" content shard is invalid.");
@@ -44,6 +45,7 @@ function validateShard<K extends FootballKnowledgeKey>(key:K,value:unknown):Foot
  const list=(name:string)=>Array.isArray(data[name])?data[name] as unknown[]:[];
  const count=key==="core"?list("players").length:
   key==="matches"?list("matches").length:
+  key==="english-matches"?list("matches").length:
   key==="goal-events"?list("events").length:
   key==="world-cup"?list("lineups").length:
   key==="footle"?list("answers").length:
@@ -62,7 +64,7 @@ function validateShard<K extends FootballKnowledgeKey>(key:K,value:unknown):Foot
   const players=list("players") as Record<string,unknown>[],clubs=list("clubs") as Record<string,unknown>[];
   if(players.some(player=>!player.id||!player.name||player.licence!=="CC0-1.0")||clubs.some(club=>!club.id||!club.name||club.licence!=="CC0-1.0"))throw new Error("A canonical entity is missing its stable ID or CC0 marker.");
  }
- if(key==="matches"&&list("matches").some(match=>{const row=match as Record<string,unknown>;return !row.id||!row.date||!row.home||!row.away||!Number.isInteger(row.homeScore)||!Number.isInteger(row.awayScore)}))throw new Error("An international match record is incomplete.");
+ if((key==="matches"||key==="english-matches")&&list("matches").some(match=>{const row=match as Record<string,unknown>;return !row.id||!row.date||!row.home||!row.away||!Number.isInteger(row.homeScore)||!Number.isInteger(row.awayScore)}))throw new Error("An international match record is incomplete.");
  if(key==="goal-events"&&list("events").some(event=>{const row=event as Record<string,unknown>;return !row.id||!row.date||!row.scorer||typeof row.ownGoal!=="boolean"}))throw new Error("An international goal event is incomplete.");
  if(key==="world-cup"){
   const lineups=list("lineups") as Record<string,unknown>[];
