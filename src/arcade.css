@@ -369,3 +369,10 @@
  .tournament-xi-row .shirt-club small{font-size:6px}
  .shirt-position{font-size:5px}
 }
+
+.arc-save-tools{background:#e9f0dc}
+.arc-save-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:13px}
+.arc-import-button{position:relative;overflow:hidden;cursor:pointer}
+.arc-import-button input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px!important}
+.arc-save-message{margin:12px 0 0;padding:9px 11px;background:#f8f6ef;border-left:3px solid var(--ag);font-size:10px;font-weight:700;line-height:1.45}
+@media(max-width:620px){.arc-save-actions{flex-direction:column}.arc-save-actions>*{width:100%}.arc-import-button{min-height:42px}}
