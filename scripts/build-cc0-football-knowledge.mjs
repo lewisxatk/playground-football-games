@@ -312,8 +312,8 @@ function makeStrandsPacks(players){
 const players=await parsePlayers(),clubs=await parseClubs();
 const wikidataCareerImport=await fetchWikidataCareers(players);
 const careerPlayers=wikidataCareerImport.players;
-const careerFileCandidates=careerPlayers.filter(p=>p.spells.length>=3&&new Set(p.spells.map(spell=>spell.clubQid)).size>=3);
-const cultHeroCandidates=careerFileCandidates;
+const careerFileCandidates=careerPlayers.filter(p=>p.spells.length>=2&&new Set(p.spells.map(spell=>spell.clubQid)).size>=2);
+const cultHeroCandidates=careerPlayers.filter(p=>p.spells.length>=2&&new Set(p.spells.map(spell=>spell.clubQid)).size>=2);
 const linkUpPacks=makeWikidataLinkPacks(careerPlayers,750);
 const internationalMatches=await parseInternationalResults();
 const internationalQuiz=buildInternationalQuiz(internationalMatches);

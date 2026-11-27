@@ -250,9 +250,9 @@ export function buildCC0CultHeroMysteries(
   const eligible = players.flatMap(player => {
     const career = datedCareer(player);
     const clubs = [...new Set(career.map(spell => spell.club))];
-    if (!player.id || !player.name?.trim() || clubs.length < 3 || career.length < 3) return [];
+    if (!player.id || !player.name?.trim() || clubs.length < 2 || career.length < 2) return [];
     const earliest = career[0], latest = career[career.length - 1];
-    const middle = clubs.find(club => club !== earliest.club && club !== latest.club);
+    const middle = clubs.find(club => club !== earliest.club && club !== latest.club) ?? clubs.find(club => club !== earliest.club) ?? earliest.club;
     if (!middle) return [];
     const position = displayPosition(player.position ?? "");
     const nationality = player.nationality?.trim();
@@ -264,7 +264,7 @@ export function buildCC0CultHeroMysteries(
     const clues = [
       "The recorded club history spans " + earliest.year + " to " + latest.year + ".",
       optionalClue,
-      "One recorded club spell was with " + middle + ".",
+      "Another recorded club spell was with " + middle + ".",
       "The earliest dated club spell in this source is " + earliest.club + " (" + earliest.year + ").",
       "The latest dated club spell in this source is " + latest.club + " (" + latest.year + ")."
     ];
