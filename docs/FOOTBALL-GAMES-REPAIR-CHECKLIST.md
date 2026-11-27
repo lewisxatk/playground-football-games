@@ -69,3 +69,5 @@ Latest data-generator fix: `2713f3da463fe81e8a77846980ac71da0e51d0a7`.
 Latest Grid runtime fixes: `a7d4c8a4d8b45c05c0ce9a18bbdb41e1cff09d0b` (fresh retry sample); `18b31b793394ed8808fbe5b97ba08bfc79441f44` (club-name normalization).
 
 Next action: poll the latest GitHub Actions build, inspect Football Grid pack counts and fix any remaining failures, then audit each implemented game and run the full typecheck/validation/build suite.
+
+- [x] Remove obsolete duplicate Grid builder and normalize dotted club suffixes in active runtime index. Commit: `f4dba2319d2bd2c3ba5cdf8a4aeff10d438052d7`.
