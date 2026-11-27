@@ -422,13 +422,75 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
  </Frame>;
 }
 
+type LadderMetric="leagueGoals"|"careerApps"|"careerGoals"|"caps";
+type LadderDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
+type LadderEntry={id:string;name:string;value:number};
+const LADDER_METRICS:{id:LadderMetric;label:string;short:string}[]=[
+ {id:"leagueGoals",label:"Recorded league goals",short:"LEAGUE GOALS"},
+ {id:"careerApps",label:"Recorded career appearances",short:"CAREER APPS"},
+ {id:"careerGoals",label:"Recorded career goals",short:"CAREER GOALS"},
+ {id:"caps",label:"International caps",short:"INTERNATIONAL CAPS"}
+];
+function makeLadderSet(players:GamePlayer[],metric:LadderMetric,difficulty:LadderDifficulty,seed:number):LadderEntry[]{
+ const eligible=players.map(p=>({id:p.archiveId,name:p.name,value:metric==="leagueGoals"?p.leagueGoals:metric==="careerApps"?p.careerApps:metric==="careerGoals"?p.careerGoals:p.caps??-1,coverage:metric==="leagueGoals"?p.leagueGoalSeasons:metric==="caps"?p.caps??0:p.statSeasons}))
+   .filter(p=>p.value>=0&&(metric!=="leagueGoals"||p.coverage>=2));
+ if(eligible.length<5)return [];
+ const thresholds:{min:number;max:number}={EASY:{min:.45,max:1},STANDARD:{min:.22,max:.6},HARD:{min:.08,max:.32},EXTREME:{min:0,max:.16}}[difficulty];
+ let best:LadderEntry[]=[];
+ let bestScore=-Infinity;
+ for(let attempt=0;attempt<1200;attempt++){
+   const sample=shuffle(eligible,seed+attempt*23).slice(0,5);
+   if(new Set(sample.map(p=>p.value)).size<5)continue;
+   const sorted=[...sample].sort((a,b)=>b.value-a.value);
+   const range=(sorted[0].value-sorted[4].value)/Math.max(1,sorted[0].value);
+   const quality=difficulty==="EASY"?range*1000: difficulty==="STANDARD"?-Math.abs(range-.38)*1000:difficulty==="HARD"?-Math.abs(range-.18)*1000:-range*1000;
+   if(range>=thresholds.min&&range<=thresholds.max)return sample.map(({id,name,value})=>({id,name,value}));
+   if(quality>bestScore){bestScore=quality;best=sample.map(({id,name,value})=>({id,name,value}));}
+ }
+ return best;
+}
 function LadderPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
- const [mode,setMode]=useMode();const [players,setPlayers]=useState(()=>shuffle(LEAGUE_GOALS,hashSeed("LADDER"+utcDay())).slice(0,5));const [done,setDone]=useState(false);const dailyDone=account.daily[utcDay()]?.ladder!==undefined;
+ const [mode,setMode]=useMode();
+ const [difficulty,setDifficulty]=useState<LadderDifficulty>("STANDARD");
+ const [metric,setMetric]=useState<LadderMetric>("leagueGoals");
+ const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
+ const [players,setPlayers]=useState<LadderEntry[]>([]);
+ const [submitted,setSubmitted]=useState(false);
+ const done=account.daily[utcDay()]?.ladder!==undefined;
+ const seed=mode==="daily"?"LADDER:"+utcDay():"LADDER:PRACTICE:"+practiceSeed;
+ const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,seed,1600);
+ const pool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
+ const generated=useMemo(()=>pool.length>=5?makeLadderSet(pool,metric,difficulty,hashSeed(seed+":"+metric+":"+difficulty)):[],[pool,metric,difficulty,seed]);
+ useEffect(()=>{setPlayers(generated);setSubmitted(false);},[generated]);
  const move=(i:number,dir:number)=>setPlayers(old=>{const next=[...old],j=i+dir;if(j<0||j>=next.length)return old;[next[i],next[j]]=[next[j],next[i]];return next;});
- const submit=()=>{const right=[...players].sort((a,b)=>b.value-a.value);const correct=players.every((p,i)=>p.name===right[i].name);setDone(true);if(mode==="daily")onDaily("ladder",correct?1000:players.filter((p,i)=>p.name===right[i].name).length*200);};
- const reset=(selectedMode:Mode=mode)=>{setPlayers(shuffle(LEAGUE_GOALS,selectedMode==="daily"?hashSeed("LADDER"+utcDay()):Math.floor(Math.random()*1e9)).slice(0,5));setDone(false);};
- return <Frame account={account} game="ladder" eyebrow="ORDER THE NUMBERS / PREMIER LEAGUE" title="THE LADDER." description="Five names. One stat. Put the players in order from most Premier League goals to fewest." number="08" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
- {dailyDone&&mode==="daily"?<Success title="TODAY'S ORDER IS LOCKED." detail="The Ladder is complete. Take on another five in practice." button="PRACTICE" onAgain={()=>setMode("practice")}/>:<Card className="ladder-game"><div className="arc-game-meta"><span>HIGHEST → LOWEST</span><b>DRAG WITH THE ARROWS</b></div><div className="ladder-list">{players.map((p,i)=><div key={p.name} className="ladder-item"><strong>{i+1}</strong><span>{p.name}</span><div><button onClick={()=>move(i,-1)} disabled={i===0}>↑</button><button onClick={()=>move(i,1)} disabled={i===4}>↓</button></div></div>)}</div>{done?<div className="arc-feedback"><b>THE CORRECT ORDER</b>{[...players].sort((a,b)=>b.value-a.value).map((p,i)=><p key={p.name}>{i+1}. {p.name} — {p.value}</p>)}<button className="arc-button" onClick={()=>reset()}>ANOTHER LADDER ↗</button></div>:<div className="arc-game-foot"><span>STAT: PREMIER LEAGUE GOALS</span><button className="arc-button" onClick={submit}>LOCK THE ORDER ↗</button></div>}</Card>}
+ const expected=[...players].sort((a,b)=>b.value-a.value);
+ const score=players.filter((p,i)=>p.id===expected[i]?.id).length*200;
+ const submit=()=>{if(players.length!==5||submitted)return;setSubmitted(true);if(mode==="daily")onDaily("ladder",score);};
+ const reset=(newMode:Mode=mode,newDifficulty:LadderDifficulty=difficulty,newMetric:LadderMetric=metric)=>{
+   setDifficulty(newDifficulty);setMetric(newMetric);setSubmitted(false);
+   if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
+ };
+ const metricLabel=LADDER_METRICS.find(x=>x.id===metric)?.label??"Recorded statistic";
+ return <Frame account={account} game="ladder" eyebrow="ORDER THE NUMBERS / PLAYER ARCHIVE" title="THE LADDER." description="Drag five footballers into order. Pick the stat and difficulty. The closest five-player sets make the harder rounds." number="08" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
+ {done&&mode==="daily"?<Success title="TODAY'S ORDER IS LOCKED." detail="The daily Ladder has been completed. Unlimited practice uses fresh archive players." button="PRACTICE" onAgain={()=>{setMode("practice");reset("practice");}}/>:
+  <Card className="ladder-game">
+   <div className="arc-game-meta"><span>{players.length}/5 PLAYERS LOADED</span><b>{difficulty} · {metricLabel.toUpperCase()}</b></div>
+   <div className="grid-difficulty">{(["EASY","STANDARD","HARD","EXTREME"] as LadderDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level,metric)}>{level}</button>)}</div>
+   <div className="ladder-control-row"><label>STAT<select value={metric} onChange={e=>reset(mode,difficulty,e.target.value as LadderMetric)}>{LADDER_METRICS.map(m=><option key={m.id} value={m.id}>{m.label}</option>)}</select></label><span>HIGHEST → LOWEST</span></div>
+   {loading&&pool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>SCOUTING THE LADDER</b><span>Building a fresh set from the player archive.</span></div>:
+    players.length<5?<div className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NOT ENOUGH RECORDED STATISTICS"}</b><p>{error||"This metric does not have five players with enough coverage in the current pool. Try another statistic or difficulty."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty,metric);}}>RETRY / NEW SET ↗</button></div>:
+    <>
+     <Reorder.Group axis="y" values={players} onReorder={setPlayers} className="ladder-list">
+      {players.map((p,i)=><Reorder.Item key={p.id} value={p} className="ladder-item" whileDrag={{scale:1.025,boxShadow:"0 10px 24px #0002",zIndex:5}}>
+       <strong>{i+1}</strong><span>{p.name}</span><small className="ladder-grab">⠿ DRAG</small>
+       <div><button aria-label={"Move "+p.name+" up"} onClick={()=>move(i,-1)} disabled={submitted||i===0}>↑</button><button aria-label={"Move "+p.name+" down"} onClick={()=>move(i,1)} disabled={submitted||i===4}>↓</button></div>
+      </Reorder.Item>)}
+     </Reorder.Group>
+     {submitted?<div className="arc-feedback"><b>{score===1000?"PERFECT ORDER.":"ORDER REVEALED."} · {score}/1000</b>{expected.map((p,i)=><p key={p.id}>{i+1}. {p.name} — {p.value.toLocaleString("en-GB")}</p>)}</div>:<div className="arc-game-foot"><span>{metricLabel.toUpperCase()} / SOURCE COVERAGE VARIES</span><button className="arc-button" onClick={submit}>LOCK THE ORDER ↗</button></div>}
+     <div className="arc-game-foot"><span>FRESH PLAYER SET</span><button className="arc-quiet" onClick={()=>reset(mode,difficulty,metric)}>NEW LADDER ↻</button></div>
+     <p className="arc-muted">Statistics are the values recorded in the archive, not a guarantee of each player's complete career totals. The metric label states what is being compared.</p>
+    </>}
+  </Card>}
  </Frame>;
 }
 
