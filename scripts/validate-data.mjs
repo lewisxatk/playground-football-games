@@ -41,7 +41,11 @@ try {
     assert.ok(shard.file && shard.count > 0 && shard.sha256, "Player shard metadata is incomplete");
     const bytes = await readFile(new URL("../public/data/player-shards/" + shard.file, import.meta.url));
     assert.equal(createHash("sha256").update(bytes).digest("hex"), shard.sha256, "Player shard checksum mismatch");
-    const rows = JSON.parse(bytes.toString("utf8"));
+    const payload = JSON.parse(bytes.toString("utf8"));
+    assert.equal(payload.source, "OpenFootballBase-Data", "Player shard source metadata mismatch");
+    assert.equal(payload.releaseTag, index.sourceRelease, "Player shard release metadata mismatch");
+    assert.equal(payload.licence, "CC BY-SA 4.0", "Player shard licence metadata mismatch");
+    const rows = payload.players;
     assert.ok(Array.isArray(rows) && rows.length === shard.count, "Player shard count mismatch");
     for (const player of rows) {
       assert.ok(player.id && player.name && Array.isArray(player.clubs) && Array.isArray(player.spells),
