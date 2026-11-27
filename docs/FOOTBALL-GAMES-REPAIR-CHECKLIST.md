@@ -14,7 +14,10 @@ Rule: after every successful GitHub commit, update this checklist in the next co
 - [x] Strands: load the CC0 English dictionary and accept only valid bonus words. Commit: `94420320cc`.
 - [x] Strands: improve tile contrast, size, selected/found states and mobile usability. Commit: `2b9ef09dd9`.
 - [x] Strands: use randomized serpentine paths so answers are genuinely hidden. Commit: `4f9824f19e`.
+- [x] Strands: guarantee at least 500 boards by prioritising English-league surname themes and filling any shortfall from the CC0 nationality packs. Commit: `0c822718d9`.
+- [x] Strands: normalize English-league surnames and keep theme clues less revealing. Commits: `703205994d`, `2e1d5cf078`, `b97f0aefd3`.
 - [x] Footle: accept any valid five-letter guess and improve progressive letter hints. Commit: `efb520401a`.
+- [x] Footle: prioritize English-league players and normalize English surname answers. Commits: `b782962aad`, `a1be850312`.
 - [x] Football Grid: rebuild around unique English club × national flag intersections; add actual flags and consistent sizing. Commits: `599d72dc76`, `30bcb621f8`, `7716f6421e`.
 - [x] Football Grid: replace the incorrect “exactly 16 candidate IDs” test with a 16-cell bipartite matching check, so overlapping candidate pools are accepted only when a fully unique solution exists. Commit: `61c7a1f4d0`.
 - [x] Football Grid: load a fresh archive sample on every retry and show the loading state while the new sample is fetched. Commits: `a7d4c8a4d8`, `ca2904fc91` (retry now rotates static archive shard sample).
