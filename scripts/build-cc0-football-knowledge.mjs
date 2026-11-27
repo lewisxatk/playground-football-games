@@ -353,7 +353,7 @@ function makePlayerConnections(players){
   }
   if(!chosen||!exclusive)continue;
   const groups=chosen.map((option,index)=>({name:option.dimension+" · "+option.value.toUpperCase(),dimension:option.dimension,value:option.value,memberIds:exclusive[index]}));
-  const members=groups.flatMap(group=>group.memberIds);if(members.length!==16||!uniqueValues(members))continue;
+  const members=groups.flatMap(group=>group.memberIds);if(members.length!==16||new Set(members).size!==members.length)continue;
   const signature=groups.map(group=>group.name+":"+group.memberIds.slice().sort().join(",")).sort().join("|");
   if(seen.has(signature))continue;seen.add(signature);packs.push({id:id("connections-players",signature),source:SOURCES.players.repo,licence:"CC0-1.0",ambiguityChecked:true,groups});
  }
