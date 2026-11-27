@@ -96,3 +96,8 @@ Do not add these counts together or describe them as 3,300 approved unique facts
 The 100 records are close to the long-term UK-first balance, but 60 are in the `records` category. Future batches must deliberately add player careers, clubs, rivalries, managers, iconic matches, tournaments, stadiums and football culture. The quality gate must validate source-row evidence, exact competition scope, distractors and underlying fact IDs, not only JSON shape.
 
 See [CONTENT_AND_DATA_AUDIT_2026-11-27.md](./CONTENT_AND_DATA_AUDIT_2026-11-27.md) for the full source and game-fit audit.
+
+
+## Follow-up data hygiene
+
+The 100-record seed now separates `eventDate` (the date of a historic match/milestone) from `validAsOf` (the date the record was checked). Historical dates previously stored in `validAsOf` were migrated into `eventDate`. The validators now check source/date formats, fact/scope duplicates and accepted aliases in multiple-choice options, but factual and rights verification still require source-row recomputation and a documented CC0 source.
