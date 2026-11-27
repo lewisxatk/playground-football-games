@@ -58,9 +58,10 @@ for (const [game, keys] of Object.entries(games)) {
 
   const englishDomestic = questions.filter(question => question.region === "ENGLISH_DOMESTIC").length;
   const international = questions.length - englishDomestic;
-  console.log(game + ": " + questions.length + " unique questions; " + englishDomestic + " English-domestic (" +
+  console.log(game + " available pool: " + questions.length + " unique questions; " + englishDomestic + " English-domestic (" +
     (100 * englishDomestic / questions.length).toFixed(1) + "%), " + international + " international (" +
     (100 * international / questions.length).toFixed(1) + "%).");
+  console.log("  Runtime allocation: 5-question 4/1; 10-question practice 8/2; 17-question daily 13/4.");
   console.log("  Tier coverage: " + tiers.map(tier => tier + " " + byTier[tier].ENGLISH_DOMESTIC + " English domestic / " +
     byTier[tier].INTERNATIONAL + " international").join("; "));
 }
