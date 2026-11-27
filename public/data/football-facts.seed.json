@@ -1,12 +1,14 @@
 {
   "version": 1,
   "generatedAt": "2026-11-27",
-  "status": "seed-batch-not-yet-wired-into-live-games",
+  "status": "development-question-bank-not-yet-wired-into-live-games",
   "notes": [
-    "Initial source-backed seed facts for the shared UK-first content system.",
-    "Records are current as of the checked date and must be refreshed before being used as live records.",
-    "Question records may be adapted into each game's mechanics, but must retain their competition scope and source.",
-    "Player-facing content uses plain question, answer and optional multiple-choice choices. Source, scope and review metadata remain internal."
+    "Master source-backed factual question bank for PLAYGROUND's quiz-first content rollout.",
+    "Questions are newly written from researched football facts; source pages verify facts and are not copied quiz text.",
+    "Difficulty is editorially assigned using recognisability, specificity and historical depth.",
+    "Every record retains its competition/statistical scope, valid-as-of date, source URL and review status.",
+    "These are question records for Timed Quiz and The Climb. Other games need purpose-built puzzle-pack converters.",
+    "Records are a development batch and are not yet connected to live gameplay."
   ],
   "facts": [
     {
@@ -24,23 +26,8 @@
       },
       "reviewStatus": "verified",
       "gameModes": [
-        "lowball",
-        "the-climb",
-        "draft-xi",
-        "career-file",
-        "footle",
-        "connections",
-        "football-grid",
-        "ladder",
-        "the-reveal",
-        "football-501",
-        "link-up",
-        "missing-xi",
-        "strands",
-        "scout-signal",
-        "tournament-nation",
         "timed-quiz",
-        "cult-hero"
+        "the-climb"
       ],
       "question": "Who holds the Premier League all-time goalscoring record?",
       "acceptedAnswers": [
@@ -51,7 +38,10 @@
         "Wayne Rooney",
         "Harry Kane",
         "Sergio Agüero"
-      ]
+      ],
+      "difficulty": "easy",
+      "category": "records",
+      "difficultyReason": "A major, widely recognised Premier League record."
     },
     {
       "id": "pl-milner-appearances",
@@ -68,23 +58,8 @@
       },
       "reviewStatus": "verified",
       "gameModes": [
-        "lowball",
-        "the-climb",
-        "draft-xi",
-        "career-file",
-        "footle",
-        "connections",
-        "football-grid",
-        "ladder",
-        "the-reveal",
-        "football-501",
-        "link-up",
-        "missing-xi",
-        "strands",
-        "scout-signal",
-        "tournament-nation",
         "timed-quiz",
-        "cult-hero"
+        "the-climb"
       ],
       "question": "Who holds the record for the most Premier League appearances?",
       "acceptedAnswers": [
@@ -95,7 +70,10 @@
         "Gareth Barry",
         "Ryan Giggs",
         "Frank Lampard"
-      ]
+      ],
+      "difficulty": "medium",
+      "category": "records",
+      "difficultyReason": "A modern record, but less obvious than the all-time goals record."
     },
     {
       "id": "pl-giggs-assists",
@@ -112,23 +90,8 @@
       },
       "reviewStatus": "verified",
       "gameModes": [
-        "lowball",
-        "the-climb",
-        "draft-xi",
-        "career-file",
-        "footle",
-        "connections",
-        "football-grid",
-        "ladder",
-        "the-reveal",
-        "football-501",
-        "link-up",
-        "missing-xi",
-        "strands",
-        "scout-signal",
-        "tournament-nation",
         "timed-quiz",
-        "cult-hero"
+        "the-climb"
       ],
       "question": "Who has the most assists in Premier League history?",
       "acceptedAnswers": [
@@ -139,7 +102,10 @@
         "Cesc Fàbregas",
         "Wayne Rooney",
         "Kevin De Bruyne"
-      ]
+      ],
+      "difficulty": "medium",
+      "category": "records",
+      "difficultyReason": "Requires recall of a historic individual record."
     },
     {
       "id": "pl-cech-cleansheets",
@@ -156,23 +122,8 @@
       },
       "reviewStatus": "verified",
       "gameModes": [
-        "lowball",
-        "the-climb",
-        "draft-xi",
-        "career-file",
-        "footle",
-        "connections",
-        "football-grid",
-        "ladder",
-        "the-reveal",
-        "football-501",
-        "link-up",
-        "missing-xi",
-        "strands",
-        "scout-signal",
-        "tournament-nation",
         "timed-quiz",
-        "cult-hero"
+        "the-climb"
       ],
       "question": "Who holds the Premier League record for most clean sheets?",
       "acceptedAnswers": [
@@ -183,7 +134,10 @@
         "David James",
         "Edwin van der Sar",
         "Joe Hart"
-      ]
+      ],
+      "difficulty": "hard",
+      "category": "records",
+      "difficultyReason": "A goalkeeper-specific statistical record requiring deeper Premier League knowledge."
     },
     {
       "id": "pl-man-utd-titles",
@@ -200,23 +154,8 @@
       },
       "reviewStatus": "verified",
       "gameModes": [
-        "lowball",
-        "the-climb",
-        "draft-xi",
-        "career-file",
-        "footle",
-        "connections",
-        "football-grid",
-        "ladder",
-        "the-reveal",
-        "football-501",
-        "link-up",
-        "missing-xi",
-        "strands",
-        "scout-signal",
-        "tournament-nation",
         "timed-quiz",
-        "cult-hero"
+        "the-climb"
       ],
       "question": "Which club has won the most Premier League titles?",
       "acceptedAnswers": [
@@ -227,7 +166,10 @@
         "Manchester City",
         "Chelsea",
         "Arsenal"
-      ]
+      ],
+      "difficulty": "easy",
+      "category": "trophies",
+      "difficultyReason": "A foundational Premier League club fact."
     },
     {
       "id": "ucl-real-madrid-titles",
@@ -244,23 +186,8 @@
       },
       "reviewStatus": "verified",
       "gameModes": [
-        "lowball",
-        "the-climb",
-        "draft-xi",
-        "career-file",
-        "footle",
-        "connections",
-        "football-grid",
-        "ladder",
-        "the-reveal",
-        "football-501",
-        "link-up",
-        "missing-xi",
-        "strands",
-        "scout-signal",
-        "tournament-nation",
         "timed-quiz",
-        "cult-hero"
+        "the-climb"
       ],
       "question": "Which club has won the most European Cup/UEFA Champions League titles?",
       "acceptedAnswers": [
@@ -271,7 +198,10 @@
         "AC Milan",
         "Bayern Munich",
         "Liverpool"
-      ]
+      ],
+      "difficulty": "easy",
+      "category": "trophies",
+      "difficultyReason": "A major European competition record."
     },
     {
       "id": "ucl-ronaldo-goals",
@@ -288,23 +218,8 @@
       },
       "reviewStatus": "verified",
       "gameModes": [
-        "lowball",
-        "the-climb",
-        "draft-xi",
-        "career-file",
-        "footle",
-        "connections",
-        "football-grid",
-        "ladder",
-        "the-reveal",
-        "football-501",
-        "link-up",
-        "missing-xi",
-        "strands",
-        "scout-signal",
-        "tournament-nation",
         "timed-quiz",
-        "cult-hero"
+        "the-climb"
       ],
       "question": "Who is the UEFA Champions League all-time leading goalscorer?",
       "acceptedAnswers": [
@@ -315,7 +230,10 @@
         "Lionel Messi",
         "Robert Lewandowski",
         "Karim Benzema"
-      ]
+      ],
+      "difficulty": "medium",
+      "category": "records",
+      "difficultyReason": "Requires knowledge of an individual Champions League statistical record."
     },
     {
       "id": "ucl-ronaldo-appearances",
@@ -332,23 +250,8 @@
       },
       "reviewStatus": "verified",
       "gameModes": [
-        "lowball",
-        "the-climb",
-        "draft-xi",
-        "career-file",
-        "footle",
-        "connections",
-        "football-grid",
-        "ladder",
-        "the-reveal",
-        "football-501",
-        "link-up",
-        "missing-xi",
-        "strands",
-        "scout-signal",
-        "tournament-nation",
         "timed-quiz",
-        "cult-hero"
+        "the-climb"
       ],
       "question": "Who has made the most appearances in the UEFA Champions League?",
       "acceptedAnswers": [
@@ -359,7 +262,10 @@
         "Lionel Messi",
         "Iker Casillas",
         "Xavi"
-      ]
+      ],
+      "difficulty": "hard",
+      "category": "records",
+      "difficultyReason": "A specialist Champions League appearance record."
     },
     {
       "id": "euros-spain-titles",
@@ -376,23 +282,8 @@
       },
       "reviewStatus": "verified",
       "gameModes": [
-        "lowball",
-        "the-climb",
-        "draft-xi",
-        "career-file",
-        "footle",
-        "connections",
-        "football-grid",
-        "ladder",
-        "the-reveal",
-        "football-501",
-        "link-up",
-        "missing-xi",
-        "strands",
-        "scout-signal",
-        "tournament-nation",
         "timed-quiz",
-        "cult-hero"
+        "the-climb"
       ],
       "question": "Which nation has won the most UEFA European Championship titles?",
       "acceptedAnswers": [
@@ -403,7 +294,10 @@
         "Germany",
         "France",
         "Italy"
-      ]
+      ],
+      "difficulty": "easy",
+      "category": "trophies",
+      "difficultyReason": "A widely known national-team tournament record."
     },
     {
       "id": "euros-ronaldo-goals",
@@ -420,23 +314,8 @@
       },
       "reviewStatus": "verified",
       "gameModes": [
-        "lowball",
-        "the-climb",
-        "draft-xi",
-        "career-file",
-        "footle",
-        "connections",
-        "football-grid",
-        "ladder",
-        "the-reveal",
-        "football-501",
-        "link-up",
-        "missing-xi",
-        "strands",
-        "scout-signal",
-        "tournament-nation",
         "timed-quiz",
-        "cult-hero"
+        "the-climb"
       ],
       "question": "Who is the men's EURO final tournament all-time leading goalscorer?",
       "acceptedAnswers": [
@@ -447,7 +326,10 @@
         "Michel Platini",
         "Antoine Griezmann",
         "Alan Shearer"
-      ]
+      ],
+      "difficulty": "medium",
+      "category": "records",
+      "difficultyReason": "A specific final-tournament scoring record."
     },
     {
       "id": "euros-ronaldo-appearances",
@@ -464,23 +346,8 @@
       },
       "reviewStatus": "verified",
       "gameModes": [
-        "lowball",
-        "the-climb",
-        "draft-xi",
-        "career-file",
-        "footle",
-        "connections",
-        "football-grid",
-        "ladder",
-        "the-reveal",
-        "football-501",
-        "link-up",
-        "missing-xi",
-        "strands",
-        "scout-signal",
-        "tournament-nation",
         "timed-quiz",
-        "cult-hero"
+        "the-climb"
       ],
       "question": "Who holds the record for most appearances at men's EURO final tournaments?",
       "acceptedAnswers": [
@@ -491,7 +358,10 @@
         "Gianluigi Buffon",
         "Luka Modrić",
         "Sergio Ramos"
-      ]
+      ],
+      "difficulty": "hard",
+      "category": "records",
+      "difficultyReason": "A more specialist final-tournament appearance record."
     },
     {
       "id": "wc-mbappe-goals",
@@ -508,23 +378,8 @@
       },
       "reviewStatus": "verified",
       "gameModes": [
-        "lowball",
-        "the-climb",
-        "draft-xi",
-        "career-file",
-        "footle",
-        "connections",
-        "football-grid",
-        "ladder",
-        "the-reveal",
-        "football-501",
-        "link-up",
-        "missing-xi",
-        "strands",
-        "scout-signal",
-        "tournament-nation",
         "timed-quiz",
-        "cult-hero"
+        "the-climb"
       ],
       "question": "Who is the men's FIFA World Cup all-time leading goalscorer?",
       "acceptedAnswers": [
@@ -535,7 +390,10 @@
         "Miroslav Klose",
         "Ronaldo Nazário",
         "Lionel Messi"
-      ]
+      ],
+      "difficulty": "medium",
+      "category": "records",
+      "difficultyReason": "A current record many fans may not yet have absorbed."
     },
     {
       "id": "wc-messi-appearances",
@@ -552,23 +410,8 @@
       },
       "reviewStatus": "verified",
       "gameModes": [
-        "lowball",
-        "the-climb",
-        "draft-xi",
-        "career-file",
-        "footle",
-        "connections",
-        "football-grid",
-        "ladder",
-        "the-reveal",
-        "football-501",
-        "link-up",
-        "missing-xi",
-        "strands",
-        "scout-signal",
-        "tournament-nation",
         "timed-quiz",
-        "cult-hero"
+        "the-climb"
       ],
       "question": "Who has made the most appearances in men's FIFA World Cup history?",
       "acceptedAnswers": [
@@ -579,7 +422,10 @@
         "Lothar Matthäus",
         "Miroslav Klose",
         "Cristiano Ronaldo"
-      ]
+      ],
+      "difficulty": "extreme",
+      "category": "records",
+      "difficultyReason": "A precise tournament appearance record requiring deeper World Cup knowledge."
     },
     {
       "id": "wc-messi-wins",
@@ -596,23 +442,8 @@
       },
       "reviewStatus": "verified",
       "gameModes": [
-        "lowball",
-        "the-climb",
-        "draft-xi",
-        "career-file",
-        "footle",
-        "connections",
-        "football-grid",
-        "ladder",
-        "the-reveal",
-        "football-501",
-        "link-up",
-        "missing-xi",
-        "strands",
-        "scout-signal",
-        "tournament-nation",
         "timed-quiz",
-        "cult-hero"
+        "the-climb"
       ],
       "question": "Who has won the most matches as a player at the men's FIFA World Cup?",
       "acceptedAnswers": [
@@ -623,7 +454,10 @@
         "Cafu",
         "Miroslav Klose",
         "Pelé"
-      ]
+      ],
+      "difficulty": "extreme",
+      "category": "records",
+      "difficultyReason": "A specialist match-victory record rather than a familiar goals or appearances total."
     },
     {
       "id": "ucl-1999-final-winner",
@@ -631,8 +465,7 @@
       "question": "Who scored Manchester United's winning goal in the 1999 Champions League final?",
       "answer": "Ole Gunnar Solskjær",
       "acceptedAnswers": [
-        "Ole Gunnar Solskjær",
-        "Ole Gunnar Solskjaer"
+        "Ole Gunnar Solskjær"
       ],
       "choices": [
         "Ole Gunnar Solskjær",
@@ -651,24 +484,1481 @@
       },
       "reviewStatus": "verified",
       "gameModes": [
-        "lowball",
-        "the-climb",
-        "draft-xi",
-        "career-file",
-        "footle",
-        "connections",
-        "football-grid",
-        "ladder",
-        "the-reveal",
-        "football-501",
-        "link-up",
-        "missing-xi",
-        "strands",
-        "scout-signal",
-        "tournament-nation",
         "timed-quiz",
-        "cult-hero"
+        "the-climb"
+      ],
+      "difficulty": "hard",
+      "category": "matches",
+      "difficultyReason": "Requires recall of a specific final moment and scorer."
+    },
+    {
+      "id": "pl-first-goal-brian-deane",
+      "topic": "premier-league",
+      "category": "firsts",
+      "difficulty": "easy",
+      "difficultyReason": "An iconic early Premier League milestone.",
+      "question": "Who scored the first goal in Premier League history?",
+      "answer": "Brian Deane",
+      "acceptedAnswers": [
+        "Brian Deane"
+      ],
+      "choices": [
+        "Brian Deane",
+        "Teddy Sheringham",
+        "Mark Hughes",
+        "Eric Cantona"
+      ],
+      "explanation": "Brian Deane scored for Sheffield United against Manchester United on the opening day of the 1992/93 season.",
+      "competition": "Premier League",
+      "scope": "First competition goal, 15 August 1992",
+      "validAsOf": "1992-08-15",
+      "source": {
+        "name": "Premier League celebrates 30th anniversary",
+        "url": "https://www.premierleague.com/en/news/2738329",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-first-live-tv-goal-sheringham",
+      "topic": "premier-league",
+      "category": "firsts",
+      "difficulty": "medium",
+      "difficultyReason": "Requires remembering the first live televised fixture, not the first match of the season.",
+      "question": "Who scored the first goal in a live televised Premier League match?",
+      "answer": "Teddy Sheringham",
+      "acceptedAnswers": [
+        "Teddy Sheringham"
+      ],
+      "choices": [
+        "Teddy Sheringham",
+        "Brian Deane",
+        "Stan Collymore",
+        "Les Ferdinand"
+      ],
+      "explanation": "Teddy Sheringham scored the only goal as Nottingham Forest beat Liverpool in the first live televised Premier League fixture.",
+      "competition": "Premier League",
+      "scope": "First goal in the first live televised Premier League fixture",
+      "validAsOf": "1992-08-16",
+      "source": {
+        "name": "Premier League celebrates 30th anniversary",
+        "url": "https://www.premierleague.com/en/news/2738329",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-fastest-goal-shane-long",
+      "topic": "premier-league",
+      "category": "records",
+      "difficulty": "easy",
+      "difficultyReason": "A famous modern record with a memorable player and precise time.",
+      "question": "Who holds the record for the fastest Premier League goal?",
+      "answer": "Shane Long",
+      "acceptedAnswers": [
+        "Shane Long"
+      ],
+      "choices": [
+        "Shane Long",
+        "Sadio Mané",
+        "Philip Billing",
+        "Christian Eriksen"
+      ],
+      "explanation": "Shane Long scored after 7.69 seconds for Southampton against Watford on 23 April 2019.",
+      "competition": "Premier League",
+      "scope": "Fastest goal, 7.69 seconds",
+      "validAsOf": "2026-11-27",
+      "source": {
+        "name": "Premier League Club, Manager & Player Records",
+        "url": "https://www.premierleague.com/en/stats/records",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-highest-scoring-match",
+      "topic": "premier-league",
+      "category": "matches",
+      "difficulty": "easy",
+      "difficultyReason": "The 7-4 scoreline is famous and the prompt points to a recognisable fixture.",
+      "question": "Which fixture remains the highest-scoring match in Premier League history?",
+      "answer": "Portsmouth 7-4 Reading",
+      "acceptedAnswers": [
+        "Portsmouth 7-4 Reading"
+      ],
+      "choices": [
+        "Portsmouth 7-4 Reading",
+        "Tottenham 9-1 Wigan",
+        "West Brom 5-5 Manchester United",
+        "Manchester United 8-2 Arsenal"
+      ],
+      "explanation": "Portsmouth beat Reading 7-4 at Fratton Park on 29 September 2007; the 11 goals remain a competition record.",
+      "competition": "Premier League",
+      "scope": "11-goal match at Fratton Park, 29 September 2007",
+      "validAsOf": "2007-09-29",
+      "source": {
+        "name": "Amazing Premier League records that may never be broken",
+        "url": "https://www.premierleague.com/en/news/4204873",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-man-city-100-points",
+      "topic": "premier-league",
+      "category": "records",
+      "difficulty": "easy",
+      "difficultyReason": "A major, instantly recognisable club achievement.",
+      "question": "Which club became the first to reach 100 points in a Premier League season?",
+      "answer": "Manchester City",
+      "acceptedAnswers": [
+        "Manchester City"
+      ],
+      "choices": [
+        "Manchester City",
+        "Liverpool",
+        "Chelsea",
+        "Arsenal"
+      ],
+      "explanation": "Manchester City finished 2017/18 with 100 points after Gabriel Jesus scored a stoppage-time winner at Southampton.",
+      "competition": "Premier League",
+      "scope": "First 100-point Premier League season, 2017/18",
+      "validAsOf": "2018-05-13",
+      "source": {
+        "name": "Amazing Premier League records that may never be broken",
+        "url": "https://www.premierleague.com/en/news/4204873",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-man-city-106-goals",
+      "topic": "premier-league",
+      "category": "records",
+      "difficulty": "medium",
+      "difficultyReason": "A specific team-season statistic rather than a headline player record.",
+      "question": "How many goals did Manchester City score in their 2017/18 Premier League title-winning season?",
+      "answer": "106",
+      "acceptedAnswers": [
+        "106"
+      ],
+      "choices": [
+        "100",
+        "102",
+        "106",
+        "109"
+      ],
+      "explanation": "Manchester City scored 106 league goals in 2017/18, a Premier League single-season team record.",
+      "competition": "Premier League",
+      "scope": "Most goals by a club in one Premier League season",
+      "validAsOf": "2026-11-27",
+      "source": {
+        "name": "Premier League Club, Manager & Player Records",
+        "url": "https://www.premierleague.com/en/stats/records",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-arsenal-invincibles",
+      "topic": "premier-league",
+      "category": "clubs",
+      "difficulty": "easy",
+      "difficultyReason": "A famous, widely recognised title-season achievement.",
+      "question": "Which club completed the only unbeaten Premier League season?",
+      "answer": "Arsenal",
+      "acceptedAnswers": [
+        "Arsenal"
+      ],
+      "choices": [
+        "Arsenal",
+        "Manchester United",
+        "Chelsea",
+        "Liverpool"
+      ],
+      "explanation": "Arsenal went through the 2003/04 Premier League season without losing a match.",
+      "competition": "Premier League",
+      "scope": "Only team to complete a full Premier League season unbeaten, 2003/04",
+      "validAsOf": "2004-05-15",
+      "source": {
+        "name": "Premier League Club, Manager & Player Records",
+        "url": "https://www.premierleague.com/en/stats/records",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-fastest-hattrick-mane",
+      "topic": "premier-league",
+      "category": "records",
+      "difficulty": "medium",
+      "difficultyReason": "A specific record and time beyond general goalscorer knowledge.",
+      "question": "Who scored the fastest hat-trick in Premier League history?",
+      "answer": "Sadio Mané",
+      "acceptedAnswers": [
+        "Sadio Mané"
+      ],
+      "choices": [
+        "Sadio Mané",
+        "Sergio Agüero",
+        "Robbie Fowler",
+        "Jermain Defoe"
+      ],
+      "explanation": "Mané scored three times in 2 minutes and 56 seconds for Southampton against Aston Villa in May 2015.",
+      "competition": "Premier League",
+      "scope": "Fastest hat-trick, 2 minutes 56 seconds",
+      "validAsOf": "2015-05-16",
+      "source": {
+        "name": "Premier League Club, Manager & Player Records",
+        "url": "https://www.premierleague.com/en/stats/records",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-first-hattrick-cantona",
+      "topic": "premier-league",
+      "category": "firsts",
+      "difficulty": "hard",
+      "difficultyReason": "A deep early-era detail that even regular Premier League viewers may not know.",
+      "question": "Who scored the first hat-trick in Premier League history?",
+      "answer": "Eric Cantona",
+      "acceptedAnswers": [
+        "Eric Cantona"
+      ],
+      "choices": [
+        "Eric Cantona",
+        "Alan Shearer",
+        "Mark Hughes",
+        "Ian Wright"
+      ],
+      "explanation": "Eric Cantona scored the first Premier League hat-trick for Leeds United against Tottenham Hotspur on 25 August 1992.",
+      "competition": "Premier League",
+      "scope": "First hat-trick in Premier League history",
+      "validAsOf": "1992-08-25",
+      "source": {
+        "name": "Premier League Club, Manager & Player Records",
+        "url": "https://www.premierleague.com/en/stats/records",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-headed-goals-crouch",
+      "topic": "premier-league",
+      "category": "records",
+      "difficulty": "hard",
+      "difficultyReason": "A specialist scoring record, not total goals or appearances.",
+      "question": "Which player holds the record for the most headed goals in Premier League history?",
+      "answer": "Peter Crouch",
+      "acceptedAnswers": [
+        "Peter Crouch"
+      ],
+      "choices": [
+        "Peter Crouch",
+        "Alan Shearer",
+        "Duncan Ferguson",
+        "Andy Carroll"
+      ],
+      "explanation": "Peter Crouch scored 53 headed goals in the Premier League, more than any other player.",
+      "competition": "Premier League",
+      "scope": "Most headed goals, 53",
+      "validAsOf": "2026-11-27",
+      "source": {
+        "name": "Premier League Club, Manager & Player Records",
+        "url": "https://www.premierleague.com/en/stats/records",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-newcastle-four-goal-comeback",
+      "topic": "premier-league",
+      "category": "matches",
+      "difficulty": "hard",
+      "difficultyReason": "A very specific comeback condition and fixture.",
+      "question": "Which club came back from four goals down at half-time to draw 4-4 with Arsenal in 2011?",
+      "answer": "Newcastle United",
+      "acceptedAnswers": [
+        "Newcastle United"
+      ],
+      "choices": [
+        "Newcastle United",
+        "Tottenham Hotspur",
+        "Everton",
+        "West Ham United"
+      ],
+      "explanation": "Newcastle recovered from 4-0 down at half-time to draw 4-4; it remains the only Premier League four-goal half-time comeback draw.",
+      "competition": "Premier League",
+      "scope": "Only four-goal half-time comeback draw, Newcastle 4-4 Arsenal",
+      "validAsOf": "2011-02-05",
+      "source": {
+        "name": "Ten of the best matches in Premier League history",
+        "url": "https://www.premierleague.com/en/news/4599284/ten-of-the-best-matches-in-premier-league-history",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-non-penalty-goals-ferdinand",
+      "topic": "premier-league",
+      "category": "records",
+      "difficulty": "hard",
+      "difficultyReason": "A specialist scoring split with a narrow statistical definition.",
+      "question": "Who has scored the most Premier League goals without scoring a penalty?",
+      "answer": "Les Ferdinand",
+      "acceptedAnswers": [
+        "Les Ferdinand"
+      ],
+      "choices": [
+        "Les Ferdinand",
+        "Alan Shearer",
+        "Wayne Rooney",
+        "Sergio Agüero"
+      ],
+      "explanation": "Les Ferdinand scored 149 Premier League goals without scoring a penalty, the record for this category.",
+      "competition": "Premier League",
+      "scope": "Most goals without a penalty, 149",
+      "validAsOf": "2026-11-27",
+      "source": {
+        "name": "Premier League Club, Manager & Player Records",
+        "url": "https://www.premierleague.com/en/stats/records",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-seven-clubs-bellamy",
+      "topic": "premier-league",
+      "category": "records",
+      "difficulty": "extreme",
+      "difficultyReason": "An obscure career-path record requiring detailed knowledge of a long career.",
+      "question": "Which player has scored Premier League goals for seven different clubs?",
+      "answer": "Craig Bellamy",
+      "acceptedAnswers": [
+        "Craig Bellamy"
+      ],
+      "choices": [
+        "Craig Bellamy",
+        "Nicolas Anelka",
+        "Robbie Keane",
+        "Peter Crouch"
+      ],
+      "explanation": "Craig Bellamy scored for Coventry, Newcastle, Blackburn, Liverpool, West Ham, Manchester City and Cardiff.",
+      "competition": "Premier League",
+      "scope": "Most Premier League clubs scored for, seven",
+      "validAsOf": "2026-11-27",
+      "source": {
+        "name": "Premier League Club, Manager & Player Records",
+        "url": "https://www.premierleague.com/en/stats/records",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-consecutive-appearances-friedel",
+      "topic": "premier-league",
+      "category": "records",
+      "difficulty": "extreme",
+      "difficultyReason": "A niche durability record with a precise 310-match run.",
+      "question": "Who holds the record for the most consecutive Premier League appearances, with 310?",
+      "answer": "Brad Friedel",
+      "acceptedAnswers": [
+        "Brad Friedel"
+      ],
+      "choices": [
+        "Brad Friedel",
+        "James Milner",
+        "Frank Lampard",
+        "Ryan Giggs"
+      ],
+      "explanation": "Brad Friedel played 310 consecutive Premier League matches between August 2004 and October 2012.",
+      "competition": "Premier League",
+      "scope": "Most consecutive appearances, 310",
+      "validAsOf": "2012-10-07",
+      "source": {
+        "name": "Premier League Club, Manager & Player Records",
+        "url": "https://www.premierleague.com/en/stats/records",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-oldest-player-burridge",
+      "topic": "premier-league",
+      "category": "records",
+      "difficulty": "extreme",
+      "difficultyReason": "An unusual record depending on one historic appearance and exact age.",
+      "question": "Who is the oldest player to have appeared in a Premier League match?",
+      "answer": "John Burridge",
+      "acceptedAnswers": [
+        "John Burridge"
+      ],
+      "choices": [
+        "John Burridge",
+        "Teddy Sheringham",
+        "Edwin van der Sar",
+        "Brad Friedel"
+      ],
+      "explanation": "John Burridge appeared for Manchester City against Queens Park Rangers at 43 years and 162 days old.",
+      "competition": "Premier League",
+      "scope": "Oldest Premier League player, 43 years 162 days",
+      "validAsOf": "1995-05-14",
+      "source": {
+        "name": "Premier League Club, Manager & Player Records",
+        "url": "https://www.premierleague.com/en/stats/records",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-youngest-player-nwaneri",
+      "topic": "premier-league",
+      "category": "records",
+      "difficulty": "medium",
+      "difficultyReason": "A memorable modern debut, requiring distinction from records in other competitions.",
+      "question": "Who became the youngest player to appear in the Premier League at 15 years and 181 days?",
+      "answer": "Ethan Nwaneri",
+      "acceptedAnswers": [
+        "Ethan Nwaneri"
+      ],
+      "choices": [
+        "Ethan Nwaneri",
+        "Max Dowman",
+        "Harvey Elliott",
+        "Matthew Briggs"
+      ],
+      "explanation": "Ethan Nwaneri made his Premier League debut for Arsenal against Brentford on 18 September 2022 aged 15 years and 181 days.",
+      "competition": "Premier League",
+      "scope": "Youngest Premier League player, 15 years 181 days",
+      "validAsOf": "2022-09-18",
+      "source": {
+        "name": "Premier League Club, Manager & Player Records",
+        "url": "https://www.premierleague.com/en/stats/records",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-oldest-goalscorer-sheringham",
+      "topic": "premier-league",
+      "category": "records",
+      "difficulty": "extreme",
+      "difficultyReason": "A less commonly remembered age record, distinct from oldest player.",
+      "question": "Who is the oldest goalscorer in Premier League history?",
+      "answer": "Teddy Sheringham",
+      "acceptedAnswers": [
+        "Teddy Sheringham"
+      ],
+      "choices": [
+        "Teddy Sheringham",
+        "John Burridge",
+        "Ryan Giggs",
+        "Gareth Barry"
+      ],
+      "explanation": "Teddy Sheringham scored for West Ham against Portsmouth on Boxing Day 2006 aged 40 years and 268 days.",
+      "competition": "Premier League",
+      "scope": "Oldest goalscorer, 40 years 268 days",
+      "validAsOf": "2006-12-26",
+      "source": {
+        "name": "Premier League Club, Manager & Player Records",
+        "url": "https://www.premierleague.com/en/stats/records",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "pl-35000th-goal-haaland",
+      "topic": "premier-league",
+      "category": "milestones",
+      "difficulty": "extreme",
+      "difficultyReason": "A precise recent milestone, harder than general scoring records.",
+      "question": "Who scored the 35,000th goal in Premier League history?",
+      "answer": "Erling Haaland",
+      "acceptedAnswers": [
+        "Erling Haaland"
+      ],
+      "choices": [
+        "Erling Haaland",
+        "Mohamed Salah",
+        "Cole Palmer",
+        "Chris Wood"
+      ],
+      "explanation": "Erling Haaland scored the 35,000th Premier League goal against Brighton on 7 January 2026.",
+      "competition": "Premier League",
+      "scope": "35,000th goal in Premier League history",
+      "validAsOf": "2026-01-07",
+      "source": {
+        "name": "Premier League Club, Manager & Player Records",
+        "url": "https://www.premierleague.com/en/stats/records",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "efl-youngest-player-noble-lazarus",
+      "topic": "efl",
+      "category": "records",
+      "difficulty": "medium",
+      "difficultyReason": "A deep English-league record with particular appeal to Barnsley and EFL supporters.",
+      "question": "Who became the youngest player in an English Football League match at 15 years and 45 days?",
+      "answer": "Reuben Noble-Lazarus",
+      "acceptedAnswers": [
+        "Reuben Noble-Lazarus"
+      ],
+      "choices": [
+        "Reuben Noble-Lazarus",
+        "Ronnie Dix",
+        "Ethan Nwaneri",
+        "James Prinsep"
+      ],
+      "explanation": "Reuben Noble-Lazarus made his Barnsley debut against Ipswich Town on 30 September 2008 aged 15 years and 45 days.",
+      "competition": "English Football League",
+      "scope": "Youngest player in an EFL league match, Barnsley v Ipswich",
+      "validAsOf": "2008-09-30",
+      "source": {
+        "name": "EFL Records",
+        "url": "https://www.efl.com/about-the-efl/history/records/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "efl-oldest-player-mcbain",
+      "topic": "efl",
+      "category": "records",
+      "difficulty": "extreme",
+      "difficultyReason": "An obscure early-league record with an extraordinary age.",
+      "question": "Who holds the record as the oldest player to appear in an English league match?",
+      "answer": "Neil McBain",
+      "acceptedAnswers": [
+        "Neil McBain"
+      ],
+      "choices": [
+        "Neil McBain",
+        "Stanley Matthews",
+        "Peter Shilton",
+        "Billy Meredith"
+      ],
+      "explanation": "Neil McBain played for New Brighton against Hartlepool United on 15 March 1947 aged 51 years and 120 days.",
+      "competition": "English Football League",
+      "scope": "Oldest player in a League match, 51 years 120 days",
+      "validAsOf": "1947-03-15",
+      "source": {
+        "name": "EFL Records",
+        "url": "https://www.efl.com/about-the-efl/history/records/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "efl-youngest-scorer-ronnie-dix",
+      "topic": "efl",
+      "category": "records",
+      "difficulty": "hard",
+      "difficultyReason": "A historical record from the early Football League era.",
+      "question": "Who is the youngest goalscorer in an English league match, scoring aged 15 years and 180 days?",
+      "answer": "Ronnie Dix",
+      "acceptedAnswers": [
+        "Ronnie Dix"
+      ],
+      "choices": [
+        "Ronnie Dix",
+        "Reuben Noble-Lazarus",
+        "Dixie Dean",
+        "Tommy Lawton"
+      ],
+      "explanation": "Ronnie Dix scored for Bristol Rovers against Norwich City on 3 March 1928 aged 15 years and 180 days.",
+      "competition": "English Football League",
+      "scope": "Youngest goalscorer in a League match",
+      "validAsOf": "1928-03-03",
+      "source": {
+        "name": "EFL Records",
+        "url": "https://www.efl.com/about-the-efl/history/records/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "efl-first-million-francis",
+      "topic": "efl",
+      "category": "transfers",
+      "difficulty": "easy",
+      "difficultyReason": "A landmark transfer in English football history that is widely remembered.",
+      "question": "Who became British football's first £1 million player when he moved from Birmingham City to Nottingham Forest in 1979?",
+      "answer": "Trevor Francis",
+      "acceptedAnswers": [
+        "Trevor Francis"
+      ],
+      "choices": [
+        "Trevor Francis",
+        "Kevin Keegan",
+        "Stan Collymore",
+        "Bryan Robson"
+      ],
+      "explanation": "Trevor Francis joined Nottingham Forest from Birmingham City on 9 February 1979 in the first £1 million transfer.",
+      "competition": "English Football League",
+      "scope": "First £1 million player in English football",
+      "validAsOf": "1979-02-09",
+      "source": {
+        "name": "EFL Records",
+        "url": "https://www.efl.com/about-the-efl/history/records/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "efl-stockport-13-0",
+      "topic": "efl",
+      "category": "matches",
+      "difficulty": "hard",
+      "difficultyReason": "A remarkable lower-league scoreline less familiar than Premier League records.",
+      "question": "Which club won 13-0 against Halifax Town in the English league's joint-highest winning-margin record?",
+      "answer": "Stockport County",
+      "acceptedAnswers": [
+        "Stockport County"
+      ],
+      "choices": [
+        "Stockport County",
+        "Newcastle United",
+        "Port Vale",
+        "Sheffield United"
+      ],
+      "explanation": "Stockport County beat Halifax Town 13-0 on 6 January 1934, matching the EFL record winning margin.",
+      "competition": "English Football League",
+      "scope": "Joint-highest winning margin in a League match, 13-0",
+      "validAsOf": "1934-01-06",
+      "source": {
+        "name": "EFL Records",
+        "url": "https://www.efl.com/about-the-efl/history/records/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "efl-barnsley-windass-playoff",
+      "topic": "efl",
+      "category": "matches",
+      "difficulty": "medium",
+      "difficultyReason": "A dramatic local play-off moment rather than a question only about the scoreline.",
+      "question": "Who scored Sheffield Wednesday's 120th-minute winner against Barnsley in the 2023 League One play-off final?",
+      "answer": "Josh Windass",
+      "acceptedAnswers": [
+        "Josh Windass"
+      ],
+      "choices": [
+        "Josh Windass",
+        "Michael Smith",
+        "Barry Bannan",
+        "Lee Gregory"
+      ],
+      "explanation": "Josh Windass scored at 120+3 as Sheffield Wednesday beat Barnsley 1-0 after extra time in the 2023 League One play-off final.",
+      "competition": "EFL League One Play-Offs",
+      "scope": "Winning goal in 2022/23 League One play-off final, 120+3",
+      "validAsOf": "2023-05-29",
+      "source": {
+        "name": "League One Play-Off Finals",
+        "url": "https://www.efl.com/competitions/sky-bet-play-offs/about-the-play-offs/league-one-play-off-finals/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "fa-fastest-final-goal-gundogan",
+      "topic": "english-cups",
+      "category": "records",
+      "difficulty": "easy",
+      "difficultyReason": "A memorable modern final moment with a striking time.",
+      "question": "Who scored the fastest goal in an FA Cup final, after just 12 seconds in 2023?",
+      "answer": "İlkay Gündoğan",
+      "acceptedAnswers": [
+        "İlkay Gündoğan"
+      ],
+      "choices": [
+        "İlkay Gündoğan",
+        "Bruno Fernandes",
+        "Marcus Rashford",
+        "Erling Haaland"
+      ],
+      "explanation": "İlkay Gündoğan opened the scoring for Manchester City against Manchester United after 12 seconds in the 2023 FA Cup final.",
+      "competition": "FA Cup",
+      "scope": "Fastest goal in an FA Cup final, 12 seconds",
+      "validAsOf": "2023-06-03",
+      "source": {
+        "name": "Dazzling Gundogan double delivers Manchester City derby day Emirates FA Cup glory",
+        "url": "https://www.thefa.com/news/2023/jun/03/emirates-fa-cup-final-report-20230603",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "fa-first-final-teams",
+      "topic": "english-cups",
+      "category": "history",
+      "difficulty": "easy",
+      "difficultyReason": "A foundational piece of English cup history suitable for a broad audience.",
+      "question": "Which two clubs contested the first FA Cup final in 1872?",
+      "answer": "Wanderers and Royal Engineers",
+      "acceptedAnswers": [
+        "Wanderers and Royal Engineers"
+      ],
+      "choices": [
+        "Wanderers and Royal Engineers",
+        "Oxford University and Blackburn Rovers",
+        "Old Etonians and Queen's Park",
+        "Sheffield FC and Notts County"
+      ],
+      "explanation": "Wanderers beat Royal Engineers 1-0 at Kennington Oval on 16 March 1872 in the inaugural FA Cup final.",
+      "competition": "FA Cup",
+      "scope": "Inaugural FA Cup final, 16 March 1872",
+      "validAsOf": "1872-03-16",
+      "source": {
+        "name": "The first FA Cup Final - Wanderers 1-0 Royal Engineers",
+        "url": "https://www.thefa.com/news/2020/mar/16/first-fa-cup-final-1871-wanderers-1-0-royal-engineers",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "fa-morton-betts-first-final-goal",
+      "topic": "english-cups",
+      "category": "firsts",
+      "difficulty": "extreme",
+      "difficultyReason": "Requires knowing an 1870s final and the unusual playing alias of its scorer.",
+      "question": "Who scored the only goal in the first FA Cup final, playing under the name A.H. Chequer?",
+      "answer": "Morton Betts",
+      "acceptedAnswers": [
+        "Morton Betts"
+      ],
+      "choices": [
+        "Morton Betts",
+        "Charles Alcock",
+        "Arthur Kinnaird",
+        "William Kenyon-Slaney"
+      ],
+      "explanation": "Morton Peto Betts scored the only goal for Wanderers against Royal Engineers in the 1872 final, using the playing name A.H. Chequer.",
+      "competition": "FA Cup",
+      "scope": "Scorer of the only goal in the inaugural final; played as A.H. Chequer",
+      "validAsOf": "1872-03-16",
+      "source": {
+        "name": "The first FA Cup Final - Wanderers 1-0 Royal Engineers",
+        "url": "https://www.thefa.com/news/2020/mar/16/first-fa-cup-final-1871-wanderers-1-0-royal-engineers",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "fa-blackburn-three-in-row",
+      "topic": "english-cups",
+      "category": "trophies",
+      "difficulty": "hard",
+      "difficultyReason": "A Victorian-era achievement beyond the modern FA Cup era.",
+      "question": "Which club won the FA Cup in three consecutive seasons from 1883/84 to 1885/86?",
+      "answer": "Blackburn Rovers",
+      "acceptedAnswers": [
+        "Blackburn Rovers"
+      ],
+      "choices": [
+        "Blackburn Rovers",
+        "Wanderers",
+        "Aston Villa",
+        "Nottingham Forest"
+      ],
+      "explanation": "Blackburn Rovers lifted the FA Cup in 1884, 1885 and 1886, becoming the first club to win it in three successive seasons.",
+      "competition": "FA Cup",
+      "scope": "Three consecutive FA Cup wins, 1884–1886",
+      "validAsOf": "1886-04-03",
+      "source": {
+        "name": "Debbie Hewitt presents Blackburn Rovers with replica FA Cup",
+        "url": "https://www.thefa.com/news/2026/jan/05/debbie-hewitt-presents-blackburn-rovers-with-replica-fa-cup-20260501",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "fa-palace-first-cup-eze",
+      "topic": "english-cups",
+      "category": "matches",
+      "difficulty": "medium",
+      "difficultyReason": "A recent historic final remembered by English supporters.",
+      "question": "Who scored the winning goal when Crystal Palace won their first FA Cup in 2025?",
+      "answer": "Eberechi Eze",
+      "acceptedAnswers": [
+        "Eberechi Eze"
+      ],
+      "choices": [
+        "Eberechi Eze",
+        "Jean-Philippe Mateta",
+        "Adam Wharton",
+        "Ismaïla Sarr"
+      ],
+      "explanation": "Eberechi Eze scored in the 15th minute as Crystal Palace beat Manchester City 1-0 in the 2025 FA Cup final.",
+      "competition": "FA Cup",
+      "scope": "Winning goal in Crystal Palace's first FA Cup triumph",
+      "validAsOf": "2025-05-17",
+      "source": {
+        "name": "Crystal Palace win historic first Emirates FA Cup",
+        "url": "https://www.thefa.com/news/2025/may/17/emirates-fa-cup-final-crystal-palace-manchester-city-report-20251705",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "fa-chelsea-three-final-losses",
+      "topic": "english-cups",
+      "category": "records",
+      "difficulty": "extreme",
+      "difficultyReason": "A rare sequence across three finals, requiring detailed competition history.",
+      "question": "Which club became the first in FA Cup history to lose three consecutive finals?",
+      "answer": "Chelsea",
+      "acceptedAnswers": [
+        "Chelsea"
+      ],
+      "choices": [
+        "Chelsea",
+        "Liverpool",
+        "Manchester United",
+        "Arsenal"
+      ],
+      "explanation": "Chelsea lost the 2020, 2021 and 2022 FA Cup finals, becoming the first club to lose three consecutive finals.",
+      "competition": "FA Cup",
+      "scope": "First club to lose three consecutive FA Cup finals, 2020–2022",
+      "validAsOf": "2022-05-14",
+      "source": {
+        "name": "Opta facts and stats from Chelsea v Liverpool in the FA Cup Final",
+        "url": "https://www.thefa.com/news/2022/may/15/emirates-fa-cup-final-liverpool-chelsea-opta-stats-20221505",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "ucl-fastest-goal-makaay",
+      "topic": "champions-league",
+      "category": "records",
+      "difficulty": "easy",
+      "difficultyReason": "A famous Champions League record with a memorable player and exact time.",
+      "question": "Who scored the fastest goal in UEFA Champions League history, after 10.12 seconds?",
+      "answer": "Roy Makaay",
+      "acceptedAnswers": [
+        "Roy Makaay"
+      ],
+      "choices": [
+        "Roy Makaay",
+        "Jonas",
+        "Gilberto Silva",
+        "Alessandro Del Piero"
+      ],
+      "explanation": "Roy Makaay scored for Bayern Munich against Real Madrid after 10.12 seconds in the 2006/07 round of 16.",
+      "competition": "UEFA Champions League",
+      "scope": "Fastest Champions League goal, 10.12 seconds",
+      "validAsOf": "2007-03-07",
+      "source": {
+        "name": "Fastest Champions League goals: Roy Makaay heads list",
+        "url": "https://www.uefa.com/uefachampionsleague/news/0237-0e966468be2a-209986d8dffd-1000--fastest-champions-league-goals-roy-makaay-heads-list-includ/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "ucl-youngest-player-dowman",
+      "topic": "champions-league",
+      "category": "records",
+      "difficulty": "hard",
+      "difficultyReason": "A current record involving an extraordinary age and specific Arsenal appearance.",
+      "question": "Who became the youngest player to appear in the UEFA Champions League at 15 years and 308 days?",
+      "answer": "Max Dowman",
+      "acceptedAnswers": [
+        "Max Dowman"
+      ],
+      "choices": [
+        "Max Dowman",
+        "Lamine Yamal",
+        "Youssoufa Moukoko",
+        "Céléstine Babayaro"
+      ],
+      "explanation": "Max Dowman made his Champions League debut for Arsenal against Slavia Praha on 4 November 2025 aged 15 years and 308 days.",
+      "competition": "UEFA Champions League",
+      "scope": "Youngest player to appear in the competition",
+      "validAsOf": "2025-11-04",
+      "source": {
+        "name": "Youngest Champions League players and winners",
+        "url": "https://www.uefa.com/uefachampionsleague/news/0253-0d042a009474-d3a14de143a9-1000--youngest-champions-league-players-and-winners-youssoufa-m/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "ucl-youngest-scorer-ansu-fati",
+      "topic": "champions-league",
+      "category": "records",
+      "difficulty": "hard",
+      "difficultyReason": "Separates the youngest scorer record from youngest appearance and starter records.",
+      "question": "Who is the youngest goalscorer in the Champions League group stage or league phase?",
+      "answer": "Ansu Fati",
+      "acceptedAnswers": [
+        "Ansu Fati"
+      ],
+      "choices": [
+        "Ansu Fati",
+        "Lamine Yamal",
+        "Bojan Krkić",
+        "Kylian Mbappé"
+      ],
+      "explanation": "Ansu Fati scored for Barcelona against Inter on 10 December 2019 aged 17 years and 40 days, the record for the group stage/league phase.",
+      "competition": "UEFA Champions League",
+      "scope": "Youngest goalscorer in group stage/league phase",
+      "validAsOf": "2019-12-10",
+      "source": {
+        "name": "Champions League group stage/league phase records and statistics",
+        "url": "https://www.uefa.com/news/0257-0e994d4dc7ad-61a6d5d372dd-1000--champions-league-group-stage-records-and-statistics/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "ucl-fastest-hattrick-salah",
+      "topic": "champions-league",
+      "category": "records",
+      "difficulty": "extreme",
+      "difficultyReason": "A niche timing record from a famous match often remembered for other reasons.",
+      "question": "Who scored the fastest Champions League group stage/league-phase hat-trick, taking seven minutes against Rangers in 2022?",
+      "answer": "Mohamed Salah",
+      "acceptedAnswers": [
+        "Mohamed Salah"
+      ],
+      "choices": [
+        "Mohamed Salah",
+        "Roberto Firmino",
+        "Sadio Mané",
+        "Luis Suárez"
+      ],
+      "explanation": "Mohamed Salah scored three times in seven minutes during Liverpool's 7-1 win over Rangers on 12 October 2022.",
+      "competition": "UEFA Champions League",
+      "scope": "Fastest group stage/league phase hat-trick, seven minutes",
+      "validAsOf": "2022-10-12",
+      "source": {
+        "name": "Champions League group stage/league phase records and statistics",
+        "url": "https://www.uefa.com/news/0257-0e994d4dc7ad-61a6d5d372dd-1000--champions-league-group-stage-records-and-statistics/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "ucl-biggest-final-win-psg",
+      "topic": "champions-league",
+      "category": "matches",
+      "difficulty": "medium",
+      "difficultyReason": "A recent European final with a record scoreline.",
+      "question": "Which club beat Inter 5-0 in the biggest-ever European Cup/Champions League final victory?",
+      "answer": "Paris Saint-Germain",
+      "acceptedAnswers": [
+        "Paris Saint-Germain"
+      ],
+      "choices": [
+        "Paris Saint-Germain",
+        "Real Madrid",
+        "Bayern Munich",
+        "Liverpool"
+      ],
+      "explanation": "Paris Saint-Germain beat Inter 5-0 in the 2025 UEFA Champions League final, setting the record for biggest final winning margin.",
+      "competition": "UEFA Champions League",
+      "scope": "Biggest European Cup/Champions League final win, 5-0",
+      "validAsOf": "2025-05-31",
+      "source": {
+        "name": "Champions League final records and statistics",
+        "url": "https://www.uefa.com/uefachampionsleague/news/0252-0e98c715bb79-dea77f56e2bd-1000--final-records-and-statistics/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "ucl-oldest-final-player-zoff",
+      "topic": "champions-league",
+      "category": "records",
+      "difficulty": "extreme",
+      "difficultyReason": "A historic European Cup-era record with an exact age and final context.",
+      "question": "Who is the oldest player to have appeared in a European Cup/Champions League final?",
+      "answer": "Dino Zoff",
+      "acceptedAnswers": [
+        "Dino Zoff"
+      ],
+      "choices": [
+        "Dino Zoff",
+        "Paolo Maldini",
+        "Jens Lehmann",
+        "Edwin van der Sar"
+      ],
+      "explanation": "Dino Zoff was 41 years and 86 days old when Juventus faced Hamburg in the 1983 European Cup final.",
+      "competition": "European Cup / UEFA Champions League",
+      "scope": "Oldest player to appear in a final, 41 years 86 days",
+      "validAsOf": "1983-05-25",
+      "source": {
+        "name": "Champions League final records and statistics",
+        "url": "https://www.uefa.com/uefachampionsleague/news/0252-0e98c715bb79-dea77f56e2bd-1000--final-records-and-statistics/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "euros-fastest-goal-bajrami",
+      "topic": "euros",
+      "category": "records",
+      "difficulty": "medium",
+      "difficultyReason": "A modern international tournament record tied to an opening-day moment.",
+      "question": "Who scored the fastest goal in UEFA EURO final tournament history, after 23 seconds in 2024?",
+      "answer": "Nedim Bajrami",
+      "acceptedAnswers": [
+        "Nedim Bajrami"
+      ],
+      "choices": [
+        "Nedim Bajrami",
+        "Merih Demiral",
+        "Cristiano Ronaldo",
+        "Yussuf Poulsen"
+      ],
+      "explanation": "Nedim Bajrami scored for Albania against Italy after 23 seconds at EURO 2024, setting the fastest-goal record.",
+      "competition": "UEFA European Championship",
+      "scope": "Fastest goal at a men's EURO final tournament, 23 seconds",
+      "validAsOf": "2024-06-15",
+      "source": {
+        "name": "Who scored the fastest goals at UEFA EURO final tournaments?",
+        "url": "https://www.uefa.com/uefaeuro/history/news/0253-0d7dce47a88e-fed163e1fdf2-1000--yussuf-poulsen-scores-secondfastest-goal-in-euro-history/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "euros-fastest-hattrick-platini",
+      "topic": "euros",
+      "category": "records",
+      "difficulty": "extreme",
+      "difficultyReason": "A precise tournament record from a historic match and famous international player.",
+      "question": "Who scored the fastest hat-trick in men's EURO final tournament history, completing it in 18 minutes in 1984?",
+      "answer": "Michel Platini",
+      "acceptedAnswers": [
+        "Michel Platini"
+      ],
+      "choices": [
+        "Michel Platini",
+        "Cristiano Ronaldo",
+        "Marco van Basten",
+        "Alan Shearer"
+      ],
+      "explanation": "Michel Platini scored three times in 18 minutes for France against Yugoslavia at EURO 1984.",
+      "competition": "UEFA European Championship",
+      "scope": "Fastest hat-trick at a men's EURO final tournament, 18 minutes",
+      "validAsOf": "1984-06-19",
+      "source": {
+        "name": "EURO records: Most appearances, top scorers, key stats",
+        "url": "https://www.uefa.com/uefaeuro/history/news/0257-0e0605d428b4-25e24d26a092-1000--euro-records-and-stats/",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "world-cup-single-edition-fontaine",
+      "topic": "world-cup",
+      "category": "records",
+      "difficulty": "easy",
+      "difficultyReason": "A famous long-standing World Cup record often referenced in football history.",
+      "question": "How many goals did Just Fontaine score at the 1958 FIFA World Cup, a single-tournament record?",
+      "answer": "13",
+      "acceptedAnswers": [
+        "13"
+      ],
+      "choices": [
+        "10",
+        "11",
+        "13",
+        "15"
+      ],
+      "explanation": "Just Fontaine scored 13 goals for France at Sweden 1958, the single-edition men's World Cup record.",
+      "competition": "FIFA World Cup",
+      "scope": "Most goals by a player at one men's World Cup tournament",
+      "validAsOf": "1958-06-29",
+      "source": {
+        "name": "Mbappe, Fontaine, Ronaldo and more: Every World Cup top scorer",
+        "url": "https://www.fifa.com/en/articles/fontaine-mbappe-ronaldo-and-more-every-world-cup-top-scorer",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "bundesliga-top-scorer-muller",
+      "topic": "bundesliga",
+      "category": "records",
+      "difficulty": "easy",
+      "difficultyReason": "Gerd Müller's Bundesliga scoring record is one of the league's best-known historic facts.",
+      "question": "Who is the Bundesliga's all-time leading goalscorer with 365 goals?",
+      "answer": "Gerd Müller",
+      "acceptedAnswers": [
+        "Gerd Müller"
+      ],
+      "choices": [
+        "Gerd Müller",
+        "Robert Lewandowski",
+        "Klaus Fischer",
+        "Jupp Heynckes"
+      ],
+      "explanation": "Gerd Müller scored 365 Bundesliga goals for Bayern Munich between 1964 and 1979.",
+      "competition": "Bundesliga",
+      "scope": "All-time Bundesliga goals, 365",
+      "validAsOf": "2026-11-27",
+      "source": {
+        "name": "Bundesliga records: goals, titles, attendances for players and clubs",
+        "url": "https://www.bundesliga.com/en/faq/10-things-on-the-bundesliga/bundesliga-records-goals-titles-attendances-for-players-and-clubs-10555",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "bundesliga-longest-goal-stoppelkamp",
+      "topic": "bundesliga",
+      "category": "records",
+      "difficulty": "hard",
+      "difficultyReason": "A distinctive long-range record requiring recall of one historic goal.",
+      "question": "Who scored the Bundesliga's famous 82-metre long-range goal for Paderborn against Hannover in 2014?",
+      "answer": "Moritz Stoppelkamp",
+      "acceptedAnswers": [
+        "Moritz Stoppelkamp"
+      ],
+      "choices": [
+        "Moritz Stoppelkamp",
+        "Hakan Çalhanoğlu",
+        "David Alaba",
+        "Xabi Alonso"
+      ],
+      "explanation": "Moritz Stoppelkamp scored from 82 metres for Paderborn against Hannover in September 2014, the Bundesliga's longest-range goal.",
+      "competition": "Bundesliga",
+      "scope": "Longest-range Bundesliga goal, 82 metres",
+      "validAsOf": "2014-09-20",
+      "source": {
+        "name": "Bundesliga records: goals, titles, attendances for players and clubs",
+        "url": "https://www.bundesliga.com/en/faq/10-things-on-the-bundesliga/bundesliga-records-goals-titles-attendances-for-players-and-clubs-10555",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "bundesliga-first-goal-konietzka",
+      "topic": "bundesliga",
+      "category": "firsts",
+      "difficulty": "extreme",
+      "difficultyReason": "A foundation-era historical detail obscure outside dedicated Bundesliga history.",
+      "question": "Who scored the first-ever goal in Bundesliga history in August 1963?",
+      "answer": "Timo Konietzka",
+      "acceptedAnswers": [
+        "Timo Konietzka"
+      ],
+      "choices": [
+        "Timo Konietzka",
+        "Gerd Müller",
+        "Uwe Seeler",
+        "Franz Beckenbauer"
+      ],
+      "explanation": "Friedhelm 'Timo' Konietzka scored Borussia Dortmund's first Bundesliga goal against Werder Bremen on 24 August 1963.",
+      "competition": "Bundesliga",
+      "scope": "First goal in Bundesliga history",
+      "validAsOf": "1963-08-24",
+      "source": {
+        "name": "Bundesliga records: goals, titles, attendances for players and clubs",
+        "url": "https://www.bundesliga.com/en/faq/10-things-on-the-bundesliga/bundesliga-records-goals-titles-attendances-for-players-and-clubs-10555",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "ligue1-top-scorer-onnis",
+      "topic": "ligue-1",
+      "category": "records",
+      "difficulty": "medium",
+      "difficultyReason": "An all-time record from a league with less UK mainstream coverage.",
+      "question": "Who is Ligue 1's all-time leading goalscorer with 299 goals?",
+      "answer": "Delio Onnis",
+      "acceptedAnswers": [
+        "Delio Onnis"
+      ],
+      "choices": [
+        "Delio Onnis",
+        "Kylian Mbappé",
+        "Zlatan Ibrahimović",
+        "Bernard Lacombe"
+      ],
+      "explanation": "Delio Onnis scored 299 goals in the French top flight across spells with Reims, Monaco, Tours and Toulon.",
+      "competition": "Ligue 1",
+      "scope": "All-time Ligue 1 top-flight goals, 299",
+      "validAsOf": "2026-11-27",
+      "source": {
+        "name": "History and Records of the Ligue 1 Top Scorers",
+        "url": "https://ligue1.com/en/articles/l1_article_2588-",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "serie-a-top-scorer-piola",
+      "topic": "serie-a",
+      "category": "records",
+      "difficulty": "extreme",
+      "difficultyReason": "A historic Italian league record with a precise competition-era distinction.",
+      "question": "Who remains the all-time leading scorer in the single-group era of Serie A with 274 goals?",
+      "answer": "Silvio Piola",
+      "acceptedAnswers": [
+        "Silvio Piola"
+      ],
+      "choices": [
+        "Silvio Piola",
+        "Francesco Totti",
+        "Gunnar Nordahl",
+        "Giuseppe Meazza"
+      ],
+      "explanation": "Silvio Piola scored 274 goals in the single-group format of Serie A, confirmed by Lega Serie A in 2026.",
+      "competition": "Serie A",
+      "scope": "All-time top scorer in Serie A's single-group format, 274 goals",
+      "validAsOf": "2026-11-27",
+      "source": {
+        "name": "Buon compleanno Andriy Shevchenko",
+        "url": "https://www.legaseriea.it/serie-a/news/buon-compleanno-shevchenko-x5287",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
+      ]
+    },
+    {
+      "id": "laliga-pre-messi-record-zarra",
+      "topic": "la-liga",
+      "category": "records",
+      "difficulty": "hard",
+      "difficultyReason": "It tests the predecessor to a famous record rather than the current record-holder.",
+      "question": "Who held La Liga's all-time goalscoring record for almost 60 years before Lionel Messi surpassed him in 2014?",
+      "answer": "Telmo Zarra",
+      "acceptedAnswers": [
+        "Telmo Zarra"
+      ],
+      "choices": [
+        "Telmo Zarra",
+        "Alfredo Di Stéfano",
+        "Hugo Sánchez",
+        "Raúl González"
+      ],
+      "explanation": "Telmo Zarra's total of 251 La Liga goals stood as the competition record until Lionel Messi passed it in November 2014.",
+      "competition": "La Liga",
+      "scope": "Previous La Liga top scorer record-holder before Messi passed 251 goals",
+      "validAsOf": "2014-11-22",
+      "source": {
+        "name": "Messi received the LFP Trophy for the all-time top goal-scorer in La Liga",
+        "url": "https://www.laliga.com/en-GB/news/messi-received-the-lfp-trophy-for-the-all-time-top-goal-scorer-in-la-liga",
+        "checkedAt": "2026-11-27"
+      },
+      "reviewStatus": "verified",
+      "gameModes": [
+        "timed-quiz",
+        "the-climb"
       ]
     }
-  ]
+  ],
+  "batch": {
+    "id": "uk-football-question-batch-001",
+    "targetTotal": 60,
+    "actualTotal": 60,
+    "difficultyTargets": {
+      "easy": 15,
+      "medium": 15,
+      "hard": 15,
+      "extreme": 15
+    },
+    "contentMixTargetPercent": {
+      "premierLeague": 40,
+      "eflAndEnglishCups": 20,
+      "championsLeagueAndEuropeanCups": 15,
+      "worldCupAndEuros": 15,
+      "otherBigFiveLeagues": 10
+    },
+    "sourceFamilies": [
+      "Premier League",
+      "English Football League",
+      "The FA",
+      "UEFA",
+      "FIFA",
+      "Bundesliga",
+      "Ligue 1",
+      "Lega Serie A",
+      "La Liga"
+    ]
+  }
 }
