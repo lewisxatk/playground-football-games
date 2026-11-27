@@ -490,7 +490,7 @@ const shards={
  "goal-events":{...common,events:internationalGoals.events,scorers:internationalGoals.scorers},
  "world-cup":{...common,lineups},
  footle:{...common,answers:uniqueFootleAnswers,answerRecords:uniqueFootleAnswers.map(answer=>({id:id("footle-answer",answer),answer,source:SOURCES.players.repo,sourceCommit:SOURCES.players.commit,licence:"CC0-1.0"}))},
- connections:{...common,players:connectionPlayers,packs:playerConnections,clubCountryPacks:clubConnections},
+ connections:{...common,players:connectionPlayers,packs:playerConnections},
  strands:{...common,packs:strands},
  "football-grid":{...common,players:gridPlayers,packs:gridPacks},
  "the-climb":{...common,questions:internationalQuiz.climb},
