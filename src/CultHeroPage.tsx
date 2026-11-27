@@ -157,7 +157,7 @@ export default function CultHeroPage({ dailyDone, onDailyComplete }: Props) {
           <a href="/cult-hero-collection">COLLECTION ROOM ↗</a>
         </div>
 
-        {dailyLocked ? (
+        {dailyLocked && !runComplete ? (
           <section className="ch-complete-panel">
             <div className="ch-panel-label">TODAY'S CHALLENGE / RECORDED</div>
             <h2>YOU'VE DONE<br />TODAY'S FIVE.</h2>
