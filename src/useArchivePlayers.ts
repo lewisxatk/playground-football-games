@@ -112,6 +112,10 @@ async function loadStaticPlayerShard(seed:string,limit:number):Promise<ArchiveGa
   return sampled;
 }
 
+export async function getStaticArchivePlayers(seed:string,limit=1600):Promise<ArchiveGamePlayer[]|null>{
+  try{return await loadStaticPlayerShard(seed,limit);}catch{return null;}
+}
+
 function poolFor(key: string, limit: number): Promise<ArchiveGamePlayer[]> {
   const existing = memoryPools.get(key);
   if (existing) return existing;
