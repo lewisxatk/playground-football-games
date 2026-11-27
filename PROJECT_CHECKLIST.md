@@ -542,7 +542,7 @@ This section records the separate gameplay-rework branch so work is not confused
 - [x] Rechecked and corrected the CC0 match importer: OpenFootball England domestic league/cup matches are classified as `ENGLISH_DOMESTIC`; UEFA club matches and all senior national-team fixtures (including England) are classified as `INTERNATIONAL`.
 - [x] Found and corrected the runtime selection bug: `makeCC0QuizRound` previously selected only 40% UK-tagged questions. It now targets 75% English domestic content over rolling rounds.
 - [x] Daily Quick Quiz rotates between 13/4 and 12/5 English-domestic/international questions; across four daily seeds this totals exactly 75/25.
-- [x] Five-question rounds rotate 4/1 and 3/2 across four seeds; ten-question practice rounds rotate 8/2 and 7/3 across four seeds, giving exactly 75/25 over each cycle.
+- [x] Five-question rounds use seeded 4/1 or 3/2 quotas; ten-question practice rounds use seeded 8/2 or 7/3 quotas. The four seed buckets target 75/25 in aggregate, though individual four-day windows are not guaranteed to be exact.
 - [x] Quiz selection deduplicates by match ID, and the daily round excludes any match already selected earlier in the same round.
 - [x] Added `scripts/validate-cc0-quiz-pools.mjs` to check question IDs, unique match facts, difficulty, region, question wording, five distinct options, one correct answer, source/date provenance, manifest counts and minimum English/international coverage per tier.
 - [x] Wired the new validator into `npm run validate:data`, so CI will fail if any difficulty tier cannot satisfy English-first rounds.
