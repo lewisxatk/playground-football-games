@@ -50,6 +50,36 @@ const positionLabel = raw => {
   if (p.includes("forward") || p.includes("striker") || p.includes("winger") || p.includes("attack") || p === "fw") return "Forward";
   return "";
 };
+const countryLabels = new Map([
+  ["royaumeuni", "United Kingdom"], ["angleterre", "England"], ["ecosse", "Scotland"],
+  ["paysdegalles", "Wales"], ["irlandedunord", "Northern Ireland"], ["italie", "Italy"],
+  ["allemagne", "Germany"], ["espagne", "Spain"], ["bresil", "Brazil"],
+  ["etatsunis", "United States"], ["turquie", "Türkiye"], ["paysbas", "Netherlands"],
+  ["russie", "Russia"], ["argentine", "Argentina"], ["belgique", "Belgium"],
+  ["grece", "Greece"], ["suisse", "Switzerland"], ["japon", "Japan"],
+  ["arabiesaoudite", "Saudi Arabia"], ["republiquedecoree", "South Korea"],
+  ["cotedivoire", "Ivory Coast"], ["republiquetcheque", "Czechia"]
+]);
+const displayCountry = value => {
+  const raw = String(value ?? "").trim();
+  return countryLabels.get(normalise(raw)) ?? raw;
+};
+const leagueLabels = new Map([
+  ["fussballbundesliga", "Bundesliga"], ["2fussballbundesliga", "2. Bundesliga"],
+  ["primeradivisiondeespana", "La Liga"], ["segundadivisiondeespana", "Segunda División"],
+  ["championnatdefrancedefootball", "Ligue 1"],
+  ["championnatdefrancedefootballdedeuxiemedivision", "Ligue 2"],
+  ["campeonatobrasileiroseriea", "Brazilian Série A"], ["campeonatobrasileiroserieb", "Brazilian Série B"],
+  ["primeiraliga", "Primeira Liga"], ["eredivisie", "Eredivisie"], ["superlig", "Süper Lig"],
+  ["majorleaguesoccer", "Major League Soccer"], ["saudiproleague", "Saudi Pro League"],
+  ["premierleague", "Premier League"], ["seriea", "Serie A"], ["serieb", "Serie B"],
+  ["seriec", "Serie C"], ["seried", "Serie D"], ["eflchampionship", "EFL Championship"],
+  ["eflleagueone", "EFL League One"], ["eflleaguetwo", "EFL League Two"]
+]);
+const displayLeague = value => {
+  const raw = String(value ?? "").trim();
+  return leagueLabels.get(normalise(raw)) ?? raw;
+};
 
 const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
 if (manifest.source !== "OpenFootballBase-Data" || !Array.isArray(manifest.shards) || manifest.playerCount < 50000) {
@@ -81,8 +111,8 @@ if (players.length !== manifest.playerCount) throw new Error("Player count does 
 
 const clubs = unique(players.flatMap(player => [...(player.clubs ?? []), player.currentClub]));
 const nationalities = unique(players.map(player => player.nationality));
-const leagues = unique(players.map(player => player.currentLeague));
-const countries = unique(players.map(player => player.currentCountry));
+const leagues = unique(players.map(player => displayLeague(player.currentLeague)));
+const countries = unique(players.map(player => displayCountry(player.currentCountry)));
 const sortedNumbers = values => [...new Set(values.filter(value => value !== null).map(String))].sort((a, b) => Number(a) - Number(b));
 const careerApps = sortedNumbers(players.map(player => number(player.appearances)));
 const careerGoals = sortedNumbers(players.map(player => number(player.goals)));
@@ -186,8 +216,8 @@ for (const player of players) {
   const firstClub = String(player.spells?.[0]?.club ?? careerClubs[0] ?? "").trim();
   const nationality = String(player.nationality ?? "").trim();
   const position = positionLabel(player.position);
-  const league = String(player.currentLeague ?? "").trim();
-  const country = String(player.currentCountry ?? "").trim();
+  const league = displayLeague(player.currentLeague);
+  const country = displayCountry(player.currentCountry);
   const appearances = number(player.appearances);
   const goals = number(player.goals);
   const recordedLeagueGoals = number(player.leagueGoals);
@@ -303,3 +333,7 @@ const bank = {
 };
 await writeFile(outputPath, JSON.stringify(bank));
 console.log("Built PLAYGROUND question bank:", distribution);
+for (const tier of ["EASY", "MEDIUM", "HARD", "EXTREME"]) {
+  const examples = tiers[tier].slice(0, 2).map(question => question.question + " → " + question.answer);
+  console.log(tier + " examples:", examples.join(" | "));
+}
