@@ -16,13 +16,14 @@ Rule: after every successful GitHub commit, update this checklist in the next co
 - [x] Strands: use randomized serpentine paths so answers are genuinely hidden. Commit: `4f9824f19e`.
 - [x] Footle: accept any valid five-letter guess and improve progressive letter hints. Commit: `efb520401a`.
 - [x] Football Grid: rebuild around unique English club × national flag intersections; add actual flags and consistent sizing. Commits: `599d72dc76`, `30bcb621f8`, `7716f6421e`.
+- [x] Football Grid: replace the incorrect “exactly 16 candidate IDs” test with a 16-cell bipartite matching check, so overlapping candidate pools are accepted only when a fully unique solution exists. Commit: `61c7a1f4d0`.
 - [x] Link Up: use English-club alias matching and exact overlap-window clues. Commits: `32baeeda0a`, `259f5a9a20`, `c510c76f0c`.
 - [x] Link Up: repair the attempt gate so players get three guesses, can buy a fourth attempt, or skip without revealing the bridge. Commit: `199a453e74`.
 - [x] Career File: Premier League-only eligibility with a two-season minimum, appearance clues and unlockable identity hints. Commits: `41d97fce33`, `cb49370295`.
 
 ## To do — game repairs and verification
 - [ ] Footle: audit answer selection, keyboard feedback, hint costs, scoring and mobile behaviour.
-- [ ] Football Grid: verify all 16 intersections, unique-player enforcement, answer acceptance, retry behaviour and mobile layout.
+- [ ] Football Grid: verify all 16 intersections, unique-player enforcement, answer acceptance, retry behaviour and mobile layout (unique-solution feasibility fix committed).
 - [ ] Link Up: validate ten unique questions; confirm each bridge player genuinely overlaps at both English clubs; review hints, lives and scoring (attempt/extra-life flow fix committed).
 - [ ] Career File: verify clue accuracy, timeline, aliases, reveal/hint costs and source provenance.
 - [ ] Review Quick Quiz / The Climb pools and daily/practice allocations against the user's English-domestic preference.
@@ -52,7 +53,7 @@ Latest completed commits:
 - `599d72dc76` — Football Grid unique intersection rebuild.
 - `41d97fce33` — Career File eligibility and appearance clues.
 
-Latest relevant implementation commit: `199a453e743fc5af6eda18d97fed2cfc99a56250` (Link Up attempt/extra-life flow).
+Latest relevant implementation commits: `199a453e743fc5af6eda18d97fed2cfc99a56250` (Link Up attempt/extra-life flow); `61c7a1f4d03dd02a743d5718ffd9396852c268d6` (Football Grid unique-solution feasibility).
 Latest completed football-content validation: success on `d99d59ea3f545c41a2d7558654a406587cfa4fec`; rerun after the Link Up fix.
 The full CC0 database build was still in progress on the previous head and may be cancelled by subsequent source changes. Do not call the build verified until a non-cancelled successful run is observed.
 
