@@ -95,6 +95,111 @@ export async function getCandidates(league: LeagueCode): Promise<Candidate[]> {
     clubs: Number(r.clubs ?? 0), statSeasons: Number(r.stat_seasons ?? 0)
   }));
 }
+
+export type ArchiveGamePlayer = {
+  id: string;
+  name: string;
+  nationality: string;
+  position: string;
+  clubs: string[];
+  currentClub: string;
+  appearances: number;
+  goals: number;
+  leagueAppearances: number;
+  leagueGoals: number;
+  seasons: number;
+  firstYear: number | null;
+  lastYear: number | null;
+  caps: number | null;
+  internationalGoals: number | null;
+  birthDate: string;
+};
+let gamePoolPromise: Promise<ArchiveGamePlayer[]> | null = null;
+
+/**
+ * A broad game-ready player sample drawn from OpenFootballBase's career,
+ * player-profile, birth, national and club-season statistics tables.
+ * A single grouped archive pass replaces the old small hand-maintained pool
+ * for random player, stats and career clue games.
+ */
+export async function getArchiveGamePlayers(limit = 1600): Promise<ArchiveGamePlayer[]> {
+  if (!gamePoolPromise) {
+    gamePoolPromise = (async () => {
+      const a = await careerArchive();
+      const sampleSize = Math.max(2400, Math.min(9000, limit * 4));
+      const sample = await a.query(
+        "SELECT player_qid FROM career WHERE player_qid IS NOT NULL AND trim(player_qid)<>'' " +
+        "GROUP BY player_qid ORDER BY hash(player_qid || ?) LIMIT ?",
+        [String(Date.now()) + ":" + Math.random(), sampleSize]
+      );
+      const ids = sample.map((row: any) => String(row.player_qid)).filter(Boolean);
+      if (!ids.length) return [];
+      const marks = ids.map(() => "(?)").join(",");
+      const sql =
+        "WITH picked(player_qid) AS (VALUES " + marks + "), " +
+        "career_rollup AS (" +
+        " SELECT cr.player_qid, any_value(cr.player) AS name, " +
+        " list(DISTINCT cr.club_name) AS clubs, " +
+        " COUNT(DISTINCT cr.club_name) AS club_count, " +
+        " SUM(coalesce(cr.apps,0)) AS appearances, SUM(coalesce(cr.goals,0)) AS goals, " +
+        " arg_max(cr.club_name, coalesce(cr.end_year,cr.start_year,0)) AS current_club, " +
+        " MIN(cr.start_year) AS first_year, MAX(cr.end_year) AS last_year " +
+        " FROM career cr JOIN picked p ON p.player_qid=cr.player_qid " +
+        " GROUP BY cr.player_qid HAVING SUM(coalesce(cr.apps,0))>=10" +
+        "), stat_rollup AS (" +
+        " SELECT st.player_qid, COUNT(DISTINCT coalesce(nullif(st.club_qid,''),nullif(st.club_link,''),st.club)||'|'||st.season) AS seasons, " +
+        " SUM(CASE WHEN st.competition_group='League' THEN coalesce(st.apps,0) ELSE 0 END) AS league_appearances, " +
+        " SUM(CASE WHEN st.competition_group='League' THEN coalesce(st.goals,0) ELSE 0 END) AS league_goals " +
+        " FROM stat_club st JOIN picked p ON p.player_qid=st.player_qid " +
+        " WHERE coalesce(st.competition_group,'')<>'Total' AND coalesce(trim(st.season),'')<>'' GROUP BY st.player_qid" +
+        "), profile_rollup AS (" +
+        " SELECT pp.player_qid, any_value(pp.nationality) AS nationality, any_value(pp.position) AS position " +
+        " FROM player_profile pp JOIN picked p ON p.player_qid=pp.player_qid GROUP BY pp.player_qid" +
+        "), birth_rollup AS (" +
+        " SELECT b.player_qid, any_value(b.birth_date) AS birth_date " +
+        " FROM birth b JOIN picked p ON p.player_qid=b.player_qid WHERE b.precision=11 GROUP BY b.player_qid" +
+        "), national_rollup AS (" +
+        " SELECT nt.player_qid, SUM(nt.caps) AS caps, SUM(nt.goals) AS international_goals " +
+        " FROM national nt JOIN picked p ON p.player_qid=nt.player_qid GROUP BY nt.player_qid" +
+        ") " +
+        "SELECT c.player_qid, c.name, c.clubs, c.current_club, c.appearances, c.goals, " +
+        "c.first_year, c.last_year, coalesce(c.club_count,0) AS club_count, " +
+        "coalesce(st.seasons,0) AS seasons, coalesce(st.league_appearances,0) AS league_appearances, " +
+        "coalesce(st.league_goals,0) AS league_goals, coalesce(pp.nationality,'') AS nationality, " +
+        "coalesce(pp.position,'') AS position, b.birth_date, nt.caps, nt.international_goals " +
+        "FROM career_rollup c LEFT JOIN stat_rollup st ON st.player_qid=c.player_qid " +
+        "LEFT JOIN profile_rollup pp ON pp.player_qid=c.player_qid " +
+        "LEFT JOIN birth_rollup b ON b.player_qid=c.player_qid " +
+        "LEFT JOIN national_rollup nt ON nt.player_qid=c.player_qid " +
+        "WHERE coalesce(st.seasons,0)>=2 AND c.appearances>=20 ORDER BY hash(c.player_qid) LIMIT ?";
+      const rows = await a.query(sql, [...ids, limit]);
+      return rows.map((r: any): ArchiveGamePlayer => ({
+        id: String(r.player_qid),
+        name: String(r.name ?? "Unknown player"),
+        nationality: String(r.nationality ?? ""),
+        position: String(r.position ?? ""),
+        clubs: Array.isArray(r.clubs) ? r.clubs.map(String).filter(Boolean) : [],
+        currentClub: String(r.current_club ?? ""),
+        appearances: Number(r.appearances ?? 0),
+        goals: Number(r.goals ?? 0),
+        leagueAppearances: Number(r.league_appearances ?? 0),
+        leagueGoals: Number(r.league_goals ?? 0),
+        seasons: Number(r.seasons ?? 0),
+        firstYear: n(r.first_year),
+        lastYear: n(r.last_year),
+        caps: n(r.caps),
+        internationalGoals: n(r.international_goals),
+        birthDate: String(r.birth_date ?? "")
+      }));
+    })().catch(error => {
+      gamePoolPromise = null;
+      throw error;
+    });
+  }
+  const rows = await gamePoolPromise;
+  return rows.slice(0, limit);
+}
+
 const n = (v: unknown): number | null => v == null || v === "" ? null : Number(v);
 
 
