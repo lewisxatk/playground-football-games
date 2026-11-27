@@ -1371,9 +1371,9 @@ const lineupNameKey=(value:string)=>normalise(value);
 function tournamentPositionGroup(raw:string):"keeper"|"defence"|"midfield"|"forwards"|""{
  const value=raw.toLocaleLowerCase();
  if(value.includes("goalkeeper")||value==="gk")return "keeper";
- if(value.includes("defend")||value.includes("back"))return "defence";
- if(value.includes("midfield")||value==="mf")return "midfield";
- if(value.includes("forward")||value.includes("striker")||value.includes("winger")||value.includes("attack"))return "forwards";
+ if(value.includes("defend")||value.includes("back")||value==="def")return "defence";
+ if(value.includes("midfield")||value==="mf"||value==="mid")return "midfield";
+ if(value.includes("forward")||value.includes("striker")||value.includes("winger")||value.includes("attack")||value==="fwd")return "forwards";
  return "";
 }
 function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
@@ -1387,6 +1387,8 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
  const [clubLookupError,setClubLookupError]=useState("");
  const [clubLookupAttempt,setClubLookupAttempt]=useState(0);
  const [attempts,setAttempts]=useState(0);const [ended,setEnded]=useState(false);const [won,setWon]=useState(false);const maxGuesses=5;
+ const {players:archiveCareerPlayers,loading:archiveCareerLoading}=useArchivePlayers(true,ARCHIVE_POOL_SEED,4200);
+ const archiveCareerPool=useMemo(()=>archiveCareerPlayers.map(archivePlayerToGamePlayer),[archiveCareerPlayers]);
  const tournamentUsageKey="playground.tournament-nation.practice.v1";
  const [practicePlays,setPracticePlays]=useState<Record<string,number>>(()=>{
    try{const value=JSON.parse(localStorage.getItem(tournamentUsageKey)||"{}");return value&&typeof value==="object"?value:{};}catch{return {};}
@@ -1407,20 +1409,58 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
  useEffect(()=>{
    if(!match){setClubRows(new Map());setPositionRows(new Map());setClubLookupError("");return;}
    let live=true;setClubsLoading(true);setClubRows(new Map());setPositionRows(new Map());setClubLookupError("");
+   const useStaticFallback=()=>{
+     const clubs=new Map<string,string>(),positions=new Map<string,string>();
+     for(const name of match.starters){
+       const key=lineupNameKey(name);
+       const candidates=archiveCareerPool.filter(player=>lineupNameKey(player.name)===key);
+       const datedClubs=candidates.flatMap(player=>player.careerSpells
+         .filter(spell=>spell.club&&spell.startYear!==null&&spell.startYear<=match.year&&
+           (spell.endYear??spell.startYear)>=match.year)
+         .map(spell=>spell.club.trim()).filter(Boolean));
+       const uniqueClubs=[...new Map(datedClubs.map(club=>[normalise(club),club])).values()];
+       if(uniqueClubs.length===1)clubs.set(key,uniqueClubs[0]);
+       const roles=candidates.map(player=>{const role=positionCode(player.position);return role==="GK"?"Goalkeeper":role==="DEF"?"Defender":role==="MID"?"Midfielder":role==="FWD"?"Forward":"";}).filter(Boolean);
+       const uniqueRoles=[...new Set(roles)];
+       if(uniqueRoles.length===1)positions.set(key,uniqueRoles[0]);
+     }
+     setClubRows(clubs);setPositionRows(positions);
+     setClubLookupError(clubs.size
+       ?"Some clubs were matched from the dated static archive; records without a unique match remain hidden."
+       :"No unique club matches were found in the dated static archive for this XI.");
+   };
    getCareerClubsAtYear(match.starters,match.year).then(records=>{
      if(!live)return;
-     const clubs=new Map<string,string>();const positions=new Map<string,string>();
+     const clubs=new Map<string,string>(),positions=new Map<string,string>();
      for(const name of match.starters){
-       const key=lineupNameKey(name);const found=records.get(key)??[];
-       const distinctClubs=[...new Set(found.map(x=>x.club).filter(Boolean))];
-       const distinctPositions=[...new Set(found.map(x=>x.position).filter(Boolean))];
+       const key=lineupNameKey(name),found=records.get(key)??[];
+       const distinctClubs=[...new Set(found.map(row=>row.club).filter(Boolean))];
+       const distinctPositions=[...new Set(found.map(row=>row.position).filter(Boolean))];
        if(distinctClubs.length===1)clubs.set(key,distinctClubs[0]);
        if(distinctPositions.length===1)positions.set(key,distinctPositions[0]);
      }
+     for(const name of match.starters){
+       const key=lineupNameKey(name);
+       const candidates=archiveCareerPool.filter(player=>lineupNameKey(player.name)===key);
+       if(!clubs.has(key)){
+         const datedClubs=candidates.flatMap(player=>player.careerSpells
+           .filter(spell=>spell.club&&spell.startYear!==null&&spell.startYear<=match.year&&
+             (spell.endYear??spell.startYear)>=match.year)
+           .map(spell=>spell.club.trim()).filter(Boolean));
+         const uniqueClubs=[...new Map(datedClubs.map(club=>[normalise(club),club])).values()];
+         if(uniqueClubs.length===1)clubs.set(key,uniqueClubs[0]);
+       }
+       if(!positions.has(key)){
+         const roles=candidates.map(player=>{const role=positionCode(player.position);return role==="GK"?"Goalkeeper":role==="DEF"?"Defender":role==="MID"?"Midfielder":role==="FWD"?"Forward":"";}).filter(Boolean);
+         const uniqueRoles=[...new Set(roles)];
+         if(uniqueRoles.length===1)positions.set(key,uniqueRoles[0]);
+       }
+     }
      setClubRows(clubs);setPositionRows(positions);
-   }).catch(problem=>{if(live){setClubRows(new Map());setPositionRows(new Map());setClubLookupError("The historical club archive could not be opened for this match. The nation question remains playable; unverified club names will not be shown.");}}).finally(()=>{if(live)setClubsLoading(false);});
+     if(clubs.size<match.starters.length)setClubLookupError("Some historic clubs are missing from the archive. Only unique player-and-year matches are shown.");
+   }).catch(()=>{if(live)useStaticFallback();}).finally(()=>{if(live)setClubsLoading(false);});
    return()=>{live=false;};
- },[match?.id,clubLookupAttempt]);
+ },[match?.id,clubLookupAttempt,archiveCareerPool]);
  const teams=useMemo(()=>data?[...new Set(data.matches.map(m=>m.team).filter(Boolean))]:[],[data]);
  const optionCount=difficulty==="EASY"?3:difficulty==="STANDARD"?4:difficulty==="HARD"?6:8;
  const options=useMemo(()=>{
