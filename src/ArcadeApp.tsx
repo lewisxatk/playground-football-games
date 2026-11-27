@@ -907,7 +907,7 @@ type CheckoutDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
 type CheckoutPlayer={id:string;name:string;value:number;label:string};
 function FiveOhOnePage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();const [difficulty,setDifficulty]=useState<CheckoutDifficulty>("STANDARD");
- const [metric,setMetric]=useState<CheckoutMetric>("leagueGoals");
+ const [metric,setMetric]=useState<CheckoutMetric>("internationalGoals");
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
  const [remaining,setRemaining]=useState(501);const [turnStart,setTurnStart]=useState(501);
  const [turnPicks,setTurnPicks]=useState<CheckoutPlayer[]>([]);const [used,setUsed]=useState<string[]>([]);
