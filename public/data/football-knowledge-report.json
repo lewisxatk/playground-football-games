@@ -7,20 +7,20 @@
     "retrievedAt": "2026-11-27",
     "rawRows": 50000,
     "acceptedSpells": 49618,
-    "players": 7168,
-    "eligibleCareerFile": 7168,
-    "eligibleCultHero": 7168,
+    "players": 7169,
+    "eligibleCareerFile": 7169,
+    "eligibleCultHero": 7169,
     "error": null
   },
   "counts": {
     "players": 75224,
     "clubs": 560,
     "wikidataCareerRows": 50000,
-    "wikidataCareerPlayers": 7168,
-    "careerFileCandidates": 7168,
-    "cultHeroCandidates": 7168,
+    "wikidataCareerPlayers": 7169,
+    "careerFileCandidates": 7169,
+    "cultHeroCandidates": 7169,
     "linkUpPacks": 750,
-    "footlePlayerRecords": 71802,
+    "footlePlayerRecords": 71801,
     "footleAnswers": 6868,
     "worldCupLineups": 1520,
     "worldCupPlayerCards": 4294,
@@ -98,13 +98,13 @@
     },
     "career-file": {
       "unit": "player-card",
-      "count": 7168,
+      "count": 7169,
       "ready": true,
       "integrated": true
     },
     "cult-hero": {
       "unit": "player-card",
-      "count": 7168,
+      "count": 7169,
       "ready": true,
       "integrated": true
     },
