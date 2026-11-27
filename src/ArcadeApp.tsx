@@ -1251,28 +1251,20 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
  const [mode,setMode]=useMode();
  const [difficulty,setDifficulty]=useState<TournamentDifficulty>("STANDARD");
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
- const [practiceRunActive,setPracticeRunActive]=useState(false);
  const {data:worldCupData,loading,error,retry}=useFootballKnowledge("world-cup");
  const [attempts,setAttempts]=useState(0);
  const [ended,setEnded]=useState(false);
  const [won,setWon]=useState(false);
  const maxGuesses=5;
- const done=account.daily[utcDay()]?.["tournament-nation"]!==undefined;
- const practiceCount=practicePlays[utcDay()]??0;
- const practiceLimitReached=mode==="practice"&&!ended&&!practiceRunActive&&practiceCount>=5;
- const seed=mode==="daily"?"TOURNAMENT:"+utcDay():"TOURNAMENT:PRACTICE:"+practiceSeed;
  const tournamentUsageKey="playground.tournament-nation.practice.v1";
  const [practicePlays,setPracticePlays]=useState<Record<string,number>>(()=>{
    try{const value=JSON.parse(localStorage.getItem(tournamentUsageKey)||"{}");return value&&typeof value==="object"?value:{};}catch{return {};}
  });
- const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
- const [practiceRunActive,setPracticeRunActive]=useState(false);
  const practiceCount=practicePlays[utcDay()]??0;
- const practiceLimitReached=mode==="practice"&&practiceCount>=5&&!practiceRunActive;
+ const practiceLimitReached=mode==="practice"&&practiceCount>=5;
  const done=account.daily[utcDay()]?.["tournament-nation"]!==undefined;
  const seed=mode==="daily"?"TOURNAMENT-NATION:"+utcDay():"TOURNAMENT-NATION:PRACTICE:"+practiceSeed;
- useEffect(()=>{try{localStorage.setItem(tournamentUsageKey,JSON.stringify(practicePlays));}catch{}},[practicePlays]);
- useEffect(()=>{try{localStorage.setItem(tournamentUsageKey,JSON.stringify(practicePlays));}catch{/* keep practice available if storage is disabled */}},[practicePlays]);
+ useEffect(()=>{try{localStorage.setItem(tournamentUsageKey,JSON.stringify(practicePlays));}catch{/* practice allowance is best-effort */}},[practicePlays]);
 
  const match=useMemo(()=>{
    if(!worldCupData?.lineups.length)return null;
@@ -1296,22 +1288,15 @@ function TournamentNationPage({account,onDaily}:{account:Account;onDaily:(id:Gam
  const choose=(team:string)=>{
    if(ended||!match)return;
    const tries=attempts+1;setAttempts(tries);
-   if(team===match.team){
-     setWon(true);setEnded(true);setPracticeRunActive(false);
-     if(mode==="daily")onDaily("tournament-nation",Math.max(150,1000-(tries-1)*220));
-   }else if(tries>=maxGuesses){
-     setWon(false);setEnded(true);setPracticeRunActive(false);
-     if(mode==="daily")onDaily("tournament-nation",0);
-   }
+   if(team===match.team){setWon(true);setEnded(true);if(mode==="daily")onDaily("tournament-nation",Math.max(150,1000-(tries-1)*220));}
+   else if(tries>=maxGuesses){setWon(false);setEnded(true);if(mode==="daily")onDaily("tournament-nation",0);}
  };
  const reset=(newMode:Mode=mode,newDifficulty:TournamentDifficulty=difficulty)=>{
-   const changingDifficulty=newMode===mode&&newMode==="practice"&&practiceRunActive&&newDifficulty!==difficulty;
    setDifficulty(newDifficulty);setAttempts(0);setEnded(false);setWon(false);
-   if(newMode!=="practice"){setPracticeRunActive(false);return;}
-   if(changingDifficulty)return;
-   if((practicePlays[utcDay()]??0)>=5){setPracticeRunActive(false);return;}
-   setPracticePlays(old=>({...old,[utcDay()]:Math.min(5,(old[utcDay()]??0)+1)}));
-   setPracticeRunActive(true);setPracticeSeed(String(Math.floor(Math.random()*1e12)));
+   if(newMode==="practice"&&practiceCount<5){
+     setPracticePlays(old=>({...old,[utcDay()]:Math.min(5,(old[utcDay()]??0)+1)}));
+     setPracticeSeed(String(Math.floor(Math.random()*1e12)));
+   }
  };
  return <Frame account={account} game="tournament-nation" eyebrow="WORLD CUP ARCHIVE / STARTING XI" title="TOURNAMENT NATION." description="Identify the country from a historic World Cup starting XI. Reveal a few player names, use the match context, and work out the team." number="15" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
  {done&&mode==="daily"?<Success title="NATION IDENTIFIED." detail="Today's tournament challenge is complete. Five CC0 World Cup practice runs are also available each day." button="PRACTICE" onAgain={()=>{setMode("practice");reset("practice");}}/>:
