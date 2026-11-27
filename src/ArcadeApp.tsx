@@ -684,6 +684,21 @@ function ConnectionsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
 
 type GridDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
 const GRID_LEVELS:GridDifficulty[]=["EASY","STANDARD","HARD","EXTREME"];
+function hasUniqueGridAssignment(rows:GamePlayer[][][]):boolean{
+ const cells=rows.flat().map((players,index)=>({index,players:[...new Map(players.map(player=>[player.archiveId,player])).values()]}));
+ if(cells.length!==16||cells.some(cell=>cell.players.length===0))return false;
+ cells.sort((a,b)=>a.players.length-b.players.length||a.index-b.index);
+ const assigned=new Map<string,number>();
+ const place=(cellIndex:number,seen:Set<string>):boolean=>{
+  for(const player of cells[cellIndex].players){
+   const id=player.archiveId;if(seen.has(id))continue;seen.add(id);
+   const previous=assigned.get(id);
+   if(previous===undefined||place(previous,seen)){assigned.set(id,cellIndex);return true;}
+  }
+  return false;
+ };
+ return cells.every((_cell,index)=>place(index,new Set<string>()));
+}
 function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();
  const [difficulty,setDifficulty]=useState<GridDifficulty>("STANDARD");
@@ -703,7 +718,7 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
    if(!gridPacks.length)return null;
    const pack=gridPacks[seed%gridPacks.length],byId=new Map(playerPool.map(player=>[player.archiveId,player]));
    const answers=pack.answers.map(row=>row.map(cell=>cell.flatMap(id=>{const player=byId.get(id);return player?[player]:[]})));
-   if(answers.some(row=>row.some(cell=>cell.length===0))||new Set(answers.flat(2).map(player=>player.archiveId)).size!==16)return null;
+   if(answers.some(row=>row.some(cell=>cell.length===0))||!hasUniqueGridAssignment(answers))return null;
    return {clubs:pack.clubs,countries:pack.countries,answers};
  },[gridPacks,playerPool,seed,difficulty]);
  
