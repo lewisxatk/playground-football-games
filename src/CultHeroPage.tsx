@@ -148,9 +148,9 @@ export default function CultHeroPage({ dailyDone, onDailyComplete }: Props) {
         </div>
 
         <div className="ch-intro-strip">
-          <span>KNOW YOUR FOOTBALL.</span>
-          <span>READ THE CAREER.</span>
-          <span>NAME THE PLAYER.</span>
+          <span>BIG FIVE LEAGUE POOL.</span>
+          <span>FAMILIAR FOOTBALLERS.</span>
+          <span>FIVE MYSTERIES.</span>
         </div>
 
         <div className="arc-mode-switch ch-mode-switch">
