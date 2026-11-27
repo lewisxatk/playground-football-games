@@ -183,15 +183,16 @@ for (const player of players) {
     if (latestClub) add("EASY", player, region, "latest-club", "PLAYER & CLUBS",
       "Which club is listed as " + player.name + "'s latest recorded club?", latestClub, clubs,
       latestClub + " is the latest club recorded for " + player.name + ". It is an archive record, not a live squad feed.");
-    if (careerClubs.length) {
-      const answer = careerClubs[stableNumber(player.id + ":career-club") % careerClubs.length];
-      add("EASY", player, region, "career-club", "PLAYER & CLUBS",
-        "Which of these clubs appears in " + player.name + "'s recorded career?", answer, clubs,
-        answer + " appears in the available career spells for " + player.name + ".");
-    }
     if (position) add("EASY", player, region, "position", "PLAYER BASICS",
-      "Which position group is recorded for " + player.name + "?", position, ["Goalkeeper", "Defender", "Midfielder", "Forward", "Utility player"],
+      latestClub ? "Which position group is recorded for " + player.name + " at " + latestClub + "?" : "Which position group is recorded for " + player.name + "?",
+      position, ["Goalkeeper", "Defender", "Midfielder", "Forward", "Utility player"],
       player.name + " is listed as a " + position.toLowerCase() + " in the source's squad record.");
+    if (latestClub && league) add("EASY", player, region, "easy-latest-league", "LEAGUES",
+      "Which league is listed for " + latestClub + ", the latest recorded club of " + player.name + "?", league, leagues,
+      "The archive lists " + latestClub + " in " + league + ". This reflects the latest available club metadata.");
+    if (latestClub && country) add("EASY", player, region, "easy-club-country", "LEAGUES",
+      "Which country is listed for " + latestClub + ", the latest recorded club of " + player.name + "?", country, countries,
+      "The archive lists " + latestClub + " in " + country + ". This reflects the latest available club metadata.");
   }
 
   if (mediumEligible(player)) {
