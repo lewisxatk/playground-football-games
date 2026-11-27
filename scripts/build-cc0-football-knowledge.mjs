@@ -27,14 +27,18 @@ async function parseInternationalGoals(players){
  const rows=parseCsv(await readFile(resolve(IR,"goalscorers.csv"),"utf8"));
  const aliases=new Map();
  for(const player of players)for(const name of [player.name,...(player.aliases||[])])aliases.set(norm(name),player);
- const aggregates=new Map(),events=new Set();let accepted=0,duplicates=0,ownGoals=0;
+ const aggregates=new Map(),events=new Set(),goalEvents=[];let accepted=0,duplicates=0,ownGoals=0;
  for(const row of rows){
   const date=String(row.date||"").trim(),team=String(row.team||"").trim(),scorer=String(row.scorer||"").trim();
   const home=String(row.home_team||"").trim(),away=String(row.away_team||"").trim(),minute=String(row.minute||"").trim();
-  if(!date||!team||!scorer||!/^\d{4}-\d{2}-\d{2}$/.test(date))continue;
-  if(["true","1","yes"].includes(String(row.own_goal||"").trim().toLowerCase())){ownGoals++;continue;}
-  const eventKey=[date,norm(home),norm(away),norm(team),norm(scorer),minute,String(row.penalty||"")].join("|");
-  if(events.has(eventKey)){duplicates++;continue;}events.add(eventKey);accepted++;
+  if(!date||!team||!scorer||!/^\\d{4}-\\d{2}-\\d{2}$/.test(date))continue;
+  const ownGoal=["true","1","yes"].includes(String(row.own_goal||"").trim().toLowerCase());
+  const penalty=["true","1","yes"].includes(String(row.penalty||"").trim().toLowerCase());
+  const eventKey=[date,norm(home),norm(away),norm(team),norm(scorer),minute,String(penalty),String(ownGoal)].join("|");
+  if(events.has(eventKey)){duplicates++;continue;}events.add(eventKey);
+  goalEvents.push({id:id("international-goal-event",eventKey),date,year:Number(date.slice(0,4)),home,away,team,scorer,minute,penalty,ownGoal,eligibleForScorerTotals:!ownGoal,source:SOURCES.internationalResults});
+  if(ownGoal){ownGoals++;continue;}
+  accepted++;
   let player=aliases.get(norm(scorer));
   if(!player){
    player={id:id("player",scorer),name:scorer,aliases:[],nationalities:[],birthYears:[],positions:[],source:SOURCES.internationalResults.repo,sourceCommit:SOURCES.internationalResults.commit,licence:"CC0-1.0"};
@@ -42,38 +46,14 @@ async function parseInternationalGoals(players){
   }
   const entry=aggregates.get(player.id)||{id:player.id,name:player.name,goals:0,penaltyGoals:0,nonPenaltyGoals:0,teams:[],years:[],matches:[],source:SOURCES.internationalResults.repo,sourceCommit:SOURCES.internationalResults.commit,licence:"CC0-1.0",scope:"Recorded goals in men's senior full internationals, 1872–2024; source coverage is not guaranteed complete."};
   entry.goals++;
-  if(["true","1","yes"].includes(String(row.penalty||"").trim().toLowerCase()))entry.penaltyGoals++;else entry.nonPenaltyGoals++;
+  if(penalty)entry.penaltyGoals++;else entry.nonPenaltyGoals++;
   const year=Number(date.slice(0,4));if(!entry.years.includes(year))entry.years.push(year);
   if(!entry.teams.some(x=>norm(x)===norm(team)))entry.teams.push(team);
   const match=[date,home,away].join(" · ");if(!entry.matches.includes(match))entry.matches.push(match);
   aggregates.set(player.id,entry);
  }
  const scorers=[...aggregates.values()].sort((a,b)=>b.goals-a.goals||a.name.localeCompare(b.name));
- return {scorers,meta:{acceptedGoalEvents:accepted,duplicateGoalRows:duplicates,ownGoalsExcluded:ownGoals,uniqueScorers:scorers.length,eligibleScorers:scorers.filter(x=>x.goals>=2).length}};
-}
-function makeInternationalGoalPacks(scorers){
- const eligible=scorers.filter(player=>player.goals>=2),lowball=[],ladder=[],football501=[];
- const pairSeen=new Set(),ladderSeen=new Set(),checkoutSeen=new Set();
- if(eligible.length<500)return{lowball,ladder,football501};
- for(let seed=1;seed<20000&&lowball.length<750;seed++){
-  const draw=seededShuffle(eligible,seed*7919+23),a=draw[0],b=draw[1];
-  if(!a||!b||a.id===b.id||a.goals===b.goals)continue;
-  const signature=[a.id,b.id].sort().join("|");if(pairSeen.has(signature))continue;pairSeen.add(signature);
-  lowball.push({id:id("lowball",signature),players:[a,b].map(p=>({id:p.id,name:p.name,value:p.goals})),metric:"recorded senior international goals",source:SOURCES.internationalResults});
- }
- for(let seed=1;seed<20000&&ladder.length<750;seed++){
-  const draw=seededShuffle(eligible,seed*3571+61).slice(0,5);
-  if(draw.length!==5||new Set(draw.map(p=>p.id)).size!==5||new Set(draw.map(p=>p.goals)).size!==5)continue;
-  const signature=draw.map(p=>p.id).sort().join("|");if(ladderSeen.has(signature))continue;ladderSeen.add(signature);
-  ladder.push({id:id("ladder",signature),players:draw.map(p=>({id:p.id,name:p.name,value:p.goals})),metric:"recorded senior international goals",source:SOURCES.internationalResults});
- }
- for(let seed=1;seed<20000&&football501.length<750;seed++){
-  const draw=seededShuffle(eligible,seed*2377+83).slice(0,12);
-  if(draw.length!==12||new Set(draw.map(p=>p.id)).size!==12)continue;
-  const signature=draw.map(p=>p.id).sort().join("|");if(checkoutSeen.has(signature))continue;checkoutSeen.add(signature);
-  football501.push({id:id("football-501",signature),players:draw.map(p=>({id:p.id,name:p.name,value:p.goals,label:"RECORDED SENIOR INTERNATIONAL GOALS"})),metric:"recorded senior international goals",source:SOURCES.internationalResults});
- }
- return{lowball,ladder,football501};
+ return {scorers,events:goalEvents,meta:{acceptedGoalEvents:accepted,uniqueGoalEvents:goalEvents.length,duplicateGoalRows:duplicates,ownGoalsExcluded:ownGoals,uniqueScorers:scorers.length,eligibleScorers:scorers.filter(x=>x.goals>=2).length}};
 }
 function buildInternationalQuiz(matches){
  const scorelines=[...new Set(matches.map(m=>m.homeScore+"-"+m.awayScore))];
@@ -369,6 +349,10 @@ const connectionPlayers=players.filter(player=>connectionIds.has(player.id));
 const gridPlayers=players.filter(player=>gridIds.has(player.id));
 const positionPlayerRows=positionPlayers.map(p=>({id:p.id,name:p.name,aliases:p.aliases||[],positions:p.positions,nationalities:p.nationalities,birthYears:p.birthYears,worldCupYears:p.worldCupYears||[],internationalGoalsRecorded:p.internationalGoalsRecorded??0,worldCupStarts:p.worldCupStarts??0,source:p.source}));
 const shards={
+ core:{...common,players,clubs},
+ matches:{...common,matches:internationalMatches},
+ "goal-events":{...common,events:internationalGoals.events,scorers:internationalGoals.scorers},
+ "world-cup":{...common,lineups,questions:validQuiz,playerCards:[...cards.values()]},
  footle:{...common,answers:uniqueFootleAnswers},
  connections:{...common,players:connectionPlayers,packs:playerConnections,clubCountryPacks:clubConnections},
  strands:{...common,packs:strands},
