@@ -890,17 +890,16 @@ function RevealPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const [reveal,setReveal]=useState(0);const [guess,setGuess]=useState("");const [tries,setTries]=useState(0);const [end,setEnd]=useState(false);const [won,setWon]=useState(false);const [guessFeedback,setGuessFeedback]=useState("");
  const done=account.daily[utcDay()]?.["the-reveal"]!==undefined;
  const seed=mode==="daily"?"REVEAL:"+utcDay():"REVEAL:PRACTICE:"+practiceSeed;
- const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,4200);
- const pool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer).filter(p=>p.nationality!=="Unlisted"&&p.clubs.length>=2),[archivePlayers]);
- const target=pool.length?pool[hashSeed(seed+":target")%pool.length]:null;
+ const {playerCards,loading,error,retry}=useFootballKnowledge();
+ const target=playerCards.length?playerCards[hashSeed(seed+":target")%playerCards.length]:null;
+ const years=target?[...target.worldCups].sort((a,b)=>a-b):[];
  const clues=target?[
-   {label:"Nationality",value:target.nationality},
-   {label:"Position",value:target.position||"Position not recorded"},
-   {label:"Career path",value:target.clubs.join(" → ")},
-   {label:"Career record",value:target.lastYear!==null?target.firstYear+"–"+target.lastYear:"Career dates incomplete"},
-   {label:"Recorded appearances",value:target.careerApps.toLocaleString("en-GB")},
-   {label:"Recorded goals",value:target.careerGoals.toLocaleString("en-GB")}
- ].filter(c=>Boolean(c.value)): [];
+   {label:"National team",value:target.teams.join(" / ")},
+   {label:"World Cup editions",value:years.join(", ")},
+   {label:"Starting appearances",value:String(target.matchIds.length)},
+   {label:"First appearance",value:String(years[0]??"Not recorded")},
+   {label:"Most recent appearance",value:String(years.at(-1)??"Not recorded")}
+ ].filter(c=>Boolean(c.value)):[];
  const score=Math.max(0,1000-reveal*100-tries*45);
  const restart=(newMode:Mode=mode)=>{
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
@@ -909,25 +908,26 @@ function RevealPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const submit=(e:FormEvent)=>{
    e.preventDefault();if(end||!guess.trim()||!target)return;
    const next=tries+1;setTries(next);
-   if(acceptedName(guess,[target.name,target.surname,...target.aliases])){setWon(true);setEnd(true);setGuessFeedback("Correct — the player is identified.");if(mode==="daily")onDaily("the-reveal",score);}
+   const surname=target.name.trim().split(/\s+/).at(-1)??target.name;
+   if(acceptedName(guess,[target.name,surname])){setWon(true);setEnd(true);setGuessFeedback("Correct — the player is identified.");if(mode==="daily")onDaily("the-reveal",score);}
    else if(next>=8){setEnd(true);setGuessFeedback("No guesses left. The player is revealed below.");if(mode==="daily")onDaily("the-reveal",0);}
    else setGuessFeedback("Not this time. Try the surname or full name again.");
    setGuess("");
  };
  const showNext=()=>{if(reveal<clues.length-1)setReveal(v=>v+1);};
- return <Frame account={account} game="the-reveal" eyebrow="BLUR / CLUE / IDENTIFY" title="THE REVEAL." description="A mystery player from the archive. Use the career clues, reveal more information when you need it, then name the footballer." number="09" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
- {done&&mode==="daily"?<Success title="MYSTERY SOLVED." detail="Today's Reveal is complete. Archive-backed practice has a fresh target." button="PRACTICE" onAgain={()=>{setMode("practice");restart("practice");}}/>:
-  loading&&pool.length===0?<Card className="reveal-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>OPENING THE PLAYER DOSSIER</b><span>SCANNING RECORDED CAREERS AND CLUB SPELLS…</span></Card>:
-  !target?<Card className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NO COMPLETE PLAYER FILES FOUND"}</b><p>{error||"The current archive draw did not find enough complete career clues. Try another draw."}</p><button className="arc-button" onClick={()=>{retry();restart(mode);}}>RETRY ARCHIVE ↗</button></Card>:
+ return <Frame account={account} game="the-reveal" eyebrow="BLUR / CLUE / IDENTIFY" title="THE REVEAL." description="A mystery player from the World Cup archive. Use their national team and tournament appearances, reveal more clues when you need them, then name the footballer." number="09" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
+ {done&&mode==="daily"?<Success title="MYSTERY SOLVED." detail="Today's Reveal is complete. World Cup archive practice has a fresh target." button="PRACTICE" onAgain={()=>{setMode("practice");restart("practice");}}/>:
+  loading&&playerCards.length===0?<Card className="reveal-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>OPENING THE WORLD CUP DOSSIER</b><span>SCANNING VERIFIED STARTING-LINE-UP RECORDS…</span></Card>:
+  !target?<Card className="arc-feedback"><b>{error?"FOOTBALL DATABASE UNAVAILABLE":"NO WORLD CUP PLAYER CARDS FOUND"}</b><p>{error||"The CC0 World Cup player pool could not be loaded. Try again."}</p><button className="arc-button" onClick={()=>{retry();restart(mode);}}>RETRY DATABASE ↗</button></Card>:
   <Card className="reveal-game">
    <div className="arc-game-meta"><span>CLUE {Math.min(reveal+1,clues.length)} / {clues.length}</span><b>{Math.max(0,8-tries)} GUESSES · {score} PTS AVAILABLE</b></div>
-   <div className="reveal-portrait"><motion.div className={"reveal-silhouette r"+Math.min(3,reveal)} animate={{scale:[1,1.015,1]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut"}}><span>{end?target.name.split(" ").map(x=>x[0]).join("").slice(0,2):"?"}</span></motion.div><small>ARCHIVE PLAYER / PORTRAIT NOT CONNECTED</small></div>
+   <div className="reveal-portrait"><motion.div className={"reveal-silhouette r"+Math.min(3,reveal)} animate={{scale:[1,1.015,1]}} transition={{duration:3,repeat:Infinity,ease:"easeInOut"}}><span>{end?target.name.split(" ").map(x=>x[0]).join("").slice(0,2):"?"}</span></motion.div><small>WORLD CUP ARCHIVE / PORTRAIT NOT CONNECTED</small></div>
    <div className="reveal-clues">{clues.slice(0,reveal+1).map((c,i)=><motion.p key={c.label} initial={{opacity:0,x:-8}} animate={{opacity:1,x:0}}><span>0{i+1}</span><b>{c.label}:</b> {c.value}</motion.p>)}</div>
    <div className="reveal-actions"><button className="arc-quiet" onClick={showNext} disabled={reveal>=clues.length-1||end}>REVEAL NEXT CLUE −100 PTS</button><span>{clues.length-reveal-1} CLUES HIDDEN</span></div>
    <form className="arc-guess-form" onSubmit={submit}><input value={guess} onChange={e=>setGuess(e.target.value)} placeholder="Full name or surname…" disabled={end}/><button className="arc-button" disabled={!guess.trim()||end}>LOCK IN ↗</button></form>
    {guessFeedback&&!end&&<p className="reveal-guess-feedback">{guessFeedback}</p>}
-   {end&&<div className="arc-feedback"><b>{won?"GOT THEM.": "THE PLAYER WAS "+target.name}</b><p>{won?"You identified the archive player.":"The target's recorded career was "+target.clubs.join(" → ")+ "."}</p><button className="arc-button" onClick={()=>restart(mode)}>NEXT PLAYER ↗</button></div>}
-   <p className="arc-muted">Career totals and club spells reflect available archive records; they are not guaranteed complete for every player.</p>
+   {end&&<div className="arc-feedback"><b>{won?"GOT THEM.": "THE PLAYER WAS "+target.name}</b><p>{won?"You identified the World Cup player.":"The player represented "+target.teams.join(" / ")+" in "+years.join(", ")+ "."}</p><button className="arc-button" onClick={()=>restart(mode)}>NEXT PLAYER ↗</button></div>}
+   <p className="arc-muted">Clues come from recorded FIFA World Cup starting line-ups, not a complete club career or appearance record.</p>
   </Card>}
  </Frame>;
 }
