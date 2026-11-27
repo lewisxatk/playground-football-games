@@ -88,3 +88,50 @@
 @media(prefers-reduced-motion:reduce){
   .pg-route-stage,.arc-home-hero,.arc-home-hero:after,.arc-home-hero>div:first-child,.arc-home-graphic,.arc-home-graphic:after,.arc-graphic-pitch:after,.arc-game-tile:before,.arc-page-heading .arc-eyebrow span,.arc-feedback,.arc-result,.arc-result-tick,.arc-feedback:after,.arc-result:after,.arc-feedback,.arc-card,.ch-feedback,.ch-results-panel,.ch-complete-panel,.ch-revealed-card,.ch-owned-card,.grid-cell.filled{animation:none!important;transition:none!important;transform:none!important}
 }
+
+
+/* Each game keeps the PLAYGROUND paper/ink system but gets its own accent mood. */
+.arc-lowball{--ag:#d7f36a;--ao:#e85d43}
+.arc-the-climb{--ag:#ff986e;--ao:#f05b3d}
+.arc-draft-xi{--ag:#9ed6f0;--ao:#348ab5}
+.arc-career-file{--ag:#e8b6cd;--ao:#b55b84}
+.arc-footle{--ag:#c4ed73;--ao:#81a83b}
+.arc-connections{--ag:#cbbbf0;--ao:#8063bf}
+.arc-football-grid{--ag:#9ccce9;--ao:#397ea9}
+.arc-ladder{--ag:#ffc184;--ao:#d17a37}
+.arc-the-reveal{--ag:#f2b8c7;--ao:#d25b7d}
+.arc-football-501{--ag:#c6e86c;--ao:#719b2f}
+.arc-link-up{--ag:#c9b8eb;--ao:#8066b2}
+.arc-missing-xi{--ag:#9ccde5;--ao:#477fa1}
+.arc-strands{--ag:#f0bd7c;--ao:#d17b35}
+.arc-scout-signal{--ag:#d4c4f0;--ao:#8d6fc0}
+.arc-tournament-nation{--ag:#a9d8e8;--ao:#3d8ba9}
+.arc-timed-quiz{--ag:#ffbe7e;--ao:#da7138}
+
+/* Game tiles use different silhouettes, so the line-up reads as 17 games, not 17 copies. */
+.pg-game-lowball .arc-tile-art{border-radius:50%;background:#fff5d9}
+.pg-game-the-climb .arc-tile-art{border-radius:8px 8px 24px 24px;transform:rotate(-5deg)}
+.pg-game-draft-xi .arc-tile-art{border-radius:10px 10px 24px 24px;clip-path:polygon(0 0,100% 0,100% 82%,50% 100%,0 82%)}
+.pg-game-career-file .arc-tile-art{border-radius:4px;transform:rotate(-4deg)}
+.pg-game-footle .arc-tile-art{border-radius:8px;box-shadow:4px 5px 0 #0002, inset 0 0 0 5px #e5efcf}
+.pg-game-connections .arc-tile-art{border-radius:16px;transform:rotate(45deg) scale(.82)}
+.pg-game-connections .arc-tile-art i{transform:rotate(-45deg)}
+.pg-game-football-grid .arc-tile-art{border-radius:5px;background-color:#fff;background-image:linear-gradient(#141b191c 1px,transparent 1px),linear-gradient(90deg,#141b191c 1px,transparent 1px);background-size:17px 17px}
+.pg-game-ladder .arc-tile-art{border-radius:6px;clip-path:polygon(0 0,100% 0,100% 82%,50% 100%,0 82%)}
+.pg-game-the-reveal .arc-tile-art{border-radius:50%;background:radial-gradient(circle,#fff 0 36%,#f0d5de 37% 100%)}
+.pg-game-football-501 .arc-tile-art{border-radius:50%;background:#fff;border-width:4px}
+.pg-game-link-up .arc-tile-art{border-radius:50% 50% 7px 7px}
+.pg-game-missing-xi .arc-tile-art{border-radius:8px;background:linear-gradient(90deg,#f5f3e8 0 46%,#a9cfe2 47% 53%,#f5f3e8 54%)}
+.pg-game-strands .arc-tile-art{border-radius:50% 8px 50% 8px;transform:rotate(-12deg)}
+.pg-game-scout-signal .arc-tile-art{border-radius:14px;clip-path:polygon(50% 0,96% 28%,82% 85%,50% 100%,18% 85%,4% 28%)}
+.pg-game-tournament-nation .arc-tile-art{border-radius:50%;background:linear-gradient(135deg,#fff 0 50%,#dbeef4 51% 100%)}
+.pg-game-timed-quiz .arc-tile-art{border-radius:50%;background:conic-gradient(#fff 0 75%,#ff815f 75% 100%)}
+.pg-game-cult-hero .arc-tile-art{border-radius:5px;background:linear-gradient(135deg,#fdfbf3,#c5c9bc);box-shadow:4px 5px 0 #0002,inset 0 0 0 4px #e1e2d7}
+.pg-game-cult-hero .arc-tile-art i{font-size:29px;letter-spacing:-.08em}
+
+.arc-shell .arc-feedback,.arc-shell .arc-result{will-change:transform,opacity}
+.arc-shell .arc-game-meta b,.arc-shell .arc-result strong,.arc-shell .arc-feedback strong{font-variant-numeric:tabular-nums}
+@media(max-width:620px){
+  .pg-game-connections .arc-tile-art{transform:rotate(45deg) scale(.75)}
+  .pg-game-the-climb .arc-tile-art,.pg-game-career-file .arc-tile-art,.pg-game-strands .arc-tile-art{transform:none}
+}
