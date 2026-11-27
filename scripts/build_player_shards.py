@@ -160,11 +160,11 @@ def build_rows(manifest: dict[str, Any], files: dict[str, Any]) -> list[dict[str
     # aggregation, one execution thread, and bounded fetch batches.
     conn.execute("SET threads = 1")
     conn.execute("SET preserve_insertion_order = false")
-    conn.execute("SET memory_limit = '5GB'")
+    conn.execute("SET memory_limit = '3GB'")
     spill_dir = Path(tempfile.gettempdir()) / "playground-duckdb-spill"
     spill_dir.mkdir(parents=True, exist_ok=True)
     conn.execute(f"SET temp_directory = {sql_path(spill_dir)}")
-    conn.execute("SET max_temp_directory_size = '25GB'")
+    conn.execute("SET max_temp_directory_size = '10GB'")
     conn.execute(f"CREATE VIEW career AS SELECT * FROM read_parquet({sql_path(files['career'])})")
     conn.execute(f"CREATE VIEW stat_club AS SELECT * FROM read_parquet({sql_path(files['stat_club'])})")
     conn.execute(f"CREATE VIEW player_profile AS SELECT * FROM read_parquet({sql_path(files['player_profile'])})")
@@ -416,7 +416,6 @@ def main() -> None:
     output = Path(args.output)
     shutil.rmtree(output, ignore_errors=True)
     output.mkdir(parents=True, exist_ok=True)
-    shards: list[dict[str, Any]] = []
     shards: list[dict[str, Any]] = []
     for shard_number, offset in enumerate(range(0, len(rows), args.shard_size)):
         chunk = rows[offset : offset + args.shard_size]
