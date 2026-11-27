@@ -498,13 +498,6 @@ function FootlePage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
  const seed=mode==="daily"?"FOOTLE:"+utcDay():"FOOTLE:PRACTICE:"+practiceSeed;
  const {data:footleData,loading,error}=useFootballKnowledge("footle");
  const bank=footleData?.answers??[];
- /* legacy name parsing is intentionally replaced by the precomputed unique answer shard */
- const legacyBank=useMemo(()=>{const names:string[]=[];const surnames=names.map(value=>{
-     const parts=value.trim().split(/\s+/).filter(Boolean);
-     return (parts.at(-1)??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,"");
-   }).filter(name=>name.length===5);
-   return [...new Set([...surnames,...WORDS])].sort((a,b)=>a.localeCompare(b));
- },[cc0Players]);
  const target=bank.length?bank[hashSeed(seed+":answer")%bank.length]:WORDS[0];
  const win=guesses.at(-1)===target;
  const submitWord=()=>{
