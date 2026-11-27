@@ -122,3 +122,18 @@ These sources are suitable foundations, not an automatic guarantee of complete o
 ## Bottom line
 
 The current theme is in the right direction and the curated 100 questions are a useful editorial starter batch. The main blocker is that the largest player-data source is mixed CC BY-SA/CC0 and its performance fields are not audited; the generator also turns those imperfect fields into questions without checking whether every answer/distractor is correct. The cleanest no-fee, no-permission path is CC0 snapshots + deterministic fact extraction + original PLAYGROUND questions + game-specific validation. No outside quiz wording needs to be copied.
+
+
+## Additional source discovery — 27 November 2026
+
+The CC0 shortlist can be extended with two valuable OpenFootball repositories:
+- **OpenFootball Players** is CC0-1.0 and provides a broad country-organised player directory with name, position, date of birth, height and birthplace examples. Use it as an entity/answer pool and to expand players in Footle, Grid, Connections and profile games; do not treat it as a comprehensive career-stat database.
+- **OpenFootball Clubs** is CC0 public-domain data for club identities, aliases, founding years and stadium associations. It can drive club-history, stadium, nickname and alias questions. Club crests remain separate rights.
+
+OpenFootball's World Cup repository now advertises 2026 tournament data. That provides a path to extend PLAYGROUND's current 1982–2022 starting-XI file, but the 2026 records must be inspected and validated before they become playable.
+
+The women's international sister dataset reports approximately 11,020 match results and says major tournament results should be complete while friendlies are incomplete. Its current licence file must be directly pinned and checked before import; it remains a candidate, not yet approved.
+
+### Optional English-history dataset (not CC0)
+
+The **England Football League Data** repository reports 212,910 matches from 1888 to 26 November 2026 across England's top four tiers. It includes match results, division/tier metadata, club naming history, active periods and points deductions. However, the author's original contribution is CC BY 4.0 (requires attribution) and third-party data/logo rights are reserved. This is a high-value option for deeper EFL content if the project accepts a small data credit, but it is not part of the strict no-licence-obligation shortlist.
