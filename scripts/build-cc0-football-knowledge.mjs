@@ -507,7 +507,7 @@ function makeClubNationGridPacks(careerPlayers,englishClubNames,target=500,prefe
 
 function makeEnglishLeagueStrandsPacks(careerPlayers,englishClubNames,target=500){
  const surnames=[...new Set(careerPlayers.filter(player=>player.spells.some(spell=>englishClubNames.has(clubKey(spell.club))))
-  .map(player=>(player.name.trim().split(/\\s+/).at(-1)||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,""))
+  .map(player=>(player.name.trim().split(/\s+/).at(-1)||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,""))
   .filter(word=>word.length>=3&&word.length<=9))].sort();
  const spangram="ENGLISHLEAGUE",targetLetters=48-spangram.length,packs=[],seen=new Set();
  for(let seed=1;seed<20000&&packs.length<target;seed++){
