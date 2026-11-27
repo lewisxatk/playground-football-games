@@ -1244,7 +1244,7 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
    const path=pathRef.current;const existing=path.indexOf(cell);
    if(existing>=0){const clipped=path.slice(0,existing+1);pathRef.current=clipped;setSelected(clipped);return;}
    const last=path[path.length-1];if(last===undefined)return;
-   const r=Math.floor(last/8),c=last%8,rr=Math.floor(cell/8),cc=cell%8;
+   const r=Math.floor(last/6),c=last%6,rr=Math.floor(cell/6),cc=cell%6;
    if(Math.max(Math.abs(r-rr),Math.abs(c-cc))!==1)return;
    const next=[...path,cell];pathRef.current=next;setSelected(next);
  };
