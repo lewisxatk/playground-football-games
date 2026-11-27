@@ -157,11 +157,11 @@ export function makeCC0QuizRound(
  }
  const eligible=[...byMatch.values()];
  if(!eligible.length)return[];
- const uk=seededShuffle(eligible.filter(q=>q.region==="ENGLISH_DOMESTIC"),seed+17);
+ const englishDomestic=seededShuffle(eligible.filter(q=>q.region==="ENGLISH_DOMESTIC"),seed+17);
  const international=seededShuffle(eligible.filter(q=>q.region==="INTERNATIONAL"),seed+31);
- const ukCount=Math.max(0,Math.min(count,requestedUKCount,uk.length));
+ const ukCount=Math.max(0,Math.min(count,requestedUKCount,englishDomestic.length));
  const internationalCount=Math.min(count-ukCount,international.length);
- const selected=[...uk.slice(0,ukCount),...international.slice(0,internationalCount)];
+ const selected=[...englishDomestic.slice(0,ukCount),...international.slice(0,internationalCount)];
  const selectedIds=new Set(selected.map(q=>q.id));
  if(selected.length<count){
   const fallback=seededShuffle(eligible.filter(q=>!selectedIds.has(q.id)),seed+43);
