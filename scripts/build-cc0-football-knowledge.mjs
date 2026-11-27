@@ -26,14 +26,14 @@ async function parseInternationalResults(){
 async function parseEnglishMatches(){
  const files=(await walk(ENGLAND)).filter(path=>{
   const rel=relative(ENGLAND,path).replace(/\\/g,"/");
-  if(rel.startsWith("rsssf/")||rel.includes("/squads/")||/-full\\.txt$/i.test(rel))return false;
-  return /(?:^|\\/)(?:[1-4]-(?:premierleague|championship|league1|league2|division1|division2|division3)|eflcup|facup)\\.txt$/i.test(rel);
+  if(rel.startsWith("rsssf/")||rel.includes("/squads/")||/-full\.txt$/i.test(rel))return false;
+  return /(?:^|\/)(?:[1-4]-(?:premierleague|championship|league1|league2|division1|division2|division3)|eflcup|facup)\.txt$/i.test(rel);
  });
  const monthMap={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
  const records=new Map();
  for(const path of files){
   const rel=relative(ENGLAND,path).replace(/\\/g,"/");
-  const seasonMatch=rel.match(/(?:^|\\/)(\\d{4})-(\\d{2})\\//);
+  const seasonMatch=rel.match(/(?:^|\/)(\d{4})-(\d{2})\//);
   if(!seasonMatch)continue;
   const seasonStart=Number(seasonMatch[1]),seasonEnd=2000+Number(seasonMatch[2]);
   const filename=rel.split("/").at(-1)||"";
@@ -48,11 +48,11 @@ async function parseEnglishMatches(){
   if(!competition)continue;
   const content=await readFile(path,"utf8");
   let currentDate="";
-  const lines=content.split(/\\r?\\n/);
+  const lines=content.split(/\r?\n/);
   for(let lineIndex=0;lineIndex<lines.length;lineIndex++){
    const line=lines[lineIndex].trim();
    if(!line||line.startsWith("#")||line.startsWith("=")||line.startsWith("▪"))continue;
-   const day=line.match(/^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\\s+([A-Za-z]{3})\\s+(\\d{1,2})(?:\\s+(\\d{4}))?$/);
+   const day=line.match(/^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+([A-Za-z]{3})\s+(\d{1,2})(?:\s+(\d{4}))?$/);
    if(day){
     const month=monthMap[day[1]];
     if(!month)continue;
@@ -61,9 +61,9 @@ async function parseEnglishMatches(){
     continue;
    }
    if(!currentDate)continue;
-   const match=line.match(/^(?:\\d{1,2}:\\d{2}\\s+)?(.+?)\\s+v\\s+(.+?)\\s+(\\d+)-(\\d+)(?:\\s+\\([^)]*\\))?(?:\\s+(?:aet|pens?|penalties))?\\s*$/i);
+   const match=line.match(/^(?:\d{1,2}:\d{2}\s+)?(.+?)\s+v\s+(.+?)\s+(\d+)-(\d+)(?:\s+\([^)]*\))?(?:\s+(?:aet|pens?|penalties))?\s*$/i);
    if(!match)continue;
-   const cleanTeam=value=>value.trim().replace(/\\s+FC$/i,"");
+   const cleanTeam=value=>value.trim().replace(/\s+FC$/i,"");
    const home=cleanTeam(match[1]),away=cleanTeam(match[2]),homeScore=Number(match[3]),awayScore=Number(match[4]);
    if(!home||!away||homeScore>30||awayScore>30)continue;
    const key=[competition,seasonStart,currentDate,norm(home),norm(away)].join("|");
@@ -74,7 +74,6 @@ async function parseEnglishMatches(){
  }
  return [...records.values()].sort((a,b)=>a.date.localeCompare(b.date)||a.competition.localeCompare(b.competition)||a.home.localeCompare(b.home));
 }
-
 async function parseInternationalGoals(players){
  const rows=parseCsv(await readFile(resolve(IR,"goalscorers.csv"),"utf8"));
  const aliases=new Map();
