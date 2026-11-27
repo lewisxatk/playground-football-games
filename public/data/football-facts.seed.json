@@ -212,8 +212,8 @@
       "scope": "UEFA Champions League goals, not all UEFA club competitions",
       "validAsOf": "2026-11-27",
       "source": {
-        "name": "UEFA Champions League history",
-        "url": "https://www.uefa.com/uefachampionsleague/history/",
+        "name": "UEFA: Cristiano Ronaldo in the Champions League – records and stats",
+        "url": "https://www.uefa.com/uefachampionsleague/news/02a7-2136b8f054ea-76a61b3f9d24-1000--cristiano-ronaldo-in-the-champions-league-records-stats-wh/",
         "checkedAt": "2026-11-27"
       },
       "reviewStatus": "verified",
@@ -244,8 +244,8 @@
       "scope": "UEFA Champions League appearances",
       "validAsOf": "2026-11-27",
       "source": {
-        "name": "UEFA Champions League history",
-        "url": "https://www.uefa.com/uefachampionsleague/history/",
+        "name": "UEFA: Cristiano Ronaldo in the Champions League – records and stats",
+        "url": "https://www.uefa.com/uefachampionsleague/news/02a7-2136b8f054ea-76a61b3f9d24-1000--cristiano-ronaldo-in-the-champions-league-records-stats-wh/",
         "checkedAt": "2026-11-27"
       },
       "reviewStatus": "verified",
@@ -276,8 +276,8 @@
       "scope": "Men's EURO final tournament titles",
       "validAsOf": "2026-11-27",
       "source": {
-        "name": "UEFA EURO history",
-        "url": "https://www.uefa.com/uefaeuro/history/",
+        "name": "UEFA EURO: Most titles",
+        "url": "https://www.uefa.com/uefaeuro/history/winners/",
         "checkedAt": "2026-11-27"
       },
       "reviewStatus": "verified",
@@ -308,8 +308,8 @@
       "scope": "Men's EURO final tournament goals only; excludes qualifying",
       "validAsOf": "2026-11-27",
       "source": {
-        "name": "UEFA EURO history",
-        "url": "https://www.uefa.com/uefaeuro/history/",
+        "name": "UEFA EURO: Records and stats",
+        "url": "https://www.uefa.com/uefaeuro/history/news/0257-0e0605d428b4-25e24d26a092-1000--euro-records-and-stats/",
         "checkedAt": "2026-11-27"
       },
       "reviewStatus": "verified",
@@ -340,8 +340,8 @@
       "scope": "Men's EURO final tournament appearances only; excludes qualifying",
       "validAsOf": "2026-11-27",
       "source": {
-        "name": "UEFA EURO history",
-        "url": "https://www.uefa.com/uefaeuro/history/",
+        "name": "UEFA EURO: Records and stats",
+        "url": "https://www.uefa.com/uefaeuro/history/news/0257-0e0605d428b4-25e24d26a092-1000--euro-records-and-stats/",
         "checkedAt": "2026-11-27"
       },
       "reviewStatus": "verified",
@@ -2017,8 +2017,8 @@
       "scope": "Winner of inaugural men's EURO in 1960",
       "validAsOf": "1960-07-10",
       "source": {
-        "name": "UEFA EURO History",
-        "url": "https://www.uefa.com/uefaeuro/history/",
+        "name": "UEFA EURO 1960 season and results",
+        "url": "https://www.uefa.com/uefaeuro/history/seasons/1960/",
         "checkedAt": "2026-11-27"
       },
       "reviewStatus": "verified",
@@ -3009,8 +3009,8 @@
       "scope": "Only manager to win two men's World Cup titles",
       "validAsOf": "1938-06-19",
       "source": {
-        "name": "FIFA World Cup history and records",
-        "url": "https://www.fifa.com/en/articles/",
+        "name": "FIFA: Italy and Brazil – consecutive World Cup titles",
+        "url": "https://www.fifa.com/en/tournaments/mens/worldcup/articles/italy-brazil-consecutive-titles",
         "checkedAt": "2026-11-27"
       },
       "reviewStatus": "verified",
