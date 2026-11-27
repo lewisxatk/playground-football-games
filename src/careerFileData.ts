@@ -107,7 +107,7 @@ export async function getCandidates(league: LeagueCode): Promise<Candidate[]> {
   }));
 }
 
-export type ArchiveCareerSpell={club:string;startYear:number|null;endYear:number|null;clubLink?:string;clubQid?:string;loan?:boolean};
+export type ArchiveCareerSpell={seq?:number;years?:string;club:string;startYear:number|null;endYear:number|null;clubLink?:string;clubQid?:string;loan?:boolean;apps?:number|null;goals?:number|null;sourceTitle?:string;sourceRevision?:number|null};
 export type ArchiveGameStat={club:string;clubLink:string;clubQid:string;season:string;competitionGroup:string;apps:number|null;goals:number|null;assists:number|null};
 export type ArchiveGamePlayer = {
   id: string;
