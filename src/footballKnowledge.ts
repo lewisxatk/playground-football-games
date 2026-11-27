@@ -116,6 +116,13 @@ export function useFootballKnowledge<K extends FootballKnowledgeKey>(key:K){
  return {data,loading,error,retry:()=>setAttempt(value=>value+1)};
 }
 
+function normaliseLegacyQuizRegion(question:CC0QuizQuestion):CC0QuizQuestion{
+ if(question.region!=="UK")return question;
+ // Older shards used UK for both English domestic fixtures and UK national teams.
+ // Their pinned source URL lets us classify them accurately before the refreshed shards land.
+ const isEnglishDomestic=/github\\.com\\/openfootball\\/england\\//i.test(question.source??"");
+ return {...question,region:isEnglishDomestic?"ENGLISH_DOMESTIC":"INTERNATIONAL"};
+}
 export function useFootballQuizKnowledge(game:"the-climb"|"timed-quiz"){
  const [data,setData]=useState<{questions:CC0QuizQuestion[]}|null>(null);
  const [loading,setLoading]=useState(true);
@@ -131,7 +138,7 @@ export function useFootballQuizKnowledge(game:"the-climb"|"timed-quiz"){
    (game+"-extreme") as FootballKnowledgeKey
   ];
   Promise.all(keys.map(key=>loadFootballKnowledge(key,attempt>0) as Promise<{questions:CC0QuizQuestion[]}>))
-   .then(shards=>{if(live)setData({questions:shards.flatMap(shard=>shard.questions)})})
+   .then(shards=>{if(live)setData({questions:shards.flatMap(shard=>shard.questions).map(normaliseLegacyQuizRegion)})})
    .catch(problem=>{if(live)setError(problem instanceof Error?problem.message:"CC0 football quiz database unavailable.")})
    .finally(()=>{if(live)setLoading(false)});
   return()=>{live=false};
@@ -157,7 +164,7 @@ export function makeCC0QuizRound(
  }
  const eligible=[...byMatch.values()];
  if(!eligible.length)return[];
- const englishDomestic=seededShuffle(eligible.filter(q=>q.region==="ENGLISH_DOMESTIC"||q.region==="UK"),seed+17);
+ const englishDomestic=seededShuffle(eligible.filter(q=>q.region==="ENGLISH_DOMESTIC"),seed+17);
  const international=seededShuffle(eligible.filter(q=>q.region==="INTERNATIONAL"),seed+31);
  const englishCount=Math.max(0,Math.min(count,requestedEnglishCount,englishDomestic.length));
  const internationalCount=Math.min(count-englishCount,international.length);
