@@ -299,25 +299,57 @@ function DraftPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:n
 const WORDS=[...new Set([...playerSurnames(),"MALEN","BARRY","DIAZ"])];
 function wordleEval(guess:string,target:string){const result=Array(5).fill("absent");const letters=target.split("");for(let i=0;i<5;i++){if(guess[i]===target[i]){result[i]="correct";letters[i]="";}}for(let i=0;i<5;i++){if(result[i]==="correct")continue;const at=letters.indexOf(guess[i]);if(at>=0){result[i]="present";letters[at]="";}}return result;}
 function FootlePage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
- const [mode,setMode]=useMode();const [target,setTarget]=useState(()=>dailyFootle("daily"));const [typed,setTyped]=useState("");const [guesses,setGuesses]=useState<string[]>([]);const [end,setEnd]=useState(false);const done=account.daily[utcDay()]?.footle!==undefined;
- useEffect(()=>{setTarget(dailyFootle(mode));setTyped("");setGuesses([]);setEnd(false);},[mode]);
+ const [mode,setMode]=useMode();
+ const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
+ const [typed,setTyped]=useState("");const [guesses,setGuesses]=useState<string[]>([]);const [end,setEnd]=useState(false);
+ const done=account.daily[utcDay()]?.footle!==undefined;
+ const seed=mode==="daily"?"FOOTLE:"+utcDay():"FOOTLE:PRACTICE:"+practiceSeed;
+ const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,seed,1600);
+ const bank=useMemo(()=>{
+   const archived=archivePlayers.map(p=>{
+     const parts=p.name.trim().split(/\s+/).filter(Boolean);
+     const raw=parts.slice(-1)[0]??"";
+     return raw.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,"");
+   }).filter(name=>name.length===5);
+   return [...new Set(archived.length>=10?archived:WORDS)].sort((a,b)=>a.localeCompare(b));
+ },[archivePlayers]);
+ const target=bank.length?bank[hashSeed(seed+":answer")%bank.length]:WORDS[0];
  const win=guesses.at(-1)===target;
- const submitWord=()=>{const word=typed.toUpperCase();if(word.length!==5||!WORDS.includes(word)||end)return;const next=[...guesses,word];setGuesses(next);setTyped("");if(word===target||next.length===6){setEnd(true);if(mode==="daily")onDaily("footle",word===target?Math.max(100,700-next.length*75):0);}};
+ const submitWord=()=>{
+   const word=typed.toUpperCase();
+   if(word.length!==5||!bank.includes(word)||guesses.includes(word)||end)return;
+   const next=[...guesses,word];setGuesses(next);setTyped("");
+   if(word===target||next.length===6){setEnd(true);if(mode==="daily")onDaily("footle",word===target?Math.max(100,700-next.length*75):0);}
+ };
  const submit=(e:FormEvent)=>{e.preventDefault();submitWord();};
  const keyStatus=(letter:string)=>{
    let status="";
-   for(const guess of guesses){const index=guess.indexOf(letter);if(index<0)continue;
-     const colors=wordleEval(guess,target);
-     if([...guess].some((value,i)=>value===letter&&colors[i]==="correct"))return "correct";
-     if([...guess].some((value,i)=>value===letter&&colors[i]==="present"))status="present";
+   for(const guess of guesses){
+     if(!guess.includes(letter))continue;
+     const colours=wordleEval(guess,target);
+     if([...guess].some((value,i)=>value===letter&&colours[i]==="correct"))return "correct";
+     if([...guess].some((value,i)=>value===letter&&colours[i]==="present"))status="present";
      else if(!status)status="absent";
    }
    return status;
  };
  const keyRows=["QWERTYUIOP","ASDFGHJKL","ZXCVBNM"];
- const resetPractice=()=>{setTarget(dailyFootle("practice"));setTyped("");setGuesses([]);setEnd(false);};
- return <Frame account={account} game="footle" eyebrow="THE FIVE-LETTER FOOTBALL WORD" title="FOOTLE." description="Find the five-letter football surname in six guesses. Daily for everyone. Unlimited practice whenever." number="05" mode={mode} setMode={setMode}>
- {done&&mode==="daily"?<Success title="TODAY'S FOOTLE IS DONE." detail="One shared daily word. Infinite practice is still open." button="UNLIMITED PRACTICE" onAgain={()=>setMode("practice")}/>:<Card className="footle-game"><div className="footle-board">{Array.from({length:6},(_,r)=><div className="footle-row" key={r}>{Array.from({length:5},(_,c)=>{const word=guesses[r];const color=word?wordleEval(word,target)[c]:"";return <div key={c} className={"footle-cell "+color}>{word?.[c]??(r===guesses.length?typed[c]??"":"")}</div>;})}</div>)}</div>{end&&<div className="arc-feedback"><b>{win?"YOU GOT IT.":"THE WORD WAS "+target}</b><p>{win?"A proper bit of football knowledge.":"Have another go in unlimited practice."}</p>{mode==="practice"&&<button className="arc-button" onClick={resetPractice}>NEXT WORD ↗</button>}</div>}<form className="footle-entry" onSubmit={submit}><input value={typed} onChange={e=>setTyped(e.target.value.replace(/[^a-z]/gi,"").slice(0,5))} placeholder="TYPE A 5-LETTER NAME" maxLength={5} disabled={end}/><button className="arc-button" disabled={typed.length!==5||end}>ENTER ↵</button></form><div className="footle-keyboard" aria-label="On-screen keyboard">{keyRows.map((row,i)=><div className="footle-key-row" key={row}>{row.split("").map(letter=><button type="button" key={letter} className={keyStatus(letter)} aria-label={letter+" key"} onClick={()=>!end&&setTyped(v=>(v+letter).slice(0,5))}>{letter}</button>)}{i===2&&<><button type="button" className="wide-key" onClick={submitWord} disabled={end||typed.length!==5}>ENTER</button><button type="button" className="wide-key" aria-label="Delete last letter" onClick={()=>setTyped(v=>v.slice(0,-1))} disabled={end}>⌫</button></>}</div>)}</div><div className="footle-note">GREEN = RIGHT LETTER / RIGHT PLACE · AMBER = RIGHT LETTER / WRONG PLACE · GREY = NOT IN THE WORD</div></Card>}
+ const restart=(newMode:Mode=mode)=>{
+   if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
+   setTyped("");setGuesses([]);setEnd(false);
+ };
+ return <Frame account={account} game="footle" eyebrow="THE FIVE-LETTER FOOTBALL WORD" title="FOOTLE." description="Find the five-letter football surname in six guesses. A fresh shared daily word, plus an archive-backed pool for unlimited practice." number="05" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
+ {done&&mode==="daily"?<Success title="TODAY'S FOOTLE IS DONE." detail="One shared daily word. Infinite archive-backed practice is still open." button="UNLIMITED PRACTICE" onAgain={()=>{setMode("practice");restart("practice");}}/>:
+  loading&&archivePlayers.length===0?<Card className="footle-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>SCOUTING FIVE-LETTER NAMES</b><span>BUILDING A FRESH WORD BANK FROM THE PLAYER ARCHIVE…</span></Card>:
+  <Card className="footle-game">
+   <div className="arc-game-meta"><span>6 GUESSES / 5 LETTERS</span><b>{bank.length} VALID PLAYER SURNAMES</b></div>
+   <div className="footle-board">{Array.from({length:6},(_,r)=><div className="footle-row" key={r}>{Array.from({length:5},(_,c)=>{const word=guesses[r];const colour=word?wordleEval(word,target)[c]:"";return <div key={c} className={"footle-cell "+colour}>{word?.[c]??(r===guesses.length?typed[c]??"":"")}</div>;})}</div>)}</div>
+   {end&&<div className="arc-feedback"><b>{win?"YOU GOT IT.":"THE WORD WAS "+target}</b><p>{win?"A proper bit of football knowledge.":"Try another player surname in the archive."}</p>{mode==="practice"&&<button className="arc-button" onClick={()=>restart("practice")}>NEXT WORD ↗</button>}</div>}
+   <form className="footle-entry" onSubmit={submit}><input value={typed} onChange={e=>setTyped(e.target.value.replace(/[^a-z]/gi,"").slice(0,5))} placeholder="TYPE A 5-LETTER NAME" maxLength={5} disabled={end}/><button className="arc-button" disabled={typed.length!==5||end||!bank.includes(typed.toUpperCase())||guesses.includes(typed.toUpperCase())}>ENTER ↵</button></form>
+   <div className="footle-keyboard" aria-label="On-screen keyboard">{keyRows.map((row,i)=><div className="footle-key-row" key={row}>{row.split("").map(letter=><button type="button" key={letter} className={keyStatus(letter)} aria-label={letter+" key"} onClick={()=>!end&&setTyped(v=>(v+letter).slice(0,5))}>{letter}</button>)}{i===2&&<><button type="button" className="wide-key" onClick={submitWord} disabled={end||typed.length!==5||!bank.includes(typed.toUpperCase())}>ENTER</button><button type="button" className="wide-key" aria-label="Delete last letter" onClick={()=>setTyped(v=>v.slice(0,-1))} disabled={end}>⌫</button></>}</div>)}</div>
+   <div className="footle-note">GREEN = RIGHT LETTER / RIGHT PLACE · AMBER = RIGHT LETTER / WRONG PLACE · GREY = NOT IN THE WORD</div>
+   {error&&<p className="arc-muted">Archive fallback is active. The starter player list is being used until the larger surname pool is available.</p>}
+  </Card>}
  </Frame>;
 }
 
