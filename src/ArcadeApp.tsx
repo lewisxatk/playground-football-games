@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef, type FormEvent, type ReactNode } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, Reorder } from "motion/react";
 import {
   PLAYER_DATABASE, FOOTBALL_GROUPS, LEAGUE_GOALS, CAREER_FILES, STRANDS_PACKS,
   type Player
@@ -549,7 +549,7 @@ function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
     {board.cells.map((letter,i)=>{
       const foundWord=found.findIndex(idx=>board.paths[idx].includes(i));
       const pathIndex=selected.indexOf(i);
-      return <motion.button type="button" key={i} layout onPointerDown={e=>beginPath(i,e)} onPointerEnter={()=>extendPath(i)} onPointerUp={finishPath}
+      return <motion.button type="button" key={i} layout onPointerDown={e=>beginPath(i,e)} onPointerEnter={()=>extendPath(i)}
         className={(pathIndex>=0?"selected ":"")+(foundWord>=0?(foundWord===0?"spangram":"found"):"")}
         animate={{scale:pathIndex>=0?1.08:1,rotate:foundWord>=0?0:0}}
         transition={{type:"spring",stiffness:430,damping:26}}
