@@ -33,11 +33,13 @@ const regionOf = player => {
   // UK country metadata does not always distinguish England, Scotland, Wales
   // and Northern Ireland. Only identify those records as English when their
   // league metadata identifies an English competition.
-  if (country.includes("england") || englishLeague) return "ENGLISH";
+  if (country.includes("england")) return "ENGLISH";
   if (country.includes("unitedkingdom") || country.includes("greatbritain") || country === "uk" || country === "gb") {
     return englishLeague ? "ENGLISH" : "INTERNATIONAL";
   }
-  if (country || league) return "INTERNATIONAL";
+  if (country) return "INTERNATIONAL";
+  if (league.startsWith("eng") || league.includes("englishfootball")) return "ENGLISH";
+  if (league) return "INTERNATIONAL";
   return null;
 };
 const positionLabel = raw => {
