@@ -670,7 +670,7 @@ function ConnectionsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
    <div className="arc-game-meta"><span>GROUPS FOUND {found.length}/4</span><b>MISTAKES {mistakes}/4</b></div>
    <div className="grid-difficulty">{(["EASY","STANDARD","HARD","EXTREME"] as ConnectionsDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{difficultyLabel(level)}</button>)}</div>
    {loading&&groups.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>BUILDING CONNECTIONS</b><span>Finding four distinct football groups in the archive.</span></div>:
-    groups.length!==4?<div className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NOT ENOUGH MATCHING PLAYERS"}</b><p>{error||"The current data draw doesn't contain four groups at this difficulty. Try another level or draw again."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY DATABASE ↗</button></div>:
+    groups.length!==4?<div className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NOT ENOUGH MATCHING PLAYERS"}</b><p>{error||"The current data draw doesn't contain four groups at this difficulty. Try another level or draw again."}</p><button className="arc-button" onClick={()=>{setGridReload(v=>v+1);reset(mode,difficulty);}}>RETRY DATABASE ↗</button></div>:
     <>
      <div className="connections-found">{found.map(i=><motion.div layout key={i} className={groups[i].color}><small>{groups[i].name}</small><b>{groups[i].members.map(p=>p.name).join(" · ")}</b></motion.div>)}</div>
      <div className="connections-grid">{tilePlayers.filter(p=>!found.some(i=>groups[i].members.some(g=>g.archiveId===p.archiveId))).map(p=><motion.button layout key={p.archiveId} onClick={()=>setSelected(v=>v.includes(p.archiveId)?v.filter(x=>x!==p.archiveId):v.length<4?[...v,p.archiveId]:v)} className={selected.includes(p.archiveId)?"selected":""} whileTap={{scale:.96}}>{p.name}</motion.button>)}</div>
@@ -763,19 +763,21 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
  const [guess,setGuess]=useState("");
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
  const [gridNotice,setGridNotice]=useState("");
+ const [archiveGridPlayers,setArchiveGridPlayers]=useState<GamePlayer[]>([]);
+ const [archiveGridLoading,setArchiveGridLoading]=useState(true);
+ const [archiveGridError,setArchiveGridError]=useState("");
+ const [gridReload,setGridReload]=useState(0);
  const done=account.daily[utcDay()]?.["football-grid"]!==undefined;
  const seed=mode==="daily"?hashSeed("GRID:"+utcDay()+":"+difficulty):hashSeed("GRID:practice:"+practiceSeed+":"+difficulty);
- const {data:gridData,loading,error,retry}=useFootballKnowledge("football-grid");
- const cc0Players=gridData?.players??[];
- const gridPacks=gridData?.packs??[];
- const playerPool=useMemo(()=>cc0Players.map(cc0PlayerToGamePlayer),[cc0Players]);
- const puzzle=useMemo(()=>{
-   if(!gridPacks.length)return null;
-   const pack=gridPacks[seed%gridPacks.length],byId=new Map(playerPool.map(player=>[player.archiveId,player]));
-   const answers=pack.answers.map(row=>row.map(cell=>cell.flatMap(id=>{const player=byId.get(id);return player?[player]:[]})));
-   if(answers.some(row=>row.some(cell=>cell.length===0))||!hasUniqueGridAssignment(answers))return null;
-   return {clubs:pack.clubs,countries:pack.countries,answers};
- },[gridPacks,playerPool,seed,difficulty]);
+ useEffect(()=>{
+  let live=true;setArchiveGridLoading(true);setArchiveGridError("");
+  getArchiveGamePlayers(4000,mode==="daily"?"PLAYGROUND-GRID:"+utcDay():"PLAYGROUND-GRID:PRACTICE:"+practiceSeed)
+   .then(rows=>{if(live){setArchiveGridPlayers(rows.map(archiveGamePlayerToGamePlayer));setArchiveGridLoading(false)}})
+   .catch(error=>{if(live){setArchiveGridError(error instanceof Error?error.message:"The career archive could not be loaded.");setArchiveGridLoading(false)}});
+  return()=>{live=false};
+ },[mode,practiceSeed,gridReload]);
+ const playerPool=archiveGridPlayers;
+ const puzzle=useMemo(()=>makeArchivePremierLeagueGrid(playerPool,seed),[playerPool,seed,difficulty]);
  
  const check=()=>{
    if(active===null||!guess.trim()||!puzzle)return;
@@ -794,14 +796,14 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
   <Card className="grid-game">
    <div className="arc-game-meta"><span>16 ANSWERS / 16 CELLS</span><b>{opened.length}/16 FILLED</b></div>
    <div className="grid-difficulty">{GRID_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{difficultyLabel(level)}</button>)}</div>
-   {loading&&playerPool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>BUILDING YOUR GRID</b><span>Finding verified Premier League player intersections by club and national flag.</span></div>:
+   {archiveGridLoading&&playerPool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>BUILDING YOUR GRID</b><span>Finding past and present Premier League player intersections by club and national flag.</span></div>:
     puzzle?<><div className="football-grid-wrap grid-four"><div className="grid-corner">ENGLISH CLUB ↓<br/>NATION →</div>{puzzle.countries.map(country=><div className="grid-col-head" key={country}><CountryFlag name={country}/><span>{country}</span></div>)}{puzzle.clubs.map((club,ri)=><><div className="grid-row-head" key={"r"+ri}><ClubBadge name={club} size={30}/><b>{club}</b></div>{puzzle.countries.map((country,ci)=>{const id=ri*4+ci,doneCell=opened.includes(id);return <button key={id} className={"grid-cell "+(doneCell?"filled":"")+(active===id?" active":"")} onClick={()=>{setActive(id);setGuess("");setGridNotice("");}}><small>{club} × {country}</small><b>{values[id]||"?"}</b></button>;})}</>)}</div>
-     <div className="grid-game-bottom"><span>{difficulty} · {puzzle.answers.flat().reduce((n,cell)=>n+cell.length,0)} ACCEPTED PLAYER/CELL MATCHES</span><button className="arc-quiet" onClick={()=>reset(mode,difficulty)}>NEW GRID ↻</button></div>
+     <div className="grid-game-bottom"><span>{difficulty} · {puzzle.answers.flat().reduce((n,cell)=>n+cell.length,0)} ACCEPTED PLAYER/CELL MATCHES</span>{mode==="practice"&&<button className="arc-quiet" onClick={()=>reset(mode,difficulty)}>NEW GRID ↻</button>}</div>
      {active!==null&&<div className="grid-answer"><small>{puzzle.clubs[Math.floor(active/4)]} × {puzzle.countries[active%4]}</small><input value={guess} onChange={e=>setGuess(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")check();}} placeholder="Full name or surname…"/><button className="arc-button" onClick={check}>CHECK ↗</button></div>}
      {gridNotice&&<div className="arc-feedback"><b>NOT A MATCH.</b><p>{gridNotice}</p></div>}
-     <p className="arc-muted">Every square is checked against a dated Premier League club spell and recorded nationality. There may be several valid answers per square, but you cannot reuse a footballer in another square.</p>
+     <p className="arc-muted">Every square is checked against a dated Premier League club spell and recorded nationality. There may be several valid answers per square, but you cannot reuse a footballer in another square. Source: OpenFootballBase-Data archive; season totals are unverified and attribution is shown in Career File.</p>
     </>:
-    <div className="arc-feedback"><b>{error?"CC0 PLAYER DATABASE UNAVAILABLE":"NO VALID 4×4 GRID IN THIS DRAW"}</b><p>{error||"This source did not produce sixteen non-empty intersections. Try another level or draw again."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY / NEW DRAW ↗</button></div>}
+    <div className="arc-feedback"><b>{archiveGridError?"CAREER ARCHIVE UNAVAILABLE":"NO VALID 4×4 GRID IN THIS DRAW"}</b><p>{archiveGridError||"This player sample did not produce sixteen unique Premier League intersections. Draw again to search a fresh sample."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY / NEW DRAW ↗</button></div>}
   </Card>}
  </Frame>;
 }
