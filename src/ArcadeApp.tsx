@@ -6,7 +6,7 @@ import {
 } from "./playerData";
 import { ClubBadge, CountryFlag } from "./ClubBadge";
 import { useArchivePlayers } from "./useArchivePlayers";
-import { useQuestionBank, makeQuestionRound, type QuizTier, type QuizQuestion, type QuestionBank } from "./questionBank";
+import { useQuestionBank, makeQuestionRound, makeDailyQuizRound, type QuizTier, type QuizQuestion, type QuestionBank } from "./questionBank";
 import { getWorldCupLineups } from "./tournamentNationData";
 import type { ArchiveGamePlayer, ArchiveCareerSpell, ArchiveGameStat } from "./careerFileData";
 import CareerFilePage from "./CareerFilePage";
@@ -53,6 +53,21 @@ const GAME_LINKS = [
 ] as const;
 type GameId = typeof GAME_LINKS[number]["id"];
 const normalise = (v:string) => v.toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
+
+const countryLabel = (value:string) => {
+  const key=normalise(value);
+  const labels:Record<string,string>={
+    eng:"England",wal:"Wales",wls:"Wales",sco:"Scotland",nir:"Northern Ireland",
+    esp:"Spain",espana:"Spain",es:"Spain",ger:"Germany",deu:"Germany",ned:"Netherlands",nld:"Netherlands",
+    ita:"Italy",fra:"France",por:"Portugal",prt:"Portugal",bra:"Brazil",arg:"Argentina",uru:"Uruguay",
+    bel:"Belgium",cro:"Croatia",srb:"Serbia",sui:"Switzerland",che:"Switzerland",civ:"Ivory Coast",
+    cotedivoire:"Ivory Coast",kor:"South Korea",jpn:"Japan",usa:"United States",mex:"Mexico",mar:"Morocco",
+    nga:"Nigeria",sen:"Senegal",gha:"Ghana",cmr:"Cameroon",irn:"Iran",aus:"Australia",can:"Canada",
+    den:"Denmark",swe:"Sweden",nor:"Norway",pol:"Poland",ukr:"Ukraine",cze:"Czechia",rou:"Romania",
+    tur:"Türkiye",gre:"Greece",sau:"Saudi Arabia",ksa:"Saudi Arabia",qat:"Qatar",chn:"China"
+  };
+  return labels[key]??value.trim();
+};
 const utcDay = () => new Date().toISOString().slice(0,10);
 const previousDay = (day:string) => { const d=new Date(day+"T00:00:00Z"); d.setUTCDate(d.getUTCDate()-1); return d.toISOString().slice(0,10); };
 const hashSeed = (s:string) => { let h=2166136261; for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);} return h>>>0; };
@@ -113,7 +128,7 @@ function archivePlayerToGamePlayer(p:ArchiveGamePlayer):GamePlayer{
   const ageBand=age===null?"Unknown":age<20?"Teens":age<30?"20s":age<40?"30s":age<50?"40s":age<60?"50s":"60s+";
   return {
     name,surname:surname.toLocaleUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Z]/g,""),
-    nationality:p.nationality||"Unlisted",position:positionCode(p.position),
+    nationality:countryLabel(p.nationality||"Unlisted"),position:positionCode(p.position),
     club:p.currentClub||"Unknown club",league:p.currentLeague||p.currentCountry||"Unlisted",
     active:p.lastYear!==null&&p.lastYear>=new Date().getUTCFullYear()-1,
     ageBand,clubs:p.clubs,aliases:[name,surname,p.fullName??""].filter(Boolean),
@@ -626,49 +641,69 @@ type GridDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
 type GridPuzzle={clubs:string[];countries:string[];answers:GamePlayer[][][];quality:number};
 const GRID_LEVELS:GridDifficulty[]=["EASY","STANDARD","HARD","EXTREME"];
 function buildGridPuzzle(players:GamePlayer[],difficulty:GridDifficulty,seed:number):GridPuzzle|null{
- const clubCounts=new Map<string,number>(),countryCounts=new Map<string,number>();
  const intersections=new Map<string,GamePlayer[]>();
  const clubNames=new Map<string,string>(),countryNames=new Map<string,string>();
+ const clubTotals=new Map<string,number>(),countryTotals=new Map<string,number>();
  for(const p of players){
-   const country=p.nationality;
-   if(!country||country==="Unlisted")continue;
-   const cKey=normalise(country);
-   countryCounts.set(cKey,(countryCounts.get(cKey)??0)+1);countryNames.set(cKey,country);
+   const nation=countryLabel(p.nationality||"");
+   if(!nation||nation==="Unlisted")continue;
+   const country=normalise(nation);
+   countryTotals.set(country,(countryTotals.get(country)??0)+1);countryNames.set(country,nation);
    for(const club of new Set(p.clubs.filter(Boolean))){
-     const k=normalise(club);
-     clubCounts.set(k,(clubCounts.get(k)??0)+1);clubNames.set(k,club);
-     const key=k+"::"+cKey;const list=intersections.get(key)??[];
-     list.push(p);intersections.set(key,list);
+     const clubKey=normalise(club);if(!clubKey)continue;
+     clubTotals.set(clubKey,(clubTotals.get(clubKey)??0)+1);clubNames.set(clubKey,club);
+     const key=clubKey+"::"+country;
+     const rows=intersections.get(key)??[];
+     if(!rows.some(row=>row.archiveId===p.archiveId))rows.push(p);
+     intersections.set(key,rows);
    }
  }
- const minClub=[12,7,4,2][GRID_LEVELS.indexOf(difficulty)];
- const minCountry=[14,8,4,2][GRID_LEVELS.indexOf(difficulty)];
- const clubs=Array.from(clubCounts.entries()).filter(([,n])=>n>=minClub).map(([key])=>key);
- const countries=Array.from(countryCounts.entries()).filter(([,n])=>n>=minCountry).map(([key])=>key);
- if(clubs.length<4||countries.length<4)return null;
- let best:GridPuzzle|null=null;
- for(let attempt=0;attempt<3500;attempt++){
-   const chosenClubKeys=shuffle(clubs,seed+attempt*17).slice(0,4);
-   const chosenCountryKeys=shuffle(countries,seed+attempt*31+11).slice(0,4);
-   const answers=chosenClubKeys.map(club=>chosenCountryKeys.map(country=>intersections.get(club+"::"+country)??[]));
-   if(answers.some(row=>row.some(cell=>cell.length===0)))continue;
-   const minimum=Math.min(...answers.flat().map(cell=>cell.length));
-   const maximum=Math.max(...answers.flat().map(cell=>cell.length));
-   const rarity=(chosenClubKeys.reduce((n,c)=>n+(clubCounts.get(c)??0),0)+chosenCountryKeys.reduce((n,c)=>n+(countryCounts.get(c)??0),0));
-   const quality=difficulty==="EASY"?minimum*100-maximum+rarity/1000:
-     difficulty==="STANDARD"?minimum*50-maximum+rarity/1000:
-     difficulty==="HARD"?-maximum+minimum*10-rarity/1000:
-     -minimum*5-maximum-rarity/1000;
-   if(!best||quality>best.quality)best={
-     clubs:chosenClubKeys.map(key=>clubNames.get(key)??key),
-     countries:chosenCountryKeys.map(key=>countryNames.get(key)??key),
-     answers,quality
-   };
-   if(difficulty==="EASY"&&minimum>=5)break;
-   if(difficulty==="STANDARD"&&minimum>=3)break;
-   if(difficulty==="HARD"&&minimum===1&&maximum<=5)break;
-   if(difficulty==="EXTREME"&&minimum===1&&maximum<=3)break;
+ if(players.length<40)return null;
+ const tierIndex=GRID_LEVELS.indexOf(difficulty);
+ const minClub=[12,7,4,2][tierIndex],minCountry=[14,8,4,2][tierIndex];
+ const byCountry=new Map<string,Set<string>>();
+ for(const [key,rows] of intersections){
+   if(!rows.length)continue;
+   const [club,country]=key.split("::");
+   const set=byCountry.get(country)??new Set<string>();set.add(club);byCountry.set(country,set);
  }
+ const countries=Array.from(byCountry.keys())
+   .filter(country=>(countryTotals.get(country)??0)>=minCountry)
+   .sort((a,b)=>(byCountry.get(b)?.size??0)-(byCountry.get(a)?.size??0));
+ const candidateCountries=(countries.length>=4?countries:Array.from(byCountry.keys())
+   .sort((a,b)=>(byCountry.get(b)?.size??0)-(byCountry.get(a)?.size??0))).slice(0,28);
+ if(candidateCountries.length<4)return null;
+ let best:GridPuzzle|null=null,bestQuality=-Infinity,attempt=0;
+ const makeCandidate=(nationKeys:string[],commonClubs:string[])=>{
+   const ranked=commonClubs.filter(club=>(clubTotals.get(club)??0)>=minClub || difficulty==="HARD" || difficulty==="EXTREME");
+   if(ranked.length<4)return;
+   const sample=shuffle(ranked,seed+attempt*19).slice(0,Math.min(12,ranked.length));
+   for(let a=0;a<sample.length-3;a++)for(let b=a+1;b<sample.length-2;b++)
+    for(let c=b+1;c<sample.length-1;c++)for(let d=c+1;d<sample.length;d++){
+     const chosen=[sample[a],sample[b],sample[c],sample[d]];
+     const answers=chosen.map(club=>nationKeys.map(country=>intersections.get(club+"::"+country)??[]));
+     const counts=answers.flat().map(cell=>cell.length);
+     if(counts.some(n=>n===0))continue;
+     const minimum=Math.min(...counts),maximum=Math.max(...counts),sum=counts.reduce((x,y)=>x+y,0);
+     const quality=difficulty==="EASY"?minimum*1000-maximum*8+sum/100:
+       difficulty==="STANDARD"?minimum*350-maximum*4+sum/500:
+       difficulty==="HARD"?-maximum*20+minimum*100-sum/100:
+       -maximum*100-sum;
+     if(quality>bestQuality){
+       bestQuality=quality;
+       best={clubs:chosen.map(key=>clubNames.get(key)??key),
+         countries:nationKeys.map(key=>countryNames.get(key)??key),answers,quality};
+     }
+    }
+ };
+ for(let a=0;a<candidateCountries.length-3;a++)for(let b=a+1;b<candidateCountries.length-2;b++)
+  for(let c=b+1;c<candidateCountries.length-1;c++)for(let d=c+1;d<candidateCountries.length;d++){
+   attempt++;
+   const nations=[candidateCountries[a],candidateCountries[b],candidateCountries[c],candidateCountries[d]];
+   const common=Array.from(byCountry.get(nations[0])??[])
+     .filter(club=>nations.every(country=>intersections.has(club+"::"+country)));
+   if(common.length>=4)makeCandidate(nations,common);
+  }
  return best;
 }
 function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
