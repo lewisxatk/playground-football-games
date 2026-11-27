@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef, type FormEvent, type ReactNode } from "react";
-import { motion, AnimatePresence, Reorder, MotionConfig } from "motion/react";
+import { motion, AnimatePresence, Reorder, MotionConfig, animate, useMotionValue, useTransform } from "motion/react";
 import {
   PLAYER_DATABASE, LEAGUE_GOALS, STRANDS_PACKS,
   type Player
@@ -194,6 +194,15 @@ function Success({title,detail,button,onAgain}:{title:string;detail:string;butto
   return <motion.div className="arc-result" initial={{opacity:0,y:16}} animate={{opacity:1,y:0}}><span className="arc-result-tick">✓</span><small>CHALLENGE COMPLETE</small><h2>{title}</h2><p>{detail}</p><button className="arc-button" onClick={onAgain}>{button} ↻</button></motion.div>;
 }
 function Card({children,className=""}:{children:React.ReactNode;className?:string}){return <section className={"arc-card "+className}>{children}</section>;}
+function ScoreTicker({value,suffix=""}:{value:number;suffix?:string}){
+  const count=useMotionValue(0);
+  const display=useTransform(count,current=>Math.round(current).toLocaleString("en-GB")+suffix);
+  useEffect(()=>{
+    const controls=animate(count,value,{duration:.5,ease:"easeOut"});
+    return ()=>controls.stop();
+  },[count,value]);
+  return <motion.span aria-label={value.toLocaleString("en-GB")+suffix}>{display}</motion.span>;
+}
 
 function HomePage({account}:{account:Account}){
   const done=todayGames(account);
@@ -201,7 +210,7 @@ function HomePage({account}:{account:Account}){
     <motion.section className="arc-home-hero" initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} transition={{duration:.46,ease:"easeOut"}}><div><div className="arc-eyebrow"><span/> THE FOOTBALL ARCADE / EST. 2026</div><h1>NO HALF<br/><em>TIME.</em></h1><p>Quick games, proper football knowledge and a reason to come back tomorrow.</p><div className="arc-hero-actions"><a className="arc-button" href="/footle">PLAY TODAY'S FOOTLE ↗</a><a className="arc-text-link" href="#all-games">PICK YOUR GAME ↓</a></div></div>
       <div className="arc-home-graphic"><div className="arc-graphic-label">THE PLAYGROUND / 17 GAME MODES</div><div className="arc-graphic-pitch"><i className="half"/><i className="centre"/><i className="box-one"/><i className="box-two"/><motion.span className="graphic-ball" animate={{x:[0,32,-20,0],y:[0,-15,8,0],rotate:[0,180,360]}} transition={{duration:5,repeat:Infinity,ease:"easeInOut"}}/></div><div className="arc-graphic-bottom"><span>GUESS / THINK / PLAY</span><b>↗</b><span>17 WAYS TO PLAY</span></div></div>
     </motion.section>
-    <section className="arc-daily-strip"><div><small>YOUR DAILY RECORD / UTC</small><motion.strong key={done} initial={{opacity:0,y:7}} animate={{opacity:1,y:0}}>{done} <i>/ 17</i></motion.strong><span>GAMES PLAYED TODAY</span></div><div><small>YOUR STREAK</small><motion.strong key={account.streak} initial={{opacity:0,y:7}} animate={{opacity:1,y:0}}>{account.streak} <i>days</i></motion.strong><span>BEST {account.bestStreak} DAYS</span></div><div><small>PLAYER NAME</small><strong className="nickname-stat">{account.nickname}</strong><span>LOCAL PLAYER SAVE · {todayPoints(account).toLocaleString("en-GB")} DAILY POINTS</span></div><a href="/locker-room">OPEN LOCKER ROOM ↗</a></section>
+    <section className="arc-daily-strip"><div><small>YOUR DAILY RECORD / UTC</small><motion.strong key={done} initial={{opacity:0,y:7}} animate={{opacity:1,y:0}}>{done} <i>/ 17</i></motion.strong><span>GAMES PLAYED TODAY</span></div><div><small>YOUR STREAK</small><motion.strong key={account.streak} initial={{opacity:0,y:7}} animate={{opacity:1,y:0}}>{account.streak} <i>days</i></motion.strong><span>BEST {account.bestStreak} DAYS</span></div><div><small>PLAYER NAME</small><strong className="nickname-stat">{account.nickname}</strong><span>LOCAL PLAYER SAVE · <ScoreTicker value={todayPoints(account)} suffix=" DAILY POINTS"/></span></div><a href="/locker-room">OPEN LOCKER ROOM ↗</a></section>
     <section id="all-games" className="arc-game-directory"><div className="arc-section-title"><div><span>01 / THE LINE-UP</span><h2>PICK YOUR<br/><em>GAME.</em></h2></div><p>Every game has its own page. Daily challenges reset at midnight GMT. Practice allowances vary by game.</p></div>
       <div className="arc-home-grid">{GAME_LINKS.map((game,i)=><motion.a href={"/"+game.id} key={game.id} className={"arc-game-tile "+game.tone+" pg-game-"+game.id} whileHover={{y:-5,rotate:i%2?1:-1}} whileTap={{scale:.985}}><div><small>PG / GAME {String(i+1).padStart(2,"0")}</small><span>{game.tag}</span></div><div className="arc-tile-art"><i>{["↗","Ⅲ","XI","?","A","▦","▤","↗","◉","501","↔","11","✳","◎","🏆","⏱","CH"][i]}</i></div><h3>{game.title}</h3><p>{game.sub}</p><b className="arc-tile-arrow">PLAY ↗</b></motion.a>)}</div>
     </section>
@@ -251,7 +260,7 @@ function AccountPage({account,setAccount}:{account:Account;setAccount:(a:Account
  return <div className="arc-shell arc-locker"><TopBar account={account}/><main className="arc-main"><GameHeading eyebrow="THE CLUBHOUSE / YOUR SAVE" title="LOCKER ROOM." description="Your local player card. Your nickname, daily scores and streak stay in this browser." number="PROFILE"/>
   <Card className="arc-profile-card"><div className="arc-profile-mark">PG</div><div className="arc-profile-details"><small>PLAYER CARD / LOCAL SAVE</small><h2>{account.nickname}</h2><p>PLAYER SINCE {new Date(account.createdAt).toLocaleDateString("en-GB",{month:"long",year:"numeric"})}</p></div><div className="arc-profile-stats"><div><b>{account.streak}</b><span>STREAK</span></div><div><b>{account.bestStreak}</b><span>BEST</span></div><div><b>{Object.values(account.totals).reduce((n,v)=>n+v,0)}</b><span>GAMES</span></div></div></Card>
   <Card><small className="arc-card-kicker">01 / YOUR PLAYER NAME</small><form className="arc-name-form" onSubmit={update}><input value={name} onChange={e=>setName(e.target.value)} maxLength={18} placeholder="Choose a nickname"/><button className="arc-button">SAVE NAME ↗</button></form><p className="arc-muted">This is a local save on this device and browser. It does not currently sync between phones or computers.</p></Card>
-  <Card><small className="arc-card-kicker">02 / TODAY'S SCORECARD · {utcDay()} GMT · {todayPoints(account).toLocaleString("en-GB")} TOTAL POINTS</small><div className="arc-score-list">{GAME_LINKS.map(g=><div key={g.id}><span>{g.title}</span><b>{account.daily[utcDay()]?.[g.id]!==undefined?account.daily[utcDay()][g.id]+" PTS":"NOT PLAYED"}</b></div>)}</div></Card>
+  <Card><small className="arc-card-kicker">02 / TODAY'S SCORECARD · {utcDay()} GMT · <ScoreTicker value={todayPoints(account)} suffix=" TOTAL POINTS"/></small><div className="arc-score-list">{GAME_LINKS.map(g=><div key={g.id}><span>{g.title}</span><b>{account.daily[utcDay()]?.[g.id]!==undefined?account.daily[utcDay()][g.id]+" PTS":"NOT PLAYED"}</b></div>)}</div></Card>
   <Card><small className="arc-card-kicker">03 / YOUR RECORD</small><div className="arc-record-grid">{GAME_LINKS.map(g=><div key={g.id}><span>{g.title}</span><strong>{account.totals[g.id]??0}</strong><small>COMPLETIONS</small></div>)}</div></Card>
   <Card className="arc-save-tools"><small className="arc-card-kicker">04 / BACK UP YOUR PLAYER CARD</small><p className="arc-muted">Export a small JSON backup to move your nickname, streak and game history to another phone or browser. Importing a save replaces the current local player card.</p><div className="arc-save-actions"><button className="arc-button" type="button" onClick={exportSave}>EXPORT LOCAL SAVE ↓</button><label className="arc-button arc-import-button">IMPORT SAVE ↑<input type="file" accept="application/json,.json" onChange={importSave}/></label></div>{saveMessage&&<p className="arc-save-message" role="status">{saveMessage}</p>}</Card>
   <p className="arc-muted">Daily streaks roll over at exactly 00:00 GMT (UTC), not local phone midnight. Practice rounds do not affect your streak. Clearing browser data can erase this local save; export a backup before changing devices.</p>
@@ -1113,7 +1122,7 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
   <Card className="link-game">
    {mode==="practice"&&<div className="grid-difficulty">{(["EASY","STANDARD","HARD","EXTREME"] as LinkDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{level==="STANDARD"?"MEDIUM / STANDARD":level}</button>)}</div>}
    <div className="arc-game-meta"><span>{mode==="daily"?"DAILY LINK":"PRACTICE · "+difficulty} · QUESTION {index+1}/10</span><b>{score.toLocaleString("en-GB")} PTS</b></div>
-   <div className="link-score-row"><span>QUESTION VALUE</span><b>{currentPoints.toLocaleString("en-GB")} / 1,000</b><span>{wrongCount} WRONG · {hintCount} HINTS</span></div>
+   <div className="link-score-row"><span>QUESTION VALUE</span><b><ScoreTicker value={currentPoints}/> / 1,000</b><span>{wrongCount} WRONG · {hintCount} HINTS</span></div>
    <div className="link-bridge">
     <div><small>START PLAYER</small><strong>{q.start.name}</strong><span className="link-club-evidence"><ClubBadge name={q.startClub} size={22}/>{q.startClub}</span></div>
     <i>↔</i>
@@ -1416,7 +1425,7 @@ function QuickQuizPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
    {mode==="practice"?<div className="grid-difficulty">{levels.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>restart(mode,level)}>{level==="MEDIUM"?"MEDIUM / STANDARD":level}</button>)}</div>:
     <div className="quiz-daily-mix"><span>5 EASY</span><span>5 MEDIUM</span><span>5 HARD</span><span>2 EXTREME</span></div>}
    <div className="arc-game-meta"><span>{mode==="daily"?"DAILY MIX":"10-QUESTION PRACTICE"} · {quizPoints(question.tier)} PTS FOR A CORRECT ANSWER</span><b>QUESTION {index+1} / {questions.length}</b></div>
-   <div className="quiz-scoreboard"><div><small>YOUR SCORE</small><strong>{score}</strong></div><div><small>DIFFICULTY</small><b>{question.tier==="MEDIUM"?"MEDIUM / STANDARD":question.tier}</b></div><div><small>TIME LEFT</small><strong className={seconds<=3?"urgent":""}>{typingDone?seconds:"—"}</strong></div></div>
+   <div className="quiz-scoreboard"><div><small>YOUR SCORE</small><strong><ScoreTicker value={score}/></strong></div><div><small>DIFFICULTY</small><b>{question.tier==="MEDIUM"?"MEDIUM / STANDARD":question.tier}</b></div><div><small>TIME LEFT</small><strong className={seconds<=3?"urgent":""}>{typingDone?seconds:"—"}</strong></div></div>
    <div className="quiz-question"><div className="quiz-type-cursor"/><h2>{typed}{!typingDone&&<i className="quiz-caret"/>}</h2><div className="quiz-progress"><i style={{width:(progress*100)+"%"}}/></div></div>
    {typingDone&&<motion.div className="quiz-options" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}}>{question.options.map(option=><motion.button key={option} whileTap={{scale:.985}} onClick={()=>choose(option)} disabled={locked} className={locked&&option===question.answer?"correct":locked&&option===chosen?"wrong":""}>{option}</motion.button>)}</motion.div>}
    {locked&&<motion.div className={"arc-feedback "+(chosen===question.answer?"quiz-goal":"quiz-miss")} initial={{opacity:0,y:12,scale:.98}} animate={{opacity:1,y:0,scale:1}}><b>{chosen===question.answer?"GOAL! CORRECT.":chosen?"NOT THIS TIME.":"TIME'S UP."}</b><p>{question.explanation}</p><small>{question.source}</small><button className="arc-button" onClick={next}>{index+1===questions.length?"SEE FINAL SCORE":"NEXT QUESTION ↗"}</button></motion.div>}
