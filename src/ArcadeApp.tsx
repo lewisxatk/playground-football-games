@@ -1128,51 +1128,53 @@ function MissingXIPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
 }
 
 function makeDynamicStrandsPack(players:GamePlayer[],seed:number):typeof STRANDS_PACKS[number]|null{
- const groups:{label:string;members:GamePlayer[]}[]=[];
- const addGroup=(label:string,items:GamePlayer[])=>{
+ const groups:{kind:"CLUB"|"NATION";label:string;members:GamePlayer[]}[]=[];
+ const addGroup=(kind:"CLUB"|"NATION",label:string,items:GamePlayer[])=>{
    const unique=[...new Map(items.map(p=>[p.archiveId,p])).values()];
-   if(unique.length>=10)groups.push({label,members:unique});
+   if(unique.length>=10)groups.push({kind,label,members:unique});
  };
  const byClub=new Map<string,{label:string;members:GamePlayer[]}>();
  const byNation=new Map<string,{label:string;members:GamePlayer[]}>();
  for(const p of players){
    for(const club of p.clubs){
      const key=normalise(club);if(!key)continue;
-     const group=byClub.get(key)??{label:club,members:[]};group.members.push(p);byClub.set(key,group);
+     const group=byClub.get(key)??{label:club,members:[]};
+     group.members.push(p);byClub.set(key,group);
    }
    if(p.nationality&&p.nationality!=="Unlisted"){
-     const key=normalise(p.nationality);const group=byNation.get(key)??{label:p.nationality,members:[]};
+     const label=countryLabel(p.nationality),key=normalise(label);
+     const group=byNation.get(key)??{label,members:[]};
      group.members.push(p);byNation.set(key,group);
    }
  }
- for(const group of byClub.values())addGroup("CLUB / "+group.label,group.members);
- for(const group of byNation.values())addGroup("NATIONALITY / "+group.label,group.members);
+ for(const group of byClub.values())addGroup("CLUB",group.label,group.members);
+ for(const group of byNation.values())addGroup("NATION",group.label,group.members);
  const orderedGroups=shuffle(groups,seed);
  for(let groupIndex=0;groupIndex<orderedGroups.length;groupIndex++){
    const group=orderedGroups[groupIndex];
-   const orderedMembers=shuffle(group.members,seed+groupIndex*31);
-   for(const anchor of orderedMembers){
-     const spangram=anchor.name.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,"");
-     if(spangram.length!==13&&spangram.length!==14)continue;
-     const target=48-spangram.length;
-     const anchorSurname=anchor.surname.toUpperCase();
-     const candidates=[...new Set(orderedMembers.filter(p=>p.archiveId!==anchor.archiveId)
-       .map(p=>p.surname.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,""))
-       .filter(word=>word.length>=3&&word.length<=7&&word!==anchorSurname))];
-     if(candidates.length<8)continue;
-     const dp:Map<number,string[]>[]=Array.from({length:9},()=>new Map<number,string[]>());
-     dp[0].set(0,[]);
-     for(const word of candidates){
-       for(let count=7;count>=0;count--){
-         for(const [sum,chosen] of Array.from(dp[count].entries())){
-           const next=sum+word.length;
-           if(next>target||dp[count+1].has(next))continue;
-           dp[count+1].set(next,[...chosen,word]);
-         }
+   const spangram=(group.kind==="CLUB"?group.label:group.label+" PLAYERS")
+     .normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,"");
+   if(spangram.length!==13&&spangram.length!==14)continue;
+   const target=48-spangram.length;
+   const candidates=[...new Set(shuffle(group.members,seed+groupIndex*31)
+     .map(p=>p.surname.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,""))
+     .filter(word=>word.length>=3&&word.length<=8))];
+   if(candidates.length<8)continue;
+   const dp:Map<number,string[]>[]=Array.from({length:9},()=>new Map<number,string[]>());
+   dp[0].set(0,[]);
+   for(const word of candidates){
+     for(let count=7;count>=0;count--){
+       for(const [sum,chosen] of Array.from(dp[count].entries())){
+         const next=sum+word.length;
+         if(next>target||dp[count+1].has(next))continue;
+         dp[count+1].set(next,[...chosen,word]);
        }
      }
-     const words=dp[8].get(target);
-     if(words&&new Set(words).size===8)return {spangram,words,theme:group.label+" / PLAYER CONNECTIONS"};
+   }
+   const words=dp[8].get(target);
+   if(words&&new Set(words).size===8){
+     const theme=group.kind==="CLUB"?"PLAYERS WHO PLAYED FOR "+group.label:"PLAYERS WHO REPRESENTED "+group.label;
+     return {spangram,words,theme};
    }
  }
  return null;
