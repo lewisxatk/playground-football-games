@@ -498,7 +498,7 @@ const shards={
  "the-reveal":{...common,playerCards:[...cards.values()]},
  "goal-packs":{...common,lowballPairs:internationalGoalPacks.lowball,ladderPacks:internationalGoalPacks.ladder,football501Packs:internationalGoalPacks.football501},
  "player-stats":{...common,players:positionPlayerRows},
- "career-history":{...common,meta:wikidataCareerImport.meta,players:careerPlayers,careerFileCandidates,cultHeroCandidates,linkUpPacks}
+ "career-history":{...common,meta:wikidataCareerImport.meta,players:careerPlayers,linkUpPacks}
 };
 await mkdir(OUT,{recursive:true});
 await rm(resolve(OUT,"football-knowledge.cc0.json"),{force:true});
