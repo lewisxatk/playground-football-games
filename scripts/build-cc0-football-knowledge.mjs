@@ -23,6 +23,58 @@ async function parseInternationalResults(){
  return [...map.values()].sort((a,b)=>a.date.localeCompare(b.date));
 }
 
+async function parseEnglishMatches(){
+ const files=(await walk(ENGLAND)).filter(path=>{
+  const rel=relative(ENGLAND,path).replace(/\\/g,"/");
+  if(rel.startsWith("rsssf/")||rel.includes("/squads/")||/-full\\.txt$/i.test(rel))return false;
+  return /(?:^|\\/)(?:[1-4]-(?:premierleague|championship|league1|league2|division1|division2|division3)|eflcup|facup)\\.txt$/i.test(rel);
+ });
+ const monthMap={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+ const records=new Map();
+ for(const path of files){
+  const rel=relative(ENGLAND,path).replace(/\\/g,"/");
+  const seasonMatch=rel.match(/(?:^|\\/)(\\d{4})-(\\d{2})\\//);
+  if(!seasonMatch)continue;
+  const seasonStart=Number(seasonMatch[1]),seasonEnd=2000+Number(seasonMatch[2]);
+  const filename=rel.split("/").at(-1)||"";
+  let competition="";
+  if(/premierleague/i.test(filename))competition="Premier League";
+  else if(/championship/i.test(filename))competition="Championship";
+  else if(/division1/i.test(filename))competition="First Division";
+  else if(/(?:league1|division2)/i.test(filename))competition="League One";
+  else if(/(?:league2|division3)/i.test(filename))competition="League Two";
+  else if(/eflcup/i.test(filename))competition="EFL Cup";
+  else if(/facup/i.test(filename))competition="FA Cup";
+  if(!competition)continue;
+  const content=await readFile(path,"utf8");
+  let currentDate="";
+  const lines=content.split(/\\r?\\n/);
+  for(let lineIndex=0;lineIndex<lines.length;lineIndex++){
+   const line=lines[lineIndex].trim();
+   if(!line||line.startsWith("#")||line.startsWith("=")||line.startsWith("▪"))continue;
+   const day=line.match(/^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\\s+([A-Za-z]{3})\\s+(\\d{1,2})(?:\\s+(\\d{4}))?$/);
+   if(day){
+    const month=monthMap[day[1]];
+    if(!month)continue;
+    const year=day[3]?Number(day[3]):month>=7?seasonStart:seasonEnd;
+    currentDate=year+"-"+String(month).padStart(2,"0")+"-"+String(Number(day[2])).padStart(2,"0");
+    continue;
+   }
+   if(!currentDate)continue;
+   const match=line.match(/^(?:\\d{1,2}:\\d{2}\\s+)?(.+?)\\s+v\\s+(.+?)\\s+(\\d+)-(\\d+)(?:\\s+\\([^)]*\\))?(?:\\s+(?:aet|pens?|penalties))?\\s*$/i);
+   if(!match)continue;
+   const cleanTeam=value=>value.trim().replace(/\\s+FC$/i,"");
+   const home=cleanTeam(match[1]),away=cleanTeam(match[2]),homeScore=Number(match[3]),awayScore=Number(match[4]);
+   if(!home||!away||homeScore>30||awayScore>30)continue;
+   const key=[competition,seasonStart,currentDate,norm(home),norm(away)].join("|");
+   if(records.has(key))continue;
+   const sourceRow=rel+":"+String(lineIndex+1);
+   records.set(key,{id:id("english-match",key),date:currentDate,year:Number(currentDate.slice(0,4)),home,away,homeScore,awayScore,tournament:competition+" "+seasonStart+"/"+String(seasonEnd).slice(-2),competition,season:seasonStart+"/"+String(seasonEnd).slice(-2),region:"UK",neutral:false,source:SOURCES.england,sourceFile:rel,sourceRow});
+  }
+ }
+ return [...records.values()].sort((a,b)=>a.date.localeCompare(b.date)||a.competition.localeCompare(b.competition)||a.home.localeCompare(b.home));
+}
+
 async function parseInternationalGoals(players){
  const rows=parseCsv(await readFile(resolve(IR,"goalscorers.csv"),"utf8"));
  const aliases=new Map();
@@ -89,8 +141,8 @@ function buildInternationalQuiz(matches){
   if(distractors.length!==4)return null;
   const options=[answer,...distractors].sort((a,b)=>createHash("sha256").update(match.id+a).digest("hex").localeCompare(createHash("sha256").update(match.id+b).digest("hex")));
   const tier=match.year>=2000?"EASY":match.year>=1980?"MEDIUM":match.year>=1950?"HARD":"EXTREME";
-  const region=ukTeams.has(norm(match.home))||ukTeams.has(norm(match.away))?"UK":"INTERNATIONAL";
-  return{id:id("international-question",match.id),factId:match.id,playerId:match.id,tier,region,category:match.tournament,question:"What was the full-time score when "+match.home+" played "+match.away+" on "+match.date+" in "+match.tournament+"?",answer,options,explanation:match.home+" "+answer.replace("-", "–")+" "+match.away+". Penalty shoot-outs are not included.",source:"https://github.com/martj42/international_results/blob/"+SOURCES.internationalResults.commit+"/results.csv",matchId:match.id,eventDate:match.date};
+  const region=match.region??(ukTeams.has(norm(match.home))||ukTeams.has(norm(match.away))?"UK":"INTERNATIONAL");
+  return{id:id("international-question",match.id),factId:match.id,playerId:match.id,tier,region,category:match.tournament,question:"What was the full-time score when "+match.home+" played "+match.away+" on "+match.date+" in "+match.tournament+"?",answer,options,explanation:match.home+" "+answer.replace("-", "–")+" "+match.away+". Penalty shoot-outs are not included.",source:(match.source?.url??SOURCES.internationalResults.url)+"/blob/"+(match.source?.commit??SOURCES.internationalResults.commit)+"/"+(match.sourceFile??match.source?.file??"results.csv"),matchId:match.id,eventDate:match.date};
  }).filter(Boolean);
  const uk=questions.filter(q=>q.region==="UK").sort((a,b)=>a.id.localeCompare(b.id));
  const international=questions.filter(q=>q.region==="INTERNATIONAL").sort((a,b)=>a.id.localeCompare(b.id));
@@ -311,8 +363,9 @@ const careerPlayers=wikidataCareerImport.players;
 const careerFileCandidates=careerPlayers.filter(p=>p.spells.length>=2&&new Set(p.spells.map(spell=>spell.clubQid)).size>=2);
 const cultHeroCandidates=careerPlayers.filter(p=>p.spells.length>=2&&new Set(p.spells.map(spell=>spell.clubQid)).size>=2);
 const linkUpPacks=makeWikidataLinkPacks(careerPlayers,750);
-const internationalMatches=await parseInternationalResults();
-const internationalQuiz=buildInternationalQuiz(internationalMatches);
+const [internationalMatches,englishMatches]=await Promise.all([parseInternationalResults(),parseEnglishMatches()]);
+const allMatches=[...internationalMatches,...englishMatches].sort((a,b)=>a.date.localeCompare(b.date));
+const internationalQuiz=buildInternationalQuiz(allMatches);
 const internationalGoals=await parseInternationalGoals(players);
 const internationalGoalPacks=makeInternationalGoalPacks(internationalGoals.scorers);
 const lineupData=JSON.parse(await readFile(resolve(ROOT,"public/data/worldcup-lineups.json"),"utf8"));
@@ -338,7 +391,7 @@ const clubConnections=makeConnections(clubs);
 const playerConnections=makePlayerConnections(players);
 const gridPacks=makeGridPacks(players);
 const strands=makeStrandsPacks(players);
-const report={generatedAt:TODAY,policy:"CC0-only source whitelist; Wikidata career snapshot is live-query data with retrieved timestamp",wikidataCareerImport:wikidataCareerImport.meta,counts:{players:players.length,clubs:clubs.length,wikidataCareerRows:wikidataCareerImport.meta.rawRows,wikidataCareerPlayers:careerPlayers.length,careerFileCandidates:careerFileCandidates.length,cultHeroCandidates:cultHeroCandidates.length,linkUpPacks:linkUpPacks.length,footlePlayerRecords:footle.length,footleAnswers:uniqueFootleAnswers.length,worldCupLineups:lineups.length,worldCupPlayerCards:cards.size,worldCupQuestions:validQuiz.length,internationalMatches:internationalMatches.length,internationalGoalEvents:internationalGoals.meta.uniqueGoalEvents,eligibleScoringEvents:internationalGoals.meta.acceptedGoalEvents,ownGoalsExcluded:internationalGoals.meta.ownGoalsExcluded,duplicateGoalRows:internationalGoals.meta.duplicateGoalRows,internationalGoalScorers:internationalGoals.meta.uniqueScorers,internationalScorersForGames:internationalGoals.meta.eligibleScorers,lowballPacks:internationalGoalPacks.lowball.length,ladderPacks:internationalGoalPacks.ladder.length,football501Packs:internationalGoalPacks.football501.length,climbQuestions:internationalQuiz.climb.length,timedQuizQuestions:internationalQuiz.timed.length,connectionsPacks:playerConnections.length,gridPacks:gridPacks.length,strandsPacks:strands.length,clubCountryPacks:clubConnections.length},games:{footle:{unit:"unique five-letter surname",count:uniqueFootleAnswers.length,ready:uniqueFootleAnswers.length>=500,integrated:true},"the-climb":{unit:"question",count:internationalQuiz.climb.length,ready:internationalQuiz.climb.length>=500,integrated:true},"timed-quiz":{unit:"question",count:internationalQuiz.timed.length,ready:internationalQuiz.timed.length>=500,integrated:true},connections:{unit:"puzzle-pack",count:playerConnections.length,ready:playerConnections.length>=500,integrated:true},"missing-xi":{unit:"puzzle-pack",count:lineups.length,ready:lineups.length>=500,integrated:true},"tournament-nation":{unit:"puzzle-pack",count:lineups.length,ready:lineups.length>=500,integrated:true},"the-reveal":{unit:"player-card",count:cards.size,ready:cards.size>=500,integrated:true},"link-up":{unit:"puzzle-pack",count:linkUpPacks.length,ready:linkUpPacks.length>=500,integrated:true,reason:linkUpPacks.length>=500?undefined:"Wikidata career overlap pool currently below 500 packs"}, "career-file":{unit:"player-card",count:careerFileCandidates.length,ready:careerFileCandidates.length>=500,integrated:true,reason:careerFileCandidates.length>=500?undefined:"Wikidata career pool currently below 500 eligible players"}, "cult-hero":{unit:"player-card",count:cultHeroCandidates.length,ready:cultHeroCandidates.length>=500,integrated:true,reason:cultHeroCandidates.length>=500?undefined:"Wikidata career pool currently below 500 eligible players"},strands:{unit:"puzzle-pack",count:strands.length,ready:strands.length>=500,integrated:true},"football-grid":{unit:"puzzle-pack",count:gridPacks.length,ready:gridPacks.length>=500,integrated:true,format:"position × nationality"},lowball:{unit:"challenge-pack",count:internationalGoalPacks.lowball.length,ready:internationalGoalPacks.lowball.length>=500,integrated:true,metric:"recorded senior international goals"},ladder:{unit:"challenge-pack",count:internationalGoalPacks.ladder.length,ready:internationalGoalPacks.ladder.length>=500,integrated:true,metric:"recorded senior international goals"},"football-501":{unit:"challenge-pack",count:internationalGoalPacks.football501.length,ready:internationalGoalPacks.football501.length>=500,integrated:true,metric:"recorded senior international goals"},"draft-xi":{unit:"candidate-player",count:positionPlayers.length,ready:positionPlayers.length>=500,integrated:true,metric:"position, international goals and World Cup starts; draft credits are game values"},"scout-signal":{unit:"player-card",count:positionPlayers.length,ready:positionPlayers.length>=500,integrated:true,metric:"position, nation, age band, international goals and World Cup starts"}}};
+const report={generatedAt:TODAY,policy:"CC0-only source whitelist; Wikidata career snapshot is live-query data with retrieved timestamp",wikidataCareerImport:wikidataCareerImport.meta,counts:{players:players.length,clubs:clubs.length,wikidataCareerRows:wikidataCareerImport.meta.rawRows,wikidataCareerPlayers:careerPlayers.length,careerFileCandidates:careerFileCandidates.length,cultHeroCandidates:cultHeroCandidates.length,linkUpPacks:linkUpPacks.length,footlePlayerRecords:footle.length,footleAnswers:uniqueFootleAnswers.length,worldCupLineups:lineups.length,worldCupPlayerCards:cards.size,worldCupQuestions:validQuiz.length,internationalMatches:internationalMatches.length,englishMatches:englishMatches.length,totalMatchFacts:allMatches.length,internationalGoalEvents:internationalGoals.meta.uniqueGoalEvents,eligibleScoringEvents:internationalGoals.meta.acceptedGoalEvents,ownGoalsExcluded:internationalGoals.meta.ownGoalsExcluded,duplicateGoalRows:internationalGoals.meta.duplicateGoalRows,internationalGoalScorers:internationalGoals.meta.uniqueScorers,internationalScorersForGames:internationalGoals.meta.eligibleScorers,lowballPacks:internationalGoalPacks.lowball.length,ladderPacks:internationalGoalPacks.ladder.length,football501Packs:internationalGoalPacks.football501.length,climbQuestions:internationalQuiz.climb.length,timedQuizQuestions:internationalQuiz.timed.length,connectionsPacks:playerConnections.length,gridPacks:gridPacks.length,strandsPacks:strands.length,clubCountryPacks:clubConnections.length},games:{footle:{unit:"unique five-letter surname",count:uniqueFootleAnswers.length,ready:uniqueFootleAnswers.length>=500,integrated:true},"the-climb":{unit:"question",count:internationalQuiz.climb.length,ready:internationalQuiz.climb.length>=500,integrated:true},"timed-quiz":{unit:"question",count:internationalQuiz.timed.length,ready:internationalQuiz.timed.length>=500,integrated:true},connections:{unit:"puzzle-pack",count:playerConnections.length,ready:playerConnections.length>=500,integrated:true},"missing-xi":{unit:"puzzle-pack",count:lineups.length,ready:lineups.length>=500,integrated:true},"tournament-nation":{unit:"puzzle-pack",count:lineups.length,ready:lineups.length>=500,integrated:true},"the-reveal":{unit:"player-card",count:cards.size,ready:cards.size>=500,integrated:true},"link-up":{unit:"puzzle-pack",count:linkUpPacks.length,ready:linkUpPacks.length>=500,integrated:true,reason:linkUpPacks.length>=500?undefined:"Wikidata career overlap pool currently below 500 packs"}, "career-file":{unit:"player-card",count:careerFileCandidates.length,ready:careerFileCandidates.length>=500,integrated:true,reason:careerFileCandidates.length>=500?undefined:"Wikidata career pool currently below 500 eligible players"}, "cult-hero":{unit:"player-card",count:cultHeroCandidates.length,ready:cultHeroCandidates.length>=500,integrated:true,reason:cultHeroCandidates.length>=500?undefined:"Wikidata career pool currently below 500 eligible players"},strands:{unit:"puzzle-pack",count:strands.length,ready:strands.length>=500,integrated:true},"football-grid":{unit:"puzzle-pack",count:gridPacks.length,ready:gridPacks.length>=500,integrated:true,format:"position × nationality"},lowball:{unit:"challenge-pack",count:internationalGoalPacks.lowball.length,ready:internationalGoalPacks.lowball.length>=500,integrated:true,metric:"recorded senior international goals"},ladder:{unit:"challenge-pack",count:internationalGoalPacks.ladder.length,ready:internationalGoalPacks.ladder.length>=500,integrated:true,metric:"recorded senior international goals"},"football-501":{unit:"challenge-pack",count:internationalGoalPacks.football501.length,ready:internationalGoalPacks.football501.length>=500,integrated:true,metric:"recorded senior international goals"},"draft-xi":{unit:"candidate-player",count:positionPlayers.length,ready:positionPlayers.length>=500,integrated:true,metric:"position, international goals and World Cup starts; draft credits are game values"},"scout-signal":{unit:"player-card",count:positionPlayers.length,ready:positionPlayers.length>=500,integrated:true,metric:"position, nation, age band, international goals and World Cup starts"}}};
 for(const [k,n] of [["players",players.length],["Footle answers",uniqueFootleAnswers.length],["World Cup lineups",lineups.length],["World Cup player cards",cards.size],["World Cup questions",validQuiz.length],["The Climb questions",internationalQuiz.climb.length],["Timed Quiz questions",internationalQuiz.timed.length],["International goal scorers",goalPlayers.length],["Positioned stat players",positionPlayers.length],["Connections packs",playerConnections.length],["Football Grid packs",gridPacks.length],["Strands packs",strands.length],["Lowball packs",internationalGoalPacks.lowball.length],["Ladder packs",internationalGoalPacks.ladder.length],["Football 501 packs",internationalGoalPacks.football501.length],["Career File candidates",careerFileCandidates.length],["Cult Hero candidates",cultHeroCandidates.length],["Link Up packs",linkUpPacks.length]])if(n<500)throw new Error(k+" below 500: "+n);
 const quizFactIds=[...internationalQuiz.climb,...internationalQuiz.timed].map(q=>q.factId);if(new Set(quizFactIds).size!==quizFactIds.length)throw new Error("The Climb and Timed Quiz share duplicate match facts.");
 const uniqueValues=values=>new Set(values).size===values.length;
@@ -380,7 +433,7 @@ const gridPlayers=players.filter(player=>gridIds.has(player.id));
 const positionPlayerRows=positionPlayers.map(p=>({id:p.id,name:p.name,aliases:p.aliases||[],positions:p.positions,nationalities:p.nationalities,birthYears:p.birthYears,worldCupYears:p.worldCupYears||[],internationalGoalsRecorded:p.internationalGoalsRecorded??0,worldCupStarts:p.worldCupStarts??0,source:p.source}));
 const shards={
  core:{...common,players,clubs},
- matches:{...common,matches:internationalMatches},
+ matches:{...common,matches:allMatches,internationalMatches,englishMatches},
  "goal-events":{...common,events:internationalGoals.events,scorers:internationalGoals.scorers},
  "world-cup":{...common,lineups,questions:validQuiz,playerCards:[...cards.values()]},
  footle:{...common,answers:uniqueFootleAnswers},
