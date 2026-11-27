@@ -7,7 +7,7 @@ import {
 import { ClubBadge, CountryFlag } from "./ClubBadge";
 import { useArchivePlayers } from "./useArchivePlayers";
 import { getWorldCupLineups } from "./tournamentNationData";
-import type { ArchiveGamePlayer } from "./careerFileData";
+import type { ArchiveGamePlayer, ArchiveCareerSpell } from "./careerFileData";
 import CareerFilePage from "./CareerFilePage";
 import { getCareerClubsAtYear } from "./careerFileData";
 import "./arcade.css";
@@ -65,6 +65,7 @@ function todayGames(account:Account){return Object.keys(account.daily[utcDay()]?
 
 type GamePlayer = Player & {
   archiveId:string;
+  careerSpells:ArchiveCareerSpell[];
   careerApps:number;
   careerGoals:number;
   leagueApps:number;
@@ -100,7 +101,7 @@ function archivePlayerToGamePlayer(p:ArchiveGamePlayer):GamePlayer{
     club:p.currentClub||"Unknown club",league:p.currentLeague||p.currentCountry||"Unlisted",
     active:p.lastYear!==null&&p.lastYear>=new Date().getUTCFullYear()-1,
     ageBand,clubs:p.clubs,aliases:[name,surname].filter(Boolean),
-    archiveId:p.id,careerApps:p.appearances,careerGoals:p.goals,leagueApps:p.leagueAppearances,
+    archiveId:p.id,careerSpells:p.spells??[],careerApps:p.appearances,careerGoals:p.goals,leagueApps:p.leagueAppearances,
     leagueGoals:p.leagueGoals,leagueGoalSeasons:p.leagueGoalSeasons,statSeasons:p.seasons,firstYear:p.firstYear,lastYear:p.lastYear,
     caps:p.caps,internationalGoals:p.internationalGoals,birthDate:p.birthDate,
     currentCountry:p.currentCountry,currentDivision:p.currentDivision
@@ -640,18 +641,101 @@ function FiveOhOnePage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
  </Frame>;
 }
 
-const LINK_ROUNDS=[
- {start:"Mohamed Salah",end:"Luis Suárez",answer:"Philippe Coutinho",reason:"Coutinho shared a Liverpool dressing room with Salah and Luis Suárez."},
- {start:"Lionel Messi",end:"Kylian Mbappé",answer:"Neymar Jr",reason:"Neymar played alongside Messi at Barcelona and PSG, and Mbappé at PSG."},
- {start:"Cristiano Ronaldo",end:"Wayne Rooney",answer:"Carlos Tévez",reason:"Tévez played with both at Manchester United."},
- {start:"Thierry Henry",end:"Cesc Fàbregas",answer:"Robert Pires",reason:"Pires played with Henry at Arsenal and later shared a club spell with Cesc at Arsenal."}
-];
+type LinkDifficulty="STANDARD"|"HARD"|"EXTREME";
+type GeneratedLink={start:GamePlayer;end:GamePlayer;answer:GamePlayer;startClub:string;endClub:string;options:GamePlayer[]};
+function sharedCareerSpells(a:GamePlayer,b:GamePlayer):string[]{
+ const matches:string[]=[];
+ for(const one of a.careerSpells)for(const two of b.careerSpells){
+   if(normalise(one.club)!==normalise(two.club))continue;
+   if(one.startYear===null||two.startYear===null)continue;
+   const oneEnd=one.endYear??one.startYear,twoEnd=two.endYear??two.startYear;
+   if(one.startYear<=twoEnd&&two.startYear<=oneEnd)matches.push(one.club);
+ }
+ return [...new Set(matches)];
+}
+function makeLinkQuestions(players:GamePlayer[],seed:number):GeneratedLink[]{
+ const result:GeneratedLink[]=[];
+ const pool=players.filter(p=>p.careerSpells.some(s=>s.startYear!==null));
+ const cache=new Map<string,Map<string,string[]>>();
+ const teammates=(p:GamePlayer)=>{
+   const key=p.archiveId;
+   const old=cache.get(key);if(old)return old;
+   const found=new Map<string,string[]>();
+   for(const other of pool){
+     if(other.archiveId===p.archiveId)continue;
+     const shared=sharedCareerSpells(p,other);
+     if(shared.length)found.set(other.archiveId,shared);
+   }
+   cache.set(key,found);return found;
+ };
+ const order=shuffle(pool,seed);
+ for(const target of order){
+   if(result.length>=24)break;
+   const related=teammates(target);
+   const others=Array.from(related.keys());
+   if(others.length<2)continue;
+   const pairs=shuffle(others,seed+target.archiveId.length*37);
+   for(let i=0;i<pairs.length&&result.length<24;i++){
+     for(let j=i+1;j<pairs.length&&result.length<24;j++){
+       const start=pool.find(p=>p.archiveId===pairs[i]);
+       const end=pool.find(p=>p.archiveId===pairs[j]);
+       if(!start||!end||start.archiveId===end.archiveId)continue;
+       const alternatives=pool.filter(candidate=>candidate.archiveId!==start.archiveId&&candidate.archiveId!==end.archiveId&&teammates(start).has(candidate.archiveId)&&teammates(end).has(candidate.archiveId));
+       if(alternatives.length!==1||alternatives[0].archiveId!==target.archiveId)continue;
+       const startClub=related.get(start.archiveId)?.[0]??"";
+       const endClub=related.get(end.archiveId)?.[0]??"";
+       if(!startClub||!endClub)continue;
+       const wrong=shuffle(pool.filter(p=>p.archiveId!==target.archiveId&&p.archiveId!==start.archiveId&&p.archiveId!==end.archiveId),seed+i*71+j*13).slice(0,3);
+       if(wrong.length!==3)continue;
+       result.push({start,end,answer:target,startClub,endClub,options:shuffle([target,...wrong],seed+i*101+j*11)});
+     }
+     if(result.length>=24)break;
+   }
+ }
+ return result;
+}
 function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
- const [mode,setMode]=useMode();const [idx,setIdx]=useState(()=>hashSeed("LINK"+utcDay())%LINK_ROUNDS.length);const [guess,setGuess]=useState("");const [tries,setTries]=useState(0);const [end,setEnd]=useState(false);const [won,setWon]=useState(false);const done=account.daily[utcDay()]?.["link-up"]!==undefined;const q=LINK_ROUNDS[idx];
- const submit=(e:FormEvent)=>{e.preventDefault();if(end||!guess.trim())return;const correct=acceptedName(guess,[q.answer,...q.answer.split(" ").slice(-1)]);const n=tries+1;setTries(n);setGuess("");if(correct||n>=5){setWon(correct);setEnd(true);if(mode==="daily")onDaily("link-up",correct?Math.max(100,1000-n*150):0);}};
- const reset=()=>{setIdx(mode==="daily"?hashSeed("LINK"+utcDay())%LINK_ROUNDS.length:(idx+1)%LINK_ROUNDS.length);setGuess("");setTries(0);setEnd(false);setWon(false);};
- return <Frame account={account} game="link-up" eyebrow="SHARED TEAM-MATES / PLAYER BRIDGE" title="THE LINK UP." description="One footballer played alongside both stars. Find the missing link." number="11" mode={mode} setMode={m=>{setMode(m);setIdx(m==="daily"?hashSeed("LINK"+utcDay())%LINK_ROUNDS.length:Math.floor(Math.random()*LINK_ROUNDS.length));setGuess("");setTries(0);setEnd(false);setWon(false);}}> 
- {done&&mode==="daily"?<Success title="LINK MADE." detail="Today's bridge has been solved. Practice another connection." button="PRACTICE" onAgain={()=>setMode("practice")}/>:<Card className="link-game"><div className="arc-game-meta"><span>FIND THE BRIDGE</span><b>{5-tries} GUESSES LEFT</b></div><div className="link-bridge"><div><small>START</small><strong>{q.start}</strong></div><i>↔</i><div><small>END</small><strong>{q.end}</strong></div></div><form className="arc-guess-form" onSubmit={submit}><input value={guess} onChange={e=>setGuess(e.target.value)} placeholder="Name the shared team-mate…" disabled={end}/><button className="arc-button" disabled={!guess.trim()||end}>CONNECT ↗</button></form>{end&&<div className="arc-feedback"><b>{won?"CONNECTED.":q.answer.toUpperCase()+" WAS THE LINK."}</b><p>{q.reason}</p><button className="arc-button" onClick={reset}>NEXT LINK ↗</button></div>}</Card>}
+ const [mode,setMode]=useMode();const [difficulty,setDifficulty]=useState<LinkDifficulty>("STANDARD");
+ const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
+ const [guess,setGuess]=useState("");const [tries,setTries]=useState(0);const [end,setEnd]=useState(false);const [won,setWon]=useState(false);const done=account.daily[utcDay()]?.["link-up"]!==undefined;
+ const seed=mode==="daily"?"LINK:"+utcDay():"LINK:PRACTICE:"+practiceSeed;
+ const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,seed,1600);
+ const pool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
+ const questions=useMemo(()=>pool.length>=20?makeLinkQuestions(pool,hashSeed(seed)):[],[pool,seed]);
+ const idx=questions.length?hashSeed(seed+":question")%questions.length:0;
+ const q=questions[idx];
+ const typedMode=difficulty!=="STANDARD";
+ const submit=(name:string)=>{
+   if(end||!q)return;
+   setGuess(name);
+   const correct=archiveGuess(name,[q.answer])?.archiveId===q.answer.archiveId;
+   const next=tries+1;setTries(next);
+   if(correct||next>= (difficulty==="EXTREME"?3:5)){
+     setWon(correct);setEnd(true);
+     if(mode==="daily")onDaily("link-up",correct?Math.max(100,1000-next*150):0);
+   }
+ };
+ const reset=(newMode:Mode=mode,newDifficulty:LinkDifficulty=difficulty)=>{
+   setDifficulty(newDifficulty);setGuess("");setTries(0);setEnd(false);setWon(false);
+   if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
+ };
+ return <Frame account={account} game="link-up" eyebrow="SHARED TEAM-MATES / CAREER SPELL MATCH" title="THE LINK UP." description="Two players. One missing team-mate. The answer must have a recorded club-season overlap with both endpoints." number="11" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
+ {done&&mode==="daily"?<Success title="LINK MADE." detail="Today's shared-team-mate challenge is banked. Unlimited archive draws are open in practice." button="PRACTICE" onAgain={()=>{setMode("practice");reset("practice");}}/>:
+  loading&&pool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.4,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>CONNECTING CAREERS</b><span>Finding overlapping club seasons in the archive.</span></div>:
+  !q?<Card className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NO UNIQUE PLAYER BRIDGES FOUND IN THIS DRAW"}</b><p>{error||"This archive sample did not contain enough unambiguous shared-team-mate links. Draw again or change the difficulty."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY LINK ARCHIVE ↗</button></Card>:
+  <Card className="link-game">
+   <div className="arc-game-meta"><span>{difficulty} · {typedMode?"TYPE THE ANSWER":"PICK THE MISSING LINK"}</span><b>{(difficulty==="EXTREME"?3:5)-tries} GUESSES LEFT</b></div>
+   <div className="link-bridge">
+    <div><small>START PLAYER</small><strong>{q.start.name}</strong><span className="link-club-evidence"><ClubBadge name={q.startClub} size={22}/>{q.startClub}</span></div>
+    <i>↔</i>
+    <div><small>END PLAYER</small><strong>{q.end.name}</strong><span className="link-club-evidence"><ClubBadge name={q.endClub} size={22}/>{q.endClub}</span></div>
+   </div>
+   <div className="link-evidence"><span>THE LINK MUST HAVE OVERLAPPING SPELLS AT BOTH CLUBS.</span><b>ARCHIVE WINDOW / {q.startClub} + {q.endClub}</b></div>
+   {!end?(typedMode?<form className="arc-guess-form" onSubmit={e=>{e.preventDefault();submit(guess);}}><input value={guess} onChange={e=>setGuess(e.target.value)} placeholder="Full name or surname…"/><button className="arc-button" disabled={!guess.trim()}>CONNECT ↗</button></form>:
+    <div className="missing-options">{q.options.map(p=><button key={p.archiveId} onClick={()=>submit(p.name)}>{p.name}</button>)}</div>):
+    <div className="arc-feedback"><b>{won?"BRIDGE FOUND.":"THE ARCHIVE LINK WAS "+q.answer.name.toUpperCase()+"."}</b><p>{q.answer.name} has recorded overlapping career spells with {q.start.name} at {q.startClub}, and with {q.end.name} at {q.endClub}. These are archive career-year overlaps, not minute-level appearance proof.</p><button className="arc-button" onClick={()=>reset(mode)}>NEXT LINK ↗</button></div>}
+   <p className="arc-muted">This unique-answer test is within the current archive draw. The underlying careers dataset is incomplete and unverified, so not every real-world teammate relationship will be represented.</p>
+  </Card>}
  </Frame>;
 }
 
@@ -962,7 +1046,7 @@ function ScoutSignalPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
  const archived=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer)
    .filter(p=>p.nationality!=="Unlisted"&&p.club!=="Unknown club"&&p.clubs.length>0),[archivePlayers]);
  const staticPool=useMemo(()=>PLAYER_DATABASE.map(p=>({
-   ...p,archiveId:p.name,careerApps:0,careerGoals:0,leagueApps:0,leagueGoals:0,leagueGoalSeasons:0,
+   ...p,archiveId:p.name,careerSpells:[],careerApps:0,careerGoals:0,leagueApps:0,leagueGoals:0,leagueGoalSeasons:0,
    statSeasons:0,firstYear:null,lastYear:null,caps:null,internationalGoals:null,birthDate:"",
    currentCountry:"",currentDivision:null
  } as GamePlayer)),[]);
