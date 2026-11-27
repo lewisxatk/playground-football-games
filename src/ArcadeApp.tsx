@@ -4,6 +4,7 @@ import {
   PLAYER_DATABASE, FOOTBALL_GROUPS, LEAGUE_GOALS, CAREER_FILES, STRANDS_PACKS,
   type Player
 } from "./playerData";
+import { ClubBadge, CountryFlag } from "./ClubBadge";
 import "./arcade.css";
 
 type Mode = "daily" | "practice";
@@ -311,12 +312,24 @@ function ScoutSignalPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
  const [mode,setMode]=useMode();const dailyPool=PLAYER_DATABASE.filter(p=>Boolean(p.club&&p.nationality));
  const [target,setTarget]=useState<Player>(dailyPool[hashSeed("SCOUT"+utcDay())%dailyPool.length]);const [guess,setGuess]=useState("");const [history,setHistory]=useState<Player[]>([]);const [end,setEnd]=useState(false);const [won,setWon]=useState(false);const done=account.daily[utcDay()]?.["scout-signal"]!==undefined;
  type SignalKey="nationality"|"careerClub"|"currentClub"|"position"|"league"|"ageBand";
- const category=(key:SignalKey,g:Player)=>key==="careerClub"?g.clubs.some(c=>target.clubs.includes(c)):key==="currentClub"?g.club===target.club:key==="nationality"?g.nationality===target.nationality:key==="position"?g.position===target.position:key==="league"?g.league===target.league:key==="ageBand"?g.ageBand===target.ageBand:false;
+ const matchingClubs=(g:Player)=>g.clubs.filter(c=>target.clubs.includes(c));
+ const category=(key:SignalKey,g:Player)=>key==="careerClub"?matchingClubs(g).length>0:key==="currentClub"?g.club===target.club:key==="nationality"?g.nationality===target.nationality:key==="position"?g.position===target.position:key==="league"?g.league===target.league:key==="ageBand"?g.ageBand===target.ageBand:false;
  const attrs:[SignalKey,string][]=[["nationality","NATION"],["careerClub","SHARED CLUB"],["currentClub","CURRENT CLUB"],["position","POSITION"],["league","LEAGUE"],["ageBand","AGE BAND"]];
+ const signalValue=(key:SignalKey,g:Player)=>{
+   if(key==="nationality")return <span className="scout-value"><CountryFlag name={g.nationality}/><small>{g.nationality}</small></span>;
+   if(key==="careerClub"){
+     const common=matchingClubs(g);
+     return common.length?<span className="scout-value"><ClubBadge name={common[0]} size={19}/><small>{common[0]}</small>{common.length>1&&<i>+{common.length-1}</i>}</span>:<small className="scout-no-match">NO MATCH</small>;
+   }
+   if(key==="currentClub")return <span className="scout-value"><ClubBadge name={g.club} size={19}/><small>{g.club}</small></span>;
+   if(key==="position")return <small>{g.position}</small>;
+   if(key==="league")return <small>{g.league}</small>;
+   return <small>{g.ageBand}</small>;
+ };
  const submit=(e:FormEvent)=>{e.preventDefault();const p=playerByName(guess);if(!p||history.some(x=>x.name===p.name)||end)return;const next=[...history,p];setHistory(next);setGuess("");if(p.name===target.name){setWon(true);setEnd(true);if(mode==="daily")onDaily("scout-signal",Math.max(100,1000-(next.length-1)*90));}else if(next.length>=10){setEnd(true);if(mode==="daily")onDaily("scout-signal",0);}};
  const reset=()=>{setTarget(mode==="daily"?dailyPool[hashSeed("SCOUT"+utcDay())%dailyPool.length]:dailyPool[Math.floor(Math.random()*dailyPool.length)]);setGuess("");setHistory([]);setEnd(false);setWon(false);};
  return <Frame account={account} game="scout-signal" eyebrow="ATTRIBUTE DEDUCTION / PLAYER HUNT" title="SCOUT SIGNAL." description="Guess a footballer. Each guess tests nation, shared club, position, league and age band. Green means you've found a match." number="14" mode={mode} setMode={m=>{setMode(m);setTarget(m==="daily"?dailyPool[hashSeed("SCOUT"+utcDay())%dailyPool.length]:dailyPool[Math.floor(Math.random()*dailyPool.length)]);setGuess("");setHistory([]);setEnd(false);setWon(false);}}> 
- {done&&mode==="daily"?<Success title="SCOUTING REPORT COMPLETE." detail="Today's mystery is done. Take a new one in practice." button="PRACTICE" onAgain={()=>setMode("practice")}/>:<Card className="scout-game"><div className="arc-game-meta"><span>{10-history.length} GUESSES LEFT</span><b>{Math.max(0,1000-history.length*90)} PTS AVAILABLE</b></div><div className="scout-column-head"><span>YOUR GUESS</span>{attrs.map(([,label])=><span key={label}>{label}</span>)}</div><div className="scout-rows">{history.map(p=><div className="scout-row" key={p.name}><b>{p.name}</b>{attrs.map(([key,label])=><span key={label} className={category(key,p)?"lit":""}>{category(key,p)?"✓":"—"}</span>)}</div>)}</div><form className="arc-guess-form" onSubmit={submit}><input list="scout-players" value={guess} onChange={e=>setGuess(e.target.value)} placeholder="Try a player name…"/><datalist id="scout-players">{PLAYER_DATABASE.map(p=><option key={p.name} value={p.name}/>)}</datalist><button className="arc-button" disabled={!playerByName(guess)||end}>SCAN PLAYER ↗</button></form><p className="arc-muted">You can guess from the local player pool. Shared club means both players have that club in their listed career path.</p>{end&&<div className="arc-feedback"><b>{won?"TARGET FOUND":"THE PLAYER WAS "+target.name}</b><p>{target.nationality} · {target.position} · {target.clubs.join(" → ")}</p><button className="arc-button" onClick={reset}>NEXT SCOUT REPORT ↗</button></div>}</Card>}
+ {done&&mode==="daily"?<Success title="SCOUTING REPORT COMPLETE." detail="Today's mystery is done. Take a new one in practice." button="PRACTICE" onAgain={()=>setMode("practice")}/>:<Card className="scout-game"><div className="arc-game-meta"><span>{10-history.length} GUESSES LEFT</span><b>{Math.max(0,1000-history.length*90)} PTS AVAILABLE</b></div><div className="scout-column-head"><span>YOUR GUESS</span>{attrs.map(([,label])=><span key={label}>{label}</span>)}</div><div className="scout-rows">{history.map(p=><motion.div className="scout-row" layout key={p.name} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}}><b>{p.name}</b>{attrs.map(([key,label])=><span key={label} className={category(key,p)?"lit":"scout-cell"} title={label+": "+(key==="careerClub"?matchingClubs(p).join(", ")||"No shared club":key==="currentClub"?p.club:key==="nationality"?p.nationality:key==="position"?p.position:key==="league"?p.league:p.ageBand)}>{signalValue(key,p)}</span>)}</motion.div>)}</div><form className="arc-guess-form" onSubmit={submit}><input list="scout-players" value={guess} onChange={e=>setGuess(e.target.value)} placeholder="Try a player name…"/><datalist id="scout-players">{PLAYER_DATABASE.map(p=><option key={p.name} value={p.name}/>)}</datalist><button className="arc-button" disabled={!playerByName(guess)||end}>SCAN PLAYER ↗</button></form><p className="arc-muted">You can guess from the local player pool. Shared club means both players have that club in their listed career path.</p>{end&&<div className="arc-feedback"><b>{won?"TARGET FOUND":"THE PLAYER WAS "+target.name}</b><p>{target.nationality} · {target.position} · {target.clubs.join(" → ")}</p><button className="arc-button" onClick={reset}>NEXT SCOUT REPORT ↗</button></div>}</Card>}
  </Frame>;
 }
 
