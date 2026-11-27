@@ -108,7 +108,7 @@ const n = (v: unknown): number | null => v == null || v === "" ? null : Number(v
 export async function getStatEligibleCandidates(candidates: Candidate[]): Promise<Candidate[]> {
   if (!candidates.length) return [];
   const archive = await careerArchive();
-  const eligible = new Set<string>();
+  const eligible = new Map<string, number>();
   const batchSize = 120;
   for (let offset = 0; offset < candidates.length; offset += batchSize) {
     const batch = candidates.slice(offset, offset + batchSize);
@@ -122,11 +122,11 @@ export async function getStatEligibleCandidates(candidates: Candidate[]): Promis
       "HAVING COUNT(DISTINCT coalesce(nullif(club_qid,''), nullif(club_link,''), club) || '|' || season) >= 2",
       ids
     );
-    for (const row of rows) eligible.add(String(row.player_qid));
+    for (const row of rows) eligible.set(String(row.player_qid), Number(row.stat_seasons ?? 0));
   }
   return candidates
     .filter(candidate => eligible.has(candidate.id))
-    .map(candidate => ({ ...candidate, statSeasons: 2 }));
+    .map(candidate => ({ ...candidate, statSeasons: eligible.get(candidate.id) ?? 0 }));
 }
 
 export async function getPlayer(id: string): Promise<Player> {
