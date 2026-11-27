@@ -185,8 +185,8 @@ export function makeCC0QuizRound(
  return seededShuffle(selected,seed+59);
 }
 export function makeCC0DailyQuizRound(pool:CC0QuizQuestion[],seed:number):CC0QuizQuestion[]{
- // Daily mix: fifteen English domestic questions and two UEFA Champions League questions.
- // International national-team friendlies and minor tournaments are deliberately excluded.
+ // Daily mix: fifteen English domestic questions and two selected European/World Cup history questions.
+ // National-team friendlies and minor tournaments are deliberately excluded.
  const plan:{tier:CC0QuizTier;count:number;englishCount:number}[]=[
   {tier:"EASY",count:5,englishCount:5},
   {tier:"MEDIUM",count:5,englishCount:5},
