@@ -140,15 +140,53 @@ export function useFootballQuizKnowledge(game:"the-climb"|"timed-quiz"){
 }
 
 function seededShuffle<T>(items:T[],seed:number):T[]{const copy=[...items];let state=seed>>>0;for(let i=copy.length-1;i>0;i--){state=(Math.imul(state,1664525)+1013904223)>>>0;const j=state%(i+1);[copy[i],copy[j]]=[copy[j],copy[i]]}return copy}
-export function makeCC0QuizRound(pool:CC0QuizQuestion[],tier:CC0QuizTier,seed:number,count=5):CC0QuizQuestion[]{
- const eligible=pool.filter(q=>q.tier===tier);if(!eligible.length)return[];
- const uk=seededShuffle(eligible.filter(q=>q.region==="UK"),seed+17),international=seededShuffle(eligible.filter(q=>q.region==="INTERNATIONAL"),seed+31);
- const ukCount=Math.min(uk.length,Math.round(count*.4)),selected=[...uk.slice(0,ukCount),...international.slice(0,count-ukCount)];
- if(selected.length<count)selected.push(...seededShuffle(eligible.filter(q=>!selected.some(x=>x.id===q.id)),seed+43).slice(0,count-selected.length));
+export function makeCC0QuizRound(
+ pool:CC0QuizQuestion[],
+ tier:CC0QuizTier,
+ seed:number,
+ count=5,
+ requestedUKCount=Math.round(count*.75),
+ excludedMatchIds:ReadonlySet<string>=new Set()
+):CC0QuizQuestion[]{
+ // One match must not appear twice in the same round under different question templates.
+ const byMatch=new Map<string,CC0QuizQuestion>();
+ for(const question of pool){
+  if(question.tier!==tier||excludedMatchIds.has(question.matchId))continue;
+  const key=question.matchId||question.factId||question.id;
+  if(!byMatch.has(key))byMatch.set(key,question);
+ }
+ const eligible=[...byMatch.values()];
+ if(!eligible.length)return[];
+ const uk=seededShuffle(eligible.filter(q=>q.region==="UK"),seed+17);
+ const international=seededShuffle(eligible.filter(q=>q.region==="INTERNATIONAL"),seed+31);
+ const ukCount=Math.max(0,Math.min(count,requestedUKCount,uk.length));
+ const internationalCount=Math.min(count-ukCount,international.length);
+ const selected=[...uk.slice(0,ukCount),...international.slice(0,internationalCount)];
+ const selectedIds=new Set(selected.map(q=>q.id));
+ if(selected.length<count){
+  const fallback=seededShuffle(eligible.filter(q=>!selectedIds.has(q.id)),seed+43);
+  for(const question of fallback){
+   if(selected.length>=count)break;
+   selected.push(question);
+   selectedIds.add(question.id);
+  }
+ }
  return seededShuffle(selected,seed+59);
 }
 export function makeCC0DailyQuizRound(pool:CC0QuizQuestion[],seed:number):CC0QuizQuestion[]{
- const plan:{tier:CC0QuizTier;count:number}[]=[{tier:"EASY",count:5},{tier:"MEDIUM",count:5},{tier:"HARD",count:5},{tier:"EXTREME",count:2}],selected:CC0QuizQuestion[]=[];
- plan.forEach((entry,index)=>selected.push(...makeCC0QuizRound(pool,entry.tier,seed+index*101,entry.count)));
+ // 17 questions cannot split into an exact 75/25 ratio. 13 English-domestic
+ // and 4 international questions is the closest whole-number allocation.
+ const plan:{tier:CC0QuizTier;count:number;ukCount:number}[]=[
+  {tier:"EASY",count:5,ukCount:4},
+  {tier:"MEDIUM",count:5,ukCount:4},
+  {tier:"HARD",count:5,ukCount:4},
+  {tier:"EXTREME",count:2,ukCount:1}
+ ];
+ const selected:CC0QuizQuestion[]=[];
+ const usedMatches=new Set<string>();
+ plan.forEach((entry,index)=>{
+  const round=makeCC0QuizRound(pool,entry.tier,seed+index*101,entry.count,entry.ukCount,usedMatches);
+  for(const question of round){selected.push(question);usedMatches.add(question.matchId);}
+ });
  return seededShuffle(selected,seed+997);
 }
