@@ -693,12 +693,12 @@ const HISTORIC_PREMIER_LEAGUE_CLUBS=[
  "Oldham Athletic","Portsmouth","Queens Park Rangers","Reading","Sheffield United","Sheffield Wednesday","Southampton","Stoke City",
  "Sunderland","Swansea City","Tottenham Hotspur","Watford","West Bromwich Albion","West Ham United","Wigan Athletic","Wolverhampton Wanderers"
 ];
-const gridClubKey=(value:string)=>normalise(value.replace(/&/g,"and")).replace(/\\b(?:association football club|football club|fc|afc|the)\\b/g," ").replace(/\\s+/g," ").trim();
+const gridClubKey=(value:string)=>normalise(value.replace(/&/g,"and")).replace(/\b(?:association football club|football club|fc|afc|the)\\b/g," ").replace(/\s+/g," ").trim();
 function archiveGamePlayerToGamePlayer(p:ArchiveGamePlayer):GamePlayer{
  const birthYear=p.birthDate?Number(p.birthDate.slice(0,4)):null,age=birthYear&&birthYear>1800?new Date().getUTCFullYear()-birthYear:null;
  const ageBand=age===null?"Unknown":age<20?"Teens":age<30?"20s":age<40?"30s":age<50?"40s":age<60?"50s":"60s+";
- const parts=p.name.trim().split(/\\s+/).filter(Boolean),surname=parts.at(-1)??p.name;
- return {name:p.name,surname:surname.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,""),
+ const parts=p.name.trim().split(/\s+/).filter(Boolean),surname=parts.at(-1)??p.name;
+ return {name:p.name,surname:surname.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,""),
   nationality:countryLabel(p.nationality||p.currentCountry||"Unlisted"),position:positionCode(p.position),club:p.currentClub||"Unknown club",
   league:p.currentLeague||"Unlisted",active:false,ageBand,clubs:p.clubs??[],aliases:[p.name,p.fullName??p.name],archiveId:p.id,
   careerSpells:p.spells??[],seasonStats:p.seasonStats??p.stats??[],careerAppsRecorded:p.appearances!==null,careerGoalsRecorded:p.goals!==null,
