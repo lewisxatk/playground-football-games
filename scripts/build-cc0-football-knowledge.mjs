@@ -454,7 +454,7 @@ const cultHeroCandidates=careerPlayers.filter(p=>p.spells.length>=2&&new Set(p.s
 const linkUpPacks=makeWikidataLinkPacks(careerPlayers,750);
 const [internationalMatches,englishMatches,europeanClubMatches]=await Promise.all([parseInternationalResults(),parseEnglishMatches(),parseEuropeanClubMatches()]);
 const allMatches=[...internationalMatches,...englishMatches,...europeanClubMatches].sort((a,b)=>a.date.localeCompare(b.date));
-const internationalQuiz=buildInternationalQuiz(allMatches);
+const internationalQuiz=buildInternationalQuiz([...englishMatches,...europeanClubMatches]);
 const internationalGoals=await parseInternationalGoals(players);
 const internationalGoalPacks=makeInternationalGoalPacks(internationalGoals.scorers);
 const lineupData=JSON.parse(await readFile(resolve(ROOT,"public/data/worldcup-lineups.json"),"utf8"));
