@@ -4,105 +4,124 @@
   "counts": {
     "players": 32093,
     "clubs": 560,
-    "footleAnswers": 30842,
+    "footlePlayerRecords": 30842,
+    "footleAnswers": 3671,
     "worldCupLineups": 1312,
     "worldCupPlayerCards": 3722,
     "worldCupQuestions": 1312,
-    "connectionsPacks": 500
+    "connectionsPacks": 500,
+    "strandsPacks": 500,
+    "clubCountryPacks": 500
   },
   "games": {
     "footle": {
-      "unit": "answer",
-      "count": 30842,
-      "ready": true
+      "unit": "unique five-letter surname",
+      "count": 3671,
+      "ready": true,
+      "integrated": true
     },
     "the-climb": {
       "unit": "question",
       "count": 1312,
-      "ready": true
+      "ready": true,
+      "integrated": false
     },
     "timed-quiz": {
       "unit": "question",
       "count": 1312,
-      "ready": true
+      "ready": true,
+      "integrated": false
     },
     "connections": {
       "unit": "puzzle-pack",
       "count": 500,
-      "ready": true
+      "ready": true,
+      "integrated": true
     },
     "missing-xi": {
       "unit": "puzzle-pack",
       "count": 1312,
-      "ready": true
+      "ready": true,
+      "integrated": true
     },
     "tournament-nation": {
       "unit": "puzzle-pack",
       "count": 1312,
-      "ready": true
+      "ready": true,
+      "integrated": true
     },
     "the-reveal": {
       "unit": "player-card",
       "count": 3722,
-      "ready": true
+      "ready": true,
+      "integrated": false
     },
     "link-up": {
       "unit": "puzzle-pack",
       "count": 1312,
-      "ready": true
+      "ready": true,
+      "integrated": false
     },
     "strands": {
       "unit": "puzzle-pack",
-      "count": 0,
-      "ready": false,
-      "reason": "needs word-search board generator and unique-solution QA"
+      "count": 500,
+      "ready": true,
+      "integrated": true
     },
     "football-grid": {
       "unit": "puzzle-pack",
       "count": 0,
       "ready": false,
+      "integrated": false,
       "reason": "needs verified player-club intersections"
     },
     "lowball": {
       "unit": "challenge-pack",
       "count": 0,
       "ready": false,
+      "integrated": false,
       "reason": "needs scoped numeric player/club records"
     },
     "ladder": {
       "unit": "challenge-pack",
       "count": 0,
       "ready": false,
+      "integrated": false,
       "reason": "needs scoped numeric player/club records"
     },
     "football-501": {
       "unit": "challenge-pack",
       "count": 0,
       "ready": false,
+      "integrated": false,
       "reason": "needs scoped numeric player/club records"
     },
     "draft-xi": {
       "unit": "challenge-pack",
       "count": 0,
       "ready": false,
+      "integrated": false,
       "reason": "needs verified positions and pricing"
     },
     "career-file": {
       "unit": "player-card",
       "count": 0,
       "ready": false,
+      "integrated": false,
       "reason": "needs dated career spells"
     },
     "cult-hero": {
       "unit": "player-card",
       "count": 0,
       "ready": false,
+      "integrated": false,
       "reason": "needs dated club-spell histories"
     },
     "scout-signal": {
       "unit": "player-card",
       "count": 0,
       "ready": false,
+      "integrated": false,
       "reason": "needs verified positions and player attributes"
     }
   }
