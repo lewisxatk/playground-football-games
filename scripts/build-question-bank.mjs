@@ -56,11 +56,11 @@ const countryLabels = new Map([
   ["esp", "Spain"], ["es", "Spain"], ["ger", "Germany"], ["deu", "Germany"], ["ned", "Netherlands"], ["nld", "Netherlands"],
   ["ita", "Italy"], ["fra", "France"], ["por", "Portugal"], ["prt", "Portugal"], ["bra", "Brazil"], ["arg", "Argentina"],
   ["uru", "Uruguay"], ["bel", "Belgium"], ["cro", "Croatia"], ["srb", "Serbia"], ["sui", "Switzerland"], ["che", "Switzerland"],
-  ["civ", "Ivory Coast"], ["kor", "South Korea"], ["jpn", "Japan"], ["usa", "United States"], ["mex", "Mexico"],
+  ["civ", "Ivory Coast"], ["kor", "South Korea"], ["korea", "South Korea"], ["korearepublic", "South Korea"], ["jpn", "Japan"], ["usa", "United States"], ["mex", "Mexico"],
   ["mar", "Morocco"], ["nga", "Nigeria"], ["sen", "Senegal"], ["gha", "Ghana"], ["cmr", "Cameroon"], ["irn", "Iran"],
   ["aus", "Australia"], ["can", "Canada"], ["den", "Denmark"], ["swe", "Sweden"], ["nor", "Norway"], ["pol", "Poland"],
   ["ukr", "Ukraine"], ["cze", "Czechia"], ["rou", "Romania"], ["tur", "Türkiye"], ["gre", "Greece"], ["sau", "Saudi Arabia"],
-  ["qat", "Qatar"], ["chn", "China"], ["hnd", "Honduras"], ["hon", "Honduras"], ["crc", "Costa Rica"], ["ecu", "Ecuador"], ["par", "Paraguay"], ["chi", "Chile"], ["bol", "Bolivia"], ["per", "Peru"], ["jam", "Jamaica"], ["pan", "Panama"], ["egy", "Egypt"], ["alg", "Algeria"], ["tun", "Tunisia"], ["rsa", "South Africa"], ["isl", "Iceland"], ["aut", "Austria"], ["hun", "Hungary"], ["slo", "Slovenia"], ["svk", "Slovakia"], ["fin", "Finland"], ["irl", "Republic of Ireland"], ["alb", "Albania"], ["mkd", "North Macedonia"], ["bos", "Bosnia and Herzegovina"], ["mne", "Montenegro"], ["kos", "Kosovo"], ["est", "Estonia"], ["lva", "Latvia"], ["ltu", "Lithuania"], ["bul", "Bulgaria"], ["isr", "Israel"], ["uzb", "Uzbekistan"], ["tha", "Thailand"], ["ind", "India"],
+  ["qat", "Qatar"], ["chn", "China"], ["cog", "Republic of the Congo"], ["republiqueducongo", "Republic of the Congo"], ["congo", "Republic of the Congo"], ["gnb", "Guinea-Bissau"], ["guineabissau", "Guinea-Bissau"], ["cod", "DR Congo"], ["democraticrepublicofthecongo", "DR Congo"], ["hnd", "Honduras"], ["hon", "Honduras"], ["crc", "Costa Rica"], ["ecu", "Ecuador"], ["par", "Paraguay"], ["chi", "Chile"], ["bol", "Bolivia"], ["per", "Peru"], ["jam", "Jamaica"], ["pan", "Panama"], ["egy", "Egypt"], ["alg", "Algeria"], ["tun", "Tunisia"], ["rsa", "South Africa"], ["isl", "Iceland"], ["aut", "Austria"], ["hun", "Hungary"], ["slo", "Slovenia"], ["svk", "Slovakia"], ["fin", "Finland"], ["irl", "Republic of Ireland"], ["alb", "Albania"], ["mkd", "North Macedonia"], ["bos", "Bosnia and Herzegovina"], ["mne", "Montenegro"], ["kos", "Kosovo"], ["est", "Estonia"], ["lva", "Latvia"], ["ltu", "Lithuania"], ["bul", "Bulgaria"], ["isr", "Israel"], ["uzb", "Uzbekistan"], ["tha", "Thailand"], ["ind", "India"],
   ["royaumeuni", "United Kingdom"], ["angleterre", "England"], ["ecosse", "Scotland"],
   ["paysdegalles", "Wales"], ["irlandedunord", "Northern Ireland"], ["italie", "Italy"],
   ["allemagne", "Germany"], ["espagne", "Spain"], ["bresil", "Brazil"],
@@ -109,7 +109,7 @@ if (manifest.source !== "OpenFootballBase-Data" || !Array.isArray(manifest.shard
 }
 try {
   const existing = JSON.parse(await readFile(outputPath, "utf8"));
-  if (existing.version === 4 && existing.sourceRelease === manifest.sourceRelease &&
+  if (existing.version === 5 && existing.sourceRelease === manifest.sourceRelease &&
       existing.meta?.targetPerTier === TARGET &&
       ["EASY", "MEDIUM", "HARD", "EXTREME"].every(tier =>
         existing.tiers?.[tier]?.length === TARGET &&
@@ -352,7 +352,7 @@ for (const tier of ["EASY", "MEDIUM", "HARD", "EXTREME"]) {
 }
 
 const bank = {
-  version: 4,
+  version: 5,
   source: manifest.source,
   sourceRelease: manifest.sourceRelease,
   sourceReleaseUrl: manifest.sourceReleaseUrl ?? manifest.releaseUrl,
