@@ -565,10 +565,10 @@ worldCupQuizPool.forEach((question,index)=>(index%2?internationalQuiz.timed:inte
 const footle=players.filter(p=>p.name.length>=4&&p.name.length<=22&&/^[\p{L}][\p{L}'’ .-]+$/u.test(p.name));
 const englishFootleAnswers=[...new Set(careerPlayers.filter(player=>player.spells.some(spell=>englishClubNames.has(clubKey(spell.club))))
  .flatMap(player=>[player.name,...(player.aliases||[])])
- .map(value=>(value.trim().split(/\\s+/).at(-1)||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,""))
+ .map(value=>(value.trim().split(/\s+/).at(-1)||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,""))
  .filter(word=>word.length===5))].sort();
 const globalFootleAnswers=[...new Set(footle.flatMap(player=>[player.name,...(player.aliases||[])])
- .map(value=>(value.trim().split(/\\s+/).at(-1)||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,""))
+ .map(value=>(value.trim().split(/\s+/).at(-1)||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,""))
  .filter(word=>word.length===5))].sort();
 const uniqueFootleAnswers=englishFootleAnswers.length>=500?englishFootleAnswers:[...englishFootleAnswers,...globalFootleAnswers.filter(word=>!englishFootleAnswers.includes(word))];
 const cards=new Map();for(const m of lineups)for(const name of m.starters){const k=norm(name),r=cards.get(k)||{id:id("wc-player",k),name,worldCups:[],teams:[],matchIds:[]};if(!r.worldCups.includes(m.year))r.worldCups.push(m.year);if(!r.teams.includes(m.team))r.teams.push(m.team);if(!r.matchIds.includes(m.id))r.matchIds.push(m.id);cards.set(k,r)}
