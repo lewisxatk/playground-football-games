@@ -6,7 +6,7 @@ Last reviewed: 27 November 2026.
 
 PLAYGROUND reads a sample from [OpenFootballBase-Data](https://github.com/florentfougeres/OpenFootballBase-Data) via its published Parquet files and manifest. The upstream project describes its source material as Wikipedia and Wikidata, with career and caps figures transcribed from player infoboxes and marked unverified.
 
-The upstream project reports, as of 14 November 2026, approximately 85,099 players, 479,110 career rows, 44,970 club records and 152 competitions. These figures describe the upstream project, not the PLAYGROUND client-side sample. PLAYGROUND currently draws a shared sample of up to 1,600 player records for several games. The sample, its available fields and the quality of its underlying records vary.
+The upstream project reports, as of 14 November 2026, approximately 85,099 players, 479,110 career rows, 44,970 club records and 152 competitions. These figures describe the upstream project, not the PLAYGROUND client-side sample. This describes a legacy mixed-provenance archive, not the current live content pipeline. Current games load the separate CC0-only knowledge shards; the old archive is not counted as CC0 content or used to pad the new game pools.
 
 - Wikipedia text-derived data: CC BY-SA 4.0. Attribution to Wikipedia contributors and links/revision provenance should be retained wherever the upstream records provide it.
 - Wikidata data: CC0.
@@ -25,7 +25,7 @@ The CC0 match bank includes [OpenFootball England](https://github.com/openfootba
 
 ## World Cup starting line-ups
 
-The World Cup data file in `public/data/worldcup-lineups.json` is derived from [openfootball/worldcup.json](https://github.com/openfootball/worldcup.json), whose repository publishes its data under CC0 1.0 Universal. PLAYGROUND includes 1,312 team starting-line-up records across the 1982, 1986, 1990, 1994, 1998, 2002, 2006, 2010, 2014, 2018 and 2022 FIFA World Cups.
+The World Cup data file in `public/data/worldcup-lineups.json` is derived from [openfootball/worldcup.json](https://github.com/openfootball/worldcup.json), whose repository publishes its data under CC0 1.0 Universal. The retained snapshot contains 1,312 team starting-line-up records across the 1982–2022 tournaments. The build now also imports the pinned 2026 `2026/worldcup-full.json` file, adding 208 team line-ups. The build report is the source of truth for the resulting counts.
 
 The source includes match context and eleven starters. It does not provide reliable on-pitch coordinates or a consistently verified position for every historical player. PLAYGROUND therefore shows a full schematic pitch; where its career archive has a unique player profile position it can group shirts by broad role, but it does not claim to reproduce the historical match formation. Year-matched clubs are shown only when an exact player-name/year career-spell match exists.
 
@@ -79,7 +79,7 @@ The 100-question factual seed is a development-only bank and is not the live sou
 
 - [OpenFootball Players](https://github.com/openfootball/players) publishes CC0-1.0 data for footballers grouped by country, with name, broad position, date of birth, height and birthplace fields in its examples. This is a useful identity/answer pool for Footle, Grid, Connections and player-profile games; it is not a reliable season-stat or career-history source by itself.
 - [OpenFootball Clubs](https://github.com/openfootball/clubs) publishes CC0 public-domain club data including club names, aliases, founding years and stadium associations. Useful for club-history, stadium, nickname and alias facts. Do not treat the club name record as a licence for crest artwork or trademarks.
-- [OpenFootball World Cup](https://github.com/openfootball/worldcup) currently advertises data for the Canada/USA/Mexico 2026 tournament as well as earlier editions and qualifiers. The existing PLAYGROUND XI file still only covers 1982–2022; this repository is a candidate to extend it after the 2026 files are inspected and validated.
+- [OpenFootball World Cup](https://github.com/openfootball/worldcup) currently advertises data for the Canada/USA/Mexico 2026 tournament as well as earlier editions and qualifiers. PLAYGROUND now imports the pinned 2026 `worldcup-full.json` file directly, validates both 11-player starting line-ups per match, and merges those records with the retained 1982–2022 snapshot.
 - The sister [women's international results dataset](https://github.com/martj42/womens-international-results) reports around 11,020 results and says all major tournament results should be complete, while friendlies are incomplete. Treat it as a candidate only until its current repository licence file is directly checked and pinned; do not count it as approved solely from a third-party catalogue.
 
 ### Useful but not CC0: optional English history expansion
@@ -89,6 +89,6 @@ The 100-question factual seed is a development-only bank and is not the live sou
 
 ## Strict CC0 build whitelist
 
-The current runtime knowledge engine uses only pinned CC0-1.0 data: OpenFootball player identities (`125d20f7cc06cac7e758b40df535a7695632680a`), OpenFootball clubs (`ae3800227c449447b3a337fc0aac79a8f02f4c8b`), and Mart Jürisoo men's senior international results (`ca84241bb3eed854a1956a2fab442fe4daad40dd`), plus the in-repository World Cup starting-line-up source. The exact policy, source scope and accuracy caveats are in [CC0 Football Knowledge Engine](docs/CC0_FOOTBALL_KNOWLEDGE_ENGINE.md).
+The current runtime knowledge engine uses a strict CC0-only whitelist: OpenFootball players (`125d20f7cc06cac7e758b40df535a7695632680a`), OpenFootball clubs (`ae3800227c449447b3a337fc0aac79a8f02f4c8b`), OpenFootball England (`9ee7a0c351805c99cc334478a9bf04b7d0432fec`), OpenFootball Champions League (`abfaeddc2ee3d14f99ecc163c9ddb46cb4d67cef`), OpenFootball World Cup (`516d3825c3bd23fdc298c4014e84bde78f2d4965`), and Mart Jürisoo men's senior international results (`ca84241bb3eed854a1956a2fab442fe4daad40dd`). Career history uses a dated Wikidata CC0 snapshot; its endpoint and retrieval date are recorded per build. The exact policy, source scope and accuracy caveats are in [CC0 Football Knowledge Engine](docs/CC0_FOOTBALL_KNOWLEDGE_ENGINE.md).
 
 The legacy mixed-provenance OpenFootballBase question-bank generator and runtime question-bank module have been retired from the build. CC BY-SA or unknown-rights data is not silently imported into the CC0 engine. Club crests, player photographs and third-party logos are not included.
