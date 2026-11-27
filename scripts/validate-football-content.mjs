@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 const data = JSON.parse(await readFile(resolve(process.cwd(), "public/data/football-facts.seed.json"), "utf8"));
-const errors = [], ids = new Set(), questions = new Set();
+const errors = [], ids = new Set(), questions = new Set(), factKeys = new Set();
 const normalise = value => String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
   .toLocaleLowerCase("en-GB").replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim().replace(/\s+/g, " ");
 const difficulties = ["easy","medium","hard","extreme"];
@@ -17,6 +17,9 @@ for (const f of data.facts) {
   if (questions.has(q)) errors.push(id + ": duplicate question");
   questions.add(q);
   if (!f.answer?.trim()) errors.push(id + ": missing answer");
+  const factKey = [f.topic, f.competition, f.scope, normalise(f.answer)].join("|");
+  if (factKeys.has(factKey)) errors.push(id + ": duplicate underlying fact/scope");
+  factKeys.add(factKey);
   const aliases = (f.acceptedAnswers ?? []).map(normalise).filter(Boolean);
   if (!aliases.includes(normalise(f.answer))) errors.push(id + ": canonical answer not accepted");
   if (new Set(aliases).size !== aliases.length) errors.push(id + ": duplicate aliases after accent normalisation");
@@ -34,7 +37,7 @@ for (const f of data.facts) {
   else {
     const choices = f.choices.map(normalise);
     if (new Set(choices).size !== 4) errors.push(id + ": choices must be distinct after normalisation");
-    if (choices.filter(x => x === normalise(f.answer)).length !== 1) errors.push(id + ": answer must appear exactly once");
+    if (choices.filter(x => aliases.includes(x)).length !== 1) errors.push(id + ": canonical answer or one accepted alias must appear exactly once");
   }
 }
 const byDifficulty = Object.fromEntries(difficulties.map(x => [x,data.facts.filter(f=>f.difficulty===x).length]));
