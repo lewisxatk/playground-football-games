@@ -296,3 +296,25 @@ At the end of every implementation update:
 - [ ] Wire the archive-backed pool into Scout Signal and the other player-driven games. Do not call the 1,600-row helper a live database feature until it is actually connected to the game routes.
 
 **Next concrete actions:** (1) complete build/deployment verification for the Footle keyboard CSS; (2) replace the small hand-curated player source with a shared cached archive data endpoint; (3) expand and validate dynamic quiz/connection/grid pools; (4) implement 4×4 Grid difficulty; (5) implement Strands pointer/touch drag selection.
+
+## 12. Verification update (2026-11-27, continued)
+
+- [x] Scout Signal club crests and nationality flags now render in the attribute feedback cells; matches are green. CI run: https://github.com/lewisxatk/playground-football-games/actions/runs/45927424482
+- [x] Mobile inputs use 16px minimum text size to avoid iOS Safari focus zoom. CI run: https://github.com/lewisxatk/playground-football-games/actions/runs/45927453117
+- [x] Career File remembers up to 600 recently tried player IDs in localStorage across refreshes. CI run: https://github.com/lewisxatk/playground-football-games/actions/runs/45927522190
+- [x] All current games have their own colour palette and heading display typeface. CI run: https://github.com/lewisxatk/playground-football-games/actions/runs/45927599317
+- [x] Footle has a tappable on-screen QWERTY keyboard; key states use green/yellow/grey feedback and grey keys are still available to type. CI run: https://github.com/lewisxatk/playground-football-games/actions/runs/45927677818
+- [x] Production deployment for the Footle keyboard styles succeeded at https://7dd7a119.playground-football-games.pages.dev.
+- [~] The shared game-ready archive helper can return up to 1,600 player records, but the game routes still use PLAYER_DATABASE for most choices. This is the main blocker to a genuinely massive and varied player experience.
+- [!] Research confirmed OpenFootballBase-Data release data-1.25.0 publishes a 41,488,189-byte compressed archive. This makes a build-time compact JSON/shard pipeline worth testing, rather than asking iPhones to scan remote Parquet files at play time. Any generated dataset must retain the source's incomplete-stat and provenance flags.
+- [ ] The two requested new games (Tournament Nation and Timed Football Quiz) are still not built.
+- [ ] 4×4 Grid, dynamic Connections, Strands pointer drag, Ladder drag, escalating Lowball, expanded 501 and verified Link Up/Missing XI pools remain outstanding.
+
+**Next batch (priority order):**
+1. Decide and prototype the build-time player-data export from OpenFootballBase-Data, producing small compressed files with identity, aliases, clubs, nationality, position, career span, available stats and source coverage.
+2. Connect that shared pool to Scout Signal and Lowball first; then reuse it for Footle, Connections, Grid, Ladder, Career File and Link Up.
+3. Replace the static Connections groups with a generator that only emits unique, valid groups and difficulty levels.
+4. Build 4×4 Grid with league/national-team filters and Easy/Standard/Hard/Extreme settings.
+5. Implement actual pointer/touch drag paths in Strands (not tap-to-select).
+6. Build Tournament Nation and Timed Football Quiz using source-backed tournament/question records.
+7. Only then add private head-to-head rooms with server-authoritative state.
