@@ -89,7 +89,7 @@ export function makeCC0QuizRound(pool:CC0QuizQuestion[],tier:CC0QuizTier,seed:nu
  return seededShuffle(selected,seed+59);
 }
 export function makeCC0DailyQuizRound(pool:CC0QuizQuestion[],seed:number):CC0QuizQuestion[]{
- const plan:{tier:QuizTier;count:number}[]=[{tier:"EASY",count:5},{tier:"MEDIUM",count:5},{tier:"HARD",count:5},{tier:"EXTREME",count:2}],selected:CC0QuizQuestion[]=[];
+ const plan:{tier:CC0QuizTier;count:number}[]=[{tier:"EASY",count:5},{tier:"MEDIUM",count:5},{tier:"HARD",count:5},{tier:"EXTREME",count:2}],selected:CC0QuizQuestion[]=[];
  plan.forEach((entry,index)=>selected.push(...makeCC0QuizRound(pool,entry.tier,seed+index*101,entry.count)));
  return seededShuffle(selected,seed+997);
 }
