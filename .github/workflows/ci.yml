@@ -13,5 +13,6 @@ jobs:
         with:
           node-version: 22
       - run: npm install
+      - run: npm run build:questions
       - run: npm run validate:data
       - run: npm run build
