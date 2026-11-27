@@ -1086,25 +1086,65 @@ function MissingXIPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
 }
 
 function makeStrandsBoard(pack:typeof STRANDS_PACKS[number]){
- const cells=Array(48).fill("");const paths:number[][]=[];
- // Both spangram lengths start on the top edge and finish on the bottom edge.
- // The 14-letter route adds a top-edge entry cell, preserving the same terminal.
- // NYT-style portrait board: 6 columns × 8 rows. The spangram runs top-to-bottom.
- const baseSpine=[0,6,12,18,24,30,36,42,43,44,45,46,47];
- const spine=pack.spangram.length===14?[1,...baseSpine]:baseSpine;
- const spineSet=new Set(spine);
- const rest:number[]=[];
- for(let r=0;r<7;r++){const cols=Array.from({length:5},(_,i)=>i+1);if(r%2)cols.reverse();for(const c of cols){const cell=r*6+c;if(!spineSet.has(cell))rest.push(cell);}}
- const words=[pack.spangram,...pack.words];let at=0;
- words.forEach((word,wi)=>{
-   const path=wi===0?spine:rest.slice(at,at+word.length);
-   if(wi>0)at+=word.length;
-   if(path.length!==word.length)throw new Error("This Strands pack does not fit the 6 × 8 board.");
-   paths.push(path);
-   word.split("").forEach((letter,i)=>{cells[path[i]]=letter;});
- });
+ const words=[pack.spangram,...pack.words];
+ const directions=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+ const placementOrder=[0,...words.map((_word,index)=>index).slice(1).sort((a,b)=>words[b].length-words[a].length)];
+ const deterministicShuffle=<T,>(items:T[],seed:number):T[]=>{
+  const copy=[...items];let state=seed>>>0;
+  for(let i=copy.length-1;i>0;i--){state=(Math.imul(state,1664525)+1013904223)>>>0;const j=state%(i+1);[copy[i],copy[j]]=[copy[j],copy[i]];}
+  return copy;
+ };
+ let finalPaths:number[][]|null=null;
+ for(let attempt=0;attempt<8&&!finalPaths;attempt++){
+  const seed=hashSeed(pack.id+":STRANDS:"+attempt);
+  const used=new Set<number>(),paths:Array<number[]|undefined>=Array(words.length);
+  let nodes=0;
+  const place=(orderIndex:number):boolean=>{
+   if(orderIndex>=placementOrder.length)return used.size===48;
+   const wordIndex=placementOrder[orderIndex],word=words[wordIndex];
+   const starts=deterministicShuffle(Array.from({length:48},(_,index)=>index),seed+wordIndex*7919);
+   for(const start of starts){
+    if(used.has(start))continue;
+    if(wordIndex===0&&Math.floor(start/6)!==0)continue;
+    const path=[start],local=new Set<number>([start]);
+    const extend=(cell:number,letterIndex:number):boolean=>{
+     nodes++;if(nodes>220000)return false;
+     const remaining=word.length-1-letterIndex,row=Math.floor(cell/6);
+     if(wordIndex===0&&row+remaining<7)return false;
+     if(letterIndex===word.length-1){
+      if(wordIndex===0&&row!==7)return false;
+      for(const point of path)used.add(point);
+      paths[wordIndex]=[...path];
+      if(place(orderIndex+1))return true;
+      for(const point of path)used.delete(point);
+      paths[wordIndex]=undefined;
+      return false;
+     }
+     const col=cell%6;
+     const neighbours=deterministicShuffle(directions.map(([dr,dc])=>({row:row+dr,col:col+dc}))
+      .filter(point=>point.row>=0&&point.row<8&&point.col>=0&&point.col<6)
+      .map(point=>point.row*6+point.col)
+      .filter(point=>!used.has(point)&&!local.has(point)),seed+wordIndex*104729+letterIndex*13007+cell);
+     for(const point of neighbours){
+      path.push(point);local.add(point);
+      if(extend(point,letterIndex+1))return true;
+      path.pop();local.delete(point);
+      if(nodes>220000)return false;
+     }
+     return false;
+    };
+    if(extend(start,0))return true;
+    if(nodes>220000)return false;
+   }
+   return false;
+  };
+  if(place(0))finalPaths=paths as number[][];
+ }
+ if(!finalPaths||new Set(finalPaths.flat()).size!==48)throw new Error("Could not create a valid hidden-path Strands board for "+pack.id);
+ const cells=Array(48).fill("");
+ finalPaths.forEach((path,index)=>words[index].split("").forEach((letter,position)=>{cells[path[position]]=letter;}));
  if(cells.some(letter=>!letter))throw new Error("A Strands board has an empty letter cell.");
- return {cells,paths,words,spangram:pack.spangram};
+ return {cells,paths:finalPaths,words,spangram:pack.spangram};
 }
 function StrandsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();const [boardNo,setBoardNo]=useState(0);const [selected,setSelected]=useState<number[]>([]);const pathRef=useRef<number[]>([]);const [dragging,setDragging]=useState(false);const [found,setFound]=useState<number[]>([]);const [wrong,setWrong]=useState(0);const [hintedWord,setHintedWord]=useState<number|null>(null);const [bonusWords,setBonusWords]=useState<string[]>([]);const [bonusHintsUsed,setBonusHintsUsed]=useState(0);const [finished,setFinished]=useState(false);const [notice,setNotice]=useState("");const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));const [bonusDictionary,setBonusDictionary]=useState<Set<string>>(()=>new Set());const [dictionaryReady,setDictionaryReady]=useState(false);const done=account.daily[utcDay()]?.strands!==undefined;
