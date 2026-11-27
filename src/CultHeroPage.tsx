@@ -88,7 +88,7 @@ export default function CultHeroPage({ dailyDone, onDailyComplete }: Props) {
       setRoundScore(earned);
       setTotalScore(previous => previous + earned);
       setWins(previous => previous + 1);
-      const result = addCultHeroCard(player, "mystery");
+      const result = addCultHeroCard(player, "mystery", current.league);
       setCardAdded(result.added);
       setCollectionCount(result.collection.length);
       return;
@@ -244,6 +244,7 @@ export default function CultHeroPage({ dailyDone, onDailyComplete }: Props) {
                     <p>{status === "won" ? `Correct. You earned ${roundScore.toLocaleString("en-GB")} points.` : "The five guesses are used. Read the career record, then move on to the next player."}</p>
                     {status === "won" && <div className="ch-reward-note">{cardAdded ? "CARD ADDED TO YOUR COLLECTION" : "ALREADY IN YOUR COLLECTION"} · <a href="/cult-hero-collection">VIEW CARD ↗</a></div>}
                     <div className="ch-player-facts">
+                      <span>{current.league}</span>
                       <span>{current.player.nationality}</span>
                       <span>{current.player.position}</span>
                       <span>{current.player.clubs.slice(0, 4).join(" / ")}</span>
