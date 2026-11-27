@@ -157,16 +157,18 @@ function archivePlayerToGamePlayer(p:ArchiveGamePlayer):GamePlayer{
     currentCountry:p.currentCountry,currentDivision:p.currentDivision
   };
 }
-function cc0PlayerToGamePlayer(p:{id:string;name:string;aliases:string[];nationalities:string[];birthYears:number[];positions:string[]}):GamePlayer{
+function cc0PlayerToGamePlayer(p:{id:string;name:string;aliases:string[];nationalities:string[];birthYears:number[];positions:string[];internationalGoalsRecorded?:number;worldCupStarts?:number;worldCupYears?:number[]}):GamePlayer{
  const parts=p.name.trim().split(/\s+/).filter(Boolean),surname=parts.at(-1)??p.name;
  const rawPosition=p.positions?.[0]??"";
  const position:Player["position"]=rawPosition==="G"||rawPosition==="GK"?"GK":rawPosition==="D"||rawPosition==="DF"?"DEF":rawPosition==="M"||rawPosition==="MF"?"MID":rawPosition==="F"||rawPosition==="FW"?"FWD":"" as Player["position"];
  const birthYear=p.birthYears?.[0]??null,age=birthYear===null?null:new Date().getUTCFullYear()-birthYear;
  const ageBand=age===null?"Unknown":age<20?"Teens":age<30?"20s":age<40?"30s":age<50?"40s":age<60?"50s":"60s+";
+ const worldCupStarts=p.worldCupStarts??0,internationalGoals=p.internationalGoalsRecorded??0,years=p.worldCupYears??[];
  return {name:p.name,surname:surname.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z]/g,""),
- nationality:countryLabel(p.nationalities?.[0]??"Unlisted"),position,club:"Unknown club",league:"Unlisted",active:false,ageBand,clubs:[],aliases:[p.name,...(p.aliases??[])],archiveId:p.id,
- careerSpells:[],seasonStats:[],careerAppsRecorded:false,careerGoalsRecorded:false,leagueAppsRecorded:false,leagueGoalsRecorded:false,careerApps:0,careerGoals:0,leagueApps:0,leagueGoals:0,leagueGoalSeasons:0,leagueAssists:0,leagueAssistSeasons:0,statSeasons:0,firstYear:null,lastYear:null,caps:null,internationalGoals:null,birthDate:"",currentCountry:p.nationalities?.[0]??"",currentDivision:null};
+ nationality:countryLabel(p.nationalities?.[0]??"Unlisted"),position,club:"Unknown club",league:"International",active:false,ageBand,clubs:[],aliases:[p.name,...(p.aliases??[])],archiveId:p.id,
+ careerSpells:[],seasonStats:[],careerAppsRecorded:false,careerGoalsRecorded:false,leagueAppsRecorded:false,leagueGoalsRecorded:false,careerApps:worldCupStarts,careerGoals:internationalGoals,leagueApps:0,leagueGoals:0,leagueGoalSeasons:0,leagueAssists:0,leagueAssistSeasons:0,statSeasons:years.length,firstYear:years[0]??null,lastYear:years.at(-1)??null,caps:null,internationalGoals,birthDate:"",currentCountry:p.nationalities?.[0]??"",currentDivision:null};
 }
+
 function archiveGuess(input:string,players:GamePlayer[]):GamePlayer|undefined{
   const key=normalise(input);
   return players.find(p=>[p.name,p.surname,...p.aliases].some(alias=>normalise(alias)===key));
