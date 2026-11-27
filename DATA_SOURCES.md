@@ -30,3 +30,32 @@ That repository-level licence is not a blanket clearance of every underlying clu
 ## Animation and UI assets
 
 The game visuals and motion effects are implemented in CSS/SVG and Motion for React. No third-party video or stock motion clips are bundled into the games. The `motion` dependency is the code package; its code licence does not change the rights in club crests or football data.
+
+
+## 2026-11-27 source-policy audit update
+
+For a strict no-fee / no-permission workflow, make **CC0 or public-domain data the ingestion whitelist**. Keep an internal provenance record even where attribution is not required.
+
+### CC0/public-domain candidates
+
+- [OpenFootball England](https://github.com/openfootball/england) publishes its football data and scripts to the public domain. It covers English Premier League, Championship, League One and League Two, with match results and some squad/club information. Coverage must be measured season by season.
+- [OpenFootball Champions League](https://github.com/openfootball/champions-league) publishes CC0 data for the UEFA Champions League, Europa League and Conference League.
+- [OpenFootball Leagues](https://github.com/openfootball/leagues), [Europe](https://github.com/openfootball/europe), [World](https://github.com/openfootball/world), [EURO](https://github.com/openfootball/euro) and [World Cup](https://github.com/openfootball/worldcup) are further CC0/public-domain competition datasets. Their depth varies by competition and season.
+- [Mart Jürisoo international_results](https://github.com/martj42/international_results) publishes a CC0-1.0 licence. The inspected README describes men's senior international results from 1872 through 2024 and provides results, shootouts, goalscorers and former names. It excludes Olympic, U23, B-team and league-select fixtures.
+- [Wikidata structured data](https://www.wikidata.org/wiki/Wikidata:Licensing) is CC0. It is useful for QIDs, player/club identity, birth data, nationality, position and dated membership statements, but is community-maintained and incomplete.
+
+CC0 is the closest practical fit for the requested approach: no paid licence, no permission request and no attribution/share-alike duty for the CC0 data. We should still preserve source URL, release/commit, retrieval date, hashes and source-row IDs internally.
+
+### Do not bulk-ingest
+
+- Premier League website/app data: the current terms reserve copyright/database rights and restrict commercial re-use and database creation without written approval.
+- FIFA.com article text/statistics: FIFA's current rights page limits third-party reuse to purely editorial, non-commercial purposes with credit.
+- Fjelstul World Cup Database: exclude from a commercial CC0-only build; the site terms have stated personal projects only and direct commercial users to request a separate licence.
+- OpenFootballBase-Data's merged player archive: it combines Wikipedia-derived CC BY-SA 4.0 fields with Wikidata-derived CC0 fields. The code's MIT licence does not relicense the underlying mixed data.
+- Third-party question banks: use as inspiration for coverage gaps only; do not copy question wording or import whole packs.
+- Transfer CSV: source/rights are still unverified in the current application path. Hold it until provenance is established.
+- Club crests: logo repository/code licences are not blanket commercial clearance for club trademarks and artwork.
+
+### Current content-system correction
+
+The 100-question factual seed is a development-only bank and is not the live source for The Climb or Quick Quiz. The separate generated bank has 800 questions per tier (3,200 total) and is archive-template-derived; the underlying appearance/goal/caps statistics are not independently verified. These are different datasets and must not be added together as 3,300 verified questions.
