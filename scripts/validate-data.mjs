@@ -72,37 +72,45 @@ try {
 }
 
 
-const questionBank = JSON.parse(await readFile(new URL("../public/data/question-bank.json", import.meta.url), "utf8"));
-assert.equal(questionBank.version, 5, "Question bank version mismatch");
-assert.equal(questionBank.source, "OpenFootballBase-Data", "Question bank source metadata mismatch");
-assert.equal(questionBank.meta?.targetPerTier, 800, "Question bank target must be at least 750 per tier");
-for (const tier of ["EASY", "MEDIUM", "HARD", "EXTREME"]) {
-  const questions = questionBank.tiers?.[tier];
-  const distribution = questionBank.meta?.distribution?.[tier];
-  assert.ok(Array.isArray(questions) && questions.length >= 750, tier + " must contain at least 750 questions");
-  assert.deepEqual(distribution, { english: 600, international: 200, total: 800 }, tier + " must preserve the 75/25 regional balance");
-  assert.equal(questions.length, distribution.total, tier + " count must match metadata");
-  const ids = new Set();
-  const regions = { ENGLISH: 0, INTERNATIONAL: 0 };
-  for (const question of questions) {
-    assert.ok(question.id && !ids.has(question.id), tier + " question IDs must be unique");
-    ids.add(question.id);
-    assert.equal(question.tier, tier, "Question tier mismatch");
-    assert.ok(question.playerId && question.question && question.answer, "Question is missing core fields");
-    assert.ok(question.options && question.options.length === 5, "Every quiz question must have five options");
-    assert.ok(question.options.includes(question.answer), "Every question must include its answer in the options");
-    assert.equal(new Set(question.options).size, 5, "Answer options must be unique");
-    assert.ok(question.explanation && question.source, "Question needs an explanation and source note");
-    assert.ok(Object.hasOwn(regions, question.region), "Question has an invalid regional classification");
-    regions[question.region]++;
-    if (tier === "EASY") {
-      assert.ok(["PLAYER BASICS", "PLAYER & CLUBS"].includes(question.category),
-        "Easy questions must use accessible player, club or league basics");
-      assert.ok(!/earliest career|earliest.*club|career.?goal total|international caps/i.test(question.question),
-        "Easy questions must not use obscure career-history or advanced-stat templates");
+try {
+  const questionBank = JSON.parse(await readFile(new URL("../public/data/question-bank.json", import.meta.url), "utf8"));
+  assert.equal(questionBank.version, 5, "Question bank version mismatch");
+  assert.equal(questionBank.source, "OpenFootballBase-Data", "Question bank source metadata mismatch");
+  assert.equal(questionBank.meta?.targetPerTier, 800, "Question bank target must be at least 750 per tier");
+  for (const tier of ["EASY", "MEDIUM", "HARD", "EXTREME"]) {
+    const questions = questionBank.tiers?.[tier];
+    const distribution = questionBank.meta?.distribution?.[tier];
+    assert.ok(Array.isArray(questions) && questions.length >= 750, tier + " must contain at least 750 questions");
+    assert.deepEqual(distribution, { english: 600, international: 200, total: 800 }, tier + " must preserve the 75/25 regional balance");
+    assert.equal(questions.length, distribution.total, tier + " count must match metadata");
+    const ids = new Set();
+    const regions = { ENGLISH: 0, INTERNATIONAL: 0 };
+    for (const question of questions) {
+      assert.ok(question.id && !ids.has(question.id), tier + " question IDs must be unique");
+      ids.add(question.id);
+      assert.equal(question.tier, tier, "Question tier mismatch");
+      assert.ok(question.playerId && question.question && question.answer, "Question is missing core fields");
+      assert.ok(question.options && question.options.length === 5, "Every quiz question must have five options");
+      assert.ok(question.options.includes(question.answer), "Every question must include its answer in the options");
+      assert.equal(new Set(question.options).size, 5, "Answer options must be unique");
+      assert.ok(question.explanation && question.source, "Question needs an explanation and source note");
+      assert.ok(Object.hasOwn(regions, question.region), "Question has an invalid regional classification");
+      regions[question.region]++;
+      if (tier === "EASY") {
+        assert.ok(["PLAYER BASICS", "PLAYER & CLUBS"].includes(question.category),
+          "Easy questions must use accessible player, club or league basics");
+        assert.ok(!/earliest career|earliest.*club|career.?goal total|international caps/i.test(question.question),
+          "Easy questions must not use obscure career-history or advanced-stat templates");
+      }
     }
+    assert.deepEqual(regions, { ENGLISH: 600, INTERNATIONAL: 200 },
+      tier + " question records must actually match the declared 75/25 regional distribution");
   }
-  assert.deepEqual(regions, { ENGLISH: 600, INTERNATIONAL: 200 },
-    tier + " question records must actually match the declared 75/25 regional distribution");
+  console.log(" - 3,200 legacy curated quiz questions: 800 per tier, 75% English clubs / 25% other leagues");
+} catch (error) {
+  if (error?.code === "ENOENT") {
+    console.log(" - Legacy question-bank.json is absent; CC0 quiz pools are validated by validate-cc0-quiz-pools.mjs.");
+  } else {
+    throw error;
+  }
 }
-console.log(" - 3,200 curated quiz questions: 800 per tier, 75% English clubs / 25% other leagues");
