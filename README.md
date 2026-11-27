@@ -25,3 +25,8 @@ npm run build
 
 ## Deployment
 Cloudflare Workers with Static Assets. Connect this repository to Workers Builds after the first frontend build is verified. Do not deploy over any existing Worker or production site until the target hostname and current game source are confirmed.
+
+
+## Development status
+
+The persistent, item-by-item implementation tracker and session handover is in [PROJECT_CHECKLIST.md](./PROJECT_CHECKLIST.md). Update it after every development batch; it is the source of truth for completed and outstanding work.
