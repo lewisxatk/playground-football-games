@@ -184,7 +184,7 @@ export default function CultHeroPage({ dailyDone, onDailyComplete }: Props) {
           <section className="ch-complete-panel">
             <div className="ch-panel-label">PLAYER DATA CHECK</div>
             <h2>NOT ENOUGH<br />VERIFIED FILES.</h2>
-            <p>The current archive sample does not contain five fully verified players with one from each of the Big Five leagues. Retry the archive rather than filling the daily set with incomplete or mismatched records.</p>
+            <p>The current archive sample has {mysteries.length} clue-ready profiles. Retry the archive rather than generating guesses from incomplete career records.</p>
             <button className="arc-button" onClick={retry}>RETRY PLAYER ARCHIVE ↻</button>
           </section>
         ) : runComplete ? (
