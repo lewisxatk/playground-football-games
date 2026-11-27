@@ -447,7 +447,7 @@ This section records the separate gameplay-rework branch so work is not confused
 - [x] Confirmed Tournament Nation uses five guesses, limits practice to five completed runs per UTC day on the same browser, and persists the count locally.
 - [x] Confirmed Link Up has a ten-run daily practice allowance stored locally.
 - [x] Confirmed Strands supports pointer-based drag selection and its board CSS disables browser touch scrolling/selection on the puzzle surface.
-- [!] These are source-code inspections only. The branch has not yet passed a fresh CI run in this continuation and has not been deployed or manually tested on iPhone Safari.
+- [!] GitHub Actions CI run `46006767271` was triggered for checkpoint commit `dce08f3f6da38580376b81221c807a43299a456a`, but GitHub reports it as **cancelled** (not passed). The branch has not been deployed or manually tested on iPhone Safari.
 - [!] Local-storage practice limits are device/browser-local and can be reset by clearing browser storage; they are not account-level enforcement.
 - [!] The 3,200 question bank remains generated from source archive records, not individually hand-researched general football trivia. Easy recognisability still needs human QA.
 
