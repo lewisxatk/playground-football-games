@@ -2625,8 +2625,8 @@
       "scope": "Winning goal in the 2010 men's World Cup final",
       "validAsOf": "2010-07-11",
       "source": {
-        "name": "FIFA World Cup history and records",
-        "url": "https://www.fifa.com/en/articles/",
+        "name": "FIFA: World Cup champions from 1982 to 2026",
+        "url": "https://www.fifa.com/en/tournaments/mens/worldcup/articles/world-cup-champions-1982-2026-italy-argentina-germany-brazil-france-spain",
         "checkedAt": "2026-11-27"
       },
       "reviewStatus": "verified",
@@ -2641,7 +2641,7 @@
       "category": "records",
       "difficulty": "easy",
       "difficultyReason": "A famous football milestone or foundational competition fact.",
-      "question": "Who remains the only player to score a hat-trick in a men's FIFA World Cup final?",
+      "question": "Who became the first player to score a hat-trick in a men's FIFA World Cup final?",
       "answer": "Geoff Hurst",
       "acceptedAnswers": [
         "Geoff Hurst"
@@ -2652,13 +2652,13 @@
         "Kylian Mbappé",
         "Gerd Müller"
       ],
-      "explanation": "Geoff Hurst scored three times for England against West Germany in the 1966 final.",
+      "explanation": "Geoff Hurst scored three times for England against West Germany in 1966, becoming the first player to score a hat-trick in a men's World Cup final. Kylian Mbappé later matched the feat in 2022.",
       "competition": "FIFA World Cup",
       "scope": "Only hat-trick scorer in a men's World Cup final",
       "validAsOf": "1966-07-30",
       "source": {
-        "name": "FIFA World Cup history and records",
-        "url": "https://www.fifa.com/en/articles/",
+        "name": "FIFA: Hurst hammers his way into history",
+        "url": "https://inside.fifa.com/tournaments/mens/worldcup/1966england/news/hurst-hammers-his-way-into-history-2878688",
         "checkedAt": "2026-11-27"
       },
       "reviewStatus": "verified",
@@ -2689,8 +2689,8 @@
       "scope": "Winner of inaugural UEFA Champions League edition, 1992/93",
       "validAsOf": "1993-05-26",
       "source": {
-        "name": "UEFA Champions League history",
-        "url": "https://www.uefa.com/uefachampionsleague/history/",
+        "name": "UEFA: 1992/93 – French first for Marseille",
+        "url": "https://www.uefa.com/uefachampionsleague/news/0119-0e6a0ed00b00-432257e362a9-1000/",
         "checkedAt": "2026-11-27"
       },
       "reviewStatus": "verified",
@@ -2913,8 +2913,8 @@
       "scope": "Only player to win the Champions League with three different clubs",
       "validAsOf": "2007-05-23",
       "source": {
-        "name": "UEFA Champions League final records and statistics",
-        "url": "https://www.uefa.com/uefachampionsleague/news/0252-0e98c715bb79-dea77f56e2bd-1000--final-records-and-statistics/",
+        "name": "UEFA: Champions League final facts and figures",
+        "url": "https://www.uefa.com/uefachampionsleague/news/025a-0ea7bd148aee-d58743bef67d-1000--uefa-champions-league-final-facts-and-figures/",
         "checkedAt": "2026-11-27"
       },
       "reviewStatus": "verified",
@@ -2945,8 +2945,8 @@
       "scope": "First manager to win the European Cup three times",
       "validAsOf": "1981-05-27",
       "source": {
-        "name": "UEFA Champions League final records and statistics",
-        "url": "https://www.uefa.com/uefachampionsleague/news/0252-0e98c715bb79-dea77f56e2bd-1000--final-records-and-statistics/",
+        "name": "UEFA: Champions League final facts and figures",
+        "url": "https://www.uefa.com/uefachampionsleague/news/025a-0ea7bd148aee-d58743bef67d-1000--uefa-champions-league-final-facts-and-figures/",
         "checkedAt": "2026-11-27"
       },
       "reviewStatus": "verified",
@@ -3169,8 +3169,8 @@
       "scope": "Liverpool's half-time deficit in the 2005 final",
       "validAsOf": "2005-05-25",
       "source": {
-        "name": "UEFA Champions League final records and statistics",
-        "url": "https://www.uefa.com/uefachampionsleague/news/0252-0e98c715bb79-dea77f56e2bd-1000--final-records-and-statistics/",
+        "name": "UEFA: Miracle of Istanbul – oral history",
+        "url": "https://www.uefa.com/news/025d-0f782b45c942-3e20b8c30dfa-1000--miracle-of-istanbul-an-oral-history/",
         "checkedAt": "2026-11-27"
       },
       "reviewStatus": "verified",
