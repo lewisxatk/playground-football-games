@@ -63,8 +63,11 @@ export function validateFootballFacts(facts: FootballFact[]) {
     if (!difficulties.has(fact.difficulty)) errors.push(id + ": missing or invalid difficulty tier.");
     if (!fact.difficultyReason?.trim()) errors.push(id + ": missing difficulty rationale.");
     if (!fact.competition?.trim() || !fact.scope?.trim()) errors.push(id + ": missing competition/statistical scope.");
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(fact.validAsOf ?? "")) errors.push(id + ": validAsOf must be an ISO date.");
-    if (!fact.source?.name || !/^https?:\/\//.test(fact.source?.url ?? "") || !fact.source?.checkedAt) errors.push(id + ": missing source provenance.");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fact.validAsOf ?? "")) errors.push(id + ": validAsOf must be an ISO verification date.");
+    if (fact.eventDate && !/^\d{4}-\d{2}-\d{2}$/.test(fact.eventDate)) errors.push(id + ": eventDate must be an ISO date.");
+    if (!fact.source?.name || !/^https:\/\//.test(fact.source?.url ?? "") ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(fact.source?.checkedAt ?? "")) errors.push(id + ": missing or invalid HTTPS source provenance.");
+    if (fact.validAsOf !== fact.source?.checkedAt) errors.push(id + ": validAsOf must match source.checkedAt; use eventDate for historic events.");
     if (fact.reviewStatus !== "verified") errors.push(id + ": not approved for live content.");
     if (!Array.isArray(fact.gameModes) || !fact.gameModes.length) errors.push(id + ": no native quiz mode mapping.");
     if (fact.gameModes?.some(mode => !["timed-quiz","the-climb"].includes(mode))) errors.push(id + ": use a game-specific converter before mapping to other games.");
