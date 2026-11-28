@@ -439,3 +439,35 @@ At the end of every implementation update:
 4. Improve Tournament Nation's historical club matching with canonical player identity and dated spells where available; keep missing clues explicit.
 5. Complete a structured desktop/iPhone test matrix across all 16 games (loading, difficulty, daily/practice, timers, touch, scoring, reduced motion and no-repeat behaviour).
 
+
+
+## 17. Career File compact pathway and scoring update (2026-11-28)
+
+- [x] Replaced the season-by-season table with one chronological row per Premier League club spell.
+- [x] Club rows show the club and first/last recorded PL season range, with appearances visible.
+- [x] Added separate Goals and Assists columns, blurred while a round is in progress.
+- [x] Added independent stat unlocks: Goals −100 points; Assists −100 points.
+- [x] Missing goals/assists stay as an explicit dash; unavailable columns cannot be purchased or charged.
+- [x] Reworked hints and costs: Position −60; first-name initial −45; surname initial −45; current age −110; international caps −150 when recorded; nationality −200.
+- [x] Unavailable hints are hidden rather than displayed as dead "NO DATA" controls.
+- [x] Completing or losing a round reveals the hidden goals/assists columns; no further point purchase is needed after the result.
+- [x] Kept wrong guesses at −50 and the starting score at 1,000.
+- [!] Honours are not yet offered by the active Quiz FC PL endpoint. Research identified OpenFootballBase-Data as a possible enrichment source: it publishes national-title squad lists, competition winners and Ballon d’Or rankings under a Wikipedia-derived CC BY-SA 4.0 data licence. National-title lists can include squad members who did not play, so the hint must be labelled precisely and not presented as a medal actually won by the player.
+- [!] International caps are not populated by the current Quiz FC Premier League source; the hint appears only for player records where a verified cap total exists. A separate international-stat enrichment is needed for broad coverage.
+- [!] Validate club-spell aggregation against known player examples and verify that missing/partial season stats are not presented as complete totals.
+- [x] Removed the unreliable Transfermarkt-fee hint from Career File so the new hint list and point economy are consistent.
+- [!] Run GitHub Actions typecheck/data validation/production build and test the deployed Career File on iPhone Safari before calling this update complete.
+
+
+## 18. Career File weighted player pool (2026-11-28)
+
+- [x] Set the draw mix to 95% players with recorded Premier League careers (current and former), 3% curated EFL legends who never played in the Premier League, and 2% global legends from other leagues.
+- [x] Practice selection follows an exact 100-pick cycle (95 PL / 3 EFL / 2 world); the daily draw is date-deterministic.
+- [x] Relaxed the Premier League pool to accept one qualifying PL club spell and one full recorded PL season row, so one-club former PL players are not excluded.
+- [x] Added curated EFL and global legend name lists, resolved first against OpenFootballBase infobox career records and then Wikidata P54 club-membership history; missing statistics stay blank.
+- [x] Added EFL/global club-spell appearances and goals from sourced Wikipedia infobox career rows, with explicit unverified/non-league-only warning in the UI.
+- [x] Filtered youth international teams out of the OpenFootballBase senior-cap hint.
+- [x] Added pool mix indicator and source/research links to Career File.
+- [!] Verify curated names resolve to OpenFootballBase or Wikidata QIDs and check actual club spells/stat values on examples before production release.
+- [!] Confirm the 95/3/2 ratio in a 100-round automated draw test and test deterministic daily selection.
+- [!] Run CI and mobile browser tests before merging/deploying.
