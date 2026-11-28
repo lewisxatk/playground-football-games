@@ -75,10 +75,10 @@ function archivePlayerCandidate(player:Player,raw:ArchiveGamePlayer):Candidate{
 }
 
 const MODES: { name:Mode; note:string; colour:string }[] = [
-  {name:"EASY",note:"Famous players with long, well-documented careers",colour:"lime"},
-  {name:"MEDIUM",note:"Established players and recognisable career paths",colour:"blue"},
-  {name:"HARD",note:"Less obvious players and more demanding career clues",colour:"orange"},
-  {name:"EXTREME",note:"Specialist careers, shorter records and fewer obvious clues",colour:"violet"}
+  {name:"EASY",note:"Well-known Premier League careers and major clubs",colour:"lime"},
+  {name:"MEDIUM",note:"Established Premier League players with less obvious paths",colour:"blue"},
+  {name:"HARD",note:"Less familiar players and deeper Premier League knowledge",colour:"orange"},
+  {name:"EXTREME",note:"Shorter, older or specialist Premier League careers",colour:"violet"}
 ];
 
 const LEAGUES: {label:string;code:LeagueCode}[] = [
@@ -149,12 +149,12 @@ const ageOf=(p:Player)=>{
   return String(age);
 };
 function fits(c:Candidate,m:Mode){
-  // Difficulty is based on career footprint, not a short hard-coded celebrity list.
-  // The archive remains the source of the career and season rows shown in each file.
-  if(m==="EASY")return c.apps>=550&&c.clubs>=3;
-  if(m==="MEDIUM")return c.apps>=220&&c.clubs>=3;
-  if(m==="HARD")return c.apps>=70&&c.clubs>=2;
-  return c.apps>=20&&c.apps<220&&c.clubs>=2;
+  // Candidate apps/clubs describe ONLY the selected competition's clubs.
+  // Keep bands disjoint so a player cannot appear in several difficulties.
+  if(m==="EASY")return c.apps>=450&&c.clubs>=2;
+  if(m==="MEDIUM")return c.apps>=250&&c.apps<450&&c.clubs>=2;
+  if(m==="HARD")return c.apps>=100&&c.apps<250&&c.clubs>=2;
+  return c.apps>=20&&c.apps<100&&c.clubs>=2;
 }
 function positionLabel(raw:string){
   const value=raw.toUpperCase();
@@ -213,12 +213,12 @@ function careerHint(p:Player):Hint[]{
     {id:"age",label:"Age / birth year",cost:90,value:age?age+" years old":p.birthDate?"Born "+p.birthDate.slice(0,4):"Birth date not recorded",available:!!(age||p.birthDate)},
     {id:"height",label:"Height",cost:70,value:p.height?p.height+" cm":"Height not recorded",available:p.height!=null},
     {id:"birthplace",label:"Birthplace",cost:100,value:p.birthplace||"Birthplace not recorded",available:!!p.birthplace},
-    {id:"first",label:"First senior club",cost:120,value:first?.club??"",available:!!first?.club},
-    {id:"last",label:"Latest listed club",cost:120,value:last?.club??"",available:!!last?.club},
+    {id:"first",label:"First Premier League club",cost:120,value:first?.club??"",available:!!first?.club},
+    {id:"last",label:"Latest Premier League club",cost:120,value:last?.club??"",available:!!last?.club},
     {id:"span",label:"Career span",cost:100,value:first?.start&&last?.end?first.start+"–"+last.end:"Career dates are incomplete",available:!!(first?.start||last?.end)},
     {id:"clubs",label:"Number of clubs",cost:90,value:new Set(p.spells.map(s=>s.club)).size+" different clubs",available:true},
-    {id:"apps",label:"Senior appearances",cost:150,value:fmt(totalApps)+" recorded appearances",available:totalApps>0},
-    {id:"goals",label:"Senior goals",cost:150,value:fmt(totalGoals)+" recorded goals",available:totalGoals>0},
+    {id:"apps",label:"Appearances at PL clubs",cost:150,value:fmt(totalApps)+" recorded appearances",available:totalApps>0},
+    {id:"goals",label:"Goals at PL clubs",cost:150,value:fmt(totalGoals)+" recorded goals",available:totalGoals>0},
     {id:"international",label:"International record",cost:160,value:p.caps==null?"International caps not recorded":fmt(p.caps)+" caps · "+fmt(p.internationalGoals)+" goals"+(p.teams.length?" · "+p.teams.slice(0,5).join(", "):""),available:p.caps!=null||p.teams.length>0}
   ];
 }
@@ -257,8 +257,8 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     const unused=options.filter(c=>!seen.current.has(c.id));
     const source=dailyDraw?options:(unused.length?unused:options);
     if(!dailyDraw&&!unused.length){seen.current.clear();persistRecentCareerIds(seen.current);setNote("You have worked through this difficulty and league pool. The player draw has restarted.");}
-    // All Top Five mixes English clubs with Spain, Italy, Germany and France.
-    // Individual league filters remain dedicated to the selected competition.
+    // Candidate selection and visible clues stay inside the selected competition.
+    // The public game currently exposes Premier League only.
     const balancedSource=league==="ALL"?(()=>{
       const english=source.filter(candidate=>candidate.region==="ENGLISH");
       const international=source.filter(candidate=>candidate.region==="INTERNATIONAL");
@@ -283,7 +283,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
           const cached=staticPlayers.current.get(candidate.id);
           return Boolean(cached&&randomFreeRows(makeRows(cached),dailyDraw?dailySeed+":"+candidate.id:undefined).length>=2);
         })
-        :await getStatEligibleCandidates(draw);
+        :await getStatEligibleCandidates(draw,league);
       const rankByCoverage=(items:Candidate[])=>[...items].sort((a,b)=>b.statSeasons-a.statSeasons||a.id.localeCompare(b.id));
       const englishEligible=rankByCoverage(eligible.filter(candidate=>candidate.region==="ENGLISH"));
       const internationalEligible=rankByCoverage(eligible.filter(candidate=>candidate.region==="INTERNATIONAL"));
@@ -294,7 +294,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
       for(const choice of ranked.slice(0,staticPlayers.current.size?36:6)){
         seen.current.add(choice.id);persistRecentCareerIds(seen.current);
         try{
-          const record=staticPlayers.current.get(choice.id)??await getPlayer(choice.id);
+          const record=staticPlayers.current.get(choice.id)??await getPlayer(choice.id,league);
           const timeline=makeRows(record);
           const free=randomFreeRows(timeline,dailyDraw?dailySeed+":"+choice.id:undefined);
           if(!timeline.length||free.length<2){lastProblem="This career did not have two complete, matching season-stat clues.";continue;}
@@ -395,7 +395,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     </header>
     <section className="cf-hero">
       <div className="cf-hero-copy">
-        <div className="cf-eyebrow"><i/> THE PLAYER IDENTITY GAME <span>ISSUE № 01</span></div>
+        <div className="cf-eyebrow"><i/> PREMIER LEAGUE PLAYER IDENTITY GAME <span>ISSUE № 01</span></div>
         <h1>CAREER<br/><em>FILE.</em></h1>
         <p>One career. Dozens of clues. One name to find. Study the seasons, follow the transfers and back your football brain.</p>
         <div className="cf-hero-foot"><b>SELECT A FILE.</b><span>DON'T GUESS. INVESTIGATE.</span></div>
@@ -435,7 +435,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
       {error&&<div className="cf-error"><strong>THE ARCHIVE HIT A SNAG</strong><p>{error}</p><button onClick={()=>window.location.reload()}>TRY AGAIN ↗</button></div>}
       {player&&!busy&&!loadingPlayer&&<div className="cf-layout">
         <section className="cf-record">
-          <div className="cf-record-head"><span>CONFIDENTIAL / SENIOR CAREER RECORD</span><span>SUBJECT: ████████</span></div>
+          <div className="cf-record-head"><span>CONFIDENTIAL / PREMIER LEAGUE CLUB RECORD</span><span>SUBJECT: ████████</span></div>
           <div className="cf-subject"><div><small>PLAYER UNKNOWN</small><strong>THE<br/><em>JOURNEY.</em></strong><span>{rows.length} TIMELINE ENTRIES / {player.spells.length} CLUB SPELLS</span></div><div className="cf-crest-stack"><span>PG</span><span>?</span><span>90</span></div></div>
           <div className="cf-timeline-toolbar"><div><b>CAREER TIMELINE</b><small>{revealedCount} / {rows.length} REVEALED</small></div>
             <button onClick={revealAll} disabled={status!=="playing"||revealedCount===rows.length}>REVEAL FULL CAREER · {Math.max(0,rows.length-revealedCount)*35} PTS</button></div>
@@ -448,8 +448,8 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
               <td><span className={shown?"":"cf-blur"}>{r.covered?fmt(r.goals):"—"}</span></td>
               <td>{shown?<span className="cf-revealed-tick">{freeRows.includes(r.id)?"FREE":"✓"}</span>:<button className="cf-reveal-row" onClick={()=>revealRow(r)} disabled={status!=="playing"}>−35 ↗</button>}</td>
             </motion.tr>;})}</tbody></table></div>
-          <div className="cf-record-foot"><span>APPS / GOALS: SOURCE TOTALS ACROSS LISTED COMPETITION GROUPS</span><span>— = NOT RECORDED</span></div>
-          <div className="cf-source-note">Career-spell totals are shown separately from season totals. Season figures combine the source’s listed non-total competition groups for that club and season. Missing totals are not guessed; source statistics are unverified. <a href={player.wikipediaUrl} target="_blank" rel="noreferrer">OPEN THE ORIGINAL PLAYER SOURCE ↗</a></div>
+          <div className="cf-record-foot"><span>APPS / GOALS: RECORDED TOTALS AT THESE CLUBS</span><span>— = NOT RECORDED</span></div>
+          <div className="cf-source-note">Career clues are restricted to Premier League clubs. Season figures combine the source’s listed non-total competition groups for each club and season, so they are not league-only totals. Missing totals are not guessed; source statistics are unverified. <a href={player.wikipediaUrl} target="_blank" rel="noreferrer">OPEN THE ORIGINAL PLAYER SOURCE ↗</a></div>
         </section>
         <aside className="cf-side">
           <div className="cf-scorecard"><div><small>YOUR SCORE</small><strong>{score.toLocaleString("en-GB")}<i> PTS</i></strong></div><div><small>GUESSES LEFT</small><strong>{left}<i> / 10</i></strong></div>
@@ -478,7 +478,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     </section>
     <section className="cf-bottom-strip"><div><span>THE PLAYGROUND PLAYER ARCHIVE</span><strong>READ THE GAME.<br/>READ THE CAREER.</strong></div>
       <div className="cf-source-credits"><b>DATA & SOURCES</b>
-        <p>Career timelines derive from OpenFootballBase. Its five major-league squad archive begins in 2000/01, although a player’s infobox career may show earlier spells. The playable draw requires at least two club-season stat rows. The documented stat_club source only covers players of Champions League clubs from seven major countries since 2010, so this is a curated playable archive, not every professional footballer. Appearance and goal figures are published as found on English Wikipedia and are explicitly unverified; missing seasons remain blank. Wikipedia text is CC BY-SA 4.0; Wikidata is CC0.</p>
+        <p>Career File is currently Premier League-only. Both player selection and the displayed club timeline are filtered through the source’s Premier League club list; overseas spells are excluded. This is not yet a complete history of every English club or every professional player. The underlying OpenFootballBase career and club-season figures have coverage limits and are not independently verified; source gaps remain blank. Wikipedia-derived text is CC BY-SA 4.0; Wikidata-derived fields are CC0.</p>
         <p>Transfer clues use Tiago Cumetti’s Football Transfers Dataset (2005–2024), collected from Transfermarkt pages. It is CC BY 4.0 and includes undisclosed or missing fees. No match does not mean a free transfer.</p>
         <a href="https://github.com/florentfougeres/OpenFootballBase-Data" target="_blank" rel="noreferrer">OPEN FOOTBALL DATA SOURCE ↗</a>
         <a href="https://doi.org/10.5281/zenodo.17921143" target="_blank" rel="noreferrer">TRANSFER DATA / DOI ↗</a>
