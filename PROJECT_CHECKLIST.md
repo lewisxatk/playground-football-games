@@ -511,19 +511,19 @@ At the end of every implementation update:
 
 ## 15. Football Grid — agreed product and design brief (2026-11-28)
 
-**Decision status:** Product direction agreed; visual direction awaiting user selection. Do not begin the gameplay redesign until the user chooses a visual concept and confirms the rules/structure.
+**Decision status:** Editorial Clubhouse selected and implementation started on 2026-11-28. Design is committed in code; gameplay implementation is partial and remains unverified until CI, data-backed generation tests and iPhone acceptance pass.
 
 ### Core game direction
-- [ ] 4×4 board: 4 row criteria × 4 column criteria = 16 intersections.
-- [ ] Initial core format: club × nationality; every cell needs a player satisfying both.
-- [ ] One player may be used only once per grid.
-- [ ] Correct answers lock the cell and show player identity; incorrect answers provide clear feedback and leave the cell available.
-- [ ] Searchable player autocomplete with canonical identity, aliases, accent/diacritic handling and disambiguation.
-- [ ] Four real difficulty tiers: Easy, Medium, Hard, Extreme; difficulty changes criteria/player rarity and attempt allowance, not merely colour.
-- [ ] Daily shared puzzle with stable server/build seed; unlimited practice uses separate random boards and does not affect daily streak.
-- [ ] Score out of 16, completion %, attempt tracking, rarity scoring, result/share screen and end-of-game alternative answers.
+- [~] 4×4 board and 16 intersections are implemented in the current Grid page; build/runtime verification pending.
+- [~] Club × Nation and Club × Club selectors and relationship lookups are implemented; actual live-pool generation coverage is not yet measured.
+- [~] Duplicate-player prevention and a distinct-player matching check are implemented; automated runtime tests pending.
+- [~] Correct cells lock; wrong answers deduct points and leave cells open; runtime QA pending.
+- [~] Custom mobile autocomplete searches the sampled archive; matching normalises accents and aliases. Full canonical identity coverage remains outstanding.
+- [~] Easy/Medium/Hard/Extreme now have different candidate thresholds and attempt limits; statistical calibration against live archive remains outstanding.
+- [~] Daily uses a deterministic UTC seed and practice uses separate random seeds; server-persisted puzzle versioning and cross-device consistency are outstanding.
+- [~] Score, cells-completed progress, attempts, rarity bonuses, share action and assigned-answer review are implemented; real device testing pending.
 - [ ] Rarity initially based on eligible answer-pool size; later improve with actual anonymised answer-frequency data if collected.
-- [ ] Optional hint system; solution reveal and post-game learning/review.
+- [~] Per-cell paid hint and solution review are implemented; runtime QA pending.
 - [ ] Future grid variants: club × club, club × trophy, club × league, club × position. Do not compromise clarity of the core game.
 
 ### Board generation and validation (mandatory)
@@ -537,21 +537,21 @@ At the end of every implementation update:
 - [ ] Test thousands of generated boards and report empty/sparse intersections, duplicate conflicts and difficulty distribution.
 
 ### Visual and identity system
-- [ ] User to choose between three mockup directions: Editorial Clubhouse (warm cream/lime), Night Match (dark stadium/lime), Modern Scoreboard (white/orange).
-- [ ] Use authentic club crests and national-team identity/flags in row and column headers where available; do not use AI-generated approximations as actual crests.
-- [ ] Reuse existing `ClubBadge` component and indexed SVG badge library first; audit path resolution across English, Spanish, Italian, German, French and global clubs.
+- [x] User selected Editorial Clubhouse: warm ivory, black editorial typography and lime accents, with a standalone page identity.
+- [~] Existing real ClubBadge SVG resolver is used on club headers; CountryFlag supplies national flags. Dedicated verified national-team crest assets remain outstanding.
+- [~] Existing `ClubBadge` component and indexed SVG library are reused; representative country/club path audit remains outstanding.
 - [ ] Add verified national-team crests/flags, stable identity mapping and fallback initials/flags when assets are missing.
 - [ ] Reserve fixed image dimensions, lazy-load and cache assets; maintain readable names alongside crests for accessibility.
 - [ ] Audit asset provenance, licence/terms and trademark display rights; no implication of club endorsement.
-- [ ] Mobile-first responsive board: readable 4×4 cells on iPhone, compact row/column labels, selected-cell/player-entry flow, clear completed/incorrect/empty states.
+- [~] Mobile-first Editorial Clubhouse CSS and selected-cell/player-entry flow are implemented; manual iPhone Safari acceptance remains outstanding.
 - [ ] Desktop board scales up without changing interaction logic; keyboard accessibility and visible focus states.
 
 ### Implementation stages
-- [ ] Audit current Football Grid component, player lookup, existing badge resolver and archive relationship coverage before replacing anything.
-- [ ] Agree visual concept and exact rules with user.
+- [~] Existing Grid, archive lookup and badge resolver audited; data coverage still needs a measured audit.
+- [x] Editorial Clubhouse selected; core rules agreed in this brief.
 - [ ] Build canonical player-to-club and player-to-nationality eligibility index, including provenance and coverage flags.
 - [ ] Build deterministic valid-board generator and test suite.
-- [ ] Implement input/autocomplete, cell state, duplicate prevention, scoring, rarity and results.
-- [ ] Implement daily/practice separation and puzzle versioning.
+- [~] Implemented in source; build and interaction tests pending.
+- [~] Daily/practice separation implemented; persistent puzzle versioning outstanding.
 - [ ] Manual iPhone Safari + desktop acceptance tests; verify no impossible cells or false-positive players.
 - [ ] Update this checklist with evidence; do not mark done from a mock-up alone.
