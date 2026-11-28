@@ -1136,7 +1136,7 @@ function LinkUpPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:
   return()=>{live=false;};
  },[retryToken]);
  const pool=useMemo(()=>archivePlayers.map(archivePlayerToGridPlayer),[archivePlayers]);
- const candidateQuestions=useMemo(()=>clubIndex&&pool.length?buildArchiveLinkUpQuestions(pool,clubIndex,hashSeed(seed+":"+difficulty)):[],[clubIndex,pool,seed,difficulty]);
+ const candidateQuestions=useMemo(()=>clubIndex&&pool.length?buildArchiveLinkUpQuestions(pool,clubIndex,hashSeed(seed+":"+difficulty),difficulty):[],[clubIndex,pool,seed,difficulty]);
  const questions=useMemo(()=>{
   const ordered=shuffle(candidateQuestions,hashSeed(seed+":"+difficulty+":ten-links"));
   const selected:ArchiveLinkQuestion[]=[],answers=new Set<string>();
