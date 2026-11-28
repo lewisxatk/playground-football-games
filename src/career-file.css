@@ -98,3 +98,16 @@
  .cf-pathway-table td:first-child strong{font-size:10px}
  .cf-pathway-years{font-size:8px}
 }
+
+
+/* Weighted mixed player pool: Premier League, EFL and global legends. */
+.cf-pool-mix{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.cf-pool-mix-items{display:flex;align-items:center;gap:clamp(12px,2.2vw,28px);flex-wrap:wrap}
+.cf-pool-mix-items span{font-size:9px;font-weight:800;letter-spacing:.09em;color:var(--cf-muted,#858585);white-space:nowrap}
+.cf-pool-mix-items b{font-size:18px;letter-spacing:-.04em;color:var(--cf-ink,#171717);margin-right:5px}
+@media(max-width:620px){
+ .cf-pool-mix{align-items:flex-start}
+ .cf-pool-mix-items{width:100%;display:grid;grid-template-columns:1fr;gap:7px}
+ .cf-pool-mix-items span{font-size:9px}
+ .cf-pool-mix-items b{font-size:16px;min-width:40px;display:inline-block}
+}
