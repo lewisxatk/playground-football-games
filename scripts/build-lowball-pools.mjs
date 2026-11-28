@@ -48,7 +48,12 @@ function makeAnswers(rows) {
     };
   });
   const surnameCounts = new Map();
+  const aliasOwners = new Map();
   for (const answer of answers) {
+    for (const alias of answer.aliases) {
+      const key = normalise(alias);
+      if (key) aliasOwners.set(key, answer.id);
+    }
     const surname = answer.name.split(/\s+/).at(-1) ?? "";
     const key = normalise(surname);
     if (key) surnameCounts.set(key, (surnameCounts.get(key) ?? 0) + 1);
@@ -56,7 +61,10 @@ function makeAnswers(rows) {
   for (const answer of answers) {
     const surname = answer.name.split(/\s+/).at(-1) ?? "";
     const key = normalise(surname);
-    if (key && surnameCounts.get(key) === 1 && !answer.aliases.some(alias => normalise(alias) === key)) answer.aliases.push(surname);
+    if (key && surnameCounts.get(key) === 1 && !aliasOwners.has(key)) {
+      answer.aliases.push(surname);
+      aliasOwners.set(key, answer.id);
+    }
   }
   return answers;
 }
