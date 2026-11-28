@@ -679,7 +679,7 @@ function buildGridPuzzle(players:GamePlayer[],difficulty:GridDifficulty,kind:Gri
  const clubKeys=[...clubPlayers.entries()].filter(([,v])=>v.length>=band).map(([k])=>k);
  const nationKeys=[...nationPlayers.entries()].filter(([,v])=>v.length>=band).map(([k])=>k);
  const pairKeys=[...clubPairs.entries()].filter(([,v])=>v.length>=band).map(([k])=>k);
- const rowKeys=kind==="CLUB_CLUB"?[...clubKeys].sort((a,b)=>(clubNeighbors.get(b)?.size??0)-(clubNeighbors.get(a)?.size??0)):clubKeys;
+ const rowKeys=kind==="CLUB_CLUB"?[...clubKeys].sort((a,b)=>(clubNeighbors.get(b)?.size??0)-(clubNeighbors.get(a)?.size??0)).slice(0,100):clubKeys;
  const colKeys=kind==="CLUB_NATION"?nationKeys:clubKeys;
  if(rowKeys.length<4||colKeys.length<4)return null;
  let best:GridPuzzle|null=null;
