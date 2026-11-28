@@ -464,10 +464,10 @@ At the end of every implementation update:
 - [x] Set the draw mix to 95% players with recorded Premier League careers (current and former), 3% curated EFL legends who never played in the Premier League, and 2% global legends from other leagues.
 - [x] Practice selection follows an exact 100-pick cycle (95 PL / 3 EFL / 2 world); the daily draw is date-deterministic.
 - [x] Relaxed the Premier League pool to accept one qualifying PL club spell and one full recorded PL season row, so one-club former PL players are not excluded.
-- [x] Added curated EFL and global legend name lists, resolved against OpenFootballBase career records rather than invented career data.
+- [x] Added curated EFL and global legend name lists, resolved first against OpenFootballBase infobox career records and then Wikidata P54 club-membership history; missing statistics stay blank.
 - [x] Added EFL/global club-spell appearances and goals from sourced Wikipedia infobox career rows, with explicit unverified/non-league-only warning in the UI.
 - [x] Filtered youth international teams out of the OpenFootballBase senior-cap hint.
 - [x] Added pool mix indicator and source/research links to Career File.
-- [!] Verify curated names resolve to OpenFootballBase QIDs and check all player spells/stat values on actual examples before production release.
+- [!] Verify curated names resolve to OpenFootballBase or Wikidata QIDs and check actual club spells/stat values on examples before production release.
 - [!] Confirm the 95/3/2 ratio in a 100-round automated draw test and test deterministic daily selection.
 - [!] Run CI and mobile browser tests before merging/deploying.
