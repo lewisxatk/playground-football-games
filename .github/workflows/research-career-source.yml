@@ -1,0 +1,19 @@
+name: Research Career File source schema
+
+on:
+  push:
+    branches: [fix/career-file-tier-pool-v2]
+    paths:
+      - scripts/inspect-career-source.mjs
+      - .github/workflows/research-career-source.yml
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Inspect published Quiz FC dataset schema
+        run: node scripts/inspect-career-source.mjs
