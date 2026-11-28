@@ -50,10 +50,27 @@ for (const [game, keys] of Object.entries(games)) {
 
   for (const tier of tiers) {
     const counts = byTier[tier];
-    // A ten-question practice round needs eight English-domestic and two
-    // international questions; the five-question Climb needs four and one.
-    if (counts.ENGLISH_DOMESTIC < 8 || counts.INTERNATIONAL < 3) {
-      fail(game + " " + tier + " cannot satisfy the English-first 75/25 round allocation: " + JSON.stringify(counts));
+    // Each tier must support a ten-question practice round (9 English + 1
+    // approved international question) without falling back to unrelated fixtures.
+    if (counts.ENGLISH_DOMESTIC < 9 || counts.INTERNATIONAL < 1) {
+      fail(game + " " + tier + " cannot satisfy the English-first 90/10 practice allocation: " + JSON.stringify(counts));
+    }
+  }
+
+  // The 17-question daily mix is fixed at 5 Easy, 5 Medium, 5 Hard and 2
+  // Extreme. It uses 15 English domestic questions and only two approved
+  // Champions League / World Cup questions, both drawn from Hard/Extreme.
+  const dailyMinimums = {
+    EASY: { ENGLISH_DOMESTIC: 5, INTERNATIONAL: 0 },
+    MEDIUM: { ENGLISH_DOMESTIC: 5, INTERNATIONAL: 0 },
+    HARD: { ENGLISH_DOMESTIC: 4, INTERNATIONAL: 1 },
+    EXTREME: { ENGLISH_DOMESTIC: 1, INTERNATIONAL: 1 }
+  };
+  for (const tier of tiers) {
+    for (const region of ["ENGLISH_DOMESTIC", "INTERNATIONAL"]) {
+      if (byTier[tier][region] < dailyMinimums[tier][region]) {
+        fail(game + " daily mix cannot satisfy " + tier + " " + region + " quota: " + JSON.stringify(byTier[tier]));
+      }
     }
   }
 
