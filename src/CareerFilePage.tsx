@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { motion } from "motion/react";
-import { getCandidates, getPlayer, getStatEligibleCandidates, getTransferHints, type Candidate, type LeagueCode, type Player, type Transfer, type ArchiveGamePlayer } from "./careerFileData";
+import { getCandidates, getPlayer, getStatEligibleCandidates, getTransferHints, type Candidate, type LeagueCode, type Player, type Transfer, type ArchiveGamePlayer, type CareerDifficulty } from "./careerFileData";
 import { getStaticArchivePlayers } from "./useArchivePlayers";
 import "./career-file.css";
 
-type Mode = "EASY" | "MEDIUM" | "HARD" | "EXTREME";
+type Mode = CareerDifficulty;
 type Row = { id:string; season:string; club:string; clubKey:string; loan:boolean; apps:number|null; goals:number|null; covered:boolean; spellApps:number|null; spellGoals:number|null };
 type FreeNote = { id:string; label:string; value:string };
 type Hint = { id:string; label:string; cost:number; value:string; available:boolean };
@@ -283,9 +283,9 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     // difficulty/league. Subsequent files are random practice and avoid repeats.
     // Keep the phone draw bounded: 72 candidates and at most six full lookups.
     const dailyCandidates=dailyDraw?[...balancedSource].sort((a,b)=>a.id.localeCompare(b.id)):balancedSource;
-    const draw=shuffleCandidates(dailyCandidates,72,dailyDraw?dailySeed:undefined);
+    const draw=shuffleCandidates(dailyCandidates,180,dailyDraw?dailySeed:undefined);
     setLoadingPlayer(true);
-    setNote("Picking a fresh file from "+options.length.toLocaleString("en-GB")+" eligible careers…");
+    setNote("Picking a fresh file from "+options.length.toLocaleString("en-GB")+" sampled careers in this difficulty…");
     try{
       const eligible=staticPlayers.current.size
         ?draw.filter(candidate=>{
@@ -308,7 +308,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
           const free=randomFreeRows(timeline,dailyDraw?dailySeed+":"+choice.id:undefined);
           if(!timeline.length||free.length<2){lastProblem="This career did not have two complete, matching season-stat clues.";continue;}
           const note=makeFreeNote(record,dailyDraw?dailySeed+":"+choice.id:undefined);
-          setPlayer(record);setRows(timeline);setFreeRows(free);setRevealed(free);setFreeNote(note);
+          seen.current.add(choice.id);persistRecentCareerIds(seen.current);\n          setPlayer(record);setRows(timeline);setFreeRows(free);setRevealed(free);setFreeNote(note);
           setOpened(note?[note.id]:[]);setRound(n=>n+1);setStatus("playing");setNote("");
           return;
         }catch(problem){
@@ -340,7 +340,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
         }
       }
       staticPlayers.current.clear();
-      const list=await getCandidates(league);
+      const list=await getCandidates(league,mode);
       if(!live)return;
       setPool(list);
       await newPlayer(list,mode);
