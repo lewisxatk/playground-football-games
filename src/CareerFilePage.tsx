@@ -203,7 +203,7 @@ function hasOneUsablePLRow(rows:Row[]):boolean{
  return rows.some(row=>row.covered&&row.apps!==null&&row.goals!==null);
 }
 function hasTwoUsableCareerRows(rows:Row[]):boolean{
- const clubs=new Set(rows.filter(row=>row.covered&&(row.apps!==null||row.goals!==null)).map(row=>row.clubKey));
+ const clubs=new Set(rows.filter(row=>row.covered).map(row=>row.clubKey));
  return clubs.size>=2;
 }
 function matches(input:string,p:Player){
