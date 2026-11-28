@@ -15,6 +15,41 @@ console.log("CONTENT_LENGTH_BYTES", bytes || "not supplied");
 console.log("ROOT_TYPE", Array.isArray(payload) ? "array" : typeof payload);
 console.log("ROOT_KEYS", Object.keys(payload ?? {}).join(", "));
 console.log("META", JSON.stringify(payload?.meta ?? null));
+console.log("JSON_CHAR_LENGTH", JSON.stringify(payload).length);
+const clubSeasonLevel = new Map((payload.clubSeasons ?? []).map(([year, clubIndex, level]) => [year + "|" + clubIndex, level]));
+const statsByPlayer = new Map();
+for (const row of payload.stats ?? []) {
+  const [playerIndex, year, clubIndex, apps, goals] = row;
+  const list = statsByPlayer.get(playerIndex) ?? [];
+  list.push({ year, clubIndex, apps, goals, level: clubSeasonLevel.get(year + "|" + clubIndex) ?? "none" });
+  statsByPlayer.set(playerIndex, list);
+}
+const careerByPlayer = new Map((payload.careerTotals ?? []).map(([playerIndex, apps, goals, appsFlag, goalsFlag, linesFlag]) => [
+  playerIndex, { apps, goals, appsComplete: appsFlag === 1 && typeof apps === "number", goalsComplete: goalsFlag === 1 && typeof goals === "number", linesComplete: linesFlag === 1 }
+]));
+const tiers = { EASY: 0, MEDIUM: 0, HARD: 0, EXTREME: 0 };
+let complete10Plus = 0;
+let twoFullSeasons = 0;
+let twoFullClubs = 0;
+for (let playerIndex = 0; playerIndex < (payload.players ?? []).length; playerIndex++) {
+  const player = payload.players[playerIndex];
+  const fameRank = player[6];
+  const total = careerByPlayer.get(playerIndex);
+  const seasonRows = (statsByPlayer.get(playerIndex) ?? []).filter(row => row.level === "full" && typeof row.apps === "number" && typeof row.goals === "number");
+  const clubs = new Set(seasonRows.map(row => row.clubIndex));
+  if (total?.appsComplete && total?.goalsComplete && player[12] === 1 && total.apps >= 10) {
+    complete10Plus++;
+    if (seasonRows.length >= 2) twoFullSeasons++;
+    if (seasonRows.length >= 2 && clubs.size >= 2) twoFullClubs++;
+    if (seasonRows.length >= 2 && clubs.size >= 2) {
+      if (fameRank <= 300) tiers.EASY++;
+      else if (fameRank <= 1200) tiers.MEDIUM++;
+      else if (fameRank <= 2500) tiers.HARD++;
+      else tiers.EXTREME++;
+    }
+  }
+}
+console.log("CANDIDATE_COUNTS", JSON.stringify({ complete10Plus, twoFullSeasons, twoFullClubs, tiers }));
 for (const key of ["competitions", "seasons", "clubs", "players", "stats", "clubSeasons", "careerTotals", "lineups"]) {
   const rows = payload?.[key];
   if (Array.isArray(rows) && rows.length) {
