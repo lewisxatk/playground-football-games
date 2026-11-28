@@ -439,3 +439,20 @@ At the end of every implementation update:
 4. Improve Tournament Nation's historical club matching with canonical player identity and dated spells where available; keep missing clues explicit.
 5. Complete a structured desktop/iPhone test matrix across all 16 games (loading, difficulty, daily/practice, timers, touch, scoring, reduced motion and no-repeat behaviour).
 
+
+
+## 17. Career File compact pathway and scoring update (2026-11-28)
+
+- [x] Replaced the season-by-season table with one chronological row per Premier League club spell.
+- [x] Club rows show the club and first/last recorded PL season range, with appearances visible.
+- [x] Added separate Goals and Assists columns, blurred while a round is in progress.
+- [x] Added independent stat unlocks: Goals −100 points; Assists −100 points.
+- [x] Missing goals/assists stay as an explicit dash; unavailable columns cannot be purchased or charged.
+- [x] Reworked hints and costs: Position −60; first-name initial −45; surname initial −45; current age −110; international caps −150 when recorded; nationality −200.
+- [x] Unavailable hints are hidden rather than displayed as dead "NO DATA" controls.
+- [x] Completing or losing a round reveals the hidden goals/assists columns; no further point purchase is needed after the result.
+- [x] Kept wrong guesses at −50 and the starting score at 1,000.
+- [!] Honours are not yet offered: the current Premier League history source does not include a verified honours field. Add only after a separately sourced, attributable honours dataset is available.
+- [!] International caps are not populated by the current Quiz FC Premier League source; the hint appears only for player records where a verified cap total exists. A separate international-stat enrichment is needed for broad coverage.
+- [!] Validate club-spell aggregation against known player examples and verify that missing/partial season stats are not presented as complete totals.
+- [!] Run GitHub Actions typecheck/data validation/production build and test the deployed Career File on iPhone Safari before calling this update complete.
