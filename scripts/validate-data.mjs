@@ -23,7 +23,8 @@ assert.ok(Array.isArray(badges) && badges.length >= 4500, "Expected at least 4,5
 assert.ok(badges.every(path => path.startsWith("logos/") && path.endsWith(".svg")), "Badge index contains an invalid path");
 
 const englishClubIndex = JSON.parse(await readFile(new URL("../public/data/football-knowledge-football-grid-clubs.cc0.json", import.meta.url), "utf8"));
-assert.equal(englishClubIndex.licence, "CC0-1.0", "English club index must retain its CC0 licence");
+assert.equal(englishClubIndex.sourceRegistry?.england?.licence, "CC0-1.0", "English match source must retain its CC0 licence");
+assert.equal(englishClubIndex.sourceRegistry?.clubs?.licence, "CC0-1.0", "Club index source must retain its CC0 licence");
 assert.ok(Array.isArray(englishClubIndex.premierLeagueClubs), "Premier League club index is missing");
 assert.ok(Array.isArray(englishClubIndex.englishLeagueClubs), "English league club index is missing");
 const normaliseClub = value => String(value ?? "").toLocaleLowerCase("en-GB").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/&/g, " and ").replace(/\\b(?:association football club|football club|a\\.?f\\.?c\\.?|f\\.?c\\.?|the)\\b/g, " ").replace(/[^a-z0-9]+/g, " ").trim().replace(/\\s+/g, " ");
