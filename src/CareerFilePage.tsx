@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { motion } from "motion/react";
-import { getArchiveGamePlayersByNames, type Candidate, type Player, type ArchiveGamePlayer, type CareerDifficulty, type PlayerPoolCategory } from "./careerFileData";
+import { getArchiveGamePlayersByNames, getWikidataCareerPlayersByNames, type Candidate, type Player, type ArchiveGamePlayer, type CareerDifficulty, type PlayerPoolCategory } from "./careerFileData";
 import { getQuizFcCareerCandidates, getQuizFcCareerPlayer, getQuizFcStatEligibleCandidates } from "./quizFcCareerData";
 import "./career-file.css";
 
@@ -52,6 +52,11 @@ function archivePlayerToCareerFile(raw:ArchiveGamePlayer):Player{
    wikipediaUrl:article?"https://en.wikipedia.org/wiki/"+encodeURIComponent(article.replace(/ /g,"_")):raw.id.startsWith("Q")?"https://www.wikidata.org/wiki/"+raw.id:"",
    statsScope:"Wikipedia senior-career club-spell totals (unverified; may include more than league appearances)"
  };
+}
+function wikidataPlayerCandidate(player:Player,poolCategory:PlayerPoolCategory):Candidate{
+ const clubs=new Set(player.spells.map(spell=>spell.clubQid||clean(spell.clubLink||spell.club)).filter(Boolean));
+ return {id:player.id,name:player.name,apps:0,spells:player.spells.length,clubs:clubs.size,statSeasons:player.spells.length,
+   region:poolCategory==="EFL_LEGEND"?"ENGLISH":"INTERNATIONAL",source:"wikidata",poolCategory};
 }
 function archivePlayerCandidate(player:Player,raw:ArchiveGamePlayer,poolCategory:PlayerPoolCategory):Candidate{
  const country=clean(raw.currentCountry??"");
@@ -157,7 +162,7 @@ function makeRows(p:Player):Row[]{
      apps:total("apps"),
      goals:total("goals"),
      assists:total("assists"),
-     covered:matchingStats.length>0||(p.statsScope!==undefined&&(spell.apps!==null||spell.goals!==null))
+     covered:matchingStats.length>0||(p.statsScope!==undefined&&(p.statsScope.startsWith("Wikidata")||spell.apps!==null||spell.goals!==null))
    });
  }
  return rows.filter(row=>row.club.trim().length>0);
@@ -266,11 +271,21 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     }else{
       const names=desiredPool==="EFL_LEGEND"?EFL_LEGEND_NAMES:WORLD_LEGEND_NAMES;
       setNote("Loading the curated "+(desiredPool==="EFL_LEGEND"?"EFL legends":"world legends")+" files…");
-      const archiveRows=await getArchiveGamePlayersByNames(names).catch(()=>[]);
-      const mapped=archiveRows.map(raw=>archivePlayerToCareerFile(raw));
-      staticPlayers.current=new Map(mapped.map(player=>[player.id,player]));
-      options=archiveRows.map(raw=>archivePlayerCandidate(staticPlayers.current.get(raw.id)!,raw,desiredPool))
-        .filter(candidate=>fits(candidate,selectedMode))
+      const [archiveRows,wikidataRows]=await Promise.all([
+        getArchiveGamePlayersByNames(names).catch(()=>[]),
+        getWikidataCareerPlayersByNames(names).catch(()=>[])
+      ]);
+      const archiveById=new Map(archiveRows.map(raw=>[raw.id,raw]));
+      const playerById=new Map(wikidataRows.map(player=>[player.id,player]));
+      for(const raw of archiveRows){
+        const player=archivePlayerToCareerFile(raw);
+        if(hasTwoUsableCareerRows(makeRows(player)))playerById.set(player.id,player);
+      }
+      staticPlayers.current=playerById;
+      options=Array.from(playerById.values()).map(player=>{
+        const raw=archiveById.get(player.id);
+        return raw&&player.statsScope?.startsWith("Wikipedia")?archivePlayerCandidate(player,raw,desiredPool):wikidataPlayerCandidate(player,desiredPool);
+      }).filter(candidate=>fits(candidate,selectedMode))
         .filter(candidate=>{const player=staticPlayers.current.get(candidate.id);return Boolean(player&&hasTwoUsableCareerRows(makeRows(player)));});
       if(!options.length){
         staticPlayers.current.clear();
@@ -419,8 +434,8 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
               <td><span className={status!=="playing"||revealed.includes("goals")||r.goals===null?"":"cf-blur"}>{fmt(r.goals)}</span></td>
               <td><span className={status!=="playing"||revealed.includes("assists")||r.assists===null?"":"cf-blur"}>{fmt(r.assists)}</span></td>
             </motion.tr>)}</tbody></table></div>
-          <div className="cf-record-foot"><span>{player.statsScope?"APPS / GOALS: WIKIPEDIA CLUB-SPELL TOTALS · UNVERIFIED":"APPS / GOALS / ASSISTS: PREMIER LEAGUE LEAGUE TOTALS"}</span><span>— = NOT RECORDED</span></div>
-          <div className="cf-source-note">{player.statsScope?"EFL and world-legend appearances and goals are sourced from Wikipedia senior-career club-spell infoboxes. These figures are unverified and are not directly comparable with Premier League league-only statistics. Assists are not included for these files until complete, comparable data is available.":"Premier League league appearances, goals and assists (1992/93 onward). Cup, European and EFL figures are excluded. Club dates are first and last recorded PL seasons, not exact transfer dates; gaps remain unrecorded. Missing figures remain unrecorded."} <a href={player.wikipediaUrl} target="_blank" rel="noreferrer">OPEN PLAYER IDENTITY ↗</a></div>
+          <div className="cf-record-foot"><span>{player.statsScope?.startsWith("Wikidata")?"APPS / GOALS / ASSISTS: NOT IN WIKIDATA CAREER RECORD":player.statsScope?"APPS / GOALS: WIKIPEDIA CLUB-SPELL TOTALS · UNVERIFIED":"APPS / GOALS / ASSISTS: PREMIER LEAGUE LEAGUE TOTALS"}</span><span>— = NOT RECORDED</span></div>
+          <div className="cf-source-note">{player.statsScope?.startsWith("Wikidata")?"This career pathway uses Wikidata club-membership records. Club affiliations and dates may be incomplete; appearances, goals and assists are not provided by this source.":player.statsScope?"EFL and world-legend appearances and goals are sourced from Wikipedia senior-career club-spell infoboxes. These figures are unverified and are not directly comparable with Premier League league-only statistics. Assists are not included for these files until complete, comparable data is available.":"Premier League league appearances, goals and assists (1992/93 onward). Cup, European and EFL figures are excluded. Club dates are first and last recorded PL seasons, not exact transfer dates; gaps remain unrecorded. Missing figures remain unrecorded."} <a href={player.wikipediaUrl} target="_blank" rel="noreferrer">OPEN PLAYER IDENTITY ↗</a></div>
         </section>
         <aside className="cf-side">
           <div className="cf-scorecard"><div><small>YOUR SCORE</small><strong>{score.toLocaleString("en-GB")}<i> PTS</i></strong></div><div><small>GUESSES LEFT</small><strong>{left}<i> / 10</i></strong></div>
