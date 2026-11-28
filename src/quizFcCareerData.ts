@@ -170,17 +170,17 @@ export async function getQuizFcCareerCandidates(): Promise<Candidate[]> {
     );
     const clubIds = new Set(rows.map(row => row.clubIndex));
     const recordedApps = rows.reduce((sum, row) => sum + (row.apps ?? 0), 0);
-    // Require two independently recorded full PL season rows, at least ten
-    // recorded league appearances and two PL clubs. Missing career totals do
+    // Require at least one independently recorded full PL season row and ten
+    // recorded league appearances. One-club careers are valid; Missing career totals do
     // not disqualify a player; their total-stat hints remain unavailable.
-    if (rows.length < 2 || clubIds.size < 2 || recordedApps < 10) continue;
+    if (rows.length < 1 || clubIds.size < 1 || recordedApps < 10) continue;
     const total = data.totalsByPlayer.get(player.index);
     const appsAreComplete = player.careerComplete && total?.appsComplete;
     candidates.push({
       id: player.id, name: player.name,
       apps: appsAreComplete ? (total?.apps ?? recordedApps) : recordedApps,
       spells: clubIds.size, clubs: clubIds.size, statSeasons: rows.length,
-      fameRank: player.fameRank, source: "quizfc-pl"
+      fameRank: player.fameRank, source: "quizfc-pl", poolCategory: "PREMIER_LEAGUE"
     });
   }
   return candidates.sort((a, b) =>
@@ -190,7 +190,7 @@ export async function getQuizFcCareerCandidates(): Promise<Candidate[]> {
 }
 
 export function getQuizFcStatEligibleCandidates(candidates: Candidate[]): Candidate[] {
-  return candidates.filter(candidate => candidate.source === "quizfc-pl" && candidate.statSeasons >= 2 && candidate.clubs >= 2);
+  return candidates.filter(candidate => candidate.source === "quizfc-pl" && candidate.statSeasons >= 1 && candidate.clubs >= 1);
 }
 
 function seasonLabel(seasonEndYear: number): string {
