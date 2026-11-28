@@ -343,13 +343,17 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
         const raw=archiveById.get(player.id);
         return raw&&player.statsScope?.startsWith("Wikipedia")?archivePlayerCandidate(player,raw,desiredPool):wikidataPlayerCandidate(player,desiredPool);
       }).filter(candidate=>!premierLeagueIds.has(candidate.id))
+        // A name list is not proof of category. EFL files must have an English
+        // football archive classification; global files must be international.
+        // Wikidata-only records do not carry enough league-country evidence for EFL.
+        .filter(candidate=>desiredPool==="EFL_LEGEND"
+          ?candidate.source==="openfootballbase"&&candidate.region==="ENGLISH"
+          :candidate.region==="INTERNATIONAL")
         .filter(candidate=>fits(candidate,selectedMode))
         .filter(candidate=>{const player=staticPlayers.current.get(candidate.id);return Boolean(player&&hasUsableSpecialCareer(makeRows(player)));});
       if(!options.length){
         staticPlayers.current.clear();
-        selectedPool="PREMIER_LEAGUE";
-        fallbackNotice=(desiredPool==="EFL_LEGEND"?"EFL legend source had no usable career record.":"Global legend source had no usable career record.")+" This slot used the Premier League backup instead.";
-        options=deck.filter(candidate=>candidate.poolCategory==="PREMIER_LEAGUE"&&fits(candidate,selectedMode));
+        throw new Error("No verified "+(desiredPool==="EFL_LEGEND"?"EFL":"world")+" legend profiles are available from the current source. The game has stopped rather than silently substituting a Premier League player.");
       }
     }
     if(!options.length){setLoadingPlayer(false);throw new Error("There are no verified player files for "+selectedMode+". Choose another difficulty.");}
