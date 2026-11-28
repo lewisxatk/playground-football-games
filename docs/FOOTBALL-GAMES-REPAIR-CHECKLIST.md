@@ -59,7 +59,7 @@
 - [ ] Confirm generated database manifests, shard counts, licences and provenance.
 - [ ] Confirm every required game pool reaches its target without fabricated or duplicate facts.
 
-**Current build:** GitHub Actions run `46085891374` was building commit `1adb3a538e` at the last check. Upstream licence checks passed. The canonical generation step must prove the 500+ secondary Wikidata Link Up pool and all other shard minimums before the typecheck/site build can run. Do not mark the build complete until the newest run finishes successfully and its generated report is inspected.
+**Current build:** GitHub Actions run `46086104358` is building commit `b53cbea6ab45bf773808c0c8afe1fafd5c897104` (the latest source changes) at the last check. Upstream licence checks passed. The canonical generation step must prove the 500+ secondary Wikidata Link Up pool and all other shard minimums before the typecheck/site build can run. Do not mark the build complete until the newest run finishes successfully and its generated report is inspected.
 
 ## 3. Live game verification still required
 
@@ -83,7 +83,7 @@
 
 ## 5. Resume pointer
 
-**Next action:** poll GitHub Actions run `46085891374`. If it succeeds, inspect its build report and generated pool counts, then mark the automated checks above. If it fails, fix the first failing stage before making unrelated changes.
+**Next action:** poll GitHub Actions run `46086104358`. If it succeeds, inspect its build report and generated pool counts, then mark the automated checks above. If it fails, fix the first failing stage before making unrelated changes.
 
 Keep this checklist current after every commit. Do not claim a successful build or a 500+ runtime pool until the evidence is visible.
 
