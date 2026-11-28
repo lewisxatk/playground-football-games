@@ -87,13 +87,11 @@ const EFL_LEGEND_NAMES = [
  "Wilf Kirkham","Dean Lewington","Steve Bull","Tommy Tynan","Jimmy Chamberlain"
 ];
 const WORLD_LEGEND_NAMES = [
- "Lionel Messi","Diego Maradona","Zinedine Zidane","Ronaldinho","Xavi","Andres Iniesta",
- "Andrés Iniesta","Paolo Maldini","Gianluigi Buffon","Andrea Pirlo","Francesco Totti",
- "Alessandro Del Piero","Kaka","Kaká","Ronaldo","Ronaldo Nazario","Ronaldo Luís Nazário de Lima",
- "Pele","Pelé","Johan Cruyff","Franz Beckenbauer","Eusebio","Eusébio","Michel Platini",
- "Roberto Baggio","Hristo Stoichkov","Luis Figo","Luís Figo","Romario","Romário","Zico",
- "Iker Casillas","Raul","Raúl","Juan Roman Riquelme","Juan Román Riquelme","Gabriel Batistuta",
- "Miroslav Klose","Lothar Matthaus","Lothar Matthäus","Rivaldo","Neymar","Karim Benzema",
+ "Lionel Messi","Diego Maradona","Zinedine Zidane","Ronaldinho","Xavi","Andrés Iniesta",
+ "Paolo Maldini","Gianluigi Buffon","Andrea Pirlo","Francesco Totti","Alessandro Del Piero",
+ "Johan Cruyff","Franz Beckenbauer","Eusébio","Michel Platini","Roberto Baggio",
+ "Hristo Stoichkov","Luís Figo","Zico","Iker Casillas","Raúl","Juan Román Riquelme",
+ "Gabriel Batistuta","Miroslav Klose","Lothar Matthäus","Rivaldo","Neymar","Karim Benzema",
  "Robert Lewandowski"
 ];
 const MODES: { name:Mode; note:string; colour:string }[] = [
