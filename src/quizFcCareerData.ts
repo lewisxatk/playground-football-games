@@ -171,10 +171,10 @@ export async function getQuizFcCareerCandidates(): Promise<Candidate[]> {
     // not disqualify a player; their total-stat hints remain unavailable.
     if (rows.length < 2 || clubIds.size < 2 || recordedApps < 10) continue;
     const total = data.totalsByPlayer.get(player.index);
-    const totalIsComplete = player.careerComplete && total?.appsComplete && total?.goalsComplete;
+    const appsAreComplete = player.careerComplete && total?.appsComplete;
     candidates.push({
       id: player.id, name: player.name,
-      apps: totalIsComplete ? (total?.apps ?? recordedApps) : recordedApps,
+      apps: appsAreComplete ? (total?.apps ?? recordedApps) : recordedApps,
       spells: clubIds.size, clubs: clubIds.size, statSeasons: rows.length,
       fameRank: player.fameRank, source: "quizfc-pl"
     });
@@ -198,25 +198,25 @@ function positionName(position: string): string {
 }
 
 function buildSpells(rows: NormalStat[], clubs: Dataset["clubs"]): Player["spells"] {
-  const grouped = new Map<string, NormalStat[]>();
+  const byClub = new Map<number, NormalStat[]>();
   for (const row of rows) {
-    const key = row.clubIndex + "|" + (row.seq === null ? "unsequenced" : row.seq);
-    const group = grouped.get(key) ?? [];
+    const group = byClub.get(row.clubIndex) ?? [];
     group.push(row);
-    grouped.set(key, group);
+    byClub.set(row.clubIndex, group);
   }
   const spells: Player["spells"] = [];
   let spellSeq = 0;
-  for (const [key, group] of grouped) {
+  for (const [clubIndex, group] of byClub) {
     const sorted = [...group].sort((a, b) => a.seasonEndYear - b.seasonEndYear);
-    const clubIndex = sorted[0].clubIndex;
     const club = clubs[clubIndex];
     const segments: NormalStat[][] = [];
     for (const row of sorted) {
       const current = segments[segments.length - 1];
       const previous = current?.[current.length - 1];
-      const splitGap = row.seq === null && previous && row.seasonEndYear > previous.seasonEndYear + 1;
-      if (!current || splitGap) segments.push([row]);
+      // Split a return to the same club when there is a missing PL season
+      // between recorded spells. The optional source sequence is a row-order
+      // tie-breaker, not a stable career-spell identifier.
+      if (!current || (previous && row.seasonEndYear > previous.seasonEndYear + 1)) segments.push([row]);
       else current.push(row);
     }
     for (const segment of segments) {
@@ -253,9 +253,8 @@ export async function getQuizFcCareerPlayer(id: string): Promise<Player> {
     };
   });
   const total = data.totalsByPlayer.get(playerIndex);
-  const totalsAreComplete = source.careerComplete && Boolean(total?.linesComplete);
-  const careerAppsComplete = totalsAreComplete && Boolean(total?.appsComplete);
-  const careerGoalsComplete = totalsAreComplete && Boolean(total?.goalsComplete);
+  const careerAppsComplete = source.careerComplete && Boolean(total?.appsComplete);
+  const careerGoalsComplete = source.careerComplete && Boolean(total?.goalsComplete);
   const birthDate = source.dob || (source.birthYear ? String(source.birthYear) : "");
   const birthPrecision = /^\d{4}-\d{2}-\d{2}$/.test(birthDate) ? 11 : /^\d{4}$/.test(birthDate) ? 9 : null;
   const player: Player = {
