@@ -778,7 +778,7 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
 
      {gridNotice&&<div className="arc-feedback"><b>{gridNotice.startsWith("Correct")?"CORRECT ANSWER":"GRID UPDATE"}</b><p>{gridNotice}</p></div>}
      <div className="grid-editorial-actions"><button onClick={()=>setShowSolutions(v=>!v)}>SOLUTIONS / {showSolutions?"HIDE":"REVEAL"}</button><button onClick={()=>{if(active!==null)revealHint();else setGridNotice("Select an empty square first to reveal its answer.");}}>HINT</button><button onClick={()=>reset(mode,difficulty,kind)}>NEW GRID ↻</button></div>
-     {showSolutions&&<div className="grid-solution-list"><b>VALID ANSWERS FOR THIS GRID</b>{puzzle.solutions.map((p,i)=><span key={i}>{p.name}</span>)}</div>}
+     {showSolutions&&<div className="grid-solution-list"><b>VALID ANSWERS FOR THIS GRID</b>{puzzle.solutions.map((p,i)=><div key={i}><b>{p.name}</b><small>{puzzle.rows[Math.floor(i/4)]} × {puzzle.columns[i%4]}</small></div>)}</div>}
      {finished&&<div className="arc-feedback"><b>{opened.length===16?"GRID COMPLETE":"TIME TO REVIEW THE GRID"}</b><p>{opened.length}/16 cells · {attempts} wrong attempts · {score} points</p><button className="arc-button" onClick={()=>setShowSolutions(true)}>REVEAL ALL ANSWERS ↗</button><button className="arc-quiet" onClick={()=>reset("practice",difficulty,kind)}>NEW PRACTICE GRID</button></div>}
      <p className="arc-muted">Players are accepted only when the archive records both relationships. One player per square. This archive is sampled, so a player missing from suggestions may still be a valid real-world answer; the generator only uses its indexed records.</p>
     </>:
