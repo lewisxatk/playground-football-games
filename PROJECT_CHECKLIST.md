@@ -494,3 +494,13 @@ At the end of every implementation update:
 - [x] Re-run the production build and deploy the one-club legend eligibility change to Cloudflare Pages (28 Nov 2026).
 
 - [x] Live Wikidata P54 coverage check: 23 curated EFL and 28 curated global legend records returned with usable club history after excluding national teams.
+
+## 2026-11-28 — Career File pool expansion batch
+
+- [x] Expanded the EFL and world-legend source lookup name lists to well over 100 candidate names per category.
+- [x] Special-category candidates are deduplicated against the Premier League candidate deck by stable player ID/QID before draw selection.
+- [x] Existing source-quality gate retained: special profiles need a usable sourced career pathway; Wikidata-only profiles do not receive invented apps/goals/assists.
+- [~] Actual live Premier League eligible count (target 500+) still needs to be measured against the deployed Quiz FC history endpoint.
+- [~] Actual resolved EFL and world playable-profile counts (target 100–200+ combined) still need to be measured against the deployed Wikidata/OpenFootballBase sources. Lookup-name count is not the same as playable-profile count.
+- [ ] Build/CI and Cloudflare deployment verification for this batch.
+- [ ] Manual iPhone Safari test, then repeat-draw test across all categories and four difficulties.
