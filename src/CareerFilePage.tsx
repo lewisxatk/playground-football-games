@@ -284,7 +284,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     const source=dailyDraw?options:(unused.length?unused:options);
     if(!dailyDraw&&!unused.length){seen.current.clear();persistRecentCareerIds(seen.current);setNote("You have worked through this player pool. The draw has restarted.");}
     const draw=shuffleCandidates(source,Math.min(180,source.length),dailyDraw?dailySeed+":"+selectedPool:undefined);
-    setNote("Picking a "(selectedPool==="PREMIER_LEAGUE"?"former Premier League":selectedPool==="EFL_LEGEND"?"EFL legend":"world legend")+" career…");
+    setNote("Picking a "+(selectedPool==="PREMIER_LEAGUE"?"former Premier League":selectedPool==="EFL_LEGEND"?"EFL legend":"world legend")+" career…");
     try{
       const eligible=selectedPool==="PREMIER_LEAGUE"
         ?getQuizFcStatEligibleCandidates(draw)
