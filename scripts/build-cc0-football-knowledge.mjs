@@ -546,8 +546,8 @@ const cards=new Map();for(const m of lineups)for(const name of m.starters){const
 const clubConnections=makeConnections(clubs);
 const playerConnections=makePlayerConnections(players);
 const premierLeagueClubNames=new Set(englishMatches.filter(match=>match.competition==="Premier League").flatMap(match=>[match.home,match.away]).map(clubKey));
-const gridClubIndexKey=value=>String(value??"").toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/&/g," and ").replace(/\b(?:association football club|football club|a\.?f\.?c\.?|f\.?c\.?|the)\b/g," ").replace(/[^a-z0-9]+/g," ").trim().replace(/\s+/g," ");
-const uniqueClubLabels=values=>{const map=new Map();for(const value of values){const label=String(value??"").trim(),key=gridClubIndexKey(label);if(key&&!map.has(key))map.set(key,label);}return [...map.values()].sort((a,b)=>a.localeCompare(b));};
+const gridClubIndexKey=value=>String(value??"").toLocaleLowerCase("en-GB").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/&/g," and ").replace(/\b(?:association football club|football club|a\.?f\.?c\.?|f\.?c\.?|the)\b/g," ").replace(/[^a-z0-9]+/g," ").trim().replace(/\s+/g," ");
+const uniqueClubLabels=values=>{const map=new Map();for(const value of values){const label=String(value??"").trim(),key=gridClubIndexKey(label);if(key&&!map.has(key))map.set(key,label);}const labels=[...map.values()].sort((a,b)=>a.localeCompare(b));if(new Set(labels.map(gridClubIndexKey)).size!==labels.length)throw new Error("English club index failed canonical normalization");return labels;};
 const gridPacks=[];
 const premierLeagueClubs=uniqueClubLabels(englishMatches.filter(match=>match.competition==="Premier League").flatMap(match=>[match.home,match.away]));
 const englishLeagueClubs=uniqueClubLabels(englishMatches.filter(match=>/^(?:Premier League|Championship|League One|League Two|First Division|Second Division|Third Division|Fourth Division)$/i.test(match.competition)).flatMap(match=>[match.home,match.away]));
