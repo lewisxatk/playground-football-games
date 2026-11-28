@@ -14,7 +14,7 @@ type RawCareerTotal = [number, number | null, number | null, number, number, num
 type RawDataset = {
   format: string;
   version: number;
-  meta: { license?: string; sourceDate?: string; coverage?: any };
+  meta: { license?: string; licenseUrl?: string; sourceDate?: string; coverage?: any };
   players: RawPlayer[];
   clubs: RawClub[];
   stats: RawStat[];
@@ -93,6 +93,9 @@ async function loadDataset(): Promise<Dataset> {
   const response = await fetch("/api/career-file-history", { cache: "force-cache" });
   if (!response.ok) throw new Error("Premier League history could not be loaded (" + response.status + ").");
   const raw = await response.json() as RawDataset;
+  if (!String(raw.meta?.license ?? "").includes("CC BY-SA 4.0") || raw.meta?.licenseUrl !== "https://creativecommons.org/licenses/by-sa/4.0/") {
+    throw new Error("The Premier League history source licence or attribution has changed; data was not loaded.");
+  }
   if (raw.format !== "quizfc-pl-history" || raw.version !== 2 ||
       !Array.isArray(raw.players) || !Array.isArray(raw.clubs) ||
       !Array.isArray(raw.stats) || !Array.isArray(raw.clubSeasons) ||
