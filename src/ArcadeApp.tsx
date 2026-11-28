@@ -761,7 +761,9 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
  const [hintUsed,setHintUsed]=useState<number[]>([]);
  const done=account.daily[utcDay()]?.["football-grid"]!==undefined;
  const seed=mode==="daily"?hashSeed("GRID:"+utcDay()+":"+difficulty+":"+kind):hashSeed("GRID:practice:"+practiceSeed+":"+difficulty+":"+kind);
- const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,1600);
+ // Grid intersections need a broader sample than quick single-player games:
+ // four static shards (up to 3,200 players) materially improve sparse club links.
+ const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,3200);
  const playerPool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
  const puzzle=useMemo(()=>playerPool.length>=40?buildGridPuzzle(playerPool,difficulty,kind,seed):null,[playerPool,difficulty,kind,seed]);
  const boardSignature=puzzle?kind+"|"+[...puzzle.rows].map(normalise).sort().join(",")+"|"+[...puzzle.columns].map(normalise).sort().join(","):"";
