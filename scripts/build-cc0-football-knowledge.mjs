@@ -55,9 +55,11 @@ async function parseEnglishMatches(){
    const day=line.match(/^(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+([A-Za-z]{3})\s+(\d{1,2})(?:\s+(\d{4}))?$/);
    if(day){const month=monthMap[day[1]];if(!month)continue;const year=day[3]?Number(day[3]):month>=7?seasonStart:seasonEnd;currentDate=year+"-"+String(month).padStart(2,"0")+"-"+String(Number(day[2])).padStart(2,"0");continue;}
    if(!currentDate)continue;
-   const match=line.match(/^(?:\d{1,2}:\d{2}\s+)?(.+?)\s+(\d+)-(\d+)(?:\s+\([^)]*\))?\s+(.+?)\s*$/i);
-   if(!match)continue;const cleanTeam=value=>value.trim().replace(/\s+FC$/i,"");
-   const home=cleanTeam(match[1]),homeScore=Number(match[2]),awayScore=Number(match[3]),away=cleanTeam(match[4]);
+   const withVersus=line.match(/^(?:\d{1,2}:\d{2}\s+)?(.+?)\s+v\s+(.+?)\s+(\d+)-(\d+)(?:\s+\([^)]*\))?(?:\s+(?:aet|pens?|penalties))?\s*$/i);
+   const legacy=line.match(/^(?:\d{1,2}:\d{2}\s+)?(.+?)\s+(\d+)-(\d+)(?:\s+\([^)]*\))?\s+(.+?)\s*$/i);
+   if(!withVersus&&!legacy)continue;const cleanTeam=value=>value.trim().replace(/\s+FC$/i,"");
+   const home=cleanTeam(withVersus?withVersus[1]:legacy[1]),away=cleanTeam(withVersus?withVersus[2]:legacy[4]);
+   const homeScore=Number(withVersus?withVersus[3]:legacy[2]),awayScore=Number(withVersus?withVersus[4]:legacy[3]);
    if(!home||!away||homeScore>30||awayScore>30)continue;
    const key=[competition,seasonStart,currentDate,norm(home),norm(away)].join("|");if(records.has(key))continue;
    const sourceRow=rel+":"+String(lineIndex+1);
@@ -544,9 +546,11 @@ const cards=new Map();for(const m of lineups)for(const name of m.starters){const
 const clubConnections=makeConnections(clubs);
 const playerConnections=makePlayerConnections(players);
 const premierLeagueClubNames=new Set(englishMatches.filter(match=>match.competition==="Premier League").flatMap(match=>[match.home,match.away]).map(clubKey));
+const gridClubIndexKey=value=>String(value??"").toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/&/g," and ").replace(/\b(?:association football club|football club|a\.?f\.?c\.?|f\.?c\.?|the)\b/g," ").replace(/[^a-z0-9]+/g," ").trim().replace(/\s+/g," ");
+const uniqueClubLabels=values=>{const map=new Map();for(const value of values){const label=String(value??"").trim(),key=gridClubIndexKey(label);if(key&&!map.has(key))map.set(key,label);}return [...map.values()].sort((a,b)=>a.localeCompare(b));};
 const gridPacks=[];
-const premierLeagueClubs=[...new Set(englishMatches.filter(match=>match.competition==="Premier League").flatMap(match=>[match.home,match.away]))].sort();
-const englishLeagueClubs=[...new Set(englishMatches.filter(match=>/^(?:Premier League|Championship|League One|League Two|First Division|Second Division|Third Division|Fourth Division)$/i.test(match.competition)).flatMap(match=>[match.home,match.away]))].sort();
+const premierLeagueClubs=uniqueClubLabels(englishMatches.filter(match=>match.competition==="Premier League").flatMap(match=>[match.home,match.away]));
+const englishLeagueClubs=uniqueClubLabels(englishMatches.filter(match=>/^(?:Premier League|Championship|League One|League Two|First Division|Second Division|Third Division|Fourth Division)$/i.test(match.competition)).flatMap(match=>[match.home,match.away]));
 const englishLeagueStrands=makeEnglishLeagueStrandsPacks(careerPlayers,englishClubNames,500);
 const strands=[...englishLeagueStrands,...makeStrandsPacks(players).slice(0,Math.max(500-englishLeagueStrands.length,Math.ceil(englishLeagueStrands.length/4)))];
 const archivePlayerManifest=JSON.parse(await readFile(new URL("../public/data/player-shards/manifest.json",import.meta.url),"utf8"));
