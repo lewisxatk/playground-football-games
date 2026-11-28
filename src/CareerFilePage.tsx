@@ -33,7 +33,7 @@ function archivePlayerToCareerFile(raw:ArchiveGamePlayer):Player{
    goals:stat.goals??null,
    assists:stat.assists??null
  }));
- const article=raw.careerSourceTitle?.trim();
+ const article=(raw.careerSourceTitle||spells.find(spell=>spell.sourceTitle)?.sourceTitle||"").trim();
  return {
    id:raw.id,
    name:raw.name,
@@ -49,7 +49,7 @@ function archivePlayerToCareerFile(raw:ArchiveGamePlayer):Player{
    caps:raw.caps??null,
    internationalGoals:raw.internationalGoals??null,
    teams:raw.nationalTeams??[],
-   wikipediaUrl:article?"https://en.wikipedia.org/wiki/"+encodeURIComponent(article.replace(/ /g,"_")):"",
+   wikipediaUrl:article?"https://en.wikipedia.org/wiki/"+encodeURIComponent(article.replace(/ /g,"_")):raw.id.startsWith("Q")?"https://www.wikidata.org/wiki/"+raw.id:"",
    statsScope:"Wikipedia senior-career club-spell totals (unverified; may include more than league appearances)"
  };
 }
