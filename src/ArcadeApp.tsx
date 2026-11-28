@@ -6,7 +6,6 @@ import {
 } from "./playerData";
 import { ClubBadge, CountryFlag } from "./ClubBadge";
 
-import { cc0CareerToArchiveGamePlayer } from "./cc0CareerAdapter";
 import type { ArchiveGamePlayer, ArchiveCareerSpell, ArchiveGameStat } from "./careerFileData";
 import CareerFilePage from "./CareerFilePage";
 import { getStaticArchivePlayers } from "./useArchivePlayers";
@@ -132,28 +131,6 @@ function positionCode(raw:string):Player["position"]{
   if(p.includes("MF")||p.includes("MID"))return "MID";
   if(p.includes("FW")||p.includes("FORWARD")||p.includes("STRIKER"))return "FWD";
   return "" as Player["position"];
-}
-function archivePlayerToGamePlayer(p:ArchiveGamePlayer):GamePlayer{
-  const name=p.name.trim();
-  const parts=name.split(/\s+/).filter(Boolean);
-  const surname=parts.slice(-1)[0]??name;
-  const birth=p.birthDate?new Date(p.birthDate+"T00:00:00Z"):null;
-  const age=birth&&!Number.isNaN(birth.getTime())?new Date().getUTCFullYear()-birth.getUTCFullYear():null;
-  const ageBand=age===null?"Unknown":age<20?"Teens":age<30?"20s":age<40?"30s":age<50?"40s":age<60?"50s":"60s+";
-  return {
-    name,surname:surname.toLocaleUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Z]/g,""),
-    nationality:countryLabel(p.nationality||"Unlisted"),position:positionCode(p.position),
-    club:p.currentClub||"Unknown club",league:p.currentLeague||p.currentCountry||"Unlisted",
-    active:p.lastYear!==null&&p.lastYear>=new Date().getUTCFullYear()-1,
-    ageBand,clubs:p.clubs,aliases:[name,surname,p.fullName??""].filter(Boolean),
-    archiveId:p.id,careerSpells:p.spells??[],seasonStats:p.seasonStats??p.stats??[],
-    careerAppsRecorded:(p.careerAppearanceRows??0)>0,careerGoalsRecorded:(p.careerGoalRows??0)>0,
-    leagueAppsRecorded:(p.leagueAppearanceRows??0)>0,leagueGoalsRecorded:(p.leagueGoalRows??0)>0,
-    careerApps:p.appearances,careerGoals:p.goals,leagueApps:p.leagueAppearances,
-    leagueGoals:p.leagueGoals,leagueGoalSeasons:p.leagueGoalSeasons,leagueAssists:p.leagueAssists??0,leagueAssistSeasons:p.leagueAssistSeasons??0,statSeasons:p.seasons,firstYear:p.firstYear,lastYear:p.lastYear,
-    caps:p.caps,internationalGoals:p.internationalGoals,birthDate:p.birthDate,
-    currentCountry:p.currentCountry,currentDivision:p.currentDivision
-  };
 }
 function cc0PlayerToGamePlayer(p:{id:string;name:string;aliases:string[];nationalities:string[];birthYears:number[];positions:string[];internationalGoalsRecorded?:number;worldCupStarts?:number;worldCupYears?:number[]}):GamePlayer{
  const parts=p.name.trim().split(/\s+/).filter(Boolean),surname=parts.at(-1)??p.name;
@@ -670,7 +647,7 @@ function ConnectionsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
    <div className="arc-game-meta"><span>GROUPS FOUND {found.length}/4</span><b>MISTAKES {mistakes}/4</b></div>
    <div className="grid-difficulty">{(["EASY","STANDARD","HARD","EXTREME"] as ConnectionsDifficulty[]).map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level)}>{difficultyLabel(level)}</button>)}</div>
    {loading&&groups.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>BUILDING CONNECTIONS</b><span>Finding four distinct football groups in the archive.</span></div>:
-    groups.length!==4?<div className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NOT ENOUGH MATCHING PLAYERS"}</b><p>{error||"The current data draw doesn't contain four groups at this difficulty. Try another level or draw again."}</p><button className="arc-button" onClick={()=>{setGridReload(v=>v+1);reset(mode,difficulty);}}>RETRY DATABASE ↗</button></div>:
+    groups.length!==4?<div className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NOT ENOUGH MATCHING PLAYERS"}</b><p>{error||"The current data draw doesn't contain four groups at this difficulty. Try another level or draw again."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty);}}>RETRY DATABASE ↗</button></div>:
     <>
      <div className="connections-found">{found.map(i=><motion.div layout key={i} className={groups[i].color}><small>{groups[i].name}</small><b>{groups[i].members.map(p=>p.name).join(" · ")}</b></motion.div>)}</div>
      <div className="connections-grid">{tilePlayers.filter(p=>!found.some(i=>groups[i].members.some(g=>g.archiveId===p.archiveId))).map(p=><motion.button layout key={p.archiveId} onClick={()=>setSelected(v=>v.includes(p.archiveId)?v.filter(x=>x!==p.archiveId):v.length<4?[...v,p.archiveId]:v)} className={selected.includes(p.archiveId)?"selected":""} whileTap={{scale:.96}}>{p.name}</motion.button>)}</div>
@@ -685,7 +662,6 @@ function ConnectionsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
 
 type GridDifficulty="EASY"|"STANDARD"|"HARD"|"EXTREME";
 const GRID_LEVELS:GridDifficulty[]=["EASY","STANDARD","HARD","EXTREME"];
-const gridClubKey=(value:string)=>normalise(value.replace(/&/g,"and")).replace(/and/g,"").replace(/^(?:associationfootballclub|footballclub|fc|afc)/,"").replace(/(?:associationfootballclub|footballclub|fc|afc)$/,"");
 function hasUniqueGridAssignment(rows:GamePlayer[][][]):boolean{
  const cells=rows.flat().map((players,index)=>({index,players:[...new Map(players.map(player=>[player.archiveId,player])).values()]}));
  if(cells.length!==16||cells.some(cell=>cell.players.length===0))return false;
@@ -707,7 +683,7 @@ function archivePlayerToGridPlayer(raw:ArchiveGamePlayer):GamePlayer{
  const birthYear=raw.birthDate?Number(raw.birthDate.slice(0,4)):null;
  const rawPosition=(raw.position||"").toLowerCase();
  const position=rawPosition.includes("goalkeeper")?"GK":rawPosition.includes("defender")?"DF":rawPosition.includes("midfielder")?"MF":/(forward|striker|winger)/.test(rawPosition)?"FW":raw.position||"";
- const base=cc0PlayerToGamePlayer({id:raw.id,name:raw.name,aliases:raw.fullName&&raw.fullName!==raw.name?[raw.fullName]:[],nationalities:[raw.nationality],birthYears:Number.isFinite(birthYear)?[birthYear]:[],positions:[position]});
+ const base=cc0PlayerToGamePlayer({id:raw.id,name:raw.name,aliases:raw.fullName&&raw.fullName!==raw.name?[raw.fullName]:[],nationalities:[raw.nationality],birthYears:birthYear!==null&&Number.isFinite(birthYear)?[birthYear]:[],positions:[position]});
  return {...base,club:raw.currentClub||"Unknown club",league:raw.currentLeague||"English football",active:false,clubs:raw.clubs??[],aliases:[raw.name,...(raw.fullName&&raw.fullName!==raw.name?[raw.fullName]:[])],careerSpells:raw.spells??[],seasonStats:raw.seasonStats??raw.stats??[],careerAppsRecorded:(raw.careerAppearanceRows??0)>0,careerGoalsRecorded:(raw.careerGoalRows??0)>0,leagueAppsRecorded:(raw.leagueAppearanceRows??0)>0,leagueGoalsRecorded:(raw.leagueGoalRows??0)>0,careerApps:raw.appearances??0,careerGoals:raw.goals??0,leagueApps:raw.leagueAppearances??0,leagueGoals:raw.leagueGoals??0,leagueGoalSeasons:raw.leagueGoalSeasons??0,leagueAssists:raw.leagueAssists??0,leagueAssistSeasons:raw.leagueAssistSeasons??0,statSeasons:raw.seasons??0,firstYear:raw.firstYear??null,lastYear:raw.lastYear??null,caps:raw.caps??null,internationalGoals:raw.internationalGoals??null,birthDate:raw.birthDate??"",currentCountry:raw.currentCountry??"",currentDivision:raw.currentDivision??null};
 }
 function buildArchiveFootballGrid(players:GamePlayer[],index:GridClubIndex,seed:number,difficulty:GridDifficulty){
@@ -1289,7 +1265,7 @@ function MissingXIPage({account,onDaily}:{account:Account;onDaily:(id:GameId,sco
  </Frame>;
 }
 
-function makeStrandsBoard(pack:typeof STRANDS_PACKS[number]){
+function makeStrandsBoard(pack:{id?:string;spangram:string;words:string[];theme:string}){
  const words=[pack.spangram,...pack.words];
  const baseCycle:Array<[number,number]>=[];
  for(let col=0;col<6;col++)baseCycle.push([0,col]);
@@ -1300,7 +1276,7 @@ function makeStrandsBoard(pack:typeof STRANDS_PACKS[number]){
  baseCycle.push([7,0]);
  for(let row=6;row>=1;row--)baseCycle.push([row,0]);
  if(baseCycle.length!==48)throw new Error("Strands Hamiltonian path must cover 48 cells.");
- const seed=hashSeed(pack.id+":STRANDS");
+ const seed=hashSeed((pack.id??pack.theme+":"+pack.words.join("|"))+":STRANDS");
  const deterministicShuffle=<T,>(items:T[],value:number):T[]=>{
   const copy=[...items];let state=value>>>0;
   for(let i=copy.length-1;i>0;i--){state=(Math.imul(state,1664525)+1013904223)>>>0;const j=state%(i+1);[copy[i],copy[j]]=[copy[j],copy[i]];}
