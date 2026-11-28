@@ -471,3 +471,16 @@ At the end of every implementation update:
 - [!] Verify curated names resolve to OpenFootballBase or Wikidata QIDs and check actual club spells/stat values on examples before production release.
 - [!] Confirm the 95/3/2 ratio in a 100-round automated draw test and test deterministic daily selection.
 - [!] Run CI and mobile browser tests before merging/deploying.
+
+
+## 19. Production release and source-query hardening (2026-11-28)
+
+- [x] GitHub Actions question-bank build, data validation, TypeScript and Vite production build passed on the 95/3/2 release branch.
+- [x] Production commit deployed successfully to Cloudflare Pages; Career File route returned HTTP 200 and rendered a live player dossier with club pathway.
+- [x] Browser-rendered smoke test confirmed the 95% current/former PL, 3% EFL, 2% world pool indicator and the compact pathway table.
+- [x] Verified the 100-slot category mapping contains 95 Premier League, 3 EFL and 2 world slots.
+- [x] Queried curated EFL/global names against Wikidata P54 and found source-backed multi-club records for the majority of the curated list.
+- [x] Excluded national-team entities from the Wikidata club-membership query so international teams cannot appear as club spells.
+- [x] Removed ambiguous short-name duplicates (Kaká, Pelé, Ronaldo, Romário) from the global-legend candidate list.
+- [!] Re-run CI and production deployment after the final source-query/name-list hardening commits.
+- [!] Manually test the live game in iPhone Safari and confirm the EFL/global category rounds behave as intended.
