@@ -258,7 +258,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
   const newPlayer=useCallback(async(deck:Candidate[],selectedMode:Mode)=>{
     const dailyDraw=!dailyDone;
     const today=new Date().toISOString().slice(0,10);
-    const dailySeed="PLAYGROUND-CAREER-FILE:"+today+":"+selectedMode+":MIXED;
+    const dailySeed="PLAYGROUND-CAREER-FILE:"+today+":"+selectedMode+":MIXED";
     const slot=dailyDraw?Math.floor(Date.parse(today+"T00:00:00Z")/86400000)%100:seen.current.size%100;
     const desiredPool=poolCategoryForSlot(slot);
     let options:Candidate[]=[];
