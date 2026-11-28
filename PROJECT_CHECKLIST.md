@@ -1,6 +1,6 @@
 # PLAYGROUND — Master Build Checklist & Handover
 
-**Last audited:** 2026-11-28 12:30 UTC  
+**Last audited:** 2026-11-28 13:40 UTC  
 **Repository:** https://github.com/lewisxatk/playground-football-games  
 **Production:** https://playground-football-games.pages.dev  
 **Purpose:** This file is the persistent project memory and source of truth for implementation status. Update it at the end of every development batch. Do not mark a task complete merely because a route or visual mock-up exists; the behaviour must be implemented and build-tested.
@@ -556,3 +556,15 @@ At the end of every implementation update:
 - [~] Daily/practice separation implemented; persistent puzzle versioning outstanding.
 - [ ] Manual iPhone Safari + desktop acceptance tests; verify no impossible cells or false-positive players.
 - [ ] Update this checklist with evidence; do not mark done from a mock-up alone.
+
+
+## 15. Football Grid — Premier League focus (2026-11-28)
+
+- [x] Replaced generic Club × Nation / Club × Club choices with **PREM × PREM**, **PREM × EUROPE**, and **PREM × NATIONS**.
+- [x] All row categories are restricted to clubs in the Premier League all-time club set; European columns are restricted to a curated group of major European sides rather than every club from one foreign league.
+- [x] Prem × Prem columns are restricted to Premier League clubs; Prem × Europe columns are restricted to the curated European club set; Prem × Nations columns use recorded player nationalities.
+- [x] Career links use the archive's past-club list, so historical as well as current players can answer intersections.
+- [x] Player autocomplete now searches every player in the loaded archive sample instead of truncating results to seven; matching results are scrollable and prefix matches sort first.
+- [~] The loaded autocomplete pool remains a 3,200-player sample of the 60,711-player archive, not the complete archive. A complete all-archive search index is a separate performance/data-delivery task.
+- [~] New 6-combination archive audit (Easy/Hard × three formats, 50 seeds each, 250 unique-board target) is running in GitHub Actions. Do not mark the new formats fully verified until the audit and production build pass.
+- [!] Manual visual and gameplay QA still required on desktop and iPhone Safari, including a check that the source club naming variants match the Premier League/European club allow-lists.
