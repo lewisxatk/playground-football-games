@@ -39,6 +39,12 @@ A second research reference, [PL-History-Dashboard](https://github.com/ethankauf
 
 A separate Quiz FC file, [`career-grid.json`](https://quiz-fc.com/data/career-grid.json), was also inspected. Its metadata identifies a live Wikidata-derived index (CC0) of 4,382 PL-linked players and 101 English clubs. It stores player-to-club membership lists, but not spell dates, chronology, loan status or complete lower-league coverage. It is useful for cross-checking English club affiliations, **not** a reliable full career timeline. It should not be used to invent years or imply that every senior club is present.
 
+### Potential EFL career-spell enrichment (not integrated)
+
+Wikidata's [member of sports team (P54)](https://www.wikidata.org/wiki/Property:P54) supports statement qualifiers for [start time (P580)](https://www.wikidata.org/wiki/Property:P580) and [end time (P582)](https://www.wikidata.org/wiki/Property:P582). This is a CC0 source and may provide dated English-club affiliations for some PL/EFL players. It is not a complete transfer register: many statements have no dates, coverage varies by player, and the property does not provide season appearances/goals. A future importer should preserve source/qualifier provenance, include only actual recorded dates, keep uncertain memberships separate, and never infer loans or fill missing years. No P54-derived data is currently integrated.
+
+No complete, openly licensed EFL player-season appearances/goals dataset has been approved for use yet. The PL adapter must therefore remain explicitly PL-only until an EFL source passes licence, coverage and accuracy checks.
+
 [English Football Vault](https://englishfootballvault.co.uk/about.html) remains a possible source for English league/team history across eight tiers from 1888/89, but it documents match/team results rather than the player-season appearance/goals dataset needed by Career File. It is not a drop-in player-career source.
 
 ## World Cup starting line-ups
