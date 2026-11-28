@@ -111,3 +111,64 @@
  .cf-pool-mix-items span{font-size:9px}
  .cf-pool-mix-items b{font-size:16px;min-width:40px;display:inline-block}
 }
+
+/* Compact, play-first Career File layout */
+.cf-compact-header{height:48px;padding:0 5%;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);background:var(--p)}
+.cf-compact-header>span{font-size:8px;font-weight:900;letter-spacing:.13em;color:#747a6e}
+.cf-mode-area{padding:14px 5% 16px;background:#e8e5db;border-bottom:1px solid var(--line)}
+.cf-mode-title{margin-bottom:9px;align-items:center}
+.cf-mode-title>span:last-child{display:none}
+.cf-mode-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.cf-mode-card{min-height:76px;padding:9px 11px;gap:5px}
+.cf-mode-card .cf-mode-index,.cf-mode-card>small:not(.cf-mode-count),.cf-mode-card>i{display:none}
+.cf-mode-card strong{font-size:clamp(18px,2.4vw,26px)}
+.cf-mode-card .cf-mode-count{margin:0}
+.cf-round-note{margin-top:8px}
+.cf-game-area-compact{padding:18px 5% 35px;background:#e8e5db}
+.cf-game-area-compact .cf-game-heading{margin-bottom:12px;align-items:center}
+.cf-game-area-compact .cf-game-heading h2{font-size:clamp(30px,4vw,48px);line-height:1;margin:5px 0 0}
+.cf-game-area-compact .cf-round-count strong{font-size:30px}
+.cf-layout{grid-template-columns:minmax(300px,.78fr) minmax(0,1.22fr);gap:12px}
+.cf-side{grid-column:1;grid-row:1}
+.cf-record{grid-column:2;grid-row:1;padding:14px;box-shadow:4px 4px 0 var(--i)}
+.cf-guess-panel{order:-1}
+.cf-guess-panel label{margin:8px 0 6px}
+.cf-guess-panel form input{padding:13px}
+.cf-scorecard{padding:12px}
+.cf-scorecard strong{font-size:32px}
+.cf-record-head,.cf-subject,.cf-record-foot,.cf-source-note{display:none}
+.cf-timeline-toolbar{padding:9px 10px}
+.cf-pathway-table td:first-child strong{font-size:12px}
+.cf-locked-club{filter:blur(5px);user-select:none;pointer-events:none}
+.cf-locked-row{opacity:.65}
+.cf-locked-row td{background:#deddd5!important}
+.cf-locked-row .cf-pathway-years{filter:blur(4px)}
+.cf-footer-compact{padding:12px 5%}
+@media(max-width:700px){
+ .cf-compact-header{height:42px}
+ .cf-compact-header>span{font-size:7px}
+ .cf-mode-area{padding:10px 4% 12px}
+ .cf-mode-title{margin-bottom:7px}
+ .cf-mode-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+ .cf-mode-card{min-height:58px;padding:8px 5px;justify-content:center;align-items:center;text-align:center}
+ .cf-mode-card strong{font-size:clamp(14px,4.2vw,19px)}
+ .cf-mode-card .cf-mode-count{font-size:6px!important;white-space:nowrap}
+ .cf-round-note{font-size:6px;line-height:1.4;margin-top:7px}
+ .cf-game-area-compact{padding:13px 4% 25px}
+ .cf-game-area-compact .cf-game-heading{margin-bottom:9px}
+ .cf-game-area-compact .cf-game-heading h2{font-size:32px}
+ .cf-layout{display:flex;flex-direction:column;gap:10px}
+ .cf-side{display:flex;width:100%;order:0;gap:8px}
+ .cf-record{width:100%;order:1}
+ .cf-guess-panel{order:0;padding:12px}
+ .cf-scorecard{order:-1;display:grid;grid-template-columns:1fr 1fr;width:100%;padding:9px 11px}
+ .cf-scorecard strong{font-size:28px}
+ .cf-score-track{height:5px}
+ .cf-hints{order:1}
+ .cf-side-actions{order:2}
+ .cf-timeline-toolbar{gap:7px}
+ .cf-stat-unlocks{grid-template-columns:1fr 1fr}
+ .cf-pathway-table th:first-child,.cf-pathway-table td:first-child{min-width:105px}
+ .cf-footer-compact{display:none}
+}
+@media(max-width:380px){.cf-mode-card .cf-mode-count{font-size:5px!important}.cf-mode-card strong{font-size:13px}}
