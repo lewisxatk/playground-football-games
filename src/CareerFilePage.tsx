@@ -107,6 +107,10 @@ function stableHash(value:string):number{
   for(let i=0;i<value.length;i++){hash^=value.charCodeAt(i);hash=Math.imul(hash,16777619);}
   return hash>>>0;
 }
+function poolCategoryForSlot(slot:number):PlayerPoolCategory{
+  const position=((Math.trunc(slot)%100)+100)%100;
+  return position<95?"PREMIER_LEAGUE":position<98?"EFL_LEGEND":"WORLD_LEGEND";
+}
 function seededRandom(seed:number){let state=seed>>>0;return()=>{state+=0x6D2B79F5;let t=state;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296;};}
 function shuffleCandidates<T>(items:T[],limit:number,seed?:string):T[]{
   const copy=[...items];const random=seed?seededRandom(stableHash(seed)):Math.random;
@@ -138,7 +142,7 @@ function makeRows(p:Player):Row[]{
    const firstYear=start??(knownYears.length?Math.min(...knownYears):null);
    const lastYear=spell.end??(knownYears.length?Math.max(...knownYears):firstYear);
    const total=(key:"apps"|"goals"|"assists")=>{
-     if(p.statsScope&&key!=="assists")return spell[key]??null;
+     if(p.statsScope)return key==="assists"?null:spell[key]??null;
      if(!matchingStats.length||matchingStats.some(stat=>stat[key]===null||stat[key]===undefined))return null;
      if(key==="apps"&&matchingStats.some(stat=>stat.statsLevel!==undefined&&stat.statsLevel!=="full"))return null;
      if(key==="goals"&&matchingStats.some(stat=>stat.statsLevel==="none"))return null;
@@ -251,7 +255,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     const today=new Date().toISOString().slice(0,10);
     const dailySeed="PLAYGROUND-CAREER-FILE:"+today+":"+selectedMode+":MIXED;
     const slot=dailyDraw?Math.floor(Date.parse(today+"T00:00:00Z")/86400000)%100:seen.current.size%100;
-    const desiredPool:PlayerPoolCategory=slot<95?"PREMIER_LEAGUE":slot<98?"EFL_LEGEND":"WORLD_LEGEND";
+    const desiredPool=poolCategoryForSlot(slot);
     let options:Candidate[]=[];
     let selectedPool=desiredPool;
     let fallbackNotice="";
@@ -416,7 +420,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
               <td><span className={status!=="playing"||revealed.includes("assists")||r.assists===null?"":"cf-blur"}>{fmt(r.assists)}</span></td>
             </motion.tr>)}</tbody></table></div>
           <div className="cf-record-foot"><span>{player.statsScope?"APPS / GOALS: WIKIPEDIA CLUB-SPELL TOTALS · UNVERIFIED":"APPS / GOALS / ASSISTS: PREMIER LEAGUE LEAGUE TOTALS"}</span><span>— = NOT RECORDED</span></div>
-          <div className="cf-source-note">{player.statsScope?"EFL and world-legend appearances and goals are sourced from Wikipedia senior-career club-spell infoboxes. These figures are unverified and are not directly comparable with Premier League league-only statistics. Assists are shown only where separately sourced.":"Premier League league appearances, goals and assists (1992/93 onward). Cup, European and EFL figures are excluded. Club dates are first and last recorded PL seasons, not exact transfer dates; gaps remain unrecorded. Missing figures remain unrecorded."} <a href={player.wikipediaUrl} target="_blank" rel="noreferrer">OPEN PLAYER IDENTITY ↗</a></div>
+          <div className="cf-source-note">{player.statsScope?"EFL and world-legend appearances and goals are sourced from Wikipedia senior-career club-spell infoboxes. These figures are unverified and are not directly comparable with Premier League league-only statistics. Assists are not included for these files until complete, comparable data is available.":"Premier League league appearances, goals and assists (1992/93 onward). Cup, European and EFL figures are excluded. Club dates are first and last recorded PL seasons, not exact transfer dates; gaps remain unrecorded. Missing figures remain unrecorded."} <a href={player.wikipediaUrl} target="_blank" rel="noreferrer">OPEN PLAYER IDENTITY ↗</a></div>
         </section>
         <aside className="cf-side">
           <div className="cf-scorecard"><div><small>YOUR SCORE</small><strong>{score.toLocaleString("en-GB")}<i> PTS</i></strong></div><div><small>GUESSES LEFT</small><strong>{left}<i> / 10</i></strong></div>
