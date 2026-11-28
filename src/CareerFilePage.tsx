@@ -432,35 +432,67 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
 
   return <main className="cf-page" id="top">
     <div className="cf-grain" aria-hidden="true"/>
-    <header className="cf-topbar">
-      <a className="cf-brand" href="/">PLAY<span>GROUND</span><b>®</b></a>
-      <div className="cf-toplinks"><a href="/">THE ARCADE</a><span>/</span><strong>CAREER FILE</strong></div>
-      <div className="cf-topright"><i className="cf-live"/> PLAYER ARCHIVE / 01</div>
-    </header>
-    <section className="cf-hero">
-      <div className="cf-hero-copy">
-        <div className="cf-eyebrow"><i/> FOOTBALL CAREER IDENTITY GAME <span>ISSUE № 01</span></div>
-        <h1>CAREER<br/><em>FILE.</em></h1>
-        <p>One player. A career pathway. One name to find. Follow the club pathway, compare appearances and unlock hidden stats across Premier League careers, EFL legends and global greats.</p>
-        <div className="cf-hero-foot"><b>SELECT A FILE.</b><span>DON'T GUESS. INVESTIGATE.</span></div>
-      </div>
-      <div className="cf-hero-art" aria-label="Animated football pitch graphic">
-        <div className="cf-score-strip"><span>PG / SCOUTING DEPT.</span><span>LIVE DOSSIER <i/></span></div>
-        <div className="cf-mini-pitch"><div className="cf-halfway"/><div className="cf-centre-circle"/><div className="cf-box left"/><div className="cf-box right"/>
-          <motion.div className="cf-ball" animate={{x:[0,16,-11,0],y:[0,-9,4,0],rotate:[0,130,270,360]}} transition={{duration:6.5,repeat:Infinity,ease:"easeInOut"}}/>
-          <motion.div className="cf-runner runner-a" animate={{x:[0,26,4,0],y:[0,17,-4,0]}} transition={{duration:5,repeat:Infinity,ease:"easeInOut"}}>09</motion.div>
-          <motion.div className="cf-runner runner-b" animate={{x:[0,-22,3,0],y:[0,-12,7,0]}} transition={{duration:6,repeat:Infinity,ease:"easeInOut"}}>10</motion.div>
-          <div className="cf-pitch-note">THE<br/>90 MIN.</div>
-        </div>
-        <div className="cf-art-bottom"><span>EVERY SEASON TELLS A STORY</span><b>↗</b><span>EST. 2026</span></div>
-        <motion.div className="cf-orbit-stamp" animate={{rotate:[8,13,8]}} transition={{duration:7,repeat:Infinity}}>SCOUT<br/>THE<br/>STORY</motion.div>
-      </div>
+    <header className="cf-compact-header"><a className="cf-brand" href="/">PLAY<span>GROUND</span><b>®</b></a><span>CAREER FILE / PLAYER IDENTITY</span></header>
+    <section className="cf-mode-area">
+      <div className="cf-mode-title"><span>02 / SET THE DIFFICULTY</span><span>THE HARDER THE FILE, THE LESS OBVIOUS THE NAME</span></div>
+      <div className="cf-mode-grid">{MODES.map((m,i)=><motion.button key={m.name}
+        className={"cf-mode-card "+m.colour+(mode===m.name?" chosen":"")} onClick={()=>setMode(m.name)}
+        whileHover={{y:-5,rotate:i%2?1:-1}} whileTap={{scale:.98}}>
+        <span className="cf-mode-index">0{i+1} / PG</span><strong>{m.name}</strong><small>{m.note}</small><small className="cf-mode-count">{pool.length?pool.filter(c=>fits(c,m.name)).length+" PL CORE FILES":"READING PLAYER POOL"}</small><i>{mode===m.name?"SELECTED ✓":"SELECT ↗"}</i>
+      </motion.button>)}</div>
+      <div className="cf-round-note"><span><b>{mode}</b> / MIXED FOOTBALL PLAYER POOL</span><span>10 GUESSES · 1,000 STARTING POINTS · CLUB PATHWAY VISIBLE</span></div>
     </section>
-    {dailyDone&&<div className="cf-daily-complete">TODAY'S CAREER FILE IS BANKED · NEXT FILES ARE PRACTICE</div>}
-    <section className="cf-controlbar cf-pool-mix">
-      <div className="cf-control-title"><span>01 / PLAYER DATABASE</span><strong>THREE FOOTBALL WORLDS. ONE DRAW.</strong></div>
-      <div className="cf-pool-mix-items"><span><b>95%</b> CURRENT + FORMER PREMIER LEAGUE</span><span><b>3%</b> EFL LEGENDS</span><span><b>2%</b> WORLD LEGENDS</span></div>
+    <section className="cf-game-area cf-game-area-compact">
+      <div className="cf-game-heading"><div><span>03 / THE DOSSIER</span><h2>WHO'S THE<br/><em>PLAYER?</em></h2></div>
+        <div className="cf-round-count"><small>FILE NUMBER</small><strong>{String(round||1).padStart(3,"0")}</strong><span>NEW FILE EACH ROUND</span></div>
+      </div>
+      {(busy||loadingPlayer)&&<div className="cf-loading"><motion.div animate={{rotate:360}} transition={{repeat:Infinity,duration:1.6,ease:"linear"}}>✳</motion.div>
+        <b>{busy?"OPENING THE PLAYER ARCHIVE":"BUILDING THE CAREER FILE"}</b><span>Preparing a random file from the career archive. Season-stat coverage is checked in batches.</span></div>}
+      {error&&<div className="cf-error"><strong>THE ARCHIVE HIT A SNAG</strong><p>{error}</p><button onClick={()=>window.location.reload()}>TRY AGAIN ↗</button></div>}
+      {player&&!busy&&!loadingPlayer&&<div className="cf-layout">
+        <section className="cf-record">
+          <div className="cf-record-head"><span>CONFIDENTIAL / FOOTBALL CAREER PATHWAY</span><span>SUBJECT: ████████</span></div>
+          <div className="cf-subject"><div><small>IDENTITY HIDDEN</small><strong>THE<br/><em>JOURNEY.</em></strong><span>ONE CLUB SHOWN · OTHERS LOCKED</span></div><div className="cf-crest-stack"><span>PG</span><span>?</span><span>90</span></div></div>
+          <div className="cf-timeline-toolbar cf-pathway-toolbar">
+            <div><b>CLUB PATHWAY</b><small>FIRST CLUB VISIBLE · REST HIDDEN</small></div>
+            <div className="cf-stat-unlocks">
+              <button onClick={()=>revealStat("goals")} disabled={status!=="playing"||revealed.includes("goals")||!goalsAvailable}> {revealed.includes("goals")?"GOALS SHOWN ✓":goalsAvailable?"REVEAL GOALS · −100 PTS":"GOALS NOT RECORDED"}</button>
+              <button onClick={()=>revealStat("assists")} disabled={status!=="playing"||revealed.includes("assists")||!assistsAvailable}> {revealed.includes("assists")?"ASSISTS SHOWN ✓":assistsAvailable?"REVEAL ASSISTS · −100 PTS":"ASSISTS NOT RECORDED"}</button>
+            </div>
+          </div>
+          <div className="cf-table-wrap"><table className="cf-table cf-pathway-table"><thead><tr><th>CLUB PATHWAY</th><th>APPS</th><th>GOALS</th><th>ASSISTS</th></tr></thead>
+            <tbody>{rows.map((r,i)=><motion.tr key={r.id}
+              initial={{opacity:0,x:-8}} animate={{opacity:1,x:0}} transition={{delay:Math.min(i*.025,.35)}}>
+              <td><strong className={i>0?"cf-locked-club":""}>{i===0?r.club:"HIDDEN CLUB"}</strong><small className={"cf-pathway-years "+(i>0?"cf-locked-club":"")}>{i===0?r.season:"DATES LOCKED"}</small>{i===0&&r.loan&&<small className="cf-loan">LOAN</small>}</td>
+              <td>{fmt(r.apps)}</td>
+              <td><span className={i>0||status!=="playing"||revealed.includes("goals")||r.goals===null?"":"cf-blur"}>{fmt(r.goals)}</span></td>
+              <td><span className={i>0||status!=="playing"||revealed.includes("assists")||r.assists===null?"":"cf-blur"}>{fmt(r.assists)}</span></td>
+            </motion.tr>)}</tbody></table></div>
+          <div className="cf-record-foot"><span>{player.statsScope?.startsWith("Wikidata")?"APPS / GOALS / ASSISTS: NOT IN WIKIDATA CAREER RECORD":player.statsScope?"APPS / GOALS: WIKIPEDIA CLUB-SPELL TOTALS · UNVERIFIED":"APPS / GOALS / ASSISTS: PREMIER LEAGUE LEAGUE TOTALS"}</span><span>— = NOT RECORDED</span></div>
+          <div className="cf-source-note">{player.statsScope?.startsWith("Wikidata")?"This career pathway uses Wikidata club-membership records. Club affiliations and dates may be incomplete; appearances, goals and assists are not provided by this source.":player.statsScope?"EFL and world-legend appearances and goals are sourced from Wikipedia senior-career club-spell infoboxes. These figures are unverified and are not directly comparable with Premier League league-only statistics. Assists are not included for these files until complete, comparable data is available.":"Premier League league appearances, goals and assists (1992/93 onward). Cup, European and EFL figures are excluded. Club dates are first and last recorded PL seasons, not exact transfer dates; gaps remain unrecorded. Missing figures remain unrecorded."} <a href={player.wikipediaUrl} target="_blank" rel="noreferrer">OPEN PLAYER IDENTITY ↗</a></div>
+        </section>
+        <aside className="cf-side">
+          <div className="cf-scorecard"><div><small>YOUR SCORE</small><strong>{score.toLocaleString("en-GB")}<i> PTS</i></strong></div><div><small>GUESSES LEFT</small><strong>{left}<i> / 10</i></strong></div>
+            <div className="cf-score-track"><motion.i animate={{width:score/1000*100+"%"}}/></div></div>
+          <section className="cf-side-panel cf-guess-panel"><span className="cf-side-kicker">04 / MAKE YOUR CALL</span><label htmlFor="cf-guess">WHO IS THE PLAYER?</label>
+            <form onSubmit={submit}><input id="cf-guess" autoFocus value={guess} onChange={e=>setGuess(e.target.value)} placeholder="Full name or surname…" disabled={status!=="playing"} autoComplete="off"/>
+              <button disabled={!guess.trim()||status!=="playing"}>LOCK IT IN ↗</button></form>
+            <div className="cf-guess-rules"><span>10 GUESSES</span><span>−50 PTS / WRONG ANSWER</span></div>
+            {note&&<motion.p className="cf-message" initial={{opacity:0,y:6}} animate={{opacity:1,y:0}}>{note}</motion.p>}
+            {status!=="playing"&&<div className={"cf-outcome "+status}><span>{status==="won"?"FILE CRACKED":"CASE CLOSED"}</span><strong>{player.name}</strong>
+              <p>{status==="won"?"You found the player with "+score+" points.":"The player was "+player.name+". The complete record is now revealed."}</p>
+              <button onClick={share}>{copied?"COPIED ✓":"SHARE RESULT ↗"}</button></div>}
+          </section>
+          <section className="cf-side-panel cf-hints"><div className="cf-hint-head"><span className="cf-side-kicker">05 / THE CLUE ROOM</span><span>SPEND TO REVEAL</span></div>
+            {hints.filter(h=>h.available).map(h=><div className="cf-hint-row" key={h.id}><div><b>{h.label}</b>{opened.includes(h.id)&&<p>{h.value}</p>}</div>
+              <button onClick={()=>unlock(h)} disabled={!h.available||opened.includes(h.id)||status!=="playing"}>{opened.includes(h.id)?"UNLOCKED ✓":h.available?"−"+h.cost+" PTS ↗":"NO DATA"}</button></div>)}
+          </section>
+          <div className="cf-side-actions"><button onClick={next} disabled={busy||loadingPlayer||!pool.length}>{loadingPlayer?"LOADING…":"NEXT PLAYER ↗"}</button><span>USED FILES ARE AVOIDED UNTIL THE DRAW REFRESHES.</span></div>
+        </aside>
+      </div>}
     </section>
+    <footer className="cf-footer cf-footer-compact"><a href="/">PLAYGROUND®</a><span>FOOTBALL, PLAYED DIFFERENTLY.</span></footer>
+  </main>;
     <section className="cf-mode-area">
       <div className="cf-mode-title"><span>02 / SET THE DIFFICULTY</span><span>THE HARDER THE FILE, THE LESS OBVIOUS THE NAME</span></div>
       <div className="cf-mode-grid">{MODES.map((m,i)=><motion.button key={m.name}
