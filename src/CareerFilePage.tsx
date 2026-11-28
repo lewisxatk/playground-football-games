@@ -160,7 +160,7 @@ const ageOf=(p:Player)=>{
 };
 function fits(c:Candidate,m:Mode){
   if(c.source==="quizfc-pl"&&c.fameRank!==undefined){
-    // Wikidata fame rank from the licensed PL history source: lower is more recognisable.
+    // Source-provided prominence rank: lower ranks indicate more recognisable players.
     if(m==="EASY")return c.fameRank<=300;
     if(m==="MEDIUM")return c.fameRank>300&&c.fameRank<=1200;
     if(m==="HARD")return c.fameRank>1200&&c.fameRank<=2500;
@@ -497,7 +497,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     </section>
     <section className="cf-bottom-strip"><div><span>THE PLAYGROUND PLAYER ARCHIVE</span><strong>READ THE GAME.<br/>READ THE CAREER.</strong></div>
       <div className="cf-source-credits"><b>DATA & SOURCES</b>
-        <p>Career File currently uses a dedicated Premier League history dataset covering 1992/93 onward. Player identities and fame ranking are linked through Wikidata; season appearances and goals are adapted from Wikipedia club-season tables and senior-career infoboxes, cross-checked against openfootball results. The source has 4,866 player identities and 17,028 season-stat rows; 593 of 686 club-seasons have full appearances/goals coverage, 65 are goals-only and 28 have no statistics. Club timelines show the first/last recorded Premier League seasons only, not exact transfer dates, loans or complete senior careers. EFL, cup and European statistics are not included. Missing figures remain unrecorded. The data is CC BY-SA 4.0 and may be used commercially with attribution and share-alike; see the source attribution.</p>
+        <p>Career File currently uses a dedicated Premier League history dataset covering 1992/93 onward. Player identities are linked through Wikidata; the source-provided prominence rank sets the difficulty bands. Season appearances and goals are adapted from Wikipedia club-season tables and senior-career infoboxes, cross-checked against openfootball results. The source has 4,866 player identities and 17,028 season-stat rows; 593 of 686 club-seasons have full appearances/goals coverage, 65 are goals-only and 28 have no statistics. Club timelines show the first/last recorded Premier League seasons only, not exact transfer dates, loans or complete senior careers. EFL, cup and European statistics are not included. Missing figures remain unrecorded. The data is CC BY-SA 4.0 and may be used commercially with attribution and share-alike; see the source attribution.</p>
         <p>Transfer clues use Tiago Cumetti’s Football Transfers Dataset (2005–2024), collected from Transfermarkt pages. It is CC BY 4.0 and includes undisclosed or missing fees. No match does not mean a free transfer.</p>
         <a href="https://quiz-fc.com/data/pl-history.v2.json" target="_blank" rel="noreferrer">OPEN PL HISTORY DATA ↗</a>
         <a href="https://quiz-fc.com/data/ATTRIBUTION.md" target="_blank" rel="noreferrer">DATA ATTRIBUTION / CC BY-SA 4.0 ↗</a>
