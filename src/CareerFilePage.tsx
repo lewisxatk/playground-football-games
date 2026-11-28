@@ -14,7 +14,7 @@ function archivePlayerToCareerFile(raw:ArchiveGamePlayer):Player{
    seq:Number(spell.seq??index),
    years:String(spell.years??""),
    start:spell.startYear??null,
-   end:spell.endYear??spell.startYear??null,
+   end:spell.endYear??null,
    club:String(spell.club??""),
    clubLink:String(spell.clubLink??""),
    clubQid:String(spell.clubQid??""),
@@ -114,29 +114,38 @@ function persistRecentCareerIds(ids:Set<string>){
 function makeRows(p:Player):Row[]{
   const rows:Row[]=[];
   for(const spell of ordered(p)){
-    const start=spell.start??yearOf(spell.years),end=spell.end??start;
+    const start=spell.start??yearOf(spell.years);
+    const end=spell.end;
     const clubKey=spell.clubQid||clean(spell.clubLink||spell.club);
     if(start==null){
-      rows.push({id:"s"+spell.seq,season:spell.years||"Date not recorded",club:spell.club,clubKey,loan:spell.loan,
+      rows.push({id:"s"+spell.seq,season:spell.years||"Dates not recorded",club:spell.club,clubKey,loan:spell.loan,
         apps:null,goals:null,covered:false,spellApps:spell.apps,spellGoals:spell.goals});
       continue;
     }
-    for(let y=start;y<=Math.min(end??start,start+35);y++){
-      const found=p.stats.filter(stat=>{
-        if(yearOf(stat.season)!==y)return false;
-        // Prefer stable Wikidata identity, then page links; fall back to the displayed club
-        // name because career infobox links may be redirects while the stats table uses another title.
-        if(spell.clubQid&&stat.clubQid&&spell.clubQid===stat.clubQid)return true;
-        if(spell.clubLink&&stat.clubLink&&clean(spell.clubLink)===clean(stat.clubLink))return true;
-        return clean(spell.club)===clean(stat.club);
-      });
+    const sameClub=(stat:Player["stats"][number])=>{
+      if(spell.clubQid&&stat.clubQid&&spell.clubQid===stat.clubQid)return true;
+      if(spell.clubLink&&stat.clubLink&&clean(spell.clubLink)===clean(stat.clubLink))return true;
+      return clean(spell.club)===clean(stat.club);
+    };
+    const matchingStats=p.stats.filter(stat=>{
+      const statYear=yearOf(stat.season);
+      return statYear!==null&&statYear>=start&&(end==null||statYear<=end)&&sameClub(stat);
+    });
+    // An empty end_year means ongoing OR unknown in the source. Do not turn it
+    // into a fake one-year spell: show the start year plus only recorded stat years.
+    const years=end==null
+      ?Array.from(new Set([start,...matchingStats.map(stat=>yearOf(stat.season)).filter((year):year is number=>year!==null)]))
+        .sort((a,b)=>a-b)
+      :Array.from({length:Math.max(1,Math.min(end,start+35)-start+1)},(_,i)=>start+i);
+    for(const year of years){
+      const found=matchingStats.filter(stat=>yearOf(stat.season)===year);
       const sourceSeason=found.find(stat=>stat.season)?.season.trim();
-      const displayedSeason=sourceSeason?sourceSeason.replace(/[–—-]/g,"/"):y+"/"+String((y+1)%100).padStart(2,"0");
-      rows.push({id:spell.seq+"-"+y,season:displayedSeason,
+      const displayedSeason=sourceSeason?sourceSeason.replace(/[–—-]/g,"/"):String(year);
+      rows.push({id:spell.seq+"-"+year,season:displayedSeason,
         club:spell.club,clubKey,loan:spell.loan,
         apps:found.length&&found.some(x=>x.apps!==null)?found.reduce((n,x)=>n+(x.apps??0),0):null,
         goals:found.length&&found.some(x=>x.goals!==null)?found.reduce((n,x)=>n+(x.goals??0),0):null,
-        covered:found.length>0,spellApps:y===start?spell.apps:null,spellGoals:y===start?spell.goals:null});
+        covered:found.length>0,spellApps:year===start?spell.apps:null,spellGoals:year===start?spell.goals:null});
     }
   }
   return rows;
