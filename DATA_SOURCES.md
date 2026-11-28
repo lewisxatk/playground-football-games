@@ -1,6 +1,6 @@
 # PLAYGROUND data sources, attribution and coverage
 
-Last reviewed: 27 November 2026.
+Last reviewed: 28 November 2026.
 
 ## Player, club and career archive
 
@@ -26,6 +26,16 @@ Coverage is not complete. OpenFootballBase's `career` table records club spells 
 For a future EFL and lower-league expansion, English Football Vault describes an eight-tier English pyramid archive from 1888–89 onwards. Its coverage is useful research context, but no data has been imported from it; API access, reuse terms and field-level provenance must be checked before integration.
 
 Upstream technical reference: [OpenFootballBase data model](https://github.com/florentfougeres/OpenFootballBase-Data/blob/main/docs/en/data-model.md). Further English-football archive research: [English Football Vault — About](https://englishfootballvault.co.uk/about.html).
+
+### Better Premier League season-stat source found (not yet integrated)
+
+Research identified [Quiz FC's published `pl-history.v2.json`](https://quiz-fc.com/data/pl-history.v2.json), explicitly distributed under **CC BY-SA 4.0**. Its credits state that it contains Premier League league appearances and goals by club-season plus senior-career spells, built from Wikipedia club-season articles/player infoboxes, openfootball results (CC0) and Wikidata (CC0). It covers Premier League history from 1992/93 and deliberately excludes cup/European figures; incomplete figures are not shown. Reuse is permitted subject to attribution, a link to CC BY-SA 4.0, documenting changes, and sharing the adapted data under the same licence.
+
+This is a substantially closer match to Career File's required season clues than OpenFootballBase's `stat_club` table, whose documentation limits its coverage to a subset of Champions League-club players from seven major countries since 2010. The Quiz FC source also has an existing Career Path game, making it a useful public reference for clue design. The data file has been identified and its licence/coverage checked, but it has **not yet been downloaded, imported, or merged** into PLAYGROUND.
+
+A second research reference, [PL-History-Dashboard](https://github.com/ethankaufman/PL-History-Dashboard), reports 18,662 player-season-club rows covering 34 seasons (1992/93–2025/26), 5,112 players and 51 clubs, and describes cross-checking player-season data against Premier League records. Its README says it uses the Premier League's public statistics service, which is undocumented and could change. The repository does not make the player-data licence sufficiently clear in its README, so do not copy that file until its reuse terms are confirmed. It is a useful independent validation lead, not an approved import source.
+
+[English Football Vault](https://englishfootballvault.co.uk/about.html) remains a possible source for English league/team history across eight tiers from 1888/89, but it documents match/team results rather than the player-season appearance/goals dataset needed by Career File. It is not a drop-in player-career source.
 
 ## World Cup starting line-ups
 
