@@ -461,7 +461,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
             </div>
           </div>
           <div className="cf-table-wrap"><table className="cf-table cf-pathway-table"><thead><tr><th>CLUB PATHWAY</th><th>APPS</th><th>GOALS</th><th>ASSISTS</th></tr></thead>
-            <tbody>{rows.map((r,i)=><motion.tr key={r.id}
+            <tbody>{rows.map((r,i)=><motion.tr key={r.id} className={i>0?"cf-locked-row":""}
               initial={{opacity:0,x:-8}} animate={{opacity:1,x:0}} transition={{delay:Math.min(i*.025,.35)}}>
               <td><strong className={i>0?"cf-locked-club":""}>{i===0?r.club:"HIDDEN CLUB"}</strong><small className={"cf-pathway-years "+(i>0?"cf-locked-club":"")}>{i===0?r.season:"DATES LOCKED"}</small>{i===0&&r.loan&&<small className="cf-loan">LOAN</small>}</td>
               <td>{fmt(r.apps)}</td>
