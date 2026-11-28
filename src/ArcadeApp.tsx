@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useRef, type FormEvent, type ReactNode } from "react";
 import { motion, AnimatePresence, Reorder, MotionConfig, animate, useMotionValue, useTransform } from "motion/react";
 import {
-  PLAYER_DATABASE, LEAGUE_GOALS, STRANDS_PACKS,
+  PLAYER_DATABASE, STRANDS_PACKS,
   type Player
 } from "./playerData";
 import { ClubBadge, CountryFlag } from "./ClubBadge";
@@ -9,6 +9,7 @@ import { ClubBadge, CountryFlag } from "./ClubBadge";
 import type { ArchiveGamePlayer, ArchiveCareerSpell, ArchiveGameStat } from "./careerFileData";
 import CareerFilePage from "./CareerFilePage";
 import { getStaticArchivePlayers } from "./useArchivePlayers";
+import { buildLowballQuestions, type LowballAnswer, type LowballClubIndex } from "./lowball";
 import CultHeroPage from "./CultHeroPage";
 import CultHeroCollectionPage from "./CultHeroCollectionPage";
 import { useFootballKnowledge, useFootballQuizKnowledge, makeCC0QuizRound, makeCC0DailyQuizRound, type CC0QuizTier as QuizTier } from "./footballKnowledge";
@@ -35,7 +36,7 @@ const difficultyDescription=(level:string)=>({
 } as Record<string,string>)[level]??"";
 const EMPTY_ACCOUNT: Account = { nickname:"PLAYER 01", createdAt:new Date().toISOString(), streak:0, bestStreak:0, lastDailyDate:"", daily:{}, totals:{} };
 const GAME_LINKS = [
-  {id:"lowball",title:"WHO'S GOT MORE?",sub:"Pick who has more recorded senior international goals.",tone:"lime",tag:"STAT FACE-OFF"},
+  {id:"lowball",title:"LOWBALL",sub:"Seven English-football questions. Lowest total wins.",tone:"lime",tag:"LOW SCORE WINS"},
   {id:"the-climb",title:"THE CLIMB",sub:"Five questions. Three lives.",tone:"orange",tag:"SURVIVAL"},
   {id:"draft-xi",title:"DRAFT XI",sub:"Build an XI inside the game budget.",tone:"blue",tag:"SQUAD BUILDER"},
   {id:"career-file",title:"CAREER FILE",sub:"Read the club journey. Find the player.",tone:"pink",tag:"MYSTERY"},
@@ -249,85 +250,99 @@ function AccountPage({account,setAccount}:{account:Account;setAccount:(a:Account
 
 function LowballPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();
+ const [archivePlayers,setArchivePlayers]=useState<ArchiveGamePlayer[]>([]);
+ const [clubIndex,setClubIndex]=useState<LowballClubIndex|null>(null);
+ const [loading,setLoading]=useState(true);
+ const [loadError,setLoadError]=useState("");
+ const [retryToken,setRetryToken]=useState(0);
  const [step,setStep]=useState(0);
- const [score,setScore]=useState(0);
- const [pick,setPick]=useState<number|null>(null);
+ const [guess,setGuess]=useState("");
+ const [feedback,setFeedback]=useState("");
+ const [picked,setPicked]=useState<LowballAnswer|null>(null);
+ const [skipped,setSkipped]=useState(false);
+ const [results,setResults]=useState<Array<{questionId:string;answer:LowballAnswer|null;score:number}>>([]);
  const [runDone,setRunDone]=useState(false);
- const [used,setUsed]=useState<string[]>([]);
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
  const done=account.daily[utcDay()]?.lowball!==undefined;
  const seed=mode==="daily"?"LOWBALL:"+utcDay():"LOWBALL:PRACTICE:"+practiceSeed;
- const {data:goalData,loading:poolLoading,error:poolError,retry}=useFootballKnowledge("goal-packs");
- const lowballPairs=goalData?.lowballPairs??[];
- type DuelStatPlayer={name:string;value:number;club:string;seasons:number;id:string};
- const fallbackPool:DuelStatPlayer[]=LEAGUE_GOALS.map(p=>({name:p.name,value:p.value,club:"Starter list",seasons:1,id:p.name}));
- const sourcePool=useMemo(()=>{
-   const unique=new Map<string,DuelStatPlayer>();
-   for(const pack of lowballPairs)for(const player of pack.players){const value=player.value??player.goals??player.internationalGoalsRecorded??0;if(value>0&&!unique.has(player.id))unique.set(player.id,{id:player.id,name:player.name,value,club:player.teams?.[0]??"International football",seasons:1})}
-   return [...unique.values()];
- },[lowballPairs]);
- const level=Math.min(3,Math.floor(step/5));
- const levelNames=["EASY","MEDIUM / STANDARD","HARD","EXTREME"];
- const metric=sourcePool.length>=2?"RECORDED SENIOR INTERNATIONAL GOALS":"STARTER FALLBACK LIST";
- const pair=useMemo(()=>{
-   const candidates=sourcePool.filter(p=>!used.includes(p.id));
-   const available=candidates.length>=2?candidates:sourcePool;
-   const randomized=shuffle(available,hashSeed(seed+":DUEL:"+step));
-   const minGap=[.28,.12,.04,0][level];
-   const maxGap=[1,.28,.12,.04][level];
-   let selectedPair:[DuelStatPlayer,DuelStatPlayer]|null=null;
-   for(let i=0;i<randomized.length&&!selectedPair;i++){
-     for(let j=i+1;j<randomized.length;j++){
-       const high=Math.max(randomized[i].value,randomized[j].value);
-       const low=Math.min(randomized[i].value,randomized[j].value);
-       if(high===low&&level<3)continue;
-       const gap=(high-low)/Math.max(1,high);
-       if(gap>=minGap&&(level===3?gap<=.04:gap<maxGap)){
-         selectedPair=[randomized[i],randomized[j]];
-         break;
-       }
-     }
-   }
-   return selectedPair??(randomized.length>=2?[randomized[0],randomized[1]]:[fallbackPool[0],fallbackPool[1]]);
- },[sourcePool,used,seed,step,level]);
- const correct=pair[0].value>pair[1].value?0:1;
- const choose=(i:number)=>{
-   if(pick!==null||runDone||done&&mode==="daily")return;
-   setPick(i);
-   if(i===correct){
-     setScore(v=>v+100+(level*50));
-     setUsed(v=>[...v,pair[0].id,pair[1].id]);
-   }else{
-     setRunDone(true);
-     if(mode==="daily")onDaily("lowball",score);
-   }
+
+ useEffect(()=>{
+  let live=true;
+  setLoading(true);setLoadError("");
+  Promise.all([
+   getStaticArchivePlayers("ENGLISH-FOOTBALL-ARCHIVE"+retryToken,3200),
+   fetch("/data/football-knowledge-football-grid-clubs.cc0.json",{cache:"force-cache"}).then(response=>{
+    if(!response.ok)throw new Error("English club index unavailable");
+    return response.json() as Promise<LowballClubIndex>;
+   })
+  ]).then(([players,index])=>{
+   if(!live)return;
+   if(!players?.length||!Array.isArray(index?.englishLeagueClubs))throw new Error("English player archive or club index is incomplete");
+   setArchivePlayers(players);setClubIndex(index);setLoading(false);
+  }).catch(error=>{
+   if(!live)return;
+   setLoadError(error instanceof Error?error.message:"The English football archive could not be loaded.");
+   setLoading(false);
+  });
+  return()=>{live=false};
+ },[retryToken]);
+
+ const questions=useMemo(()=>buildLowballQuestions(archivePlayers,clubIndex,hashSeed(seed)),[archivePlayers,clubIndex,seed]);
+ const question=questions[step];
+ const completedScore=results.reduce((sum,result)=>sum+result.score,0);
+ const currentScore=completedScore+(picked?.score??(skipped?100:0));
+ const finish=(nextResults:Array<{questionId:string;answer:LowballAnswer|null;score:number}>)=>{
+  const total=nextResults.reduce((sum,result)=>sum+result.score,0);
+  setResults(nextResults);setRunDone(true);
+  if(mode==="daily"&&!done)onDaily("lowball",Math.max(0,700-total));
+ };
+ const submit=(event:FormEvent<HTMLFormElement>)=>{
+  event.preventDefault();
+  if(!question||picked||skipped||runDone)return;
+  const key=guess.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("en-GB").replace(/[^a-z0-9]/g,"");
+  if(!key){setFeedback("ENTER A PLAYER NAME TO LOCK IN.");return;}
+  const answer=question.answers.find(candidate=>candidate.aliases.some(alias=>alias.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("en-GB").replace(/[^a-z0-9]/g,"")===key));
+  if(!answer){setFeedback("NOT IN THE VERIFIED ANSWER SET. TRY A FULL NAME OR A UNIQUE SURNAME.");return;}
+  setPicked(answer);setGuess("");setFeedback("ANSWER ACCEPTED.");
+ };
+ const skip=()=>{
+  if(picked||skipped||runDone||!question)return;
+  setSkipped(true);setGuess("");setFeedback("SKIPPED · 100 POINTS.");
  };
  const next=()=>{
-   if(pick===null)return;
-   if(step+1>=10&&mode==="daily"){
-     setRunDone(true);onDaily("lowball",score+100+(level*50));return;
-   }
-   setStep(v=>v+1);setPick(null);
+  if(!picked&&!skipped)return;
+  const result={questionId:question.id,answer:picked,score:picked?.score??100};
+  const nextResults=[...results,result];
+  if(step>=6){finish(nextResults);return;}
+  setResults(nextResults);setStep(value=>value+1);setGuess("");setPicked(null);setSkipped(false);setFeedback("");
  };
- const restart=(newMode:Mode=mode)=>{
-   setStep(0);setScore(0);setPick(null);setRunDone(false);setUsed([]);
-   if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
+ const restart=(nextMode:Mode=mode)=>{
+  setStep(0);setGuess("");setFeedback("");setPicked(null);setSkipped(false);setResults([]);setRunDone(false);
+  if(nextMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
  };
- return <Frame account={account} game="lowball" eyebrow="STAT FACE-OFF / QUICK FIRE" title="WHO'S GOT MORE?" description="Two players. One number. Pick who has more recorded senior international goals. The source coverage is not a claim of complete career totals." number="01" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
-  {done&&mode==="daily"?<Success title="DAILY DONE." detail="Today's ten-duel challenge is banked. Practice runs are unlimited." button="PRACTICE" onAgain={()=>{setMode("practice");restart("practice");}}/>:
-   poolLoading&&sourcePool.length===0?<Card className="lb-panel lb-loading"><motion.div className="lb-loading-ball" animate={{y:[0,-12,0],rotate:[0,180,360]}} transition={{duration:1.2,repeat:Infinity,ease:"easeInOut"}}>⚽</motion.div><b>SCOUTING THE ARCHIVE</b><p>Building a fresh pool of footballers and recorded stats…</p><span>THE FIRST LOAD CAN TAKE A LITTLE LONGER. NEXT VISITS USE A LOCAL CACHE.</span></Card>:
-   runDone?<Success title={pick===null?"RUN COMPLETE.":"STREAK ENDED."} detail={"You reached "+step+" correct in a row and banked "+score+" points."} button="NEW RUN" onAgain={()=>restart(mode)}/>:
-   <Card className="lb-panel">
-    <div className="arc-game-meta"><span>{mode==="daily"?"DAILY DUEL "+(step+1)+" / 10":"STREAK "+step+" · "+levelNames[level]}</span><motion.b key={score} initial={{opacity:0,y:8,scale:.9}} animate={{opacity:1,y:0,scale:1}} transition={{type:"spring",stiffness:320,damping:18}}>{score} PTS</motion.b></div>
-    <div className="lb-streak-meter">{[0,1,2,3].map(i=><span key={i} className={i<=level?"on":""}>{i===0?"EASY":i===1?"MED":i===2?"HARD":"EXTREME"}</span>)}</div>
-    <div className="lb-vs">
-     <div className="lb-player"><small>PLAYER A</small><strong>{pair[0].name}</strong><span>{pick!==null&&<motion.span initial={{opacity:0,y:12,scale:.92}} animate={{opacity:1,y:0,scale:1}} transition={{duration:.3}}>{pair[0].value.toLocaleString("en-GB")} GOALS</motion.span>}{pick===null?"— — —":""}</span><i>{pair[0].club}</i></div>
-     <div className="lb-vs-mark">VS</div>
-     <div className="lb-player"><small>PLAYER B</small><strong>{pair[1].name}</strong><span>{pick!==null&&<motion.span initial={{opacity:0,y:12,scale:.92}} animate={{opacity:1,y:0,scale:1}} transition={{duration:.3}}>{pair[1].value.toLocaleString("en-GB")} GOALS</motion.span>}{pick===null?"— — —":""}</span><i>{pair[1].club}</i></div>
-    </div>
-    <div className="lb-actions">{pair.map((p,i)=><button key={p.id} onClick={()=>choose(i)} disabled={pick!==null} className={pick===null?"":i===correct?"correct":"wrong"}>MORE GOALS ↗</button>)}</div>
-    {pick!==null&&<motion.div className={"arc-feedback "+(pick===correct?"quiz-goal":"quiz-miss")} initial={{opacity:0,y:14,scale:.97}} animate={{opacity:1,y:0,scale:1}} transition={{type:"spring",stiffness:240,damping:22}}><b>{pick===correct?"YOU CALLED IT. ⚽":"STREAK OVER."}</b><p>{pair[correct].name} has {pair[correct].value.toLocaleString("en-GB")} recorded senior international goals in the CC0 source records.</p><button className="arc-button" onClick={pick===correct?next:()=>{if(mode==="daily")onDaily("lowball",score);setRunDone(true);}}>{pick===correct?(mode==="daily"&&step===9?"BANK DAILY SCORE":"NEXT DUEL"):"SEE RUN RESULT"} ↗</button></motion.div>}
-    <div className="lb-data-note"><b>{metric}</b><span>{sourcePool.length>=2?"Men’s senior full-international goals recorded in the CC0 source; coverage is not guaranteed complete.":"Manual starter fallback while the CC0 database is unavailable."}</span>{poolError&&<button onClick={retry}>RETRY DATABASE</button>}</div>
+ const beginPractice=()=>{setMode("practice");restart("practice");};
+ const totalScore=runDone?results.reduce((sum,result)=>sum+result.score,0):completedScore;
+ return <Frame account={account} game="lowball" eyebrow="SEVEN QUESTIONS / LOW SCORE WINS" title="LOWBALL." description="Name a valid player from the English league archive. Less obvious careers earn fewer provisional points. Lowest total wins." number="01" mode={mode} setMode={nextMode=>{setMode(nextMode);restart(nextMode);}}>
+  {done&&mode==="daily"&&!runDone?<Success title="TODAY'S LOWBALL IS BANKED." detail="Your seven-question daily challenge is complete. Practice runs use fresh English-football questions." button="PRACTICE LOWBALL" onAgain={beginPractice}/>:
+   loading?<Card className="lb-panel lb-loading"><motion.div className="lb-loading-ball" animate={{y:[0,-12,0],rotate:[0,180,360]}} transition={{duration:1.2,repeat:Infinity,ease:"easeInOut"}}>⚽</motion.div><b>SCOUTING THE ENGLISH ARCHIVE</b><p>Loading player careers and recorded league statistics…</p><span>THE FIRST LOAD CACHES THE PLAYER SHARDS FOR THE OTHER GAMES.</span></Card>:
+   loadError||questions.length<7?<Card className="lb-panel lb-loading"><b>LOWBALL DATA NEEDS A RETRY.</b><p>{loadError||("Only "+questions.length+" complete questions could be built from this archive sample.")}</p><button className="arc-button" onClick={()=>setRetryToken(value=>value+1)}>RETRY ENGLISH ARCHIVE ↗</button><div className="lb-data-note"><b>DATA RULE</b><span>Only recorded English-club league appearances and goals are accepted. Missing records are not guessed.</span></div></Card>:
+   runDone?<Card className="lb-panel lb-lowball-result">
+    <div className="arc-game-meta"><span>DAILY RESULT / SEVEN QUESTIONS</span><b>LOWER IS BETTER</b></div>
+    <div className="lb-lowball-final"><small>YOUR LOWBALL TOTAL</small><strong>{totalScore}<em> / 700</em></strong><span>{Math.max(0,700-totalScore)} PLAYGROUND POINTS BANKED</span></div>
+    <div className="lb-lowball-results">{results.map((result,index)=><div className="lb-lowball-result-row" key={result.questionId}><span>{String(index+1).padStart(2,"0")}</span><div><b>{result.answer?.name??"SKIPPED"}</b><small>{result.answer?.evidence??"No answer submitted"}</small></div><strong>{result.score} PTS</strong></div>)}</div>
+    <div className="lb-data-note"><b>PROVISIONAL ARCHIVE RARITY</b><span>These are transparent estimates based on recorded English-league appearances and goals, not votes from a 100-person fan panel. Real crowd scoring needs a live response sample.</span><small>Source: OpenFootballBase-Data · CC BY-SA 4.0</small></div>
+    <button className="arc-button" onClick={mode==="daily"?beginPractice:()=>restart("practice")}>NEW PRACTICE ROUND ↗</button>
+   </Card>:
+   <Card className="lb-panel lb-lowball">
+    <div className="arc-game-meta"><span>{mode==="daily"?"TODAY'S LOWBALL":"PRACTICE LOWBALL"} · QUESTION {step+1} / 7</span><b>{currentScore} PTS · LOWER WINS</b></div>
+    <div className="lb-lowball-progress">{Array.from({length:7},(_,index)=><span key={index} className={index<step?"done":index===step?"active":""}>{index+1}</span>)}</div>
+    <div className="lb-lowball-question"><small>{question.scope}</small><h2>{question.prompt}</h2><p>One answer only. Try a full name or a unique surname.</p></div>
+    {!picked&&!skipped?<form className="lb-lowball-answer-form" onSubmit={submit}><input value={guess} onChange={event=>setGuess(event.target.value)} placeholder="ENTER PLAYER NAME…" autoComplete="off" autoCapitalize="words"/><button type="submit" disabled={!guess.trim()}>LOCK ANSWER ↗</button></form>:
+     <div className="lb-lowball-accepted"><small>{skipped?"QUESTION SKIPPED":"ANSWER ACCEPTED"}</small><strong>{picked?.name??"NO ANSWER"}</strong><span>{picked?("PROVISIONAL RARITY · "+picked.score+" POINTS"):"100 POINTS · SKIP PENALTY"}</span>{picked&&<p>{picked.evidence}</p>}<button className="arc-button" onClick={next}>{step===6?"FINISH DAILY LOWBALL":"NEXT QUESTION"} ↗</button></div>}
+    {feedback&&<div className="lb-lowball-feedback">{feedback}</div>}
+    {!picked&&!skipped&&<button className="lb-lowball-skip" onClick={skip}>CAN'T FIND ONE? SKIP · 100 PTS</button>}
+    <div className="lb-lowball-running"><span>COMPLETED {results.length} / 7</span><span>{completedScore} POINTS BANKED</span></div>
+    <div className="lb-data-note"><b>PROVISIONAL ARCHIVE RARITY</b><span>Lower points are assigned to less prominent recorded careers. This is not a live fan survey; real crowd scores will replace these estimates when enough answers are collected.</span><small>OpenFootballBase-Data · CC BY-SA 4.0</small></div>
    </Card>}
  </Frame>;
 }
