@@ -99,6 +99,7 @@ export async function getCandidates(league: LeagueCode): Promise<Candidate[]> {
     "SUM(coalesce(cr.apps,0)) AS apps " +
     "FROM career cr JOIN selected_clubs sc ON sc.club_qid=cr.club_qid " +
     "WHERE cr.player_qid IS NOT NULL AND trim(cr.player_qid)<>'' " +
+    "AND cr.start_year IS NOT NULL AND (cr.end_year IS NULL OR cr.end_year>=cr.start_year) " +
     "GROUP BY cr.player_qid " +
     "HAVING SUM(coalesce(cr.apps,0))>=20 AND COUNT(DISTINCT cr.club_qid)>=2 " +
     " AND length(trim(any_value(cr.player)))>1 " +
@@ -346,11 +347,13 @@ export async function getPlayer(id: string, league: LeagueCode = "ENG-PL"): Prom
   // Run queries sequentially on the shared DuckDB connection; concurrent prepared queries can contend on one connection.
   const spells = await a.query(selectedClubsCte +
     "SELECT cr.* FROM career cr JOIN selected_clubs sc ON sc.club_qid=cr.club_qid " +
-    "WHERE cr.player_qid=? ORDER BY cr.seq", [...codes, id]);
+    "WHERE cr.player_qid=? AND cr.start_year IS NOT NULL " +
+    "AND (cr.end_year IS NULL OR cr.end_year>=cr.start_year) ORDER BY cr.seq", [...codes, id]);
   const stats = await a.query(selectedClubsCte +
     "SELECT st.club,st.club_link,st.club_qid,st.season,SUM(st.apps) apps,SUM(st.goals) goals,SUM(st.assists) assists " +
     "FROM stat_club st JOIN selected_clubs sc ON sc.club_qid=st.club_qid " +
     "WHERE st.player_qid=? AND coalesce(st.competition_group,'')<>'Total' " +
+    "AND coalesce(trim(st.season),'')<>'' " +
     "GROUP BY st.club,st.club_link,st.club_qid,st.season", [...codes, id]);
   const profile = await a.query("SELECT * FROM player_profile WHERE player_qid=? LIMIT 1", [id]);
   const birth = await a.query("SELECT birth_date,precision FROM birth WHERE player_qid=? LIMIT 1", [id]);
