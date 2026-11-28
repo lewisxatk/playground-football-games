@@ -25,3 +25,4 @@ jobs:
 
 # Research-only workflow; this does not feed production data.
 # Schema audit includes the public Career Path bundle's data-field mapping.
+# This is a research-only fetch, not a production dependency.
