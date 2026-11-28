@@ -15,6 +15,13 @@ console.log("CONTENT_LENGTH_BYTES", bytes || "not supplied");
 console.log("ROOT_TYPE", Array.isArray(payload) ? "array" : typeof payload);
 console.log("ROOT_KEYS", Object.keys(payload ?? {}).join(", "));
 console.log("META", JSON.stringify(payload?.meta ?? null));
+for (const key of ["competitions", "seasons", "clubs", "players", "stats", "clubSeasons", "careerTotals", "lineups"]) {
+  const rows = payload?.[key];
+  if (Array.isArray(rows) && rows.length) {
+    console.log("SAMPLE_ROW", key, JSON.stringify(rows[0]));
+    if (rows.length > 1) console.log("SAMPLE_ROW_2", key, JSON.stringify(rows[1]));
+  }
+}
 
 const seen = new Set();
 function inspect(value, path = "$", depth = 0) {
