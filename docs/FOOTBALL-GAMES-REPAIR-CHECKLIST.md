@@ -82,7 +82,9 @@
 
 - [x] Verify the pinned OpenFootball England season structure and relabel pre-1992 `1-premierleague.txt` matches as First Division; only 1992 onward is Premier League. Commit: `9956a22704`.
 - [x] Add a data-validation guard requiring a plausible 40–100 historic Premier League club count, normalized uniqueness and inclusion in the wider English club index. Commits: `43d80c7633`, `90b72d73c2`.
-- [ ] Rerun the full build and confirm the corrected Premier League index is approximately 51 clubs, not 464.
+- [x] Parse both OpenFootball England match formats (`home score away` and `home v away score`) so current-season fixtures are not mistaken for club names; deduplicate the club index using the same canonicalization as runtime. Commit: `fb060e53a0`.
+- [x] Validate the generated club index licence through its pinned `sourceRegistry`, rather than expecting a non-existent top-level licence field. Commit: `cbfc4f9d32`.
+- [ ] Rerun the full build and confirm the corrected Premier League index is approximately 51 clubs, not 464, with no fixture/scoreline strings in either club list.
 
 - [ ] Audit remaining CC0 source manifests, licences, stable IDs, provenance and deduplication.
 - [ ] Check for duplicate or contradictory question facts across all pools.
