@@ -26,13 +26,14 @@ const englishClubIndex = JSON.parse(await readFile(new URL("../public/data/footb
 assert.equal(englishClubIndex.licence, "CC0-1.0", "English club index must retain its CC0 licence");
 assert.ok(Array.isArray(englishClubIndex.premierLeagueClubs), "Premier League club index is missing");
 assert.ok(Array.isArray(englishClubIndex.englishLeagueClubs), "English league club index is missing");
-const normaliseClub = value => String(value).toLocaleLowerCase("en-GB").replace(/&/g, "and").replace(/\\b(fc|afc|f\\.c\\.|a\\.f\\.c\\.)\\b/gi, "").replace(/[^a-z0-9]+/g, "");
+const normaliseClub = value => String(value ?? "").toLocaleLowerCase("en-GB").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/&/g, " and ").replace(/\\b(?:association football club|football club|a\\.?f\\.?c\\.?|f\\.?c\\.?|the)\\b/g, " ").replace(/[^a-z0-9]+/g, " ").trim().replace(/\\s+/g, " ");
 const premierClubKeys = englishClubIndex.premierLeagueClubs.map(normaliseClub);
-const englishClubKeys = new Set(englishClubIndex.englishLeagueClubs.map(normaliseClub));
+const englishClubKeyList = englishClubIndex.englishLeagueClubs.map(normaliseClub);
+const englishClubKeys = new Set(englishClubKeyList);
 assert.ok(englishClubIndex.premierLeagueClubs.length >= 40 && englishClubIndex.premierLeagueClubs.length <= 100,
   "Premier League index should contain a plausible historic Premier League club count, not pre-1992 First Division clubs");
 assert.equal(new Set(premierClubKeys).size, premierClubKeys.length, "Premier League club index contains duplicates");
-assert.equal(new Set(englishClubKeys).size, englishClubKeys.size, "English league club index contains duplicates");
+assert.equal(englishClubKeys.size, englishClubKeyList.length, "English league club index contains duplicates after normalization");
 assert.ok(premierClubKeys.every(key => englishClubKeys.has(key)), "Every Premier League club must also exist in the English club index");
 
 console.log("Data validation passed:");
