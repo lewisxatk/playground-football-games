@@ -162,3 +162,36 @@ if (pageResponse.ok) {
   }
 }
 
+const previewBase = "https://fix-career-file-tier-pool-v2.playground-football-games.pages.dev";
+let previewResponse;
+for (let attempt = 0; attempt < 18; attempt++) {
+  try {
+    previewResponse = await fetch(previewBase + "/api/career-file-history", {
+      headers: { "user-agent": "PLAYGROUND-CareerFile-Preview-QA/1.0" },
+      cache: "no-store"
+    });
+    if (previewResponse.ok) break;
+  } catch {}
+  await new Promise(resolve => setTimeout(resolve, 10000));
+}
+if (!previewResponse?.ok) {
+  throw new Error("Cloudflare preview proxy failed after waiting for deployment: HTTP " + (previewResponse?.status ?? "network error"));
+}
+const previewData = await previewResponse.json();
+if (previewData.format !== "quizfc-pl-history" || previewData.version !== 2 ||
+    !String(previewData.meta?.license ?? "").includes("CC BY-SA 4.0")) {
+  throw new Error("Cloudflare preview proxy returned an unexpected dataset or licence.");
+}
+console.log("PREVIEW_PROXY_HTTP", previewResponse.status);
+console.log("PREVIEW_PROXY_COUNTS", JSON.stringify({
+  players: previewData.players?.length ?? 0,
+  stats: previewData.stats?.length ?? 0,
+  clubs: previewData.clubs?.length ?? 0,
+  clubSeasons: previewData.clubSeasons?.length ?? 0
+}));
+const pageResponse = await fetch(previewBase + "/career-file", {
+  headers: { "user-agent": "PLAYGROUND-CareerFile-Preview-QA/1.0" },
+  cache: "no-store"
+});
+console.log("PREVIEW_CAREER_PAGE_HTTP", pageResponse.status);
+if (!pageResponse.ok) throw new Error("Career File preview page failed: HTTP " + pageResponse.status);
