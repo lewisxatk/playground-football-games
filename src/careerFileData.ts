@@ -199,7 +199,7 @@ export async function getWikidataCareerPlayersByNames(names:string[]):Promise<Pl
       const response=await fetch(url,{headers:{Accept:"application/sparql-results+json"},cache:"force-cache"});
       if(!response.ok)throw new Error("Wikidata career lookup failed ("+response.status+").");
       const payload=await response.json();
-      const grouped=new Map<string,{name:string;birthDate:string;nationality:string;position:string;articleTitle:string;spells:Spell[]}>();
+      const grouped=new Map<string,{name:string;birthDate:string;birthPrecision:number;nationality:string;position:string;articleTitle:string;spells:Spell[]}>();
       for(const row of payload.results?.bindings??[]){
         const id=String(row.player?.value??"").split("/").pop()??"";
         if(!/^Q\d+$/.test(id))continue;
@@ -207,8 +207,9 @@ export async function getWikidataCareerPlayersByNames(names:string[]):Promise<Pl
         const club=String(row.clubLabel?.value??"").trim();
         if(!name||!club)continue;
         let item=grouped.get(id);
-        if(!item){item={name,birthDate:"",nationality:"",position:"",articleTitle:"",spells:[]};grouped.set(id,item);}
+        if(!item){item={name,birthDate:"",birthPrecision:0,nationality:"",position:"",articleTitle:"",spells:[]};grouped.set(id,item);}
         item.birthDate ||= String(row.birthDate?.value??"").slice(0,10);
+        item.birthPrecision ||= Number(row.birthPrecision?.value??0);
         item.nationality ||= String(row.nationalityLabel?.value??"");
         item.position ||= String(row.positionLabel?.value??"");
         item.articleTitle ||= String(row.articleTitle?.value??"");
@@ -229,7 +230,7 @@ export async function getWikidataCareerPlayersByNames(names:string[]):Promise<Pl
         item.spells.forEach((spell,index)=>{spell.seq=index;});
         return {
           id,name:item.name,fullName:item.name,nationality:item.nationality,position:item.position,
-          height:null,birthDate:item.birthDate,birthPrecision:Number(row.birthPrecision?.value??0)===11?11:null,
+          height:null,birthDate:item.birthDate,birthPrecision:item.birthPrecision===11?11:null,
           birthplace:"",spells:item.spells,stats:[],caps:null,internationalGoals:null,teams:[],
           wikipediaUrl:item.articleTitle?"https://en.wikipedia.org/wiki/"+encodeURIComponent(item.articleTitle.replace(/ /g,"_")):"https://www.wikidata.org/wiki/"+id,
           statsScope:"Wikidata club memberships (no verified appearance, goal or assist totals)"
