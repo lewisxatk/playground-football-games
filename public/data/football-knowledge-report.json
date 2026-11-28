@@ -1,0 +1,165 @@
+{
+  "generatedAt": "2026-11-28",
+  "policy": "CC0-only source whitelist for quiz and match shards; Career File, Link Up and Football Grid use the separately attributed OpenFootballBase-Data CC BY-SA 4.0 season archive",
+  "wikidataCareerImport": {
+    "status": "success",
+    "endpoint": "https://query-next.wikidata.org/sparql",
+    "retrievedAt": "2026-11-28",
+    "rawRows": 50000,
+    "acceptedSpells": 49981,
+    "players": 1646,
+    "eligibleCareerFile": 1639,
+    "eligibleCultHero": 1639,
+    "error": null,
+    "scope": "English club career records"
+  },
+  "counts": {
+    "players": 54077,
+    "clubs": 560,
+    "wikidataCareerRows": 50000,
+    "wikidataCareerPlayers": 8449,
+    "careerFileCandidates": 1639,
+    "cultHeroCandidates": 1639,
+    "linkUpRuntimeArchivePlayers": 60711,
+    "footlePlayerRecords": 52184,
+    "footleAnswers": 5519,
+    "worldCupLineups": 1520,
+    "worldCupPlayerCards": 4294,
+    "worldCupQuestions": 760,
+    "internationalMatches": 50092,
+    "englishMatches": 60626,
+    "europeanClubMatches": 4091,
+    "totalMatchFacts": 114809,
+    "englishDomesticMatchFacts": 60626,
+    "internationalMatchFacts": 54183,
+    "internationalGoalEvents": 47835,
+    "eligibleScoringEvents": 46899,
+    "ownGoalsExcluded": 936,
+    "duplicateGoalRows": 79,
+    "internationalGoalScorers": 14839,
+    "internationalScorersForGames": 7946,
+    "lowballPacks": 750,
+    "ladderPacks": 750,
+    "football501Packs": 750,
+    "climbQuestions": 31399,
+    "timedQuizQuestions": 31400,
+    "connectionsPacks": 500,
+    "gridPacks": 0,
+    "strandsPacks": 625,
+    "englishLeagueStrands": 500,
+    "clubCountryPacks": 500
+  },
+  "games": {
+    "footle": {
+      "unit": "unique five-letter surname",
+      "count": 5519,
+      "ready": true,
+      "integrated": true
+    },
+    "the-climb": {
+      "unit": "question",
+      "count": 31399,
+      "ready": true,
+      "integrated": true
+    },
+    "timed-quiz": {
+      "unit": "question",
+      "count": 31400,
+      "ready": true,
+      "integrated": true
+    },
+    "connections": {
+      "unit": "puzzle-pack",
+      "count": 500,
+      "ready": true,
+      "integrated": true
+    },
+    "missing-xi": {
+      "unit": "puzzle-pack",
+      "count": 1520,
+      "ready": true,
+      "integrated": true
+    },
+    "tournament-nation": {
+      "unit": "puzzle-pack",
+      "count": 1520,
+      "ready": true,
+      "integrated": true
+    },
+    "the-reveal": {
+      "unit": "player-card",
+      "count": 4294,
+      "ready": true,
+      "integrated": true
+    },
+    "link-up": {
+      "unit": "English-club archive player",
+      "count": 60711,
+      "ready": true,
+      "integrated": true,
+      "puzzleTarget": 750,
+      "format": "runtime season-by-season overlapping club spells; one unique bridge player"
+    },
+    "career-file": {
+      "unit": "Premier League player-season archive",
+      "count": 60711,
+      "ready": true,
+      "integrated": true,
+      "format": "minimum two recorded statistical seasons; appearances and goals shown where sourced"
+    },
+    "cult-hero": {
+      "unit": "player-card",
+      "count": 1639,
+      "ready": true,
+      "integrated": true
+    },
+    "strands": {
+      "unit": "puzzle-pack",
+      "count": 625,
+      "ready": true,
+      "integrated": true
+    },
+    "football-grid": {
+      "unit": "English-club archive player",
+      "count": 60711,
+      "ready": true,
+      "integrated": true,
+      "format": "Premier League club × national flag first; lower English leagues as fallback; unique players enforced at runtime"
+    },
+    "lowball": {
+      "unit": "challenge-pack",
+      "count": 750,
+      "ready": true,
+      "integrated": true,
+      "metric": "recorded senior international goals"
+    },
+    "ladder": {
+      "unit": "challenge-pack",
+      "count": 750,
+      "ready": true,
+      "integrated": true,
+      "metric": "recorded senior international goals"
+    },
+    "football-501": {
+      "unit": "challenge-pack",
+      "count": 750,
+      "ready": true,
+      "integrated": true,
+      "metric": "recorded senior international goals"
+    },
+    "draft-xi": {
+      "unit": "candidate-player",
+      "count": 3745,
+      "ready": true,
+      "integrated": true,
+      "metric": "position, international goals and World Cup starts; draft credits are game values"
+    },
+    "scout-signal": {
+      "unit": "player-card",
+      "count": 3745,
+      "ready": true,
+      "integrated": true,
+      "metric": "position, nation, age band, international goals and World Cup starts"
+    }
+  }
+}

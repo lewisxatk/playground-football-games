@@ -452,3 +452,116 @@ This section records the separate gameplay-rework branch so work is not confused
 - [!] The 3,200 question bank remains generated from source archive records, not individually hand-researched general football trivia. Easy recognisability still needs human QA.
 
 **Next actions:** open a draft PR to run the full CI pipeline; resolve any type/build/data-validation failures; then test Grid, Footle, Quick Quiz, Tournament Nation, Link Up and Strands on iPhone Safari before promoting the branch to production.
+
+
+## 17. CULT HERO initial implementation (2026-11-27)
+
+- [x] Created isolated branch `feat/cult-hero-mystery-pack-opening` from the latest gameplay-rework branch; production `main` and earlier work were not overwritten.
+- [x] Added CULT HERO as the 17th arcade game tile and registered `/cult-hero` in the existing application router.
+- [x] Implemented a five-player Daily Five run and unlimited Practice mode. Daily player selection uses a stable UTC-date seed against the shared archive sample; practice uses a fresh seed.
+- [x] Built clues only from player profile and dated career-spell fields available in the archive. Eligibility requires a recorded position, nationality, and at least three distinct dated clubs; wording explicitly describes the archive record rather than claiming full career completeness.
+- [x] Added five guesses, progressive clues, surname matching only when unique in that day's five, clue-based scoring, per-run results, and daily score callback into the existing local Locker Room record.
+- [x] Correctly identified players are saved to a deduplicated local CULT HERO collection. Storage is browser-local and is not cloud-synced.
+- [x] Added `/cult-hero-collection` with a one-card pack opening, card emergence, reveal state, and local collection cabinet. The animation uses original CSS/React only and respects reduced-motion preferences; no third-party animation dependency was added.
+- [x] Added editorial styling consistent with PLAYGROUND's warm paper, ink, olive and orange design direction. No FIFA-style walkout, cartoon effects, paid currency or random paid packs.
+- [!] Player cards are typography-led. Real player portraits, club crests and other third-party art are not used in the pack prototype until suitable image rights/asset sources are cleared.
+- [!] The collection and daily scores remain local-browser features; server-authoritative scoring, cloud save, account sync, trading and shared online leaderboards are not implemented.
+- [!] Human playtesting on iPhone Safari and desktop is outstanding. Build/CI validation is recorded below after the branch workflow completes.
+
+
+- [x] Cloudflare Pages preview build and deployment passed for commit `7f27eaf1b410586b2b97d15d0e76f55547685760`; preview: https://8171d457.playground-football-games.pages.dev. Branch preview: https://feat-cult-hero-mystery-pack.playground-football-games.pages.dev.
+- [!] The repository GitHub Actions CI workflow currently filters pull requests targeting `main`; CULT HERO PR #2 intentionally targets the unmerged gameplay-rework branch to preserve the earlier work, so that Actions workflow was not triggered for PR #2. Cloudflare's preview build/deploy check is successful, but this is not a substitute for a separate full CI run.
+- [!] Preview URLs are branch previews only. Production `main` has not been changed or deployed with CULT HERO.
+
+
+## 18. PLAYGROUND visual and motion upgrade batch (2026-11-27)
+
+- [x] Added a shared visual upgrade layer in `src/playground-upgrades.css` without introducing a new animation dependency; the existing `motion` package remains the primary React animation tool.
+- [x] Added a restrained homepage hero entrance, stadium-pitch light sweep and animated daily progress/streak figures.
+- [x] Added card shimmer, lift, shadow and icon micro-interactions; every game tile now carries its own game ID class so its card illustration can have a distinct silhouette.
+- [x] Added unique accent palettes for the individual game pages while preserving the shared PLAYGROUND paper-and-ink design system.
+- [x] Added route entrance transitions and animated feedback/result panel entrances, including a success-mark pop and restrained shine.
+- [x] Improved touch sizing, focus-visible states, active feedback and small-screen CULT HERO guess-form layout.
+- [x] Added additional reduced-motion overrides for the new animation layer; no important game state depends on animation.
+- [x] No charts, scouting graphs, WebGL, GSAP, Rive or heavyweight animation libraries were added.
+- [x] Expanded CULT HERO's recognition pool with curated, exact-name rosters spanning Premier League, La Liga, Bundesliga, Serie A and Ligue 1. Daily selection aims for one usable player from each league before filling any remaining slots.
+- [x] Increased CULT HERO's sampled archive window from 1,600 to 8,000 records to improve the chance of finding well-known roster players with enough dated career records for fair clues.
+- [x] Collection pack draws use the same recognisable Big Five pool and avoid duplicate cards until the available pool is exhausted.
+- [!] CULT HERO can only select a player when that name is present in the loaded source archive and the archive provides nationality, position and at least three distinct dated clubs. If a league has no eligible record in the loaded sample, the draw fills from the other verified Big Five names; it does not invent a player or clue.
+- [!] Recognition is a curated starter roster, not a complete current squad list or full historical list for all five leagues. It should be expanded in later data-audited batches.
+- [!] The latest Cloudflare Pages build and deployment are being checked against the final commit. A previous CULT HERO collection build succeeded, but that does not certify the final combined branch.
+- [!] No hands-on iPhone Safari test has been performed in this session. Automated build success does not replace checking the 17 game routes, touch interactions and visual layout on a real phone.
+- [!] Current branch remains a preview-only feature branch; production `main` has not been changed.
+
+**Next acceptance pass:** confirm the final Pages build succeeds; then check homepage, all 17 games, menu navigation, reduced-motion, 320–390px widths, and CULT HERO's five-league daily mix / collection duplicate behaviour in desktop and iPhone Safari.
+
+
+## 15. Content and rights audit — 27 November 2026
+
+- [x] Audited the current branch's theme, separate factual seed, generated quiz bank, validation rules and declared sources. Full findings: `docs/CONTENT_AND_DATA_AUDIT_2026-11-27.md`.
+- [x] Updated `DATA_SOURCES.md` with a CC0/public-domain ingestion whitelist and exclusions.
+- [x] Corrected `docs/FOOTBALL_CONTENT_PLAN.md` to distinguish the 100-question development seed from the separate 3,200-question archive-generated bank.
+- [!] The 100 source-referenced seed questions have no duplicate normalised stems and are close to the UK-first topic mix, but the validator checks structure, not fact truth, answer freshness, source accessibility, distractor truth or source reuse rights. A sample was cross-checked; this is not a 100/100 independent fact certification.
+- [!] The generated 3,200 question pool is template-derived from mixed-provenance OpenFootballBase-Data. Some underlying appearances/goals/caps fields are explicitly unverified or incomplete. Do not describe it as a verified editorial question bank.
+- [!] Current OpenFootballBase player archive mixes Wikipedia-derived CC BY-SA 4.0 data with Wikidata CC0 data. The project should migrate to a CC0-only build for the user's preferred no-fee/no-permission route; do not imply the upstream code's MIT licence clears the underlying mixed data.
+- [!] Transfer CSV provenance and redistribution rights remain unverified; hold transfer hints out of any new commercial data release until the exact source is documented.
+- [!] Club crests remain a separate trademark/artwork rights issue. Keep text fallbacks and original generic graphics.
+- [~] Theme matches the PLAYGROUND chalk/ink/pitch-green/orange editorial direction. Typography still needs consolidation between Cabinet Grotesk, Space Grotesk and multiple imported display families.
+- [ ] Build CC0 source ingestion, pinned snapshots, canonical fact ledger, deterministic fact/question generation, source-row recomputation and game-specific QA before claiming 500+ approved playable items per game.
+
+**Next content acceptance gate:** only count an item after its underlying fact is reproducible from an approved CC0 source row, its answer and distractors pass scope checks, it is unique at fact level, and its target game's complete playable unit passes its own validator.
+
+
+- [x] Normalised the 100-question seed's date semantics: 76 historical event dates moved into `eventDate`; all `validAsOf` values now match source check date 2026-11-27.
+- [x] Strengthened static/runtime validators for date semantics, HTTPS sources, fact/scope duplicates and answer aliases in multiple-choice options.
+- [x] Rechecked structural invariants across the 100-question seed: 100 unique IDs, question stems and fact/scope keys; 76 explicit event dates; no schema errors.
+- [!] Factual QA remains separate: the validators cannot prove the statement true or guarantee distractors false. A current Premier League spot check confirmed Nwaneri remains youngest player appearance record and Max Dowman is youngest goalscorer; preserve the distinction and do not treat the Premier League website as a bulk-licensed data source.
+
+
+- [x] Tightened Les Ferdinand's 149-goal statistic to say "non-penalty goals", avoiding the impression that he never scored a penalty.
+- [x] Corrected Geoff Hurst's World Cup final hat-trick scope from "only" to "first", noting Mbappé later matched the feat in 2022.
+- [x] Confirmed Ethan Nwaneri remains the youngest Premier League appearance-maker; Max Dowman holds the separate youngest-goalscorer record.
+
+
+## CC0 knowledge engine — current state
+
+- [x] Pin and verify CC0 player, club and international-results sources
+- [x] Build stable player/match IDs, aliases, source provenance and source-scoped deduplication
+- [x] Generate and validate 500+ game-specific pools for 14 games
+- [x] Remove the legacy mixed-provenance question-bank generator/module from the production build path
+- [x] Integrate CC0 pools into the 14 game pages listed in `docs/CC0_FOOTBALL_KNOWLEDGE_ENGINE.md`
+- [ ] Replace legacy career data in Career File with verified dated club spells
+- [ ] Build 500+ Cult Hero packs from source-backed career/appearance facts
+- [ ] Build 500+ Link Up shared-career puzzles with a unique valid answer
+- [ ] Split/lazy-load large database shards and measure first-load performance on mobile
+- [ ] Manually spot-check factual accuracy and answer ambiguity across every game before public release
+
+
+## 15. English-first question selection and source audit (2026-11-27)
+
+- [x] Rechecked and corrected the CC0 match importer: OpenFootball England domestic league/cup matches are classified as `ENGLISH_DOMESTIC`; UEFA club matches and all senior national-team fixtures (including England) are classified as `INTERNATIONAL`.
+- [x] Found and corrected the runtime selection bug: `makeCC0QuizRound` previously selected too few English domestic questions. It now targets 80% English in five-question rounds and 90% in ten-question practice rounds.
+- [x] Daily Quick Quiz uses exactly 15 English domestic questions and 2 approved international questions (UEFA Champions League / FIFA World Cup only). No friendlies or minor international tournaments.
+- [x] Five-question rounds target 4/1; ten-question practice rounds target 9/1. Runtime filtering and CI validation prevent unrelated international fixtures from entering fallback selection.
+- [x] Quiz selection deduplicates by match ID, and the daily round excludes any match already selected earlier in the same round.
+- [x] Added `scripts/validate-cc0-quiz-pools.mjs` to check question IDs, unique match facts, difficulty, region, question wording, five distinct options, one correct answer, source/date provenance, manifest counts and minimum English/international coverage per tier.
+- [x] Wired the new validator into `npm run validate:data`, so CI will fail if any difficulty tier cannot satisfy English-first rounds.
+- [x] Updated The Climb and Quick Quiz descriptions so the English-domestic emphasis is visible in the UI.
+- [x] Changed the existing international-goals higher/lower tile to display as **WHO'S GOT MORE?**, so it is not misrepresented as the ClubPark-style Lowball game.
+- [x] Added a temporary loader normaliser for old `UK`-tagged quiz records: OpenFootball England source URLs become `ENGLISH_DOMESTIC`, while national-team source URLs become `INTERNATIONAL`; the new validator still requires the refreshed explicit tags.
+- [x] Improved match-winner distractors: prefer clubs/nations from the same competition, then fall back to the same source family instead of mixing English clubs with national teams.
+- [x] Rebalanced English domestic difficulty bands across all eras after validation exposed an empty English Hard pool: 2015+ Easy, 2005–2014 Medium, 1995–2004 Hard, pre-1995 Extreme. Full shard validation must confirm the new counts before merge.
+- [x] Researched the 212k+ England Football League Data dataset. It is a CC BY 4.0 candidate with third-party rights reserved, so it is documented for review but not bulk-imported. Official Premier League pages are kept as manual fact-check references only; current terms prohibit commercial database extraction without prior written approval.
+- [x] CC0 rebuild completed successfully in GitHub Actions run `46078531848`: all pinned source/licence checks, database generation, legacy data validation, new CC0 quiz validation and full `tsc -b && vite build` passed. Generated data commit: `594a0f7`.
+- [x] Cloudflare preview for the regenerated database deployed successfully: `https://78e4ceba.playground-football-games.pages.dev`.
+- [x] New report confirms 60,626 English domestic match facts, 54,183 international match facts, 57,404 Climb questions and 57,405 Quick Quiz questions. Both quiz pools pass per-tier English/international availability checks.
+- [!] Physical iPhone/desktop playtesting is still outstanding; production remains on main commit `8caec1b` and has not been changed.
+- [!] The English-first weighting currently applies to The Climb and Quick Quiz, not every game. Lowball, Ladder and Football 501 still use recorded senior international-goal values and need English player-stat data before they can honestly become English-stat games.
+- [!] The existing 100 curated English-heavy seed questions are still not connected to the CC0 live quiz bank. They remain a separate editorial development file and must not be counted as live content.
+
+**Next actions:**
+1. Check CI for this branch and fix any validator/build failures.
+2. Inspect actual generated question counts by tier and region from the new validator output.
+3. Find a rights-cleared English player-stat source (appearances, goals, assists) or use a verified manual fact ledger; do not scrape Premier League pages.
+4. Expand game-specific English club/player packs, then make Lowball's fan-popularity game a separate mechanic from Who's Got More?
+5. Test all 17 game routes on iPhone Safari and desktop before merging the feature branch into the gameplay branch and then production.
