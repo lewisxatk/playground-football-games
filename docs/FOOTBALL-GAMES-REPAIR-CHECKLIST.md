@@ -6,12 +6,14 @@ Rule: after every successful GitHub commit, update this checklist in the next co
 
 ## Completed and committed
 - [x] Rebalance quiz runtime allocation to favour English domestic football; keep international questions occasional.
+- [x] Restrict quiz runtime selection to English domestic, UEFA Champions League and FIFA World Cup categories only; block unrelated internationals and fallback leakage. Commit: `89ed93ff83`.
 - [x] Restrict quiz answer distractors to the same competition pool and deduplicate candidate answers.
 - [x] Build Link Up eligible-club list from clubs appearing in the English domestic match archive.
 - [x] Import the 34,637-entry English dictionary from `outparse/english-dictionary-dataset` (CC0 1.0) to `public/data/english-wordlist.cc0.txt`.
 
 ## Implemented and committed — verification still required
 - [x] Strands: load the CC0 English dictionary and accept only valid bonus words. Commit: `94420320cc`.
+- [x] Fix a missing closing parenthesis in Strands dictionary initialization that would have broken the site build. Commit: `ff2de43627`.
 - [x] Strands: improve tile contrast, size, selected/found states and mobile usability. Commit: `2b9ef09dd9`.
 - [x] Strands: use randomized serpentine paths so answers are genuinely hidden. Commit: `4f9824f19e`.
 - [x] Strands: guarantee at least 500 boards by prioritising English-league surname themes and filling any shortfall from the CC0 nationality packs. Commit: `0c822718d9`.
@@ -80,7 +82,7 @@ The full CC0 database build passed the Football Grid stage after moving it to th
 Latest data-generator fixes: `2713f3da463fe81e8a77846980ac71da0e51d0a7` (P27 nationality coverage); `0c822718d9` (Strands 500-board fallback); `dbb6a8fcc35bade22960e8bd6fc0f8bc0a920d18` (Wikidata pagination retained as a secondary archive).
 Latest Grid runtime fixes: `18b31b793394ed8808fbe5b97ba08bfc79441f44` (club-name normalization); `720b3fba6e` and `1cf67dd5bf` (static archive + generated club index); `ca2904fc9127738b4db1d6abfdd221a336a80df4` (static-shard retry rotation).
 
-Next action: poll the latest GitHub Actions build, inspect Football Grid pack counts and fix any remaining failures, then audit each implemented game and run the full typecheck/validation/build suite.
+Next action: verify the latest selector-filter commit with the full CC0 database build, inspect generated quiz counts and Football Grid pack counts, then audit all games and run the full typecheck/validation/build suite.
 
 - [x] Remove obsolete duplicate Grid builder and normalize dotted club suffixes in active runtime index. Commit: `f4dba2319d2bd2c3ba5cdf8a4aeff10d438052d7`.
 
