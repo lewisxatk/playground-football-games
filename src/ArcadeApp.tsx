@@ -762,6 +762,11 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
    setValues(v=>v.map((x,i)=>i===active?answer.name:x));setOpened(next);setHintUsed(v=>[...v,active]);setScore(nextScore);setGridNotice("Revealed "+answer.name+" for −100 points.");setActive(null);
    if(next.length===16)finish(nextScore);
  };
+ const shareResult=async()=>{
+   const summary="PLAYGROUND FOOTBALL GRID · "+difficulty+" · "+kind.replace("_"," × ")+" · "+opened.length+"/16 cells · "+score+" points";
+   try{if(navigator.share)await navigator.share({title:"PLAYGROUND Football Grid",text:summary});else if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(summary);setGridNotice("Your grid result has been copied to the clipboard.");}}
+   catch{/* sharing may be cancelled */}
+ };
  const reset=(newMode:Mode=mode,newDifficulty:GridDifficulty=difficulty,newKind:GridKind=kind)=>{
    setValues(Array(16).fill(""));setOpened([]);setActive(null);setGuess("");setGridNotice("");setAttempts(0);setScore(1000);setFinished(false);setShowSolutions(false);setHintUsed([]);
    if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
@@ -781,7 +786,7 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
      <div className="grid-editorial-board"><div className="grid-corner">PLAYER<br/>↓</div>{puzzle.columns.map((column,i)=><div className="grid-col-head" key={column}>{puzzle.columnKind==="nation"?<CountryFlag name={column}/>:<ClubBadge name={column} size={30}/>}<span>{column}</span></div>)}{puzzle.rows.map((row,ri)=><Fragment key={row}><div className="grid-row-head"><ClubBadge name={row} size={32}/><span>{row}</span></div>{puzzle.columns.map((column,ci)=>{const id=ri*4+ci;const doneCell=opened.includes(id);const count=puzzle.answers[ri][ci].length;return <button key={id} className={"grid-cell "+(doneCell?"filled ":"")+(active===id?"active":"")} disabled={doneCell||finished} onClick={()=>{setActive(id);setGuess("");setGridNotice("");}}><small>{puzzle.rows[ri]} × {column}</small><b>{values[id]||"?"}</b>{doneCell&&<i>{Math.min(150,Math.max(10,Math.round(150/Math.sqrt(count))))} PTS</i>}</button>;})}</Fragment>)}</div>
 
      {gridNotice&&<div className="arc-feedback"><b>{gridNotice.startsWith("Correct")?"CORRECT ANSWER":"GRID UPDATE"}</b><p>{gridNotice}</p></div>}
-     <div className="grid-editorial-actions"><button onClick={()=>setShowSolutions(v=>!v)}>SOLUTIONS / {showSolutions?"HIDE":"REVEAL"}</button><button onClick={()=>{if(active!==null)revealHint();else setGridNotice("Select an empty square first to reveal its answer.");}}>HINT</button><button onClick={()=>reset(mode,difficulty,kind)}>NEW GRID ↻</button></div>
+     <div className="grid-editorial-actions"><button onClick={()=>setShowSolutions(v=>!v)}>SOLUTIONS / {showSolutions?"HIDE":"REVEAL"}</button><button onClick={()=>{if(active!==null)revealHint();else setGridNotice("Select an empty square first to reveal its answer.");}}>HINT</button><button onClick={shareResult}>SHARE RESULT ↗</button><button onClick={()=>reset(mode,difficulty,kind)}>NEW GRID ↻</button></div>
      {showSolutions&&<div className="grid-solution-list"><b>VALID ANSWERS FOR THIS GRID</b>{puzzle.solutions.map((p,i)=><div key={i}><b>{p.name}</b><small>{puzzle.rows[Math.floor(i/4)]} × {puzzle.columns[i%4]}</small></div>)}</div>}
      {finished&&<div className="arc-feedback"><b>{opened.length===16?"GRID COMPLETE":"TIME TO REVIEW THE GRID"}</b><p>{opened.length}/16 cells · {attempts} wrong attempts · {score} points</p><button className="arc-button" onClick={()=>setShowSolutions(true)}>REVEAL ALL ANSWERS ↗</button><button className="arc-quiet" onClick={()=>reset("practice",difficulty,kind)}>NEW PRACTICE GRID</button></div>}
      <p className="arc-muted">Players are accepted only when the archive records both relationships. One player per square. This archive is sampled, so a player missing from suggestions may still be a valid real-world answer; the generator only uses its indexed records.</p>
