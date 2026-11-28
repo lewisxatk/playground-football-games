@@ -6,6 +6,11 @@ on:
     paths:
       - scripts/inspect-career-source.mjs
       - .github/workflows/research-career-source.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - scripts/inspect-career-source.mjs
+      - .github/workflows/research-career-source.yml
 
 jobs:
   inspect:
