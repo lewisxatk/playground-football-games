@@ -201,7 +201,7 @@ function matches(input:string,p:Player){
   return accepted.has(g);
 }
 function careerHint(p:Player):Hint[]{
- const name=(p.fullName||p.name).trim().split(/\\s+/).filter(Boolean);
+ const name=(p.fullName||p.name).trim().split(/\s+/).filter(Boolean);
  const firstInitial=name[0]?.[0]?.toUpperCase()??"";
  const surnameInitial=name[name.length-1]?.[0]?.toUpperCase()??"";
  const age=ageOf(p);
