@@ -93,6 +93,24 @@ function inspect(value, path = "$", depth = 0) {
 }
 inspect(payload);
 
+const careerIndexResponse = await fetch("https://quiz-fc.com/data/career-grid.json", {
+  headers: { "user-agent": "PLAYGROUND-CareerFile-Research/1.0" }
+});
+console.log("CAREER_GRID_HTTP", careerIndexResponse.status);
+if (careerIndexResponse.ok) {
+  const careerIndex = await careerIndexResponse.json();
+  console.log("CAREER_GRID_META", JSON.stringify(careerIndex.meta ?? null));
+  console.log("CAREER_GRID_COUNTS", JSON.stringify({
+    clubs: careerIndex.clubs?.length ?? 0,
+    nationalities: careerIndex.nationalities?.length ?? 0,
+    positions: careerIndex.positions?.length ?? 0,
+    players: careerIndex.players?.length ?? 0
+  }));
+  console.log("CAREER_GRID_SAMPLE_PLAYER", JSON.stringify(careerIndex.players?.[0] ?? null));
+  console.log("CAREER_GRID_SAMPLE_CLUB", JSON.stringify(careerIndex.clubs?.[0] ?? null));
+}
+
+
 // Read only the public Career Path bundle references to understand compact
 // array indexes. This is a schema audit; no application code is copied.
 const pageResponse = await fetch("https://quiz-fc.com/career-path/", {
