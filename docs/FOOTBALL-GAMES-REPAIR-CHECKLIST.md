@@ -56,7 +56,7 @@
 - [ ] Confirm generated database manifests, shard counts, licences and provenance.
 - [ ] Confirm every required game pool reaches its target without fabricated or duplicate facts.
 
-**Current build:** GitHub Actions run `46085667980`, commit `1a593d123f`, was still in progress at the last check. Its upstream licence checks passed and the canonical database build step was running. The raw archive-field validator was corrected in commit `fb1a78c107`; if the current run reaches that validator and fails, the next run must use the corrected commit. Do not mark the build complete until the run finishes successfully and the generated report is inspected.
+**Current build:** run `46085851722` was building commit `8ceab63d6e` at the last check; newer TypeScript fixes are in `1adb3a538e`. If the run is cancelled by the newer push, wait for the replacement run. Upstream licence checks passed on the previous attempt. Do not mark the build complete until the newest run finishes successfully and its generated report is inspected.
 
 ## 3. Live game verification still required
 
