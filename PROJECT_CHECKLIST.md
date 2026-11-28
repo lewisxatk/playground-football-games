@@ -507,3 +507,51 @@ At the end of every implementation update:
 - [~] Actual resolved EFL and world playable-profile counts (target 100–200+ combined) still need to be measured against the deployed Wikidata/OpenFootballBase sources. Lookup-name count is not the same as playable-profile count.
 - [ ] Build/CI and Cloudflare deployment verification for this batch.
 - [ ] Manual iPhone Safari test, then repeat-draw test across all categories and four difficulties.
+
+
+## 15. Football Grid — agreed product and design brief (2026-11-28)
+
+**Decision status:** Product direction agreed; visual direction awaiting user selection. Do not begin the gameplay redesign until the user chooses a visual concept and confirms the rules/structure.
+
+### Core game direction
+- [ ] 4×4 board: 4 row criteria × 4 column criteria = 16 intersections.
+- [ ] Initial core format: club × nationality; every cell needs a player satisfying both.
+- [ ] One player may be used only once per grid.
+- [ ] Correct answers lock the cell and show player identity; incorrect answers provide clear feedback and leave the cell available.
+- [ ] Searchable player autocomplete with canonical identity, aliases, accent/diacritic handling and disambiguation.
+- [ ] Four real difficulty tiers: Easy, Medium, Hard, Extreme; difficulty changes criteria/player rarity and attempt allowance, not merely colour.
+- [ ] Daily shared puzzle with stable server/build seed; unlimited practice uses separate random boards and does not affect daily streak.
+- [ ] Score out of 16, completion %, attempt tracking, rarity scoring, result/share screen and end-of-game alternative answers.
+- [ ] Rarity initially based on eligible answer-pool size; later improve with actual anonymised answer-frequency data if collected.
+- [ ] Optional hint system; solution reveal and post-game learning/review.
+- [ ] Future grid variants: club × club, club × trophy, club × league, club × position. Do not compromise clarity of the core game.
+
+### Board generation and validation (mandatory)
+- [ ] Generate candidate row/column criteria from canonical data, not random unverified lists.
+- [ ] Validate all 16 intersections against the full eligible player identity/relationship index.
+- [ ] Reject boards with zero-answer cells, insufficient alternatives, duplicate-only solutions or no valid complete matching.
+- [ ] Target at least 2–3 eligible players per cell; prefer more where source coverage permits.
+- [ ] Validate that 16 distinct players can fill the board (matching/constraint check), not merely that each cell independently has an answer.
+- [ ] Persist daily puzzle and its data/version so all users get the same board.
+- [ ] Distinguish “no valid player” from “not in sampled pool”; do not infer impossibility from the current 1,600-record sampled archive.
+- [ ] Test thousands of generated boards and report empty/sparse intersections, duplicate conflicts and difficulty distribution.
+
+### Visual and identity system
+- [ ] User to choose between three mockup directions: Editorial Clubhouse (warm cream/lime), Night Match (dark stadium/lime), Modern Scoreboard (white/orange).
+- [ ] Use authentic club crests and national-team identity/flags in row and column headers where available; do not use AI-generated approximations as actual crests.
+- [ ] Reuse existing `ClubBadge` component and indexed SVG badge library first; audit path resolution across English, Spanish, Italian, German, French and global clubs.
+- [ ] Add verified national-team crests/flags, stable identity mapping and fallback initials/flags when assets are missing.
+- [ ] Reserve fixed image dimensions, lazy-load and cache assets; maintain readable names alongside crests for accessibility.
+- [ ] Audit asset provenance, licence/terms and trademark display rights; no implication of club endorsement.
+- [ ] Mobile-first responsive board: readable 4×4 cells on iPhone, compact row/column labels, selected-cell/player-entry flow, clear completed/incorrect/empty states.
+- [ ] Desktop board scales up without changing interaction logic; keyboard accessibility and visible focus states.
+
+### Implementation stages
+- [ ] Audit current Football Grid component, player lookup, existing badge resolver and archive relationship coverage before replacing anything.
+- [ ] Agree visual concept and exact rules with user.
+- [ ] Build canonical player-to-club and player-to-nationality eligibility index, including provenance and coverage flags.
+- [ ] Build deterministic valid-board generator and test suite.
+- [ ] Implement input/autocomplete, cell state, duplicate prevention, scoring, rarity and results.
+- [ ] Implement daily/practice separation and puzzle versioning.
+- [ ] Manual iPhone Safari + desktop acceptance tests; verify no impossible cells or false-positive players.
+- [ ] Update this checklist with evidence; do not mark done from a mock-up alone.
