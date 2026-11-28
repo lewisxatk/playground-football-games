@@ -27,7 +27,10 @@ for (const row of payload.stats ?? []) {
 const careerByPlayer = new Map((payload.careerTotals ?? []).map(([playerIndex, apps, goals, appsFlag, goalsFlag, linesFlag]) => [
   playerIndex, { apps, goals, appsComplete: appsFlag === 1 && typeof apps === "number", goalsComplete: goalsFlag === 1 && typeof goals === "number", linesComplete: linesFlag === 1 }
 ]));
-const tiers = { EASY: 0, MEDIUM: 0, HARD: 0, EXTREME: 0 };
+const tierCounts = () => ({ EASY: 0, MEDIUM: 0, HARD: 0, EXTREME: 0 });
+const strictTiers = tierCounts();
+const flexibleTiers = tierCounts();
+const oneClubTiers = tierCounts();
 let complete10Plus = 0;
 let twoFullSeasons = 0;
 let twoFullClubs = 0;
@@ -37,19 +40,19 @@ for (let playerIndex = 0; playerIndex < (payload.players ?? []).length; playerIn
   const total = careerByPlayer.get(playerIndex);
   const seasonRows = (statsByPlayer.get(playerIndex) ?? []).filter(row => row.level === "full" && typeof row.apps === "number" && typeof row.goals === "number");
   const clubs = new Set(seasonRows.map(row => row.clubIndex));
-  if (total?.appsComplete && total?.goalsComplete && player[12] === 1 && total.apps >= 10) {
-    complete10Plus++;
-    if (seasonRows.length >= 2) twoFullSeasons++;
-    if (seasonRows.length >= 2 && clubs.size >= 2) twoFullClubs++;
-    if (seasonRows.length >= 2 && clubs.size >= 2) {
-      if (fameRank <= 300) tiers.EASY++;
-      else if (fameRank <= 1200) tiers.MEDIUM++;
-      else if (fameRank <= 2500) tiers.HARD++;
-      else tiers.EXTREME++;
-    }
-  }
+  const seasonApps = seasonRows.reduce((sum, row) => sum + row.apps, 0);
+  const hasTwoSeasons = seasonRows.length >= 2 && seasonApps >= 10;
+  const hasTwoClubs = clubs.size >= 2;
+  const totalsComplete = total?.appsComplete && total?.goalsComplete && player[12] === 1 && total.apps >= 10;
+  const tier = fameRank <= 300 ? "EASY" : fameRank <= 1200 ? "MEDIUM" : fameRank <= 2500 ? "HARD" : "EXTREME";
+  if (totalsComplete) complete10Plus++;
+  if (hasTwoSeasons) twoFullSeasons++;
+  if (hasTwoSeasons && hasTwoClubs) twoFullClubs++;
+  if (totalsComplete && hasTwoSeasons && hasTwoClubs) strictTiers[tier]++;
+  if (hasTwoSeasons && hasTwoClubs) flexibleTiers[tier]++;
+  if (hasTwoSeasons) oneClubTiers[tier]++;
 }
-console.log("CANDIDATE_COUNTS", JSON.stringify({ complete10Plus, twoFullSeasons, twoFullClubs, tiers }));
+console.log("CANDIDATE_COUNTS", JSON.stringify({ complete10Plus, twoFullSeasons, twoFullClubs, strictTiers, flexibleTiers, oneClubTiers }));
 for (const key of ["competitions", "seasons", "clubs", "players", "stats", "clubSeasons", "careerTotals", "lineups"]) {
   const rows = payload?.[key];
   if (Array.isArray(rows) && rows.length) {
