@@ -6,6 +6,7 @@ import {
 } from "./playerData";
 import { ClubBadge, CountryFlag } from "./ClubBadge";
 import { useArchivePlayers } from "./useArchivePlayers";
+import { buildGridPuzzle } from "./footballGridCore.js";
 import { useQuestionBank, makeQuestionRound, type QuizTier, type QuizQuestion, type QuestionBank } from "./questionBank";
 import { getWorldCupLineups } from "./tournamentNationData";
 import type { ArchiveGamePlayer, ArchiveCareerSpell, ArchiveGameStat } from "./careerFileData";
@@ -624,125 +625,8 @@ function ConnectionsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
 
 type GridDifficulty="EASY"|"HARD";
 type GridKind="CLUB_NATION"|"CLUB_CLUB";
-type GridPuzzle={rows:string[];columns:string[];rowKind:"club";columnKind:"nation"|"club";answers:GamePlayer[][][];solutions:GamePlayer[];quality:number};
 const GRID_LEVELS:GridDifficulty[]=["EASY","HARD"];
-const GRID_ATTEMPTS:Record<GridDifficulty,number>={EASY:20,HARD:12};
-// Clubs with a recognised Premier League history. These are used as a
-// harder clue pool, not as a claim that the club currently plays in the PL.
-const FORMER_PL_CLUBS=new Set([
- "blackburn rovers","bolton wanderers","portsmouth","wigan athletic","reading",
- "blackpool","birmingham city","middlesbrough","stoke city","norwich city",
- "sunderland","west bromwich albion","hull city","cardiff city","swansea city",
- "watford","sheffield united","sheffield wednesday","charlton athletic",
- "bradford city","wimbledon","oldham athletic","barnsley","coventry city",
- "derby county","queens park rangers","qpr","leicester city","southampton",
- "ipswich town","luton town","huddersfield town","crystal palace","burnley",
- "wolves","wolverhampton wanderers","nottingham forest","fulham"
-].map(normalise));
 const GRID_VARIANT_TARGET=300;
-function assignDistinctAnswers(cells:GamePlayer[][]):GamePlayer[]|null{
- if(cells.length!==16)return null;
- const playerToCell=new Map<string,{player:GamePlayer;cell:number}>();
- const cellToPlayer:Array<GamePlayer|undefined>=Array(cells.length);
- const order=cells.map((c,i)=>({i,candidates:[...new Map(c.filter(p=>p?.archiveId).map(p=>[p.archiveId,p])).values()]}))
-   .sort((a,b)=>a.candidates.length-b.candidates.length);
- const assign=(cell:number,seen:Set<string>):boolean=>{
-   for(const player of order.find(entry=>entry.i===cell)!.candidates){
-     const id=player.archiveId;
-     if(seen.has(id))continue;
-     seen.add(id);
-     const previous=playerToCell.get(id);
-     if(!previous||assign(previous.cell,seen)){
-       playerToCell.set(id,{player,cell});cellToPlayer[cell]=player;return true;
-     }
-   }
-   return false;
- };
- for(const entry of order)if(!assign(entry.i,new Set()))return null;
- return cellToPlayer.every(Boolean)?cellToPlayer as GamePlayer[]:null;
-}
-function buildGridPuzzle(players:GamePlayer[],difficulty:GridDifficulty,kind:GridKind,seed:number):GridPuzzle|null{
- const clubPlayers=new Map<string,GamePlayer[]>(),nationPlayers=new Map<string,GamePlayer[]>();
- const clubNames=new Map<string,string>(),nationNames=new Map<string,string>();
- const clubPairs=new Map<string,GamePlayer[]>(),clubNationPairs=new Map<string,GamePlayer[]>();
- const clubNeighbors=new Map<string,Set<string>>();
- for(const player of players){
-   const clubs=[...new Set(player.clubs.filter(Boolean))],nation=player.nationality;
-   if(nation&&nation!=="Unlisted"){
-     const nk=normalise(nation);nationNames.set(nk,nation);
-     const list=nationPlayers.get(nk)??[];list.push(player);nationPlayers.set(nk,list);
-   }
-   for(const club of clubs){
-     const ck=normalise(club);if(!ck)continue;
-     clubNames.set(ck,club);
-     const list=clubPlayers.get(ck)??[];list.push(player);clubPlayers.set(ck,list);
-     if(nation&&nation!=="Unlisted"){
-       const key=ck+"::"+normalise(nation),matches=clubNationPairs.get(key)??[];
-       matches.push(player);clubNationPairs.set(key,matches);
-     }
-   }
-   if(kind==="CLUB_CLUB"){
-     for(let a=0;a<clubs.length;a++)for(let b=a+1;b<clubs.length;b++){
-       const ka=normalise(clubs[a]),kb=normalise(clubs[b]);if(!ka||!kb||ka===kb)continue;
-       const key=[ka,kb].sort().join("::"),list=clubPairs.get(key)??[];
-       list.push(player);clubPairs.set(key,list);
-       const aSet=clubNeighbors.get(ka)??new Set<string>();aSet.add(kb);clubNeighbors.set(ka,aSet);
-       const bSet=clubNeighbors.get(kb)??new Set<string>();bSet.add(ka);clubNeighbors.set(kb,bSet);
-     }
-   }
- }
- const easy= difficulty==="EASY";
- const minPool=easy?3:1;
- const clubKeys=[...clubPlayers.entries()].filter(([,v])=>v.length>=minPool).map(([k])=>k);
- const nationKeys=[...nationPlayers.entries()].filter(([,v])=>v.length>=minPool).map(([k])=>k);
- const clubRarity=(key:string)=>(clubPlayers.get(key)?.length??0);
- const nationRarity=(key:string)=>(nationPlayers.get(key)?.length??0);
- const rowKeys=kind==="CLUB_CLUB"
-   ?[...clubKeys].sort((a,b)=>easy?(clubNeighbors.get(b)?.size??0)-(clubNeighbors.get(a)?.size??0):
-      Number(FORMER_PL_CLUBS.has(b))-Number(FORMER_PL_CLUBS.has(a))||clubRarity(a)-clubRarity(b))
-   :[...clubKeys].sort((a,b)=>easy?clubRarity(b)-clubRarity(a):
-      Number(FORMER_PL_CLUBS.has(b))-Number(FORMER_PL_CLUBS.has(a))||clubRarity(a)-clubRarity(b));
- const colKeys=kind==="CLUB_NATION"
-   ?nationKeys.sort((a,b)=>easy?nationRarity(b)-nationRarity(a):nationRarity(a)-nationRarity(b))
-   :[...clubKeys].sort((a,b)=>easy?clubRarity(b)-clubRarity(a):
-      Number(FORMER_PL_CLUBS.has(b))-Number(FORMER_PL_CLUBS.has(a))||clubRarity(a)-clubRarity(b));
- if(rowKeys.length<4||colKeys.length<4)return null;
- const rowPool=rowKeys.slice(0,easy?120:180),colPool=colKeys.slice(0,easy?120:180);
- let best:GridPuzzle|null=null;
- const attempts=kind==="CLUB_CLUB"?2400:2000;
- for(let attempt=0;attempt<attempts;attempt++){
-   const chosenRows=shuffle(rowPool,seed+attempt*19).slice(0,4);
-   let chosenCols:string[];
-   if(kind==="CLUB_CLUB"){
-     const common=[...(clubNeighbors.get(chosenRows[0])??[])].filter(candidate=>
-       !chosenRows.includes(candidate)&&chosenRows.every(row=>clubNeighbors.get(row)?.has(candidate)));
-     chosenCols=shuffle(common.filter(key=>colPool.includes(key)),seed+attempt*37+7).slice(0,4);
-   }else chosenCols=shuffle(colPool,seed+attempt*37+7).slice(0,4);
-   if(chosenCols.length!==4)continue;
-   const hasFormerClub=[...chosenRows,...chosenCols].some(key=>FORMER_PL_CLUBS.has(key));
-   const hasRareNation=kind==="CLUB_NATION"&&chosenCols.some(key=>nationRarity(key)<=18);
-   if(!easy&&!hasFormerClub&&!hasRareNation)continue;
-   const answers=chosenRows.map(row=>chosenCols.map(col=>
-     kind==="CLUB_NATION"?(clubNationPairs.get(row+"::"+col)??[]):(clubPairs.get([row,col].sort().join("::"))??[])
-   ));
-   if(answers.some(row=>row.some(cell=>cell.length===0)))continue;
-   const flat=answers.flat(),solutions=assignDistinctAnswers(flat);if(!solutions)continue;
-   const counts=flat.map(cell=>cell.length),min=Math.min(...counts),max=Math.max(...counts);
-   const average=counts.reduce((sum,n)=>sum+n,0)/counts.length;
-   // Easy favours answerable, familiar intersections but allows a small number
-   // of tougher cells. Hard favours low candidate counts and a genuinely rare
-   // nationality or a club with Premier League history.
-   const quality=easy
-     ?-Math.abs(average-7)*12+min*2-max*.25
-     :-max*8+min*2+(hasFormerClub?30:0)+(hasRareNation?18:0);
-   const puzzle:GridPuzzle={rows:chosenRows.map(k=>clubNames.get(k)??k),
-     columns:chosenCols.map(k=>kind==="CLUB_NATION"?(nationNames.get(k)??k):(clubNames.get(k)??k)),
-     rowKind:"club",columnKind:kind==="CLUB_NATION"?"nation":"club",answers,solutions,quality};
-   if(!best||quality>best.quality)best=puzzle;
-   if(easy?min>=2&&max<=18&&average>=4&&average<=11:min>=1&&max<=8)break;
- }
- return best;
-}
 function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();
  const [difficulty,setDifficulty]=useState<GridDifficulty>("EASY");
