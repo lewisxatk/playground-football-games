@@ -1,6 +1,6 @@
 # PLAYGROUND — Master Build Checklist & Handover
 
-**Last audited:** 2026-11-27 12:04 UTC  
+**Last audited:** 2026-11-28 12:30 UTC  
 **Repository:** https://github.com/lewisxatk/playground-football-games  
 **Production:** https://playground-football-games.pages.dev  
 **Purpose:** This file is the persistent project memory and source of truth for implementation status. Update it at the end of every development batch. Do not mark a task complete merely because a route or visual mock-up exists; the behaviour must be implemented and build-tested.
@@ -14,7 +14,8 @@
 
 ## 0. Current verified baseline
 
-**Verified production commit:** '03c738e3f31d63b5f02d66d88d75dc50e2efb18b'  
+**Latest build-verified commit:** 'bb59a028051c23116ba09bf0500613396cc55ca0'  
+**Latest CI:** [46144352286](https://github.com/lewisxatk/playground-football-games/actions/runs/46144352286) passed (build job successful). The latest CI run verifies compilation/data validation, not a production deployment.  
 **Latest successful production deployment:** '080c98c9-1d0b-4d61-bf4a-6ffe734c6d8a'  
 **Build and deploy:** GitHub Actions run [45995395088](https://github.com/lewisxatk/playground-football-games/actions/runs/45995395088) passed; Cloudflare Pages build and deploy stages both succeeded. Preview: https://080c98c9.playground-football-games.pages.dev.
 
@@ -25,7 +26,7 @@
 - [x] Daily challenges use UTC date seeds; practice runs use separate session seeds and do not award daily streak credit.
 - [x] The shared archive-backed game pool is connected to Lowball, The Climb, Draft XI, Footle, Connections, Football Grid, Ladder, The Reveal, Football 501, Link Up, Football Strands, The Quick Quiz and Scout Signal. Career File uses its own bounded candidate/profile flow; Tournament Nation and Missing XI use the tournament dataset plus historical career lookups.
 - [x] Each archive-driven practice session uses a fresh seeded cached player sample; the daily pool keeps a stable shared seed. Pools are cached in memory and IndexedDB for seven days.
-- [~] Each archive pool returns up to 1,600 game-ready player records from a sampled query against a much larger upstream archive. This is a meaningful game pool, but it is **not** the complete 85k-player source and does not mean every source field exists for every player.
+- [~] Most archive pools return up to 1,600 game-ready player records. Football Grid now requests up to 3,200 records from four static shards; this is a sampled pool, not the complete 60,711-record static archive. This is a meaningful game pool, but it is **not** the complete 85k-player source and does not mean every source field exists for every player.
 - [x] The source-backed World Cup file contains 1,312 team starting-XI records from 11 editions (1982–2022), exactly 11 unique starter names per record. CI validates the line-up file and the 4,700+ SVG path badge index.
 - [x] Tournament Nation shows all eleven shirts on a responsive 2D schematic pitch; difficulty changes the number of club clues shown. The career lookup adds club and broad player-position hints only where exact name/year data matches.
 - [x] Missing XI uses the same tournament data, randomises the missing starter and shows a schematic formation. It does not claim that the source contains verified match-day coordinates.
@@ -519,12 +520,12 @@ At the end of every implementation update:
 - [~] Duplicate-player prevention and a 16-cell bipartite augmenting-path matcher are implemented; this replaces exponential backtracking for dense candidate pools. Automated runtime tests and thousands-of-board QA remain pending.
 - [~] Correct cells lock; wrong answers deduct points and leave cells open; runtime QA pending.
 - [~] Custom mobile autocomplete searches the sampled archive; matching normalises accents and aliases. Full canonical identity coverage remains outstanding.
-- [~] Football Grid now has two levels: Easy / Standard (a familiar mixed board) and Hard (rarer player pools, less common nations and curated clubs with Premier League history where source coverage supports them). Difficulty is driven by candidate-pool rarity, not colour alone; live calibration remains outstanding. Grid generation now samples up to 3,200 archive players (four verified static shards) rather than 1,600 to improve sparse intersections; mobile load/performance still needs QA.
-- [~] Daily uses a deterministic UTC seed and practice uses separate random seeds. Practice stores the last 300 board signatures locally and retries recent repeats up to eight times; 300 genuinely distinct valid boards still need measured archive-generation verification. Server-persisted puzzle versioning and cross-device consistency remain outstanding.
+- [~] Football Grid now has two formats (Club × Nation and Club × Club) and two levels: Easy / Standard (a familiar mixed board) and Hard (rarer player pools, less common nations and curated clubs with Premier League history where source coverage supports them). Difficulty is driven by candidate-pool rarity, not colour alone; live calibration remains outstanding. Grid generation now requests up to 3,200 archive players from four static shards rather than 1,600 to improve sparse intersections; mobile load/performance still needs QA.
+- [~] Daily uses a deterministic UTC seed and practice uses separate random seeds. Practice stores the last 300 board signatures locally and retries recent repeats up to eight times; this prevents recent repeats but does not prove 300 genuinely distinct valid boards exist. Server-persisted puzzle versioning and cross-device consistency remain outstanding.
 - [~] Score, cells-completed progress, attempts, rarity bonuses, share action and assigned-answer review are implemented; real device testing pending.
 - [ ] Rarity initially based on eligible answer-pool size; later improve with actual anonymised answer-frequency data if collected.
 - [~] Per-cell paid hint and solution review are implemented; runtime QA pending.
-- [ ] Future grid variants: club × club, club × trophy, club × league, club × position. Do not compromise clarity of the core game.
+- [ ] Future grid variants: club × trophy, club × league, club × position. Club × Club is now part of the core game. Do not compromise clarity of the core game.
 
 ### Board generation and validation (mandatory)
 - [ ] Generate candidate row/column criteria from canonical data, not random unverified lists.
@@ -534,7 +535,7 @@ At the end of every implementation update:
 - [x] Generator validates all 16 intersections and uses bipartite matching to guarantee 16 distinct archive player IDs before displaying a board.
 - [ ] Persist daily puzzle and its data/version so all users get the same board.
 - [ ] Distinguish “no valid player” from “not in sampled pool”; do not infer impossibility from the current 1,600-record sampled archive.
-- [ ] Verify at least 300 distinct valid boards across Club × Nation and Club × Club, then test thousands of generated boards and report empty/sparse intersections, duplicate conflicts and Easy/Hard distribution.
+- [ ] Verify at least 300 distinct valid boards across Club × Nation and Club × Club, then test thousands of generated boards and report empty/sparse intersections, duplicate conflicts and Easy/Hard distribution. No measured 300-board result is available yet; do not describe the target as achieved.
 
 ### Visual and identity system
 - [x] User selected Editorial Clubhouse: warm ivory, black editorial typography and lime accents, with a standalone page identity.
