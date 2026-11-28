@@ -124,14 +124,6 @@ type GamePlayer = Player & {
   currentCountry:string;
   currentDivision:number|null;
 };
-function positionCode(raw:string):Player["position"]{
-  const p=raw.toUpperCase();
-  if(p.includes("GK")||p.includes("GOALKEEPER"))return "GK";
-  if(p.includes("DF")||p.includes("DEFENDER")||p.includes("BACK"))return "DEF";
-  if(p.includes("MF")||p.includes("MID"))return "MID";
-  if(p.includes("FW")||p.includes("FORWARD")||p.includes("STRIKER"))return "FWD";
-  return "" as Player["position"];
-}
 function cc0PlayerToGamePlayer(p:{id:string;name:string;aliases:string[];nationalities:string[];birthYears:number[];positions:string[];internationalGoalsRecorded?:number;worldCupStarts?:number;worldCupYears?:number[]}):GamePlayer{
  const parts=p.name.trim().split(/\s+/).filter(Boolean),surname=parts.at(-1)??p.name;
  const rawPosition=p.positions?.[0]??"";
