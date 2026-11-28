@@ -47,7 +47,8 @@ Rule: after every successful GitHub commit, update this checklist in the next co
 - [ ] Audit all game pages for empty states, loading/error states, responsive layout, scoring and daily completion.
 
 ## Database and quality
-- [ ] Audit CC0 source manifests, licences, stable IDs, provenance, deduplication and generated shard counts.
+- [x] Add an integrity validator for the 61-shard, 60k-player OpenFootballBase archive: check source release, CC BY-SA 4.0 licence, file sizes, SHA-256 hashes, row counts, stable IDs and duplicate IDs across shards. Commits: `f4c5c56b1e`, `d15344a9fd`.
+- [ ] Audit remaining CC0 source manifests, licences, stable IDs, provenance, deduplication and generated shard counts.
 - [x] Add Football Grid generator diagnostics and expand the eligible English-club search from 48 to 80 clubs. Commit: `3fa6e5da15`.
 - [x] Fix the underlying nationality-coverage gap: query Wikidata P27 nationalities, retain all returned nationalities per player, and bucket English-club spells against every recorded nationality. Commit: `2713f3da46`; the next full build must confirm this produces at least 500 valid grids.
 - [ ] Check for duplicate or contradictory question facts across all game pools.
@@ -84,3 +85,4 @@ Next action: poll the latest GitHub Actions build, inspect Football Grid pack co
 - [x] Remove obsolete duplicate Grid builder and normalize dotted club suffixes in active runtime index. Commit: `f4dba2319d2bd2c3ba5cdf8a4aeff10d438052d7`.
 
 - [x] Fix Strands mode-switch reset to clear the new multi-hint state correctly. Commit: `ed0bf93d76`.
+- [x] Fix missing parenthesis in CC0 dictionary Set initialization so Strands compiles and can load bonus-word validation. Commit: `ff2de436279899eeff0f8db8f4d1d2c2f8984b88`.
