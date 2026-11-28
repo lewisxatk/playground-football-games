@@ -445,7 +445,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
       {player&&!busy&&!loadingPlayer&&<div className="cf-layout">
         <section className="cf-record">
           <div className="cf-record-head"><span>CONFIDENTIAL / PREMIER LEAGUE CLUB RECORD</span><span>SUBJECT: ████████</span></div>
-          <div className="cf-subject"><div><small>PLAYER UNKNOWN</small><strong>THE<br/><em>JOURNEY.</em></strong><span>{rows.length} TIMELINE ENTRIES / {player.spells.length} CLUB SPELLS</span></div><div className="cf-crest-stack"><span>PG</span><span>?</span><span>90</span></div></div>
+          <div className="cf-subject"><div><small>IDENTITY HIDDEN</small><strong>THE<br/><em>JOURNEY.</em></strong><span>{rows.length} TIMELINE CLUES / {player.spells.length} PREMIER LEAGUE CLUB SPELLS</span></div><div className="cf-crest-stack"><span>PG</span><span>?</span><span>90</span></div></div>
           <div className="cf-timeline-toolbar"><div><b>CAREER TIMELINE</b><small>{revealedCount} / {rows.length} REVEALED</small></div>
             <button onClick={revealAll} disabled={status!=="playing"||revealedCount===rows.length}>REVEAL FULL CAREER · {Math.max(0,rows.length-revealedCount)*35} PTS</button></div>
           <div className="cf-free-brief"><div><span>FREE SCOUTING NOTE</span><strong>{freeNote?freeNote.label:"TWO FREE SEASON CLUES"}</strong><p>{freeNote?freeNote.value:"Two sourced season records are opened for every player."}</p></div><span className="cf-free-tag">NO POINTS DEDUCTED</span></div><div className="cf-table-wrap"><table className="cf-table"><thead><tr><th>SEASON</th><th>CLUB</th><th>APPS</th><th>GOALS</th><th/></tr></thead>
