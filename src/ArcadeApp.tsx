@@ -649,6 +649,7 @@ function buildGridPuzzle(players:GamePlayer[],difficulty:GridDifficulty,kind:Gri
  const clubNames=new Map<string,string>(),nationNames=new Map<string,string>();
  const clubPairs=new Map<string,GamePlayer[]>();
  const clubNationPairs=new Map<string,GamePlayer[]>();
+ const clubNeighbors=new Map<string,Set<string>>();
  for(const player of players){
    const clubs=[...new Set(player.clubs.filter(Boolean))];
    const nation=player.nationality;
@@ -669,6 +670,8 @@ function buildGridPuzzle(players:GamePlayer[],difficulty:GridDifficulty,kind:Gri
        const ka=normalise(clubs[a]),kb=normalise(clubs[b]);
        const key=[ka,kb].sort().join("::");
        const list=clubPairs.get(key)??[];list.push(player);clubPairs.set(key,list);
+       const aSet=clubNeighbors.get(ka)??new Set<string>();aSet.add(kb);clubNeighbors.set(ka,aSet);
+       const bSet=clubNeighbors.get(kb)??new Set<string>();bSet.add(ka);clubNeighbors.set(kb,bSet);
      }
    }
  }
@@ -676,7 +679,7 @@ function buildGridPuzzle(players:GamePlayer[],difficulty:GridDifficulty,kind:Gri
  const clubKeys=[...clubPlayers.entries()].filter(([,v])=>v.length>=band).map(([k])=>k);
  const nationKeys=[...nationPlayers.entries()].filter(([,v])=>v.length>=band).map(([k])=>k);
  const pairKeys=[...clubPairs.entries()].filter(([,v])=>v.length>=band).map(([k])=>k);
- const rowKeys=kind==="CLUB_NATION"?clubKeys:clubKeys;
+ const rowKeys=kind==="CLUB_CLUB"?[...clubKeys].sort((a,b)=>(clubNeighbors.get(b)?.size??0)-(clubNeighbors.get(a)?.size??0)):clubKeys;
  const colKeys=kind==="CLUB_NATION"?nationKeys:clubKeys;
  if(rowKeys.length<4||colKeys.length<4)return null;
  let best:GridPuzzle|null=null;
@@ -685,7 +688,8 @@ function buildGridPuzzle(players:GamePlayer[],difficulty:GridDifficulty,kind:Gri
    const chosenRows=shuffle(rowKeys,seed+attempt*19).slice(0,4);
    let chosenCols:string[];
    if(kind==="CLUB_CLUB"){
-     chosenCols=shuffle(colKeys.filter(k=>!chosenRows.includes(k)),seed+attempt*37+7).slice(0,4);
+     const common=[...clubNeighbors.get(chosenRows[0])??[]].filter(candidate=>!chosenRows.includes(candidate)&&chosenRows.every(row=>clubNeighbors.get(row)?.has(candidate)));
+     chosenCols=shuffle(common,seed+attempt*37+7).slice(0,4);
    }else chosenCols=shuffle(colKeys,seed+attempt*37+7).slice(0,4);
    if(chosenCols.length!==4)continue;
    const answers=chosenRows.map(row=>chosenCols.map(col=>{
