@@ -42,7 +42,7 @@
 - [x] Add four progressive hints, three guesses, an optional fourth attempt, and a skip that does not reveal the answer. Commit: `199a453e74`.
 - [x] Display the actual verified candidate-pool count in the game header. Commit: `4b4f872586`.
 - [x] Show the source attribution: OpenFootballBase-Data, CC BY-SA 4.0.
-- [x] Retain a secondary CC0 Wikidata Link Up shard, generated from paginated career statements with a 750-pack target; the validator requires at least 500 unique bridge packs. Commit: `dbb6a8fcc3`. Runtime play uses the larger season archive.
+- [x] Keep the CC0 Wikidata career-history shard limited to verified English-club career profiles for Career File/Cult Hero; remove the obsolete Wikidata Link Up pack generator and its 500-pack validator because Link Up now generates from the season archive. Commits: `49003989e8`, `336c9b7705`, `f65880e142`, `b4b61732c8`.
 
 ### Career File and archive
 - [x] Restrict Career File eligibility to Premier League players with at least two seasons; add appearance clues and unlockable identity hints. Commits: `41d97fce33`, `cb49370295`.
@@ -53,13 +53,13 @@
 ## 2. Automated verification
 
 - [x] `npm run validate:football-content` passed on commit `1a593d123f` (GitHub Actions run `46085667903`).
-- [ ] Full CC0 database generation and `npm run validate:data`, including the secondary `career-history.linkUpPacks` minimum of 500.
+- [ ] Full CC0 database generation and `npm run validate:data`, including the lean English-only career-history shard and 24 MB per-asset size limit.
 - [x] Fix TypeScript build errors from the archive adapter cleanup and Strands fallback pack type; remove the now-unused position helper. Commits: `1adb3a538e`, `f8f057a181`.
 - [ ] Full site typecheck and production build.
 - [ ] Confirm generated database manifests, shard counts, licences and provenance.
 - [ ] Confirm every required game pool reaches its target without fabricated or duplicate facts.
 
-**Current build:** GitHub Actions run `46086104358` is building commit `b53cbea6ab45bf773808c0c8afe1fafd5c897104` (the latest source changes) at the last check. Upstream licence checks passed. The canonical generation step must prove the 500+ secondary Wikidata Link Up pool and all other shard minimums before the typecheck/site build can run. Do not mark the build complete until the newest run finishes successfully and its generated report is inspected.
+**Current build:** GitHub Actions run `46086104358` is building commit `b53cbea6ab45bf773808c0c8afe1fafd5c897104` (the latest source changes) at the last check. Upstream licence checks passed. The canonical generation step must prove all remaining shard minimums and keep the career-history payload under the 24 MB per-asset limit before the typecheck/site build can run. Do not mark the build complete until the newest run finishes successfully and its generated report is inspected.
 
 ## 3. Live game verification still required
 
