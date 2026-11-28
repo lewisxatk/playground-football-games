@@ -91,7 +91,7 @@ const EFL_LEGEND_NAMES = [
  "Lee Hughes","Andy Ritchie","Andy Booth","Dean Windass","David Healy",
  "Michael Chopra","Marcus Stewart","Nicky Maynard","Jason Roberts","Nathan Ellington",
  "Ade Akinbiyi","Iwan Roberts","Robert Earnshaw","Craig Bellamy","John Hartson",
- "Nathan Tyson","Grant Holt","Rickie Lambert","Adam Le Fondre","Jordan Rhodes",
+ "Nathan Tyson","Grant Holt","Adam Le Fondre","Jordan Rhodes",
  "Chris O'Grady","Leon Clarke","Sam Winnall","Marlon King","Darius Henderson",
  "Sylvan Ebanks-Blake","Michael Kightly","Matt Le Tissier","Gordon Strachan","Chris Sutton",
  "Duncan Ferguson","Teddy Sheringham","Troy Deeney","Micky Quinn","Peter Crouch",
@@ -128,11 +128,11 @@ const WORLD_LEGEND_NAMES = [
  "Giuseppe Meazza","Gianni Rivera","Roberto Mancini","Ruud Gullit","Marco van Basten",
  "Dennis Bergkamp","Clarence Seedorf","Edgar Davids","Patrick Kluivert","Arjen Robben",
  "Wesley Sneijder","Robin van Persie","Virgil van Dijk","Ruud van Nistelrooy","Patrick Vieira",
- "Thierry Henry","Eric Cantona","David Trezeguet","Zinedine Zidane","Just Fontaine",
+ "Thierry Henry","Eric Cantona","David Trezeguet","Just Fontaine",
  "Jean-Pierre Papin","Michel Laudrup","Brian Laudrup","Peter Schmeichel","Michael Laudrup",
  "Preben Elkjær","Pavel Nedvěd","Tomáš Rosický","Petr Čech","Andriy Shevchenko",
  "Oleksandr Shovkovskyi","Davor Šuker","Luka Modrić","Ivan Rakitić","Nemanja Vidić",
- "Dejan Stanković","Dragan Stojković","Siniša Mihajlović"," Gheorghe Hagi","Gheorghe Popescu",
+ "Dejan Stanković","Dragan Stojković","Siniša Mihajlović","Gheorghe Hagi","Gheorghe Popescu",
  "Rui Costa","Deco","Fernando Torres","David Villa","Iker Muniain",
  "Sergio Ramos","Gerard Piqué","Carles Puyol","David Silva","Cesc Fàbregas",
  "Luis Enrique","Fernando Hierro","Emilio Butragueño","Telmo Zarra","Guti",
@@ -334,10 +334,16 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
         if(hasUsableSpecialCareer(makeRows(player)))playerById.set(player.id,player);
       }
       staticPlayers.current=playerById;
+      // Keep the weighted categories distinct: a player already present in
+      // the Premier League history pool must not be redrawn as an EFL/global
+      // special. QIDs are the primary identity key, so this also catches
+      // spelling/alias variants across the curated name lists.
+      const premierLeagueIds = new Set(deck.map(candidate => candidate.id));
       options=Array.from(playerById.values()).map(player=>{
         const raw=archiveById.get(player.id);
         return raw&&player.statsScope?.startsWith("Wikipedia")?archivePlayerCandidate(player,raw,desiredPool):wikidataPlayerCandidate(player,desiredPool);
-      }).filter(candidate=>fits(candidate,selectedMode))
+      }).filter(candidate=>!premierLeagueIds.has(candidate.id))
+        .filter(candidate=>fits(candidate,selectedMode))
         .filter(candidate=>{const player=staticPlayers.current.get(candidate.id);return Boolean(player&&hasUsableSpecialCareer(makeRows(player)));});
       if(!options.length){
         staticPlayers.current.clear();
