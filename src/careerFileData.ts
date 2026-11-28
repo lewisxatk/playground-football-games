@@ -1,6 +1,7 @@
 import * as duckdb from "@duckdb/duckdb-wasm";
 
 export type LeagueCode = "ALL" | "ENG-PL" | "ESP-LL" | "ITA-SA" | "DEU-BL" | "FRA-L1";
+export type CareerDifficulty = "EASY" | "MEDIUM" | "HARD" | "EXTREME";
 export type Candidate = { id: string; name: string; apps: number; spells: number; clubs: number; statSeasons: number; region?: "ENGLISH" | "INTERNATIONAL" };
 export type Spell = {
   seq: number; years: string; start: number | null; end: number | null; club: string;
@@ -81,13 +82,21 @@ async function openDb(): Promise<Archive> {
 }
 export const careerArchive = () => dbPromise ?? (dbPromise = openDb());
 
-export async function getCandidates(league: LeagueCode): Promise<Candidate[]> {
+export async function getCandidates(league: LeagueCode, difficulty: CareerDifficulty): Promise<Candidate[]> {
   const archive = await careerArchive();
   const codes = league === "ALL" ? BIG_FIVE : [league];
   const marks = codes.map(() => "?").join(",");
-  // A player must have a real spell at a club in the selected competition.
-  // Crucially, every field used for difficulty is aggregated from those selected
-  // clubs only; overseas/other-league spells must never inflate an English draw.
+  // Apply the difficulty band in SQL BEFORE sampling. Previously the query
+  // selected 2,400 players across every tier, then filtered that small sample
+  // in the browser. That could leave Easy or Extreme with a tiny accidental pool.
+  // Each tier now receives its own deterministic sample of up to 2,400 players.
+  const band = difficulty === "EASY"
+    ? "SUM(coalesce(cr.apps,0))>=450"
+    : difficulty === "MEDIUM"
+      ? "SUM(coalesce(cr.apps,0))>=250 AND SUM(coalesce(cr.apps,0))<450"
+      : difficulty === "HARD"
+        ? "SUM(coalesce(cr.apps,0))>=100 AND SUM(coalesce(cr.apps,0))<250"
+        : "SUM(coalesce(cr.apps,0))>=20 AND SUM(coalesce(cr.apps,0))<100";
   const sql =
     "WITH selected_clubs AS (" +
     " SELECT DISTINCT c.wikidata_qid AS club_qid, c.wikipedia_title AS club_title FROM competition_club cc " +
@@ -95,15 +104,18 @@ export async function getCandidates(league: LeagueCode): Promise<Candidate[]> {
     " WHERE cc.competition IN (" + marks + ") AND coalesce(trim(c.wikidata_qid),'')<>''" +
     ") " +
     "SELECT cr.player_qid AS candidate_id, any_value(cr.player) AS player_name, " +
-    "COUNT(*) AS spells, COUNT(DISTINCT cr.club_qid) AS clubs, " +
+    "COUNT(*) AS spells, COUNT(DISTINCT coalesce(nullif(cr.club_qid,''),sc.club_qid)) AS clubs, " +
     "SUM(coalesce(cr.apps,0)) AS apps " +
-    "FROM career cr JOIN selected_clubs sc ON sc.club_qid=cr.club_qid " +
+    "FROM career cr JOIN selected_clubs sc ON (sc.club_qid=cr.club_qid OR " +
+    "(coalesce(trim(cr.club_qid),'')='' AND lower(trim(cr.club_link))=lower(trim(sc.club_title)))) " +
     "WHERE cr.player_qid IS NOT NULL AND trim(cr.player_qid)<>'' " +
     "AND cr.start_year IS NOT NULL AND (cr.end_year IS NULL OR cr.end_year>=cr.start_year) " +
     "GROUP BY cr.player_qid " +
-    "HAVING SUM(coalesce(cr.apps,0))>=20 AND COUNT(DISTINCT cr.club_qid)>=2 " +
+    "HAVING " + band + " AND COUNT(DISTINCT coalesce(nullif(cr.club_qid,''),sc.club_qid))>=2 " +
     " AND length(trim(any_value(cr.player)))>1 " +
     " AND lower(trim(any_value(cr.player))) NOT IN ('unknown','unknown player','unnamed','unnamed player','n/a','tbd') " +
+    " AND NOT starts_with(lower(trim(any_value(cr.player))),'unknown ') " +
+    " AND NOT starts_with(lower(trim(any_value(cr.player))),'unnamed ') " +
     "ORDER BY hash(cr.player_qid) LIMIT 2400";
   const rows = await archive.query(sql, codes);
   return rows.map((r: any) => ({
