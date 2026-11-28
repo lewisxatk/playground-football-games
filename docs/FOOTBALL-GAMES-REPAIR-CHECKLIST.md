@@ -53,6 +53,7 @@
 ## 2. Automated verification
 
 - [x] `npm run validate:football-content` passed on commit `1a593d123f` (GitHub Actions run `46085667903`).
+- [x] Re-ran `validate:football-content` after the archive and Link Up changes; passed on commit `b4b61732c8` (GitHub Actions run `46086336629`).
 - [ ] Full CC0 database generation and `npm run validate:data`, including the lean English-only career-history shard and 24 MB per-asset size limit.
 - [x] Fix TypeScript build errors from the archive adapter cleanup and Strands fallback pack type; remove the now-unused position helper. Commits: `1adb3a538e`, `f8f057a181`.
 - [ ] Full site typecheck and production build.
