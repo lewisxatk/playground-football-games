@@ -16,6 +16,8 @@ on:
       - "package.json"
       - "scripts/validate-data.mjs"
       - "scripts/validate-cc0-quiz-pools.mjs"
+      - "scripts/build-lowball-pools.mjs"
+      - "scripts/validate-lowball-pools.mjs"
 
 permissions:
   contents: write
