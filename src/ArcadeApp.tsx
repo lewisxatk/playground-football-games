@@ -628,21 +628,33 @@ type GridPuzzle={rows:string[];columns:string[];rowKind:"club";columnKind:"natio
 const GRID_LEVELS:GridDifficulty[]=["EASY","MEDIUM","HARD","EXTREME"];
 const GRID_ATTEMPTS:Record<GridDifficulty,number>={EASY:20,MEDIUM:18,HARD:16,EXTREME:16};
 function assignDistinctAnswers(cells:GamePlayer[][]):GamePlayer[]|null{
- const order=cells.map((_,i)=>i).sort((a,b)=>cells[a].length-cells[b].length);
- const chosen=new Map<number,GamePlayer>();const used=new Set<string>();
- const visit=(depth:number):boolean=>{
-   if(depth===order.length)return true;
-   const index=order[depth];
-   for(const player of cells[index]){
-     if(used.has(player.archiveId))continue;
-     used.add(player.archiveId);chosen.set(index,player);
-     if(visit(depth+1))return true;
-     used.delete(player.archiveId);chosen.delete(index);
+ if(cells.length!==16)return null;
+ // Use a bipartite augmenting-path match instead of backtracking through every
+ // possible combination. Dense cells can contain hundreds of candidates, so
+ // naive backtracking can become exponential when a late cell has no unused
+ // answer. Reassigning an earlier cell keeps the search bounded by the 16 cells.
+ const playerToCell=new Map<string,{player:GamePlayer;cell:number}>();
+ const cellToPlayer:Array<GamePlayer|undefined>=Array(cells.length);
+ const order=cells.map((c,i)=>({i,candidates:[...new Map(c.filter(p=>p?.archiveId).map(p=>[p.archiveId,p])).values()]}))
+   .sort((a,b)=>a.candidates.length-b.candidates.length);
+ const assign=(cell:number,seen:Set<string>):boolean=>{
+   for(const player of order.find(entry=>entry.i===cell)!.candidates){
+     const id=player.archiveId;
+     if(seen.has(id))continue;
+     seen.add(id);
+     const previous=playerToCell.get(id);
+     if(!previous||assign(previous.cell,seen)){
+       playerToCell.set(id,{player,cell});
+       cellToPlayer[cell]=player;
+       return true;
+     }
    }
    return false;
  };
- if(!visit(0))return null;
- return cells.map((_,i)=>chosen.get(i)!);
+ for(const entry of order){
+   if(!assign(entry.i,new Set()))return null;
+ }
+ return cellToPlayer.every(Boolean)?cellToPlayer as GamePlayer[]:null;
 }
 function buildGridPuzzle(players:GamePlayer[],difficulty:GridDifficulty,kind:GridKind,seed:number):GridPuzzle|null{
  const clubPlayers=new Map<string,GamePlayer[]>(),nationPlayers=new Map<string,GamePlayer[]>();
