@@ -300,15 +300,15 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
         ?[...englishEligible.slice(0,27),...internationalEligible.slice(0,9)]
         :rankByCoverage(eligible);
       let lastProblem="No candidate in this draw had two complete season-stat rows.";
-      for(const choice of ranked.slice(0,staticPlayers.current.size?36:6)){
-        seen.current.add(choice.id);persistRecentCareerIds(seen.current);
+      for(const choice of ranked.slice(0,staticPlayers.current.size?36:12)){
         try{
           const record=staticPlayers.current.get(choice.id)??await getPlayer(choice.id,league);
           const timeline=makeRows(record);
           const free=randomFreeRows(timeline,dailyDraw?dailySeed+":"+choice.id:undefined);
           if(!timeline.length||free.length<2){lastProblem="This career did not have two complete, matching season-stat clues.";continue;}
           const note=makeFreeNote(record,dailyDraw?dailySeed+":"+choice.id:undefined);
-          seen.current.add(choice.id);persistRecentCareerIds(seen.current);\n          setPlayer(record);setRows(timeline);setFreeRows(free);setRevealed(free);setFreeNote(note);
+          seen.current.add(choice.id);persistRecentCareerIds(seen.current);
+          setPlayer(record);setRows(timeline);setFreeRows(free);setRevealed(free);setFreeNote(note);
           setOpened(note?[note.id]:[]);setRound(n=>n+1);setStatus("playing");setNote("");
           return;
         }catch(problem){
