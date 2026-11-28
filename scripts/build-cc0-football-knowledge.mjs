@@ -545,12 +545,17 @@ const players=await parsePlayers(),clubs=await parseClubs();
 const wikidataCareerImport=await fetchWikidataCareers(players);
 const careerPlayers=wikidataCareerImport.players;
 const hasMultiSeasonCareer=p=>p.spells.length>=2&&new Set(p.spells.map(spell=>spell.clubQid)).size>=2&&p.firstYear!==null&&p.lastYear!==null&&p.lastYear-p.firstYear>=1;
-const careerFileCandidates=careerPlayers.filter(hasMultiSeasonCareer);
-const cultHeroCandidates=careerPlayers.filter(hasMultiSeasonCareer);
 const [internationalMatches,englishMatches,europeanClubMatches]=await Promise.all([parseInternationalResults(),parseEnglishMatches(),parseEuropeanClubMatches()]);
 // The English match archive is the authoritative whitelist for English clubs; do not trust broad Wikidata country labels for game eligibility.
 const englishClubNames=new Set([...clubs.filter(club=>club.countries.some(country=>norm(country)==="england")).map(club=>club.name),...englishMatches.flatMap(match=>[match.home,match.away])].map(clubKey));
-const linkUpPacks=makeWikidataLinkPacks(careerPlayers,englishClubNames,750);
+const englishCareerPlayers=careerPlayers.filter(player=>player.spells.some(spell=>englishClubNames.has(clubKey(spell.club))));
+const careerFileCandidates=englishCareerPlayers.filter(hasMultiSeasonCareer);
+const cultHeroCandidates=englishCareerPlayers.filter(hasMultiSeasonCareer);
+wikidataCareerImport.meta.players=englishCareerPlayers.length;
+wikidataCareerImport.meta.eligibleCareerFile=careerFileCandidates.length;
+wikidataCareerImport.meta.eligibleCultHero=cultHeroCandidates.length;
+wikidataCareerImport.meta.scope="English club career records";
+const linkUpPacks=makeWikidataLinkPacks(englishCareerPlayers,englishClubNames,750);
 const allMatches=[...internationalMatches,...englishMatches,...europeanClubMatches].sort((a,b)=>a.date.localeCompare(b.date));
 const internationalQuiz=buildInternationalQuiz([...englishMatches,...europeanClubMatches.filter(match=>match.competition==="UEFA Champions League")]);
 const internationalGoals=await parseInternationalGoals(players);
@@ -685,7 +690,7 @@ const shards={
  "the-reveal":{...common,playerCards:[...cards.values()]},
  "goal-packs":{...common,lowballPairs:internationalGoalPacks.lowball,ladderPacks:internationalGoalPacks.ladder,football501Packs:internationalGoalPacks.football501},
  "player-stats":{...common,players:positionPlayerRows},
- "career-history":{...common,meta:wikidataCareerImport.meta,players:careerPlayers,linkUpPacks}
+ "career-history":{...common,meta:wikidataCareerImport.meta,players:englishCareerPlayers,linkUpPacks}
 };
 await mkdir(OUT,{recursive:true});
 await Promise.all(["football-knowledge.cc0.json","football-knowledge-the-climb.cc0.json","football-knowledge-timed-quiz.cc0.json","football-knowledge-the-climb-easy.cc0.json","football-knowledge-timed-quiz-easy.cc0.json"].map(file=>rm(resolve(OUT,file),{force:true})));
