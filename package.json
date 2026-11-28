@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 0.0.0.0",
     "typecheck": "tsc -b",
-    "validate:data": "node scripts/validate-data.mjs && node scripts/validate-cc0-quiz-pools.mjs && node scripts/validate-player-shards.mjs",
+    "validate:data": "node scripts/validate-data.mjs && node scripts/validate-cc0-quiz-pools.mjs && npm run validate:player-shards",
+    "validate:player-shards": "node scripts/validate-player-shards.mjs",
     "validate:football-content": "node scripts/validate-football-content.mjs"
   },
   "dependencies": {
