@@ -15,6 +15,18 @@ The upstream project reports, as of 14 November 2026, approximately 85,099 playe
 
 Upstream documentation: [repository and source overview](https://github.com/florentfougeres/OpenFootballBase-Data), [data model and caveats](https://github.com/florentfougeres/OpenFootballBase-Data/blob/main/docs/en/data-model.md).
 
+## Career File selection and limits
+
+Career File currently targets Premier League club careers. The candidate draw, difficulty totals, season-stat preflight and displayed club timeline use the same club identity mapping: `competition_club.competition = ENG-PL`, joined to `club.wikipedia_title` and the club's Wikidata QID. This is deliberately based on competition membership rather than a generic country field, which can be too broad for distinguishing English and other UK clubs.
+
+A player must have at least two qualifying Premier League club spells and a usable name. Only qualifying club spells contribute to the candidate's appearance and club counts; the timeline and season clues are filtered to those Premier League clubs. A player is not admitted merely because one spell was at an English club while their unrelated overseas spells are displayed. The source defines an empty career `end_year` as ongoing or unknown; Career File preserves that uncertainty instead of converting it into a false one-year stay. Where an end year is unknown, the timeline shows the start and any separately recorded club-season rows without inventing an end date.
+
+Coverage is not complete. OpenFootballBase's `career` table records club spells transcribed from English Wikipedia infoboxes. Its `stat_club` table records club/season/competition rows only for a subset of players (the published data model describes players of Champions League clubs from seven major countries since 2010). Career and season figures are published as found, not independently audited; blanks remain unknown, not zero. Premier League-only Career File is therefore a curated game pool, not a complete record of every English professional or every historical season.
+
+For a future EFL and lower-league expansion, English Football Vault describes an eight-tier English pyramid archive from 1888–89 onwards. Its coverage is useful research context, but no data has been imported from it; API access, reuse terms and field-level provenance must be checked before integration.
+
+Upstream technical reference: [OpenFootballBase data model](https://github.com/florentfougeres/OpenFootballBase-Data/blob/main/docs/en/data-model.md). Further English-football archive research: [English Football Vault — About](https://englishfootballvault.co.uk/about.html).
+
 ## World Cup starting line-ups
 
 The World Cup data file in `public/data/worldcup-lineups.json` is derived from [openfootball/worldcup.json](https://github.com/openfootball/worldcup.json), whose repository publishes its data under CC0 1.0 Universal. PLAYGROUND includes 1,312 team starting-line-up records across the 1982, 1986, 1990, 1994, 1998, 2002, 2006, 2010, 2014, 2018 and 2022 FIFA World Cups.
