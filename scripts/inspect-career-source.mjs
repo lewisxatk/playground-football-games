@@ -105,6 +105,17 @@ if (pageResponse.ok) {
     .map((match) => new URL(match[1], "https://quiz-fc.com").href);
   console.log("CAREER_PATH_SCRIPT_COUNT", scriptUrls.length);
   for (const scriptUrl of scriptUrls) {
+    const scriptResponse = await fetch(scriptUrl, { headers: { "user-agent": "PLAYGROUND-CareerFile-Research/1.0" } });
+    if (!scriptResponse.ok) continue;
+    const source = await scriptResponse.text();
+    const dataPaths = [...source.matchAll(/["'`]([^"'`]*\\.json(?:\\?[^"'`]*)?)["'`]/g)].map(match => match[1]);
+    console.log("CAREER_PATH_JSON_PATHS", JSON.stringify([...new Set(dataPaths)]));
+    for (const term of ["class Xx", "CareerIndexError", "career-index", "careerIndex"]) {
+      const at = source.indexOf(term);
+      if (at >= 0) console.log("CAREER_INDEX_CONTEXT", term, source.slice(Math.max(0, at - 1200), Math.min(source.length, at + 5200)));
+    }
+  }
+  for (const scriptUrl of scriptUrls) {
     const scriptResponse = await fetch(scriptUrl, {
       headers: { "user-agent": "PLAYGROUND-CareerFile-Research/1.0" }
     });
