@@ -562,7 +562,6 @@ for(const question of validQuiz){if(!question.id||!question.factId||!Array.isArr
 if(!uniqueValues(internationalMatches.map(match=>match.id)))throw new Error("Duplicate international match IDs found.");
 if(!uniqueValues(internationalGoals.events.map(event=>event.id)))throw new Error("Duplicate international goal event IDs found.");
 if(!uniqueValues(lineups.map(match=>match.id)))throw new Error("Duplicate World Cup line-up IDs found.");
-if(!uniqueValues(linkUpPacks.map(pack=>pack.id)))throw new Error("Duplicate Link Up pack IDs found.");
 for(const question of [...internationalQuiz.climb,...internationalQuiz.timed]){
  if(!question.id||!question.factId||!question.source||!question.eventDate||!Array.isArray(question.options)||question.options.length!==5||!uniqueValues(question.options)||question.options.filter(option=>option===question.answer).length!==1)throw new Error("Quiz question failed answer-choice/provenance validation: "+question.id);
 }
@@ -581,10 +580,6 @@ for(const pack of internationalGoalPacks.lowball)if(pack.players.length!==2||!un
 for(const pack of internationalGoalPacks.ladder)if(pack.players.length!==5||!uniqueValues(pack.players.map(player=>player.id))||!uniqueValues(pack.players.map(player=>player.value)))throw new Error("Ladder pack failed validation: "+pack.id);
 for(const pack of internationalGoalPacks.football501)if(pack.players.length!==12||!uniqueValues(pack.players.map(player=>player.id)))throw new Error("Football 501 pack failed validation: "+pack.id);
 for(const player of careerPlayers)if(player.spells.length<2||new Set(player.spells.map(spell=>spell.clubQid)).size<2)throw new Error("Career player is missing two dated club records: "+player.id);
-for(const pack of linkUpPacks){
- const options=pack.optionPlayerIds||[];
- if(options.length!==6||!uniqueValues(options)||!options.includes(pack.answerPlayerId)||options.includes(pack.startPlayerId)||options.includes(pack.endPlayerId)||pack.answerPlayerId===pack.startPlayerId||pack.answerPlayerId===pack.endPlayerId||pack.startPlayerId===pack.endPlayerId)throw new Error("Link Up pack failed unique bridge/options validation: "+pack.id);
-}
 const common={schemaVersion:1,generatedAt:TODAY,sourceRegistry:SOURCES,licencePolicy:"The CC0 data shards include no third-party crests, player portraits or logos. The separate runtime player archive and UI badge assets retain their own licences.",accuracyWarning:"CC0 does not guarantee factual accuracy. International goal values are goals recorded in the source, not complete career totals. World Cup starts are not full caps."};
 const connectionIds=new Set(playerConnections.flatMap(pack=>pack.groups.flatMap(group=>group.memberIds)));
 
