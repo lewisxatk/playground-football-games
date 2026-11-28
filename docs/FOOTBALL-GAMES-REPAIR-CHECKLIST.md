@@ -46,6 +46,7 @@
 - [x] Restrict Career File eligibility to Premier League players with at least two seasons; add appearance clues and unlockable identity hints. Commits: `41d97fce33`, `cb49370295`.
 - [x] Use the generated historic Premier League club index for eligibility. Commit: `ae2294da34`.
 - [x] Add an integrity validator for the 61-shard, 60k-player archive: source release, CC BY-SA 4.0 licence, file sizes, SHA-256 hashes, row counts, stable IDs and duplicate IDs. Commits: `f4c5c56b1e`, `d15344a9fd`.
+- [x] Validate the archive's actual `spells` field (not the mapped runtime `careerSpells` field) in the raw shard payload. Commit: `fb1a78c107`.
 
 ## 2. Automated verification
 
@@ -55,7 +56,7 @@
 - [ ] Confirm generated database manifests, shard counts, licences and provenance.
 - [ ] Confirm every required game pool reaches its target without fabricated or duplicate facts.
 
-**Current build:** GitHub Actions run `46085667980`, commit `1a593d123f`, was in progress at the last check. Its upstream licence checks passed and the canonical database build step was running. Do not mark the build complete until the run finishes successfully and the generated report is inspected.
+**Current build:** GitHub Actions run `46085667980`, commit `1a593d123f`, was still in progress at the last check. Its upstream licence checks passed and the canonical database build step was running. The raw archive-field validator was corrected in commit `fb1a78c107`; if the current run reaches that validator and fails, the next run must use the corrected commit. Do not mark the build complete until the run finishes successfully and the generated report is inspected.
 
 ## 3. Live game verification still required
 
