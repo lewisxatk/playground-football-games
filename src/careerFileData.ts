@@ -8,7 +8,7 @@ export type Spell = {
   clubLink: string; clubQid: string; loan: boolean; apps: number | null; goals: number | null;
   sourceTitle: string; sourceRevision: number | null;
 };
-export type Stat = { club: string; clubLink: string; clubQid: string; season: string; apps: number | null; goals: number | null; assists: number | null; seq?: number | null };
+export type Stat = { club: string; clubLink: string; clubQid: string; season: string; apps: number | null; goals: number | null; assists: number | null; seq?: number | null; statsLevel?: "full" | "goals" | "none" };
 export type Player = {
   id: string; name: string; fullName: string; nationality: string; position: string;
   height: number | null; birthDate: string; birthPrecision: number | null; birthplace: string;
