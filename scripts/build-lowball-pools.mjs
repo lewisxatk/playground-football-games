@@ -38,10 +38,15 @@ function makeAnswers(rows) {
     const name = String(value.record.fullName || value.record.name).trim();
     const rank = metricValues.indexOf(value.metric);
     const score = metricValues.length < 2 ? 50 : Math.round(5 + 95 * rank / (metricValues.length - 1));
+    const aliases = [];
+    for (const rawAlias of [value.record.name, value.record.fullName]) {
+      const alias = String(rawAlias ?? "").trim();
+      if (alias && !aliases.some(existing => normalise(existing) === normalise(alias))) aliases.push(alias);
+    }
     return {
       id: value.record.id,
       name,
-      aliases: [...new Set([value.record.name, value.record.fullName].map(alias => String(alias ?? "").trim()).filter(Boolean))],
+      aliases,
       score,
       evidence: value.evidence,
       metric: value.metric
@@ -70,7 +75,7 @@ function makeAnswers(rows) {
       aliasOwners.add(key);
     }
   }
-  return answers;
+  return answers.filter(answer => answer.aliases.length > 0);
 }
 
 const archiveManifest = JSON.parse(await readFile(resolve(shardDir, "manifest.json"), "utf8"));
