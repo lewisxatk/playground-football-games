@@ -2,18 +2,20 @@ import * as duckdb from "@duckdb/duckdb-wasm";
 
 export type LeagueCode = "ALL" | "ENG-PL" | "ESP-LL" | "ITA-SA" | "DEU-BL" | "FRA-L1";
 export type CareerDifficulty = "EASY" | "MEDIUM" | "HARD" | "EXTREME";
-export type Candidate = { id: string; name: string; apps: number; spells: number; clubs: number; statSeasons: number; region?: "ENGLISH" | "INTERNATIONAL" };
+export type Candidate = { id: string; name: string; apps: number; spells: number; clubs: number; statSeasons: number; region?: "ENGLISH" | "INTERNATIONAL"; fameRank?: number; source?: "quizfc-pl" };
 export type Spell = {
   seq: number; years: string; start: number | null; end: number | null; club: string;
   clubLink: string; clubQid: string; loan: boolean; apps: number | null; goals: number | null;
   sourceTitle: string; sourceRevision: number | null;
 };
-export type Stat = { club: string; clubLink: string; clubQid: string; season: string; apps: number | null; goals: number | null; assists: number | null };
+export type Stat = { club: string; clubLink: string; clubQid: string; season: string; apps: number | null; goals: number | null; assists: number | null; seq?: number | null };
 export type Player = {
   id: string; name: string; fullName: string; nationality: string; position: string;
   height: number | null; birthDate: string; birthPrecision: number | null; birthplace: string;
   spells: Spell[]; stats: Stat[]; caps: number | null; internationalGoals: number | null;
-  teams: string[]; wikipediaUrl: string;
+  teams: string[]; wikipediaUrl: string; aliases?: string[];
+  careerApps?: number | null; careerGoals?: number | null;
+  careerAppsComplete?: boolean; careerGoalsComplete?: boolean;
 };
 export type Transfer = { year: string; from: string; to: string; fee: string; league: string };
 
