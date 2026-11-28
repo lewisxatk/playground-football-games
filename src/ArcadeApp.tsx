@@ -648,6 +648,7 @@ function buildGridPuzzle(players:GamePlayer[],difficulty:GridDifficulty,kind:Gri
  const clubPlayers=new Map<string,GamePlayer[]>(),nationPlayers=new Map<string,GamePlayer[]>();
  const clubNames=new Map<string,string>(),nationNames=new Map<string,string>();
  const clubPairs=new Map<string,GamePlayer[]>();
+ const clubNationPairs=new Map<string,GamePlayer[]>();
  for(const player of players){
    const clubs=[...new Set(player.clubs.filter(Boolean))];
    const nation=player.nationality;
@@ -659,6 +660,9 @@ function buildGridPuzzle(players:GamePlayer[],difficulty:GridDifficulty,kind:Gri
      const ck=normalise(club);if(!ck)continue;
      clubNames.set(ck,club);
      const list=clubPlayers.get(ck)??[];list.push(player);clubPlayers.set(ck,list);
+     if(nation&&nation!=="Unlisted"){
+       const pair=ck+"::"+normalise(nation);const matches=clubNationPairs.get(pair)??[];matches.push(player);clubNationPairs.set(pair,matches);
+     }
    }
    if(kind==="CLUB_CLUB"){
      for(let a=0;a<clubs.length;a++)for(let b=a+1;b<clubs.length;b++){
@@ -685,7 +689,7 @@ function buildGridPuzzle(players:GamePlayer[],difficulty:GridDifficulty,kind:Gri
    }else chosenCols=shuffle(colKeys,seed+attempt*37+7).slice(0,4);
    if(chosenCols.length!==4)continue;
    const answers=chosenRows.map(row=>chosenCols.map(col=>{
-     if(kind==="CLUB_NATION")return players.filter(p=>p.nationality&&normalise(p.nationality)===col&&p.clubs.some(c=>normalise(c)===row));
+     if(kind==="CLUB_NATION")return clubNationPairs.get(row+"::"+col)??[];
      return clubPairs.get([row,col].sort().join("::"))??[];
    }));
    if(answers.some(row=>row.some(cell=>cell.length<1)))continue;
