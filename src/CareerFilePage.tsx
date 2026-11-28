@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { motion } from "motion/react";
-import { getCandidates, getPlayer, getStatEligibleCandidates, getTransferHints, type Candidate, type LeagueCode, type Player, type Transfer, type ArchiveGamePlayer } from "./careerFileData";
+import { getCandidates, getPlayer, getStatEligibleCandidates, getTransferHints, type Candidate, type LeagueCode, type Player, type Transfer, type ArchiveGamePlayer, type CareerDifficulty } from "./careerFileData";
+import { getQuizFcCareerCandidates, getQuizFcCareerPlayer, getQuizFcStatEligibleCandidates } from "./quizFcCareerData";
 import { getStaticArchivePlayers } from "./useArchivePlayers";
 import "./career-file.css";
 
-type Mode = "EASY" | "MEDIUM" | "HARD" | "EXTREME";
-type Row = { id:string; season:string; club:string; clubKey:string; loan:boolean; apps:number|null; goals:number|null; covered:boolean; spellApps:number|null; spellGoals:number|null };
-type FreeNote = { id:string; label:string; value:string };
+type Mode = CareerDifficulty;
+type Row = { id:string; season:string; club:string; clubKey:string; loan:boolean; apps:number|null; goals:number|null; assists:number|null; covered:boolean };
 type Hint = { id:string; label:string; cost:number; value:string; available:boolean };
 
 function archivePlayerToCareerFile(raw:ArchiveGamePlayer):Player{
@@ -112,43 +112,36 @@ function persistRecentCareerIds(ids:Set<string>){
   try{localStorage.setItem(RECENT_PLAYER_KEY,JSON.stringify(Array.from(ids).slice(-600)));}catch{/* private browsing may disable storage */}
 }
 function makeRows(p:Player):Row[]{
-  const rows:Row[]=[];
-  for(const spell of ordered(p)){
-    const start=spell.start??yearOf(spell.years);
-    const end=spell.end;
-    const clubKey=spell.clubQid||clean(spell.clubLink||spell.club);
-    if(start==null){
-      rows.push({id:"s"+spell.seq,season:spell.years||"Dates not recorded",club:spell.club,clubKey,loan:spell.loan,
-        apps:null,goals:null,covered:false,spellApps:spell.apps,spellGoals:spell.goals});
-      continue;
-    }
-    const sameClub=(stat:Player["stats"][number])=>{
-      if(spell.clubQid&&stat.clubQid&&spell.clubQid===stat.clubQid)return true;
-      if(spell.clubLink&&stat.clubLink&&clean(spell.clubLink)===clean(stat.clubLink))return true;
-      return clean(spell.club)===clean(stat.club);
-    };
-    const matchingStats=p.stats.filter(stat=>{
-      const statYear=yearOf(stat.season);
-      return statYear!==null&&statYear>=start&&(end==null||statYear<=end)&&sameClub(stat);
-    });
-    // An empty end_year means ongoing OR unknown in the source. Do not turn it
-    // into a fake one-year spell: show the start year plus only recorded stat years.
-    const years=end==null
-      ?Array.from(new Set([start,...matchingStats.map(stat=>yearOf(stat.season)).filter((year):year is number=>year!==null)]))
-        .sort((a,b)=>a-b)
-      :Array.from({length:Math.max(1,Math.min(end,start+35)-start+1)},(_,i)=>start+i);
-    for(const year of years){
-      const found=matchingStats.filter(stat=>yearOf(stat.season)===year);
-      const sourceSeason=found.find(stat=>stat.season)?.season.trim();
-      const displayedSeason=sourceSeason?sourceSeason.replace(/[–—-]/g,"/"):String(year);
-      rows.push({id:spell.seq+"-"+year,season:displayedSeason,
-        club:spell.club,clubKey,loan:spell.loan,
-        apps:found.length&&found.some(x=>x.apps!==null)?found.reduce((n,x)=>n+(x.apps??0),0):null,
-        goals:found.length&&found.some(x=>x.goals!==null)?found.reduce((n,x)=>n+(x.goals??0),0):null,
-        covered:found.length>0,spellApps:year===start?spell.apps:null,spellGoals:year===start?spell.goals:null});
-    }
-  }
-  return rows;
+ const rows:Row[]=[];
+ for(const spell of ordered(p)){
+   const start=spell.start??yearOf(spell.years);
+   const matchingStats=p.stats.filter(stat=>{
+     const statYear=yearOf(stat.season);
+     if(statYear===null||start===null||statYear<start||(spell.end!==null&&statYear>spell.end))return false;
+     if(spell.clubQid&&stat.clubQid&&spell.clubQid===stat.clubQid)return true;
+     if(spell.clubLink&&stat.clubLink&&clean(spell.clubLink)===clean(stat.clubLink))return true;
+     return clean(spell.club)===clean(stat.club);
+   });
+   const knownYears=matchingStats.map(stat=>yearOf(stat.season)).filter((year):year is number=>year!==null);
+   const firstYear=start??(knownYears.length?Math.min(...knownYears):null);
+   const lastYear=spell.end??(knownYears.length?Math.max(...knownYears):firstYear);
+   const total=(key:"apps"|"goals"|"assists")=>{
+     if(!matchingStats.length||matchingStats.some(stat=>stat[key]===null||stat[key]===undefined))return null;
+     return matchingStats.reduce((sum,stat)=>sum+(stat[key]??0),0);
+   };
+   rows.push({
+     id:"club-"+spell.seq,
+     season:firstYear===null?"Dates not recorded":lastYear===null||lastYear===firstYear?String(firstYear):firstYear+"–"+lastYear,
+     club:spell.club,
+     clubKey:spell.clubQid||clean(spell.clubLink||spell.club),
+     loan:spell.loan,
+     apps:total("apps"),
+     goals:total("goals"),
+     assists:total("assists"),
+     covered:matchingStats.length>0
+   });
+ }
+ return rows.filter(row=>row.club.trim().length>0);
 }
 const ageOf=(p:Player)=>{
   if(!p.birthDate||p.birthPrecision!==11)return "";
@@ -158,8 +151,14 @@ const ageOf=(p:Player)=>{
   return String(age);
 };
 function fits(c:Candidate,m:Mode){
-  // Candidate apps/clubs describe ONLY the selected competition's clubs.
-  // Keep bands disjoint so a player cannot appear in several difficulties.
+  if(c.source==="quizfc-pl"&&c.fameRank!==undefined){
+    // Source-provided prominence rank: lower ranks indicate more recognisable players.
+    if(m==="EASY")return c.fameRank<=300;
+    if(m==="MEDIUM")return c.fameRank>300&&c.fameRank<=1200;
+    if(m==="HARD")return c.fameRank>1200&&c.fameRank<=2500;
+    return c.fameRank>2500;
+  }
+  // Legacy archive fallback uses disjoint recorded-appearance bands.
   if(m==="EASY")return c.apps>=450&&c.clubs>=2;
   if(m==="MEDIUM")return c.apps>=250&&c.apps<450&&c.clubs>=2;
   if(m==="HARD")return c.apps>=100&&c.apps<250&&c.clubs>=2;
@@ -170,7 +169,7 @@ function positionLabel(raw:string){
   if(/GK|GOALKEEPER/.test(value))return "Goalkeeper";
   if(/DF|DEFENDER|BACK/.test(value))return "Defender";
   if(/MF|MIDFIELDER|MID/.test(value))return "Midfielder";
-  if(/FW|FORWARD|STRIKER|ATTACK/.test(value))return "Forward";
+  if(/FW|FORWARD|STRIKER|ATTACK|^ATT$/.test(value))return "Forward";
   return raw.trim();
 }
 function randomFreeRows(rows:Row[],seed?:string):string[]{
@@ -187,22 +186,11 @@ function randomFreeRows(rows:Row[],seed?:string):string[]{
   }
   return selected.map(row=>row.id);
 }
-function makeFreeNote(player:Player,seed?:string):FreeNote|null{
-  const career=ordered(player);
-  const first=career[0],last=career[career.length-1];
-  const broadPosition=positionLabel(player.position);
-  const options:FreeNote[]=[];
-  if(broadPosition)options.push({id:"position",label:"Position group",value:broadPosition});
-  if(player.nationality)options.push({id:"nationality",label:"Nationality",value:player.nationality});
-  if(first?.start&&last?.end)options.push({id:"span",label:"Career window",value:first.start+"–"+last.end});
-  if(!options.length)return null;
-  return options[seed?Math.floor(seededRandom(stableHash(seed))()*options.length):Math.floor(Math.random()*options.length)];
-}
 function matches(input:string,p:Player){
   const g=clean(input);if(!g)return false;
-  const accepted=new Set([clean(p.name),clean(p.fullName)]);
+  const accepted=new Set([clean(p.name),clean(p.fullName),...(p.aliases??[]).map(clean)]);
   const particles=new Set(["van","von","de","del","di","da","dos","das","du","la","le","ter","den","der"]);
-  for(const name of [p.name,p.fullName]){
+  for(const name of [p.name,p.fullName,...(p.aliases??[])]){
     const bits=clean(name).split(" ").filter(Boolean);
     if(bits.length){
       accepted.add(bits[bits.length-1]);
@@ -213,23 +201,18 @@ function matches(input:string,p:Player){
   return accepted.has(g);
 }
 function careerHint(p:Player):Hint[]{
-  const spells=ordered(p),first=spells[0],last=spells[spells.length-1];
-  const totalApps=p.spells.reduce((n,s)=>n+(s.apps??0),0),totalGoals=p.spells.reduce((n,s)=>n+(s.goals??0),0);
-  const age=ageOf(p);
-  return [
-    {id:"position",label:"Position",cost:90,value:positionLabel(p.position)||"Not listed in the top-five league squad records",available:true},
-    {id:"nationality",label:"Nationality",cost:90,value:p.nationality||"Not listed in the top-five league squad records",available:true},
-    {id:"age",label:"Age / birth year",cost:90,value:age?age+" years old":p.birthDate?"Born "+p.birthDate.slice(0,4):"Birth date not recorded",available:!!(age||p.birthDate)},
-    {id:"height",label:"Height",cost:70,value:p.height?p.height+" cm":"Height not recorded",available:p.height!=null},
-    {id:"birthplace",label:"Birthplace",cost:100,value:p.birthplace||"Birthplace not recorded",available:!!p.birthplace},
-    {id:"first",label:"First Premier League club",cost:120,value:first?.club??"",available:!!first?.club},
-    {id:"last",label:"Latest Premier League club",cost:120,value:last?.club??"",available:!!last?.club},
-    {id:"span",label:"Career span",cost:100,value:first?.start&&last?.end?first.start+"–"+last.end:"Career dates are incomplete",available:!!(first?.start||last?.end)},
-    {id:"clubs",label:"Number of clubs",cost:90,value:new Set(p.spells.map(s=>s.club)).size+" different clubs",available:true},
-    {id:"apps",label:"Appearances at PL clubs",cost:150,value:fmt(totalApps)+" recorded appearances",available:totalApps>0},
-    {id:"goals",label:"Goals at PL clubs",cost:150,value:fmt(totalGoals)+" recorded goals",available:totalGoals>0},
-    {id:"international",label:"International record",cost:160,value:p.caps==null?"International caps not recorded":fmt(p.caps)+" caps · "+fmt(p.internationalGoals)+" goals"+(p.teams.length?" · "+p.teams.slice(0,5).join(", "):""),available:p.caps!=null||p.teams.length>0}
-  ];
+ const name=(p.fullName||p.name).trim().split(/\\s+/).filter(Boolean);
+ const firstInitial=name[0]?.[0]?.toUpperCase()??"";
+ const surnameInitial=name[name.length-1]?.[0]?.toUpperCase()??"";
+ const age=ageOf(p);
+ return [
+  {id:"position",label:"Position",cost:60,value:positionLabel(p.position)||"Position not recorded",available:!!p.position},
+  {id:"firstInitial",label:"First-name initial",cost:45,value:firstInitial||"Initial not recorded",available:!!firstInitial},
+  {id:"surnameInitial",label:"Surname initial",cost:45,value:surnameInitial||"Initial not recorded",available:!!surnameInitial},
+  {id:"age",label:"Current age",cost:110,value:age?age+" years old":"Full birth date not recorded",available:!!age},
+  {id:"international",label:"International caps",cost:150,value:p.caps===null?"International caps not recorded":fmt(p.caps)+" senior international caps",available:p.caps!==null},
+  {id:"nationality",label:"Nationality",cost:200,value:p.nationality||"Nationality not recorded",available:!!p.nationality}
+ ];
 }
 
 export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyDone?:boolean;onDailyComplete?:(score:number)=>void}){
@@ -242,8 +225,6 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
   const [attempts,setAttempts]=useState(0);
   const [score,setScore]=useState(1000);
   const [revealed,setRevealed]=useState<string[]>([]);
-  const [freeRows,setFreeRows]=useState<string[]>([]);
-  const [freeNote,setFreeNote]=useState<FreeNote|null>(null);
   const [opened,setOpened]=useState<string[]>([]);
   const [transfers,setTransfers]=useState<Transfer[]|null>(null);
   const [feesBusy,setFeesBusy]=useState(false);
@@ -283,16 +264,16 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     // difficulty/league. Subsequent files are random practice and avoid repeats.
     // Keep the phone draw bounded: 72 candidates and at most six full lookups.
     const dailyCandidates=dailyDraw?[...balancedSource].sort((a,b)=>a.id.localeCompare(b.id)):balancedSource;
-    const draw=shuffleCandidates(dailyCandidates,72,dailyDraw?dailySeed:undefined);
+    const draw=shuffleCandidates(dailyCandidates,180,dailyDraw?dailySeed:undefined);
     setLoadingPlayer(true);
-    setNote("Picking a fresh file from "+options.length.toLocaleString("en-GB")+" eligible careers…");
+    setNote("Picking a fresh file from "+options.length.toLocaleString("en-GB")+" sampled careers in this difficulty…");
     try{
       const eligible=staticPlayers.current.size
         ?draw.filter(candidate=>{
           const cached=staticPlayers.current.get(candidate.id);
           return Boolean(cached&&randomFreeRows(makeRows(cached),dailyDraw?dailySeed+":"+candidate.id:undefined).length>=2);
         })
-        :await getStatEligibleCandidates(draw,league);
+        :draw[0]?.source==="quizfc-pl"?getQuizFcStatEligibleCandidates(draw):await getStatEligibleCandidates(draw,league);
       const rankByCoverage=(items:Candidate[])=>[...items].sort((a,b)=>b.statSeasons-a.statSeasons||a.id.localeCompare(b.id));
       const englishEligible=rankByCoverage(eligible.filter(candidate=>candidate.region==="ENGLISH"));
       const internationalEligible=rankByCoverage(eligible.filter(candidate=>candidate.region==="INTERNATIONAL"));
@@ -300,15 +281,14 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
         ?[...englishEligible.slice(0,27),...internationalEligible.slice(0,9)]
         :rankByCoverage(eligible);
       let lastProblem="No candidate in this draw had two complete season-stat rows.";
-      for(const choice of ranked.slice(0,staticPlayers.current.size?36:6)){
-        seen.current.add(choice.id);persistRecentCareerIds(seen.current);
+      for(const choice of ranked.slice(0,staticPlayers.current.size?36:12)){
         try{
-          const record=staticPlayers.current.get(choice.id)??await getPlayer(choice.id,league);
+          const record=staticPlayers.current.get(choice.id)??(choice.source==="quizfc-pl"?await getQuizFcCareerPlayer(choice.id):await getPlayer(choice.id,league));
           const timeline=makeRows(record);
           const free=randomFreeRows(timeline,dailyDraw?dailySeed+":"+choice.id:undefined);
           if(!timeline.length||free.length<2){lastProblem="This career did not have two complete, matching season-stat clues.";continue;}
-          const note=makeFreeNote(record,dailyDraw?dailySeed+":"+choice.id:undefined);
-          setPlayer(record);setRows(timeline);setFreeRows(free);setRevealed(free);setFreeNote(note);
+          seen.current.add(choice.id);persistRecentCareerIds(seen.current);
+          setPlayer(record);setRows(timeline);setRevealed([]);
           setOpened(note?[note.id]:[]);setRound(n=>n+1);setStatus("playing");setNote("");
           return;
         }catch(problem){
@@ -321,7 +301,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
 
   useEffect(()=>{
     let live=true;setBusy(true);setError("");
-    setPlayer(null);setRows([]);setOpened([]);setRevealed([]);setFreeRows([]);setFreeNote(null);setTransfers(null);setFeesError("");
+    setPlayer(null);setRows([]);setOpened([]);setRevealed([]);setTransfers(null);setFeesError("");
     setGuess("");setAttempts(0);setScore(1000);setStatus("playing");setNote("");
     (async()=>{
       const isDaily=!dailyDone;
@@ -340,7 +320,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
         }
       }
       staticPlayers.current.clear();
-      const list=await getCandidates(league);
+      const list=league==="ENG-PL"?await getQuizFcCareerCandidates():await getCandidates(league,mode);
       if(!live)return;
       setPool(list);
       await newPlayer(list,mode);
@@ -351,18 +331,18 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
   },[league,mode,newPlayer]);
 
   const hints=useMemo(()=>player?careerHint(player):[],[player]);
-  const left=Math.max(0,10-attempts),revealedCount=revealed.length;
+  const goalsAvailable=rows.some(row=>row.goals!==null);
+  const assistsAvailable=rows.some(row=>row.assists!==null);
+  const left=Math.max(0,10-attempts);
   const unlock=(hint:Hint)=>{
     if(!player||opened.includes(hint.id)||!hint.available||status!=="playing")return;
     setOpened(v=>[...v,hint.id]);setScore(v=>Math.max(0,v-hint.cost));
   };
-  const revealRow=(row:Row)=>{
-    if(revealed.includes(row.id)||status!=="playing")return;
-    setRevealed(v=>[...v,row.id]);setScore(v=>Math.max(0,v-35));
-  };
-  const revealAll=()=>{
-    const extra=rows.filter(r=>!revealed.includes(r.id));
-    setRevealed(rows.map(r=>r.id));setScore(v=>Math.max(0,v-extra.length*35));
+  const revealStat=(key:"goals"|"assists")=>{
+    if(!player||revealed.includes(key)||status!=="playing")return;
+    const cost=100;
+    setRevealed(v=>[...v,key]);
+    setScore(v=>Math.max(0,v-cost));
   };
   const revealFees=async()=>{
     if(!player||opened.includes("fees")||status!=="playing"||feesBusy)return;
@@ -380,11 +360,11 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     event.preventDefault();if(!player||!guess.trim()||status!=="playing")return;
     if(matches(guess,player)){setStatus("won");setNote("FILE CRACKED. Nice read.");setGuess("");if(!dailyDone)onDailyComplete?.(score);return;}
     const next=attempts+1;setAttempts(next);setScore(v=>Math.max(0,v-50));setNote("Not that one. Keep reading the file.");setGuess("");
-    if(next>=10){setStatus("lost");setRevealed(rows.map(r=>r.id));if(!dailyDone)onDailyComplete?.(0);}
+    if(next>=10){setStatus("lost");setRevealed(["goals","assists"]);if(!dailyDone)onDailyComplete?.(0);}
   };
   const next=async()=>{
     if(!pool.length)return;
-    setPlayer(null);setRows([]);setGuess("");setAttempts(0);setScore(1000);setRevealed([]);setFreeRows([]);setFreeNote(null);setOpened([]);
+    setPlayer(null);setRows([]);setGuess("");setAttempts(0);setScore(1000);setRevealed([]);setOpened([]);
     setTransfers(null);setFeesError("");setStatus("playing");setNote("");setCopied(false);setError("");
     try{await newPlayer(pool,mode);}catch(e){setError(e instanceof Error?e.message:"Could not load another player.");}
   };
@@ -406,7 +386,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
       <div className="cf-hero-copy">
         <div className="cf-eyebrow"><i/> PREMIER LEAGUE PLAYER IDENTITY GAME <span>ISSUE № 01</span></div>
         <h1>CAREER<br/><em>FILE.</em></h1>
-        <p>One career. Dozens of clues. One name to find. Study the seasons, follow the transfers and back your football brain.</p>
+        <p>One player. A career pathway. One name to find. Follow the Premier League clubs, compare appearances and unlock the hidden stats.</p>
         <div className="cf-hero-foot"><b>SELECT A FILE.</b><span>DON'T GUESS. INVESTIGATE.</span></div>
       </div>
       <div className="cf-hero-art" aria-label="Animated football pitch graphic">
@@ -433,7 +413,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
         whileHover={{y:-5,rotate:i%2?1:-1}} whileTap={{scale:.98}}>
         <span className="cf-mode-index">0{i+1} / PG</span><strong>{m.name}</strong><small>{m.note}</small><small className="cf-mode-count">{pool.length?pool.filter(c=>fits(c,m.name)).length+" FILES IN THE DRAW":"READING PLAYER POOL"}</small><i>{mode===m.name?"SELECTED ✓":"SELECT ↗"}</i>
       </motion.button>)}</div>
-      <div className="cf-round-note"><span><b>{mode}</b> / {league==="ALL"?"ALL FIVE LEAGUES":LEAGUES.find(x=>x.code===league)?.label.toUpperCase()}</span><span>10 GUESSES · 1,000 STARTING POINTS · 2 FREE SEASONS</span></div>
+      <div className="cf-round-note"><span><b>{mode}</b> / {league==="ALL"?"ALL FIVE LEAGUES":LEAGUES.find(x=>x.code===league)?.label.toUpperCase()}</span><span>10 GUESSES · 1,000 STARTING POINTS · CLUB PATHWAY VISIBLE</span></div>
     </section>
     <section className="cf-game-area">
       <div className="cf-game-heading"><div><span>03 / THE DOSSIER</span><h2>WHO'S THE<br/><em>PLAYER?</em></h2></div>
@@ -444,21 +424,25 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
       {error&&<div className="cf-error"><strong>THE ARCHIVE HIT A SNAG</strong><p>{error}</p><button onClick={()=>window.location.reload()}>TRY AGAIN ↗</button></div>}
       {player&&!busy&&!loadingPlayer&&<div className="cf-layout">
         <section className="cf-record">
-          <div className="cf-record-head"><span>CONFIDENTIAL / PREMIER LEAGUE CLUB RECORD</span><span>SUBJECT: ████████</span></div>
-          <div className="cf-subject"><div><small>IDENTITY HIDDEN</small><strong>THE<br/><em>JOURNEY.</em></strong><span>{rows.length} TIMELINE CLUES / {player.spells.length} PREMIER LEAGUE CLUB SPELLS</span></div><div className="cf-crest-stack"><span>PG</span><span>?</span><span>90</span></div></div>
-          <div className="cf-timeline-toolbar"><div><b>CAREER TIMELINE</b><small>{revealedCount} / {rows.length} REVEALED</small></div>
-            <button onClick={revealAll} disabled={status!=="playing"||revealedCount===rows.length}>REVEAL FULL CAREER · {Math.max(0,rows.length-revealedCount)*35} PTS</button></div>
-          <div className="cf-free-brief"><div><span>FREE SCOUTING NOTE</span><strong>{freeNote?freeNote.label:"TWO FREE SEASON CLUES"}</strong><p>{freeNote?freeNote.value:"Two sourced season records are opened for every player."}</p></div><span className="cf-free-tag">NO POINTS DEDUCTED</span></div><div className="cf-table-wrap"><table className="cf-table"><thead><tr><th>SEASON</th><th>CLUB</th><th>APPS</th><th>GOALS</th><th/></tr></thead>
-            <tbody>{rows.map((r,i)=>{const shown=revealed.includes(r.id)||status!=="playing";return <motion.tr key={r.id} className={shown?(freeRows.includes(r.id)?"unblurred cf-free-row":"unblurred cf-paid-row"):"hidden-row"}
-              initial={{opacity:0,x:-8}} animate={{opacity:1,x:0}} transition={{delay:Math.min(i*.012,.4)}}>
-              <td><span className={shown?"":"cf-blur"}>{r.season}</span></td>
-              <td><span className={shown?"":"cf-blur"}>{r.club}</span>{shown&&r.loan&&<small className="cf-loan">LOAN</small>}{shown&&(r.spellApps!=null||r.spellGoals!=null)&&<small className="cf-spell-total">SPELL TOTAL · {fmt(r.spellApps)} APPS / {fmt(r.spellGoals)} GOALS</small>}</td>
-              <td><span className={shown?"":"cf-blur"}>{r.covered?fmt(r.apps):"—"}</span></td>
-              <td><span className={shown?"":"cf-blur"}>{r.covered?fmt(r.goals):"—"}</span></td>
-              <td>{shown?<span className="cf-revealed-tick">{freeRows.includes(r.id)?"FREE":"✓"}</span>:<button className="cf-reveal-row" onClick={()=>revealRow(r)} disabled={status!=="playing"}>−35 ↗</button>}</td>
-            </motion.tr>;})}</tbody></table></div>
-          <div className="cf-record-foot"><span>APPS / GOALS: RECORDED TOTALS AT THESE CLUBS</span><span>— = NOT RECORDED</span></div>
-          <div className="cf-source-note">Career clues are restricted to Premier League clubs. Season figures combine the source’s listed non-total competition groups for each club and season, so they are not league-only totals. Missing totals are not guessed; source statistics are unverified. <a href={player.wikipediaUrl} target="_blank" rel="noreferrer">OPEN THE ORIGINAL PLAYER SOURCE ↗</a></div>
+          <div className="cf-record-head"><span>CONFIDENTIAL / PREMIER LEAGUE CAREER PATHWAY</span><span>SUBJECT: ████████</span></div>
+          <div className="cf-subject"><div><small>IDENTITY HIDDEN</small><strong>THE<br/><em>JOURNEY.</em></strong><span>{rows.length} CLUB SPELLS / PREMIER LEAGUE CAREER</span></div><div className="cf-crest-stack"><span>PG</span><span>?</span><span>90</span></div></div>
+          <div className="cf-timeline-toolbar cf-pathway-toolbar">
+            <div><b>PREMIER LEAGUE CLUB PATHWAY</b><small>{rows.length} CLUB SPELLS · CHRONOLOGICAL</small></div>
+            <div className="cf-stat-unlocks">
+              <button onClick={()=>revealStat("goals")} disabled={status!=="playing"||revealed.includes("goals")||!goalsAvailable}> {revealed.includes("goals")?"GOALS SHOWN ✓":goalsAvailable?"REVEAL GOALS · −100 PTS":"GOALS NOT RECORDED"}</button>
+              <button onClick={()=>revealStat("assists")} disabled={status!=="playing"||revealed.includes("assists")||!assistsAvailable}> {revealed.includes("assists")?"ASSISTS SHOWN ✓":assistsAvailable?"REVEAL ASSISTS · −100 PTS":"ASSISTS NOT RECORDED"}</button>
+            </div>
+          </div>
+          <div className="cf-table-wrap"><table className="cf-table cf-pathway-table"><thead><tr><th>CLUB PATHWAY</th><th>APPS</th><th>GOALS</th><th>ASSISTS</th></tr></thead>
+            <tbody>{rows.map((r,i)=><motion.tr key={r.id}
+              initial={{opacity:0,x:-8}} animate={{opacity:1,x:0}} transition={{delay:Math.min(i*.025,.35)}}>
+              <td><strong>{r.club}</strong><small className="cf-pathway-years">{r.season}</small>{r.loan&&<small className="cf-loan">LOAN</small>}</td>
+              <td>{fmt(r.apps)}</td>
+              <td><span className={status!=="playing"||revealed.includes("goals")||r.goals===null?"":"cf-blur"}>{fmt(r.goals)}</span></td>
+              <td><span className={status!=="playing"||revealed.includes("assists")||r.assists===null?"":"cf-blur"}>{fmt(r.assists)}</span></td>
+            </motion.tr>)}</tbody></table></div>
+          <div className="cf-record-foot"><span>APPS / GOALS / ASSISTS: PREMIER LEAGUE LEAGUE TOTALS</span><span>— = NOT RECORDED</span></div>
+          <div className="cf-source-note">Club pathway rows aggregate Premier League league appearances, goals and assists (1992/93 onward). Cup, European and EFL figures are excluded. Club dates are the first and last recorded PL seasons, not exact transfer dates; gaps remain unrecorded. Some club-seasons have goals-only or missing coverage; those appearances remain blank. Career totals are shown only when the source marks them complete. <a href={player.wikipediaUrl} target="_blank" rel="noreferrer">OPEN PLAYER IDENTITY ↗</a></div>
         </section>
         <aside className="cf-side">
           <div className="cf-scorecard"><div><small>YOUR SCORE</small><strong>{score.toLocaleString("en-GB")}<i> PTS</i></strong></div><div><small>GUESSES LEFT</small><strong>{left}<i> / 10</i></strong></div>
@@ -473,8 +457,8 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
               <button onClick={share}>{copied?"COPIED ✓":"SHARE RESULT ↗"}</button></div>}
           </section>
           <section className="cf-side-panel cf-hints"><div className="cf-hint-head"><span className="cf-side-kicker">05 / THE CLUE ROOM</span><span>SPEND TO REVEAL</span></div>
-            {hints.map(h=><div className="cf-hint-row" key={h.id}><div><b>{h.label}</b>{opened.includes(h.id)&&<p>{h.value}</p>}</div>
-              <button onClick={()=>unlock(h)} disabled={!h.available||opened.includes(h.id)||status!=="playing"}>{opened.includes(h.id)?(freeNote?.id===h.id?"FREE ✓":"UNLOCKED ✓"):h.available?"−"+h.cost+" PTS ↗":"NO DATA"}</button></div>)}
+            {hints.filter(h=>h.available).map(h=><div className="cf-hint-row" key={h.id}><div><b>{h.label}</b>{opened.includes(h.id)&&<p>{h.value}</p>}</div>
+              <button onClick={()=>unlock(h)} disabled={!h.available||opened.includes(h.id)||status!=="playing"}>{opened.includes(h.id)?"UNLOCKED ✓":h.available?"−"+h.cost+" PTS ↗":"NO DATA"}</button></div>)}
             <div className="cf-hint-row cf-transfer-row"><div><b>Transfer history / fees</b>
               {(opened.includes("fees")||Boolean(feesError))&&(feesBusy?<p>Searching the transfer archive…</p>:feesError?<p>{feesError}</p>:transfers?.length?
                 <div className="cf-transfer-list">{transfers.map((t,i)=><p key={i}><strong>{t.year||"Year ?"}</strong> · {t.from||"Unknown"} → {t.to||"Unknown"}<br/><b>{t.fee}</b>{t.league?" · "+t.league:""}</p>)}</div>:
@@ -487,9 +471,10 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     </section>
     <section className="cf-bottom-strip"><div><span>THE PLAYGROUND PLAYER ARCHIVE</span><strong>READ THE GAME.<br/>READ THE CAREER.</strong></div>
       <div className="cf-source-credits"><b>DATA & SOURCES</b>
-        <p>Career File is currently Premier League-only. Both player selection and the displayed club timeline are filtered through the source’s Premier League club list; overseas spells are excluded. This is not yet a complete history of every English club or every professional player. The underlying OpenFootballBase career and club-season figures have coverage limits and are not independently verified; source gaps remain blank. Wikipedia-derived text is CC BY-SA 4.0; Wikidata-derived fields are CC0.</p>
+        <p>Career File currently uses a dedicated Premier League history dataset covering 1992/93 onward. Player identities are linked through Wikidata; the source-provided prominence rank sets the difficulty bands. Season appearances and goals are adapted from Wikipedia club-season tables and senior-career infoboxes, cross-checked against openfootball results. The source has 4,866 player identities and 17,028 season-stat rows; 593 of 686 club-seasons have full appearances/goals coverage, 65 are goals-only and 28 have no statistics. Club timelines show the first/last recorded Premier League seasons only, not exact transfer dates, loans or complete senior careers. EFL, cup and European statistics are not included. Missing figures remain unrecorded. The data is CC BY-SA 4.0 and may be used commercially with attribution and share-alike; see the source attribution.</p>
         <p>Transfer clues use Tiago Cumetti’s Football Transfers Dataset (2005–2024), collected from Transfermarkt pages. It is CC BY 4.0 and includes undisclosed or missing fees. No match does not mean a free transfer.</p>
-        <a href="https://github.com/florentfougeres/OpenFootballBase-Data" target="_blank" rel="noreferrer">OPEN FOOTBALL DATA SOURCE ↗</a>
+        <a href="https://quiz-fc.com/data/pl-history.v2.json" target="_blank" rel="noreferrer">OPEN PL HISTORY DATA ↗</a>
+        <a href="https://quiz-fc.com/data/ATTRIBUTION.md" target="_blank" rel="noreferrer">DATA ATTRIBUTION / CC BY-SA 4.0 ↗</a>
         <a href="https://doi.org/10.5281/zenodo.17921143" target="_blank" rel="noreferrer">TRANSFER DATA / DOI ↗</a>
       </div>
     </section>
