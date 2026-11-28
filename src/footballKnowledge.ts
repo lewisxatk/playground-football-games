@@ -190,8 +190,8 @@ export function makeCC0DailyQuizRound(pool:CC0QuizQuestion[],seed:number):CC0Qui
  const plan:{tier:CC0QuizTier;count:number;englishCount:number}[]=[
   {tier:"EASY",count:5,englishCount:5},
   {tier:"MEDIUM",count:5,englishCount:5},
-  {tier:"HARD",count:5,englishCount:4},
-  {tier:"EXTREME",count:2,englishCount:1}
+  {tier:"HARD",count:5,englishCount:3},
+  {tier:"EXTREME",count:2,englishCount:2}
  ];
  const selected:CC0QuizQuestion[]=[];
  const usedMatches=new Set<string>();
