@@ -698,13 +698,13 @@ function buildGridPuzzle(players:GamePlayer[],difficulty:GridDifficulty,kind:Gri
  const clubRarity=(key:string)=>(clubPlayers.get(key)?.length??0);
  const nationRarity=(key:string)=>(nationPlayers.get(key)?.length??0);
  const rowKeys=kind==="CLUB_CLUB"
-   ?clubKeys.sort((a,b)=>easy?(clubNeighbors.get(b)?.size??0)-(clubNeighbors.get(a)?.size??0):
+   ?[...clubKeys].sort((a,b)=>easy?(clubNeighbors.get(b)?.size??0)-(clubNeighbors.get(a)?.size??0):
       Number(FORMER_PL_CLUBS.has(b))-Number(FORMER_PL_CLUBS.has(a))||clubRarity(a)-clubRarity(b))
-   :clubKeys.sort((a,b)=>easy?clubRarity(b)-clubRarity(a):
+   :[...clubKeys].sort((a,b)=>easy?clubRarity(b)-clubRarity(a):
       Number(FORMER_PL_CLUBS.has(b))-Number(FORMER_PL_CLUBS.has(a))||clubRarity(a)-clubRarity(b));
  const colKeys=kind==="CLUB_NATION"
    ?nationKeys.sort((a,b)=>easy?nationRarity(b)-nationRarity(a):nationRarity(a)-nationRarity(b))
-   :clubKeys.sort((a,b)=>easy?clubRarity(b)-clubRarity(a):
+   :[...clubKeys].sort((a,b)=>easy?clubRarity(b)-clubRarity(a):
       Number(FORMER_PL_CLUBS.has(b))-Number(FORMER_PL_CLUBS.has(a))||clubRarity(a)-clubRarity(b));
  if(rowKeys.length<4||colKeys.length<4)return null;
  const rowPool=rowKeys.slice(0,easy?120:180),colPool=colKeys.slice(0,easy?120:180);
@@ -811,9 +811,9 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
  return <Frame account={account} game="football-grid" eyebrow="THE EDITORIAL FOOTBALL PUZZLE / 4 × 4" title="FOOTBALL GRID." description="Connect the clubs and nations. Sixteen intersections. Sixteen different footballers. Easy or Hard — every board is generated from real career links." number="07" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
  {done&&mode==="daily"?<Success title="TODAY'S GRID IS COMPLETE." detail="Your daily result is saved. Play unlimited practice for a fresh board." button="PRACTICE GRID" onAgain={()=>{setMode("practice");reset("practice");}}/>:
   <Card className="grid-game grid-editorial">
-   <div className="grid-editorial-hero"><div><small>THE FOOTBALL KNOWLEDGE TEST</small><h2>FOOTBALL GRID <em>4 × 4</em></h2><p>CONNECT THE CLUBS AND NATIONS</p></div><span className="grid-hero-mark">PG / 07</span></div>
+   <div className="grid-editorial-hero"><div><small>THE FOOTBALL KNOWLEDGE TEST</small><h2>FOOTBALL GRID <em>4 × 4</em></h2><p>CONNECT THE CLUBS AND NATIONS</p></div><span className="grid-hero-mark">PG / 07<br/>{GRID_VARIANT_TARGET}+ BOARD TARGET</span></div>
    <div className="grid-mode-row"><button className={kind==="CLUB_NATION"?"active":""} onClick={()=>reset(mode,difficulty,"CLUB_NATION")}>CLUB × NATION</button><button className={kind==="CLUB_CLUB"?"active":""} onClick={()=>reset(mode,difficulty,"CLUB_CLUB")}>CLUB × CLUB</button></div>
-   <div className="grid-difficulty">{GRID_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level,kind)}>{level==="EASY"?"EASY / STANDARD":"HARD"}</button>)}</div>
+   <div className="grid-difficulty">{GRID_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level,kind)}>{level==="EASY"?"EASY / STANDARD":"HARD"}</button>)}</div><p className="arc-muted">{difficulty==="EASY"?"A standard mix of well-known clubs and nations, with the occasional trickier square.":"Less obvious players and nations, plus clubs with Premier League history where the archive supports them."}</p>
    <div className="grid-editorial-stats"><span><small>SCORE</small><b>{score.toLocaleString("en-GB")} PTS</b></span><span><small>ATTEMPTS</small><b>{attempts}/{maxAttempts}</b></span><span><small>CELLS</small><b>{opened.length}/16</b></span><span><small>RARITY</small><b>SCORING ON</b></span></div>
    {loading&&playerPool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>BUILDING YOUR GRID</b><span>Checking all sixteen intersections against the player archive.</span></div>:
     puzzle?<>     <div className="grid-editorial-entry">{active!==null?<><div><small>SELECTED INTERSECTION</small><b>{puzzle.rows[Math.floor(active/4)]} × {puzzle.columns[active%4]}</b></div><input value={guess} onChange={e=>setGuess(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")check();}} placeholder="Type a player's name…" autoComplete="off"/>{suggestions.length>0&&<div className="grid-autocomplete">{suggestions.map(p=><button key={p.archiveId} type="button" onClick={()=>setGuess(p.name)}>{p.name}<small>{p.nationality} · {p.club}</small></button>)}</div>}<button className="arc-button" onClick={check} disabled={!guess.trim()}>SUBMIT ↗</button><button className="arc-quiet" onClick={revealHint}>HINT −100</button></>:<p>SELECT ANY EMPTY SQUARE TO START · PLAYER SEARCH APPEARS HERE</p>}</div>
