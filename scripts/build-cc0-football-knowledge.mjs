@@ -344,72 +344,6 @@ async function fetchWikidataCareers(players){
  meta.eligibleCultHero=meta.eligibleCareerFile;
  return {players:careerPlayers,meta};
 }
-function makeWikidataLinkPacks(careerPlayers,englishClubNames,target=750){
- const byClub=new Map();
- for(const player of careerPlayers)for(const spell of player.spells){
-  if(!englishClubNames.has(clubKey(spell.club)))continue;
-  const key=spell.clubQid,list=byClub.get(key)||[];
-  if(spell.startYear!==null)list.push({player,spell});
-  byClub.set(key,list);
- }
- const overlaps=(a,b)=>{
-  const aStart=a.startYear,aEnd=a.endYear??a.startYear,bStart=b.startYear,bEnd=b.endYear??b.startYear;
-  return Math.max(aStart,bStart)<=Math.min(aEnd,bEnd);
- };
- const uniqueBridge=(start,end,startSpell,endSpell,answer)=>{
-  const startClub=byClub.get(startSpell.clubQid)||[],endClub=byClub.get(endSpell.clubQid)||[];
-  const overlappingStart=new Set(startClub.filter(x=>overlaps(x.spell,startSpell)).map(x=>x.player.id));
-  const overlappingEnd=new Set(endClub.filter(x=>overlaps(x.spell,endSpell)).map(x=>x.player.id));
-  // The endpoints themselves must not satisfy the bridge clue.
-  if(overlappingStart.has(start.id)&&overlappingEnd.has(start.id))return false;
-  if(overlappingStart.has(end.id)&&overlappingEnd.has(end.id))return false;
-  const bridgeIds=[...overlappingStart].filter(id=>overlappingEnd.has(id)&&id!==start.id&&id!==end.id);
-  return bridgeIds.length===1&&bridgeIds[0]===answer.id;
- };
- const ordered=seededShuffle(careerPlayers,20261127),packs=[],usedAnswers=new Set(),usedSignatures=new Set();
- for(const answer of ordered){
-  if(packs.length>=target)break;
-  if(usedAnswers.has(answer.id))continue;
-  const spells=answer.spells.filter(spell=>spell.clubQid&&spell.startYear!==null);
-  let found=null;
-  for(let i=0;i<spells.length&&!found;i++)for(let j=i+1;j<spells.length&&!found;j++){
-   const first=spells[i],second=spells[j];
-   if(first.clubQid===second.clubQid)continue;
-   // Keep the proposed bridge player in both candidate sets so the
-   // intersection can prove that this player is the unique connection.
-   // Endpoints are excluded later when selecting the two displayed stars.
-   const startCandidates=(byClub.get(first.clubQid)||[]).filter(x=>overlaps(first,x.spell));
-   const endCandidates=(byClub.get(second.clubQid)||[]).filter(x=>overlaps(second,x.spell));
-   // Find the bridge by set intersection first; avoid the previous O(A×B)
-   // Cartesian product across every pair of players at two busy clubs.
-   const startById=new Map(startCandidates.map(x=>[x.player.id,x]));
-   const bridgeIds=[...new Set(endCandidates.map(x=>x.player.id))].filter(playerId=>startById.has(playerId));
-   if(bridgeIds.length!==1||bridgeIds[0]!==answer.id)continue;
-   const startChoices=seededShuffle(startCandidates.filter(x=>x.player.id!==answer.id),hashCode(answer.id+first.id)).slice(0,12);
-   const endChoices=seededShuffle(endCandidates.filter(x=>x.player.id!==answer.id),hashCode(answer.id+second.id)).slice(0,12);
-   let pair=null;
-   for(const a of startChoices){const b=endChoices.find(x=>x.player.id!==a.player.id);if(b){pair={a,b};break;}}
-   if(!pair)continue;
-   const decoys=seededShuffle(careerPlayers.filter(p=>p.id!==answer.id&&p.id!==pair.a.player.id&&p.id!==pair.b.player.id),hashCode(answer.id+pair.a.player.id+pair.b.player.id)).slice(0,5);
-   if(decoys.length<5)continue;
-   const signature=[answer.id,pair.a.player.id,pair.b.player.id,first.clubQid,second.clubQid].join("|");
-   if(usedSignatures.has(signature))continue;
-   usedSignatures.add(signature);
-   found={
-    id:id("link-up-puzzle",signature),answerPlayerId:answer.id,
-    startPlayerId:pair.a.player.id,endPlayerId:pair.b.player.id,
-    startClub:first.club,startClubId:first.clubQid,endClub:second.club,endClubId:second.clubQid,
-    optionPlayerIds:seededShuffle([answer,...decoys],hashCode(signature)).map(p=>p.id),
-    explanation:"The connecting player has overlapping dated membership records at both clubs. The periods are recorded in Wikidata statements, not match-by-match appearance records.",
-    source:SOURCES.wikidata,licence:"CC0-1.0"
-   };
-  }
-  if(found){packs.push(found);usedAnswers.add(answer.id);}
- }
- return packs;
-}
-function hashCode(value){return parseInt(createHash("sha256").update(String(value)).digest("hex").slice(0,8),16)>>>0;}
-
 function makeConnections(clubs){const byCountry=new Map();for(const club of clubs)for(const c of club.countries){const k=norm(c),g=byCountry.get(k)||{label:c,clubs:[]};g.clubs.push(club.name);byCountry.set(k,g)}const groups=[...byCountry.values()].map(g=>({...g,clubs:[...new Set(g.clubs)].sort()})).filter(g=>g.clubs.length>=4).sort((a,b)=>a.label.localeCompare(b.label));const packs=[],seen=new Set();for(let seed=0;packs.length<500&&seed<15000&&groups.length>=4;seed++){const chosen=[];for(let j=0;j<4;j++){const g=groups[(seed*7+j*Math.max(1,Math.floor(groups.length/4)))%groups.length];if(!chosen.some(x=>norm(x.label)===norm(g.label)))chosen.push(g)}for(const g of groups)if(chosen.length<4&&!chosen.includes(g))chosen.push(g);if(chosen.length!==4)continue;const categories=chosen.map((g,j)=>{const start=(seed*(j+3)*5)%g.clubs.length;return{label:g.label,members:Array.from({length:4},(_,n)=>g.clubs[(start+n)%g.clubs.length])}});const all=categories.flatMap(g=>g.members);if(new Set(all.map(norm)).size!==16)continue;const sig=categories.map(g=>g.members.map(norm).sort().join(",")).sort().join("|");if(seen.has(sig))continue;seen.add(sig);packs.push({id:id("connections",sig),source:SOURCES.clubs.repo,licence:"CC0-1.0",groups:categories})}return packs}
 
 function seededShuffle(items,seed){const copy=[...items];let state=seed>>>0;const random=()=>{state=(state+0x6D2B79F5)>>>0;let t=state;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296};for(let i=copy.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[copy[i],copy[j]]=[copy[j],copy[i]]}return copy}
@@ -555,7 +489,6 @@ wikidataCareerImport.meta.players=englishCareerPlayers.length;
 wikidataCareerImport.meta.eligibleCareerFile=careerFileCandidates.length;
 wikidataCareerImport.meta.eligibleCultHero=cultHeroCandidates.length;
 wikidataCareerImport.meta.scope="English club career records";
-const linkUpPacks=makeWikidataLinkPacks(englishCareerPlayers,englishClubNames,750);
 const allMatches=[...internationalMatches,...englishMatches,...europeanClubMatches].sort((a,b)=>a.date.localeCompare(b.date));
 const internationalQuiz=buildInternationalQuiz([...englishMatches,...europeanClubMatches.filter(match=>match.competition==="UEFA Champions League")]);
 const internationalGoals=await parseInternationalGoals(players);
@@ -690,7 +623,7 @@ const shards={
  "the-reveal":{...common,playerCards:[...cards.values()]},
  "goal-packs":{...common,lowballPairs:internationalGoalPacks.lowball,ladderPacks:internationalGoalPacks.ladder,football501Packs:internationalGoalPacks.football501},
  "player-stats":{...common,players:positionPlayerRows},
- "career-history":{...common,meta:wikidataCareerImport.meta,players:englishCareerPlayers,linkUpPacks}
+ "career-history":{...common,meta:wikidataCareerImport.meta,players:englishCareerPlayers}
 };
 await mkdir(OUT,{recursive:true});
 await Promise.all(["football-knowledge.cc0.json","football-knowledge-the-climb.cc0.json","football-knowledge-timed-quiz.cc0.json","football-knowledge-the-climb-easy.cc0.json","football-knowledge-timed-quiz-easy.cc0.json"].map(file=>rm(resolve(OUT,file),{force:true})));
