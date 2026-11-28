@@ -48,22 +48,26 @@ function makeAnswers(rows) {
     };
   });
   const surnameCounts = new Map();
-  const aliasOwners = new Map();
+  const aliasCounts = new Map();
   for (const answer of answers) {
     for (const alias of answer.aliases) {
       const key = normalise(alias);
-      if (key) aliasOwners.set(key, answer.id);
+      if (key) aliasCounts.set(key, (aliasCounts.get(key) ?? 0) + 1);
     }
     const surname = answer.name.split(/\s+/).at(-1) ?? "";
     const key = normalise(surname);
     if (key) surnameCounts.set(key, (surnameCounts.get(key) ?? 0) + 1);
   }
   for (const answer of answers) {
+    answer.aliases = answer.aliases.filter(alias => aliasCounts.get(normalise(alias)) === 1);
+  }
+  const aliasOwners = new Set(answers.flatMap(answer => answer.aliases.map(normalise)));
+  for (const answer of answers) {
     const surname = answer.name.split(/\s+/).at(-1) ?? "";
     const key = normalise(surname);
     if (key && surnameCounts.get(key) === 1 && !aliasOwners.has(key)) {
       answer.aliases.push(surname);
-      aliasOwners.set(key, answer.id);
+      aliasOwners.add(key);
     }
   }
   return answers;
