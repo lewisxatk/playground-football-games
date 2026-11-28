@@ -2,7 +2,8 @@ import * as duckdb from "@duckdb/duckdb-wasm";
 
 export type LeagueCode = "ALL" | "ENG-PL" | "ESP-LL" | "ITA-SA" | "DEU-BL" | "FRA-L1";
 export type CareerDifficulty = "EASY" | "MEDIUM" | "HARD" | "EXTREME";
-export type Candidate = { id: string; name: string; apps: number; spells: number; clubs: number; statSeasons: number; region?: "ENGLISH" | "INTERNATIONAL"; fameRank?: number; source?: "quizfc-pl" };
+export type PlayerPoolCategory = "PREMIER_LEAGUE" | "EFL_LEGEND" | "WORLD_LEGEND";
+export type Candidate = { id: string; name: string; apps: number; spells: number; clubs: number; statSeasons: number; region?: "ENGLISH" | "INTERNATIONAL"; fameRank?: number; source?: "quizfc-pl" | "openfootballbase"; poolCategory?: PlayerPoolCategory };
 export type Spell = {
   seq: number; years: string; start: number | null; end: number | null; club: string;
   clubLink: string; clubQid: string; loan: boolean; apps: number | null; goals: number | null;
@@ -15,7 +16,7 @@ export type Player = {
   spells: Spell[]; stats: Stat[]; caps: number | null; internationalGoals: number | null;
   teams: string[]; wikipediaUrl: string; aliases?: string[];
   careerApps?: number | null; careerGoals?: number | null;
-  careerAppsComplete?: boolean; careerGoalsComplete?: boolean;
+  careerAppsComplete?: boolean; careerGoalsComplete?: boolean; statsScope?: string;
 };
 export type Transfer = { year: string; from: string; to: string; fee: string; league: string };
 
@@ -178,17 +179,21 @@ const gamePoolPromises = new Map<string, Promise<ArchiveGamePlayer[]>>();
  * A single grouped archive pass replaces the old small hand-maintained pool
  * for random player, stats and career clue games.
  */
-export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAMES-2026-01"): Promise<ArchiveGamePlayer[]> {
-  const cacheKey = seed + ":" + limit;
+export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAMES-2026-01", names?: string[]): Promise<ArchiveGamePlayer[]> {
+  const requestedNames = names?.map(name => name.trim().toLocaleLowerCase()).filter(Boolean) ?? [];
+  const cacheKey = seed + ":" + limit + (requestedNames.length ? ":names:" + requestedNames.join("|") : "");
   let gamePoolPromise = gamePoolPromises.get(cacheKey);
   if (!gamePoolPromise) {
     gamePoolPromise = (async () => {
       const a = await careerArchive();
       const sampleSize = Math.max(2400, Math.min(9000, limit * 4));
+      const nameFilter = requestedNames.length
+        ? " AND lower(trim(player)) IN (" + requestedNames.map(() => "?").join(",") + ")"
+        : "";
       const sample = await a.query(
         "SELECT player_qid FROM career WHERE player_qid IS NOT NULL AND trim(player_qid)<>'' " +
-        "GROUP BY player_qid ORDER BY hash(player_qid || ?) LIMIT ?",
-        [seed, sampleSize]
+        nameFilter + " GROUP BY player_qid ORDER BY hash(player_qid || ?) LIMIT ?",
+        [...requestedNames, seed, sampleSize]
       );
       const ids = sample.map((row: any) => String(row.player_qid)).filter(Boolean);
       if (!ids.length) return [];
@@ -198,7 +203,7 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
         "career_rollup AS (" +
         " SELECT cr.player_qid, any_value(cr.player) AS name, " +
         " list(DISTINCT cr.club_name) AS clubs, " +
-        " list(struct_pack(club := cr.club_name, start_year := cr.start_year, end_year := cr.end_year)) AS career_spells, " +
+        " list(struct_pack(club := cr.club_name, start_year := cr.start_year, end_year := cr.end_year, apps := cr.apps, goals := cr.goals)) AS career_spells, " +
         " COUNT(DISTINCT cr.club_name) AS club_count, " +
         " SUM(cr.apps) AS appearances, SUM(cr.goals) AS goals, " +
         " COUNT(cr.apps) AS appearance_rows, COUNT(cr.goals) AS goal_rows, " +
@@ -232,7 +237,8 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
         " FROM birth b JOIN picked p ON p.player_qid=b.player_qid WHERE b.precision=11 GROUP BY b.player_qid" +
         "), national_rollup AS (" +
         " SELECT nt.player_qid, SUM(nt.caps) AS caps, SUM(nt.goals) AS international_goals " +
-        " FROM national nt JOIN picked p ON p.player_qid=nt.player_qid GROUP BY nt.player_qid" +
+        " FROM national nt JOIN picked p ON p.player_qid=nt.player_qid " +
+        " WHERE NOT regexp_matches(coalesce(nt.team_name,''), '(?i)\\bU(1[789]|2[0-3])\\b') GROUP BY nt.player_qid" +
         "), club_rollup AS (" +
         " SELECT wikidata_qid, any_value(country) AS country, any_value(league) AS league, " +
         " any_value(division) AS division FROM club GROUP BY wikidata_qid" +
@@ -259,7 +265,9 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
         const spells = Array.isArray(r.career_spells) ? r.career_spells.map((spell:any)=>({
           club:String(spell.club??""),
           startYear:n(spell.start_year),
-          endYear:n(spell.end_year)
+          endYear:n(spell.end_year),
+          apps:n(spell.apps),
+          goals:n(spell.goals)
         })).filter((spell:any)=>spell.club).sort((a:any,b:any)=>(a.startYear??9999)-(b.startYear??9999)) : [];
         const chronologicalClubs = Array.from(new Set(spells.map((spell:any)=>spell.club)));
         return {
@@ -301,6 +309,12 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
   }
   const rows = await gamePoolPromise;
   return rows.slice(0, limit);
+}
+
+/** Load a small, explicitly curated set of players from the complete career index. */
+export async function getArchiveGamePlayersByNames(names:string[]):Promise<ArchiveGamePlayer[]>{
+  if(!names.length)return [];
+  return getArchiveGamePlayers(names.length,"PLAYGROUND-CAREER-FILE-SPECIAL",names);
 }
 
 const n = (v: unknown): number | null => v == null || v === "" ? null : Number(v);
