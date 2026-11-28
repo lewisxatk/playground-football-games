@@ -29,7 +29,13 @@ export function buildGridPuzzle(players,difficulty,kind,seed){
  for(let attempt=0;attempt<attempts;attempt++){
   const chosenRows=shuffle(rowPool,seed+attempt*19).slice(0,4);let chosenCols;
   if(kind==="CLUB_CLUB"){const common=[...(clubNeighbors.get(chosenRows[0])??[])].filter(candidate=>!chosenRows.includes(candidate)&&chosenRows.every(row=>clubNeighbors.get(row)?.has(candidate)));chosenCols=shuffle(common.filter(key=>colPool.includes(key)),seed+attempt*37+7).slice(0,4);}
-  else chosenCols=shuffle(colPool,seed+attempt*37+7).slice(0,4);
+  else {
+    // Pick nations genuinely shared by all four selected clubs.
+    // Drawing from the entire nation pool made 4x4 intersections extremely rare.
+    const common=[...nationKeys].filter(candidate=>chosenRows.every(row=>
+      (clubNationPairs.get(row+"::"+candidate)?.length??0)>0));
+    chosenCols=shuffle(common.filter(key=>colPool.includes(key)),seed+attempt*37+7).slice(0,4);
+  }
   if(chosenCols.length!==4)continue;
   const hasFormerClub=[...chosenRows,...chosenCols].some(key=>FORMER_PL_CLUBS.has(key)),hasRareNation=kind==="CLUB_NATION"&&chosenCols.some(key=>nationRarity(key)<=18);
   if(!easy&&!hasFormerClub&&!hasRareNation)continue;
