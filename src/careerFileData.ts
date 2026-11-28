@@ -182,14 +182,14 @@ export async function getWikidataCareerPlayersByNames(names:string[]):Promise<Pl
   if(!pending){
     pending=(async()=>{
       const values=cleanNames.map(name=>JSON.stringify(name)+"@en").join(" ");
-      const query=`SELECT ?player ?playerLabel ?club ?clubLabel ?start ?end ?birthDate ?nationalityLabel ?positionLabel ?articleTitle WHERE {
+      const query=`SELECT ?player ?playerLabel ?club ?clubLabel ?start ?end ?birthDate ?birthPrecision ?nationalityLabel ?positionLabel ?articleTitle WHERE {
         VALUES ?wantedName { ${values} }
         ?player rdfs:label ?wantedName; p:P54 ?statement.
         ?statement ps:P54 ?club.
         ?club wdt:P31/wdt:P279* wd:Q476028.
         OPTIONAL { ?statement pq:P580 ?start. }
         OPTIONAL { ?statement pq:P582 ?end. }
-        OPTIONAL { ?player wdt:P569 ?birthDate. }
+        OPTIONAL { ?player p:P569/psv:P569 ?birthDateNode. ?birthDateNode wikibase:timeValue ?birthDate; wikibase:timePrecision ?birthPrecision. }
         OPTIONAL { ?player wdt:P27 ?nationality. }
         OPTIONAL { ?player wdt:P413 ?position. }
         OPTIONAL { ?article schema:about ?player; schema:isPartOf <https://en.wikipedia.org/>; schema:name ?articleTitle. }
@@ -229,7 +229,7 @@ export async function getWikidataCareerPlayersByNames(names:string[]):Promise<Pl
         item.spells.forEach((spell,index)=>{spell.seq=index;});
         return {
           id,name:item.name,fullName:item.name,nationality:item.nationality,position:item.position,
-          height:null,birthDate:item.birthDate,birthPrecision:/^\d{4}-\d{2}-\d{2}$/.test(item.birthDate)?11:null,
+          height:null,birthDate:item.birthDate,birthPrecision:Number(row.birthPrecision?.value??0)===11?11:null,
           birthplace:"",spells:item.spells,stats:[],caps:null,internationalGoals:null,teams:[],
           wikipediaUrl:item.articleTitle?"https://en.wikipedia.org/wiki/"+encodeURIComponent(item.articleTitle.replace(/ /g,"_")):"https://www.wikidata.org/wiki/"+id,
           statsScope:"Wikidata club memberships (no verified appearance, goal or assist totals)"
