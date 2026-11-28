@@ -516,3 +516,13 @@
  .grid-editorial-stats small{font-size:6px}
  .grid-editorial-stats b{font-size:12px}
 }
+
+
+.grid-autocomplete{grid-column:1/-1;display:grid;gap:3px;max-height:190px;overflow:auto;border:1px solid #c5c2b7;border-radius:8px;background:#fffdf7}
+.grid-autocomplete button{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 10px;border:0;border-bottom:1px solid #e5e2d8;background:transparent;text-align:left;font-size:11px;font-weight:800;color:#151a18}
+.grid-autocomplete button:last-child{border-bottom:0}
+.grid-autocomplete button:active,.grid-autocomplete button:hover{background:#e9f5c4}
+.grid-autocomplete button small{font-size:8px;font-weight:600;color:#7a806d;text-align:right}
+.grid-solution-list>div{display:flex;flex-direction:column;gap:2px;padding:6px 0;border-bottom:1px solid #d4d1c6}
+.grid-solution-list>div b{font-size:10px}
+.grid-solution-list>div small{font-size:8px;color:#727b64}
