@@ -79,7 +79,7 @@ const EFL_LEGEND_NAMES = [
  "Paul McKenna","Sean Scannell","Fernando Forestieri","Lee Trundle","Ross McCormack",
  "Britt Assombalonga","Dele Adebola","Will Grigg","Billy Paynter","Brett Pitman",
  "Robin Friday","Steve Fletcher","Simon Garner","Graham Ford","Geoff Bradford",
- "Wilf Kirkham","Dean Lewington","Viktor Gyokeres","Viktor Gyökeres"
+ "Wilf Kirkham","Dean Lewington","Steve Bull","Tommy Tynan","Jimmy Chamberlain"
 ];
 const WORLD_LEGEND_NAMES = [
  "Lionel Messi","Diego Maradona","Zinedine Zidane","Ronaldinho","Xavi","Andres Iniesta",
@@ -89,7 +89,7 @@ const WORLD_LEGEND_NAMES = [
  "Roberto Baggio","Hristo Stoichkov","Luis Figo","Luís Figo","Romario","Romário","Zico",
  "Iker Casillas","Raul","Raúl","Juan Roman Riquelme","Juan Román Riquelme","Gabriel Batistuta",
  "Miroslav Klose","Lothar Matthaus","Lothar Matthäus","Rivaldo","Neymar","Karim Benzema",
- "Robert Lewandowski","Luka Modric","Luka Modrić"
+ "Robert Lewandowski"
 ];
 const MODES: { name:Mode; note:string; colour:string }[] = [
   {name:"EASY",note:"Well-known Premier League careers and major clubs",colour:"lime"},
@@ -218,7 +218,7 @@ function careerHint(p:Player):Hint[]{
   {id:"firstInitial",label:"First-name initial",cost:45,value:firstInitial||"Initial not recorded",available:!!firstInitial},
   {id:"surnameInitial",label:"Surname initial",cost:45,value:surnameInitial||"Initial not recorded",available:!!surnameInitial},
   {id:"age",label:"Current age",cost:110,value:age?age+" years old":"Full birth date not recorded",available:!!age},
-  {id:"international",label:"International caps",cost:150,value:p.caps===null?"International caps not recorded":fmt(p.caps)+" senior international caps",available:p.caps!==null},
+  {id:"international",label:"International caps",cost:150,value:p.caps===null?"International caps not recorded":fmt(p.caps)+(p.statsScope?" senior caps (source unverified)":" senior international caps"),available:p.caps!==null},
   {id:"nationality",label:"Nationality",cost:200,value:p.nationality||"Nationality not recorded",available:!!p.nationality}
  ];
 }
@@ -372,7 +372,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     {dailyDone&&<div className="cf-daily-complete">TODAY'S CAREER FILE IS BANKED · NEXT FILES ARE PRACTICE</div>}
     <section className="cf-controlbar cf-pool-mix">
       <div className="cf-control-title"><span>01 / PLAYER DATABASE</span><strong>THREE FOOTBALL WORLDS. ONE DRAW.</strong></div>
-      <div className="cf-pool-mix-items"><span><b>95%</b> FORMER PREMIER LEAGUE</span><span><b>3%</b> EFL LEGENDS</span><span><b>2%</b> WORLD LEGENDS</span></div>
+      <div className="cf-pool-mix-items"><span><b>95%</b> PREMIER LEAGUE CAREERS</span><span><b>3%</b> EFL LEGENDS</span><span><b>2%</b> WORLD LEGENDS</span></div>
     </section>
     <section className="cf-mode-area">
       <div className="cf-mode-title"><span>02 / SET THE DIFFICULTY</span><span>THE HARDER THE FILE, THE LESS OBVIOUS THE NAME</span></div>
@@ -434,9 +434,11 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     </section>
     <section className="cf-bottom-strip"><div><span>THE PLAYGROUND PLAYER ARCHIVE</span><strong>READ THE GAME.<br/>READ THE CAREER.</strong></div>
       <div className="cf-source-credits"><b>DATA & SOURCES</b>
-        <p>Player draw is weighted across three pools: 95% Premier League players (including former players), 3% EFL legends and 2% global legends. The Premier League core uses Quiz FC PL history data (1992/93 onward). EFL and global legend files are looked up by curated player lists against OpenFootballBase career records. Premier League stats are league-only; EFL and global legend appearances/goals use Wikipedia senior-career infobox totals and are labelled unverified. Missing figures are not invented. OpenFootballBase is Wikipedia CC BY-SA 4.0 and Wikidata CC0; attribution is provided with the data-source links.</p>
+        <p>Player draw is weighted across three pools: 95% players with recorded Premier League careers (current and former), 3% EFL legends who never played in the Premier League, and 2% global legends from other leagues. The Premier League core uses Quiz FC PL history data (1992/93 onward). EFL and global legend files are looked up by curated player lists against OpenFootballBase career records. Premier League stats are league-only; EFL and global legend appearances/goals use Wikipedia senior-career infobox totals and are labelled unverified. Missing figures are not invented. OpenFootballBase is Wikipedia CC BY-SA 4.0 and Wikidata CC0; attribution is provided with the data-source links.</p>
         <a href="https://quiz-fc.com/data/pl-history.v2.json" target="_blank" rel="noreferrer">OPEN PL HISTORY DATA ↗</a>
         <a href="https://github.com/florentfougeres/OpenFootballBase-Data" target="_blank" rel="noreferrer">OPENFOOTBALLBASE CAREER DATA ↗</a>
+        <a href="https://www.planetfootball.com/lists-and-rankings/amazing-xi-efl-legends-never-played-premier-league" target="_blank" rel="noreferrer">EFL LEGEND SELECTION RESEARCH ↗</a>
+        <a href="https://therealefl.co.uk/2025/06/03/legendary-efl-strikers-who-never-played-in-the-premier-league/" target="_blank" rel="noreferrer">EFL PLAYER RESEARCH ↗</a>
         <a href="https://quiz-fc.com/data/ATTRIBUTION.md" target="_blank" rel="noreferrer">DATA ATTRIBUTION / CC BY-SA 4.0 ↗</a>
       </div>
     </section>
