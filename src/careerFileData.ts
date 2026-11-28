@@ -203,7 +203,7 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
         "career_rollup AS (" +
         " SELECT cr.player_qid, any_value(cr.player) AS name, " +
         " list(DISTINCT cr.club_name) AS clubs, " +
-        " list(struct_pack(club := cr.club_name, start_year := cr.start_year, end_year := cr.end_year, apps := cr.apps, goals := cr.goals)) AS career_spells, " +
+        " list(struct_pack(club := cr.club_name, start_year := cr.start_year, end_year := cr.end_year, apps := cr.apps, goals := cr.goals, source_title := cr.source_title, source_revision := cr.source_revid)) AS career_spells, " +
         " COUNT(DISTINCT cr.club_name) AS club_count, " +
         " SUM(cr.apps) AS appearances, SUM(cr.goals) AS goals, " +
         " COUNT(cr.apps) AS appearance_rows, COUNT(cr.goals) AS goal_rows, " +
@@ -267,7 +267,9 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
           startYear:n(spell.start_year),
           endYear:n(spell.end_year),
           apps:n(spell.apps),
-          goals:n(spell.goals)
+          goals:n(spell.goals),
+          sourceTitle:String(spell.source_title??""),
+          sourceRevision:n(spell.source_revision)
         })).filter((spell:any)=>spell.club).sort((a:any,b:any)=>(a.startYear??9999)-(b.startYear??9999)) : [];
         const chronologicalClubs = Array.from(new Set(spells.map((spell:any)=>spell.club)));
         return {
@@ -296,6 +298,7 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
         caps: n(r.caps),
         internationalGoals: n(r.international_goals),
         birthDate: String(r.birth_date ?? ""),
+        birthPrecision: r.birth_date ? 11 : null,
         currentCountry: String(r.current_country ?? ""),
         currentLeague: String(r.current_league ?? ""),
         currentDivision: n(r.current_division)
