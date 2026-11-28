@@ -1,6 +1,6 @@
 # PLAYGROUND data sources, attribution and coverage
 
-Last reviewed: 27 November 2026.
+Last reviewed: 28 November 2026.
 
 ## Player, club and career archive
 
@@ -26,6 +26,26 @@ Coverage is not complete. OpenFootballBase's `career` table records club spells 
 For a future EFL and lower-league expansion, English Football Vault describes an eight-tier English pyramid archive from 1888–89 onwards. Its coverage is useful research context, but no data has been imported from it; API access, reuse terms and field-level provenance must be checked before integration.
 
 Upstream technical reference: [OpenFootballBase data model](https://github.com/florentfougeres/OpenFootballBase-Data/blob/main/docs/en/data-model.md). Further English-football archive research: [English Football Vault — About](https://englishfootballvault.co.uk/about.html).
+
+### Better Premier League season-stat source found (not yet integrated)
+
+Research identified [Quiz FC's published `pl-history.v2.json`](https://quiz-fc.com/data/pl-history.v2.json), explicitly distributed under **CC BY-SA 4.0**. Its credits state that it contains Premier League league appearances and goals by club-season plus senior-career spells, built from Wikipedia club-season articles/player infoboxes, openfootball results (CC0) and Wikidata (CC0). It covers Premier League history from 1992/93 and deliberately excludes cup/European figures; incomplete figures are not shown. Reuse is permitted subject to attribution, a link to CC BY-SA 4.0, documenting changes, and sharing the adapted data under the same licence.
+
+This is a substantially closer match to Career File's required season clues than OpenFootballBase's `stat_club` table, whose documentation limits its coverage to a subset of Champions League-club players from seven major countries since 2010. The Quiz FC source also has an existing Career Path game, making it a useful public reference for clue design. A research-only CI job fetched and inspected the actual JSON (about 1.13 MB) and measured the usable pools: 1,440 players have at least two complete season rows across two PL clubs and at least ten recorded league appearances. Fame-rank bands yield 212 Easy, 456 Medium, 401 Hard and 371 Extreme candidates. The new adapter uses those criteria; it only reveals career totals when the source completeness flags allow them. The source is now wired on the draft repair branch through a same-origin Cloudflare Pages proxy; production deployment is still pending.
+
+The public [Quiz FC Career Path rules](https://quiz-fc.com/career-path/) provide a useful gameplay reference: a full ordered senior-club history, loans and return spells preserved, Premier League spells tagged, and youth/reserve/national teams excluded. Its documented clue sequence reveals club years/position, then Premier League seasons and figures, then birth year/nationality, then a notable Premier League team-mate. This is a reference for possible mechanics, not an instruction to copy its code or change PLAYGROUND's scoring without QA.
+
+A second research reference, [PL-History-Dashboard](https://github.com/ethankaufman/PL-History-Dashboard), reports 18,662 player-season-club rows covering 34 seasons (1992/93–2025/26), 5,112 players and 51 clubs, and describes cross-checking player-season data against Premier League records. Its README says it uses the Premier League's public statistics service, which is undocumented and could change. The repository does not make the player-data licence sufficiently clear in its README, so do not copy that file until its reuse terms are confirmed. It is a useful independent validation lead, not an approved import source.
+
+A separate Quiz FC file, [`career-grid.json`](https://quiz-fc.com/data/career-grid.json), was also inspected. Its metadata identifies a live Wikidata-derived index (CC0) of 4,382 PL-linked players and 101 English clubs. It stores player-to-club membership lists, but not spell dates, chronology, loan status or complete lower-league coverage. It is useful for cross-checking English club affiliations, **not** a reliable full career timeline. It should not be used to invent years or imply that every senior club is present.
+
+### Potential EFL career-spell enrichment (not integrated)
+
+Wikidata's [member of sports team (P54)](https://www.wikidata.org/wiki/Property:P54) supports statement qualifiers for [start time (P580)](https://www.wikidata.org/wiki/Property:P580) and [end time (P582)](https://www.wikidata.org/wiki/Property:P582). This is a CC0 source and may provide dated English-club affiliations for some PL/EFL players. It is not a complete transfer register: many statements have no dates, coverage varies by player, and the property does not provide season appearances/goals. A future importer should preserve source/qualifier provenance, include only actual recorded dates, keep uncertain memberships separate, and never infer loans or fill missing years. No P54-derived data is currently integrated.
+
+No complete, openly licensed EFL player-season appearances/goals dataset has been approved for use yet. The PL adapter must therefore remain explicitly PL-only until an EFL source passes licence, coverage and accuracy checks.
+
+[English Football Vault](https://englishfootballvault.co.uk/about.html) remains a possible source for English league/team history across eight tiers from 1888/89, but it documents match/team results rather than the player-season appearance/goals dataset needed by Career File. It is not a drop-in player-career source.
 
 ## World Cup starting line-ups
 

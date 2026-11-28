@@ -86,19 +86,19 @@
 ## 3. Existing game upgrades
 
 ### 3.1 Career File
-- [~] Faster bounded player draw committed; live usability and repeat avoidance still require real-device verification.
-- [~] Candidate selection, difficulty totals, season-stat preflight and displayed timeline now use the same Premier League club identity filter on branch `fix/career-file-premier-league-only`. The previous code admitted a player through one Premier League club, then counted and displayed every career spell including overseas clubs.
-- [~] Difficulty bands are now mutually exclusive and are calculated from appearances/clubs at qualifying Premier League clubs: Easy 450+ appearances; Medium 250–449; Hard 100–249; Extreme 20–99. All require at least two clubs. Candidate counts and a gameplay sample still need verification.
-- [~] Invalid dated spells (missing start year or end year earlier than start year) are excluded from the database draw. A same-year spell is displayed as one year, not a redundant `2005–2005` range. A blank source end year means ongoing OR unknown, so the timeline preserves that uncertainty and does not invent a finish date.
-- [ ] Confirm the available candidate counts for all four difficulty levels against the live archive and adjust thresholds only from measured coverage.
-- [ ] Show two free season clues with club, season, appearances and goals only when both statistics are present.
-- [ ] Make season rows and club spells readable, with clear gaps and unavailable statistics.
-- [ ] Keep purchasable position, nationality, career dates, club count, appearances/goals, international record and transfer-fee hints.
-- [ ] Ensure each hint has a clear point cost; failed/unavailable data lookups must not deduct points.
-- [x] Mobile form sizing/keyboard behaviour has an iPhone Safari focus-zoom guard; continue real-device review for contrast and layout.
-- [ ] Run CI/build, deploy the change, then test at least 20 consecutive rounds across all four difficulties and check for foreign clubs, invalid dates and duplicate draws.
-- [ ] Test thousands of draws across every difficulty/league filter and check duplicate rate.
-
+- [x] Replace the small/mixed PL candidate draw with Quiz FC's published `pl-history.v2.json` (CC BY-SA 4.0), served through a same-origin Cloudflare Pages proxy. The source contains 4,866 player identities, 17,028 season-stat rows, 34 seasons and 51 clubs.
+- [x] Use source-provided prominence rank for four disjoint difficulty tiers. The measured eligible pool is 1,440 players: Easy 212, Medium 456, Hard 401, Extreme 371. Eligibility requires at least two full PL season rows, two PL clubs and ten recorded league appearances.
+- [x] Candidate preflight increased from 72 to 180; full-profile retries increased from 6 to 12. Recent-player history is saved only after a complete usable file has been built.
+- [x] Persist up to 600 recent player IDs across refreshes on the same device, with no immediate repeats until the eligible pool is exhausted.
+- [x] Provide two free season clues only where both appearances and goals are recorded. Season rows use Premier League league figures; cup and European statistics are excluded.
+- [x] Preserve unavailable values as unavailable. Career-wide appearances/goals are shown only when the source completeness flags permit them; missing season rows and goals-only records are not converted into invented zeroes.
+- [x] Hint costs and availability checks are implemented; unavailable hints do not deduct points.
+- [~] Timeline is deliberately PL-only and grouped by recorded club. The source does not give exact transfer dates or reliable loan/return flags; gaps remain blank rather than being split into invented spells. EFL, cup and European career records are not included.
+- [~] Position, nationality and birth-year clues are sourced where present. International caps/goals are not supplied by this dataset. Transfer-fee hints remain a separate CSV feed with coverage/name-match QA outstanding.
+- [x] CI run `46089839653` passed question generation, data validation and Vite build. Research run `46089839629` passed source schema/licence checks and preview smoke tests (proxy HTTP 200; 4,866 players / 17,028 stats; Career File route HTTP 200).
+- [~] Preview smoke tests confirm the proxy and route respond, but they do not replace browser interaction tests. Full 20-round samples per difficulty, repeat-exhaustion tests and manual iPhone/desktop acceptance remain open.
+- [!] A separately licensed EFL player-season appearances/goals source is still required. Wikidata P54 with P580/P582 dates is documented as a possible CC0 source for some dated club affiliations, but it is not complete and is not integrated.
+- [~] Reverse-engineered Quiz FC Career Path as a gameplay reference (senior-club order, loans/returns, PL tags and progressive clues); no code was copied. PLAYGROUND's own rules remain intentionally limited to the verified PL dataset until broader career sources pass QA.
 
 ### 3.2 Who’s Got More? / Lowball
 - [x] Hide totals until the player chooses; reveal the correct answer after the choice.
