@@ -877,7 +877,7 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
      <div className="grid-game-bottom"><span>{difficulty} · {puzzle.answers.flat().reduce((n,cell)=>n+cell.length,0)} ACCEPTED PLAYER/CELL MATCHES</span><button className="arc-quiet" onClick={()=>reset(mode,difficulty)}>NEW GRID ↻</button></div>
      {active!==null&&<div className="grid-answer"><small>{puzzle.clubs[Math.floor(active/4)]} × {puzzle.countries[active%4]}</small><input value={guess} onChange={e=>setGuess(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")check();}} placeholder="Full name or surname…"/><button className="arc-button" onClick={check}>CHECK ↗</button></div>}
      {gridNotice&&<div className="arc-feedback"><b>NOT A MATCH.</b><p>{gridNotice}</p></div>}
-     <p className="arc-muted">Every square is checked against a dated Premier League club spell and recorded nationality. There may be several valid answers per square, but you cannot reuse a footballer in another square. Player career archive: OpenFootballBase-Data, CC BY-SA 4.0.</p>
+     <p className="arc-muted">Every square is checked against a dated English-league club spell and recorded nationality. There may be several valid answers per square, but you cannot reuse a footballer in another square. Player career archive: OpenFootballBase-Data, CC BY-SA 4.0.</p>
     </>:
     <div className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NO VALID 4×4 GRID IN THIS DRAW"}</b><p>{error||"This player sample did not produce sixteen verified intersections. Draw again or try another difficulty."}</p><button className="arc-button" onClick={retry}>RETRY / NEW DRAW ↗</button></div>}
   </Card>}
