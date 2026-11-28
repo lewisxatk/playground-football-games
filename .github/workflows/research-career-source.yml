@@ -26,6 +26,6 @@ jobs:
 # Research-only workflow; this does not feed production data.
 # Schema audit includes the public Career Path bundle's data-field mapping.
 # This is a research-only fetch, not a production dependency.
-# Smoke-test the branch's live Pages proxy and Career File route.
+# Smoke-test the branch's live Pages proxy and Career File route after Pages preview deploy.
 # Candidate-count audit compares strict and expanded pools by fame tier.
 # Reverse-engineering checks the PL stats file and separate senior-club index, including licence.
