@@ -92,7 +92,7 @@
 
 ## 5. Resume pointer
 
-**Next action:** poll the replacement full build triggered by `90b72d73c2`. Confirm the corrected Premier League index, then verify Link Up and Football Grid runtime pool counters in a browser and finish visual/mobile QA.
+**Next action:** poll GitHub Actions run `46086948770`. Confirm the corrected Premier League index, then verify Link Up and Football Grid runtime pool counters in a browser and finish visual/mobile QA.
 
 Keep this checklist current after every commit. Do not claim a successful build or a 500+ runtime pool until the evidence is visible.
 
