@@ -235,7 +235,7 @@ function careerHint(p:Player):Hint[]{
     {id:"first",label:"First Premier League club",cost:120,value:first?.club??"",available:!!first?.club},
     {id:"last",label:"Latest Premier League club",cost:120,value:last?.club??"",available:!!last?.club},
     {id:"span",label:"Career span",cost:100,value:first?.start&&last?.end?first.start+"–"+last.end:"Career dates are incomplete",available:!!(first?.start||last?.end)},
-    {id:"clubs",label:"Number of clubs",cost:90,value:new Set(p.spells.map(s=>s.club)).size+" different clubs",available:true},
+    {id:"clubs",label:"Number of PL clubs",cost:90,value:new Set(p.spells.map(s=>s.club)).size+" different clubs",available:true},
     {id:"apps",label:"Appearances at PL clubs",cost:150,value:appsAvailable?fmt(totalApps)+" recorded appearances":"Career appearance total not complete in the source",available:appsAvailable},
     {id:"goals",label:"Goals at PL clubs",cost:150,value:goalsAvailable?fmt(totalGoals)+" recorded goals":"Career goal total not complete in the source",available:goalsAvailable},
     {id:"international",label:"International record",cost:160,value:p.caps==null?"International caps not recorded":fmt(p.caps)+" caps · "+fmt(p.internationalGoals)+" goals"+(p.teams.length?" · "+p.teams.slice(0,5).join(", "):""),available:p.caps!=null||p.teams.length>0}
@@ -416,7 +416,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
       <div className="cf-hero-copy">
         <div className="cf-eyebrow"><i/> PREMIER LEAGUE PLAYER IDENTITY GAME <span>ISSUE № 01</span></div>
         <h1>CAREER<br/><em>FILE.</em></h1>
-        <p>One career. Dozens of clues. One name to find. Study the seasons, follow the transfers and back your football brain.</p>
+        <p>One player. Dozens of clues. One name to find. Study the Premier League seasons, follow the recorded clubs and back your football brain.</p>
         <div className="cf-hero-foot"><b>SELECT A FILE.</b><span>DON'T GUESS. INVESTIGATE.</span></div>
       </div>
       <div className="cf-hero-art" aria-label="Animated football pitch graphic">
@@ -455,9 +455,9 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
       {player&&!busy&&!loadingPlayer&&<div className="cf-layout">
         <section className="cf-record">
           <div className="cf-record-head"><span>CONFIDENTIAL / PREMIER LEAGUE CLUB RECORD</span><span>SUBJECT: ████████</span></div>
-          <div className="cf-subject"><div><small>IDENTITY HIDDEN</small><strong>THE<br/><em>JOURNEY.</em></strong><span>{rows.length} TIMELINE CLUES / {player.spells.length} PREMIER LEAGUE CLUB SPELLS</span></div><div className="cf-crest-stack"><span>PG</span><span>?</span><span>90</span></div></div>
-          <div className="cf-timeline-toolbar"><div><b>CAREER TIMELINE</b><small>{revealedCount} / {rows.length} REVEALED</small></div>
-            <button onClick={revealAll} disabled={status!=="playing"||revealedCount===rows.length}>REVEAL FULL CAREER · {Math.max(0,rows.length-revealedCount)*35} PTS</button></div>
+          <div className="cf-subject"><div><small>IDENTITY HIDDEN</small><strong>THE<br/><em>JOURNEY.</em></strong><span>{rows.length} SEASON CLUES / {player.spells.length} PREMIER LEAGUE CLUBS RECORDED</span></div><div className="cf-crest-stack"><span>PG</span><span>?</span><span>90</span></div></div>
+          <div className="cf-timeline-toolbar"><div><b>PREMIER LEAGUE SEASON TIMELINE</b><small>{revealedCount} / {rows.length} REVEALED</small></div>
+            <button onClick={revealAll} disabled={status!=="playing"||revealedCount===rows.length}>REVEAL FULL PL RECORD · {Math.max(0,rows.length-revealedCount)*35} PTS</button></div>
           <div className="cf-free-brief"><div><span>FREE SCOUTING NOTE</span><strong>{freeNote?freeNote.label:"TWO FREE SEASON CLUES"}</strong><p>{freeNote?freeNote.value:"Two sourced season records are opened for every player."}</p></div><span className="cf-free-tag">NO POINTS DEDUCTED</span></div><div className="cf-table-wrap"><table className="cf-table"><thead><tr><th>SEASON</th><th>CLUB</th><th>APPS</th><th>GOALS</th><th/></tr></thead>
             <tbody>{rows.map((r,i)=>{const shown=revealed.includes(r.id)||status!=="playing";return <motion.tr key={r.id} className={shown?(freeRows.includes(r.id)?"unblurred cf-free-row":"unblurred cf-paid-row"):"hidden-row"}
               initial={{opacity:0,x:-8}} animate={{opacity:1,x:0}} transition={{delay:Math.min(i*.012,.4)}}>
