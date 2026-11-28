@@ -171,6 +171,76 @@ export type ArchiveGamePlayer = {
   statSourceTitle?: string;
   statSourceRevision?: number | null;
 };
+
+const wikidataCareerPromises = new Map<string, Promise<Player[]>>();
+
+/** Fallback career path for curated legends missing from the OpenFootballBase infobox export. */
+export async function getWikidataCareerPlayersByNames(names:string[]):Promise<Player[]>{
+  const cleanNames=Array.from(new Set(names.map(name=>name.trim()).filter(Boolean)));
+  const cacheKey=cleanNames.slice().sort().join("|");
+  let pending=wikidataCareerPromises.get(cacheKey);
+  if(!pending){
+    pending=(async()=>{
+      const values=cleanNames.map(name=>JSON.stringify(name)+"@en").join(" ");
+      const query=`SELECT ?player ?playerLabel ?club ?clubLabel ?start ?end ?birthDate ?nationalityLabel ?positionLabel ?articleTitle WHERE {
+        VALUES ?wantedName { ${values} }
+        ?player rdfs:label ?wantedName; p:P54 ?statement.
+        ?statement ps:P54 ?club.
+        ?club wdt:P31/wdt:P279* wd:Q476028.
+        OPTIONAL { ?statement pq:P580 ?start. }
+        OPTIONAL { ?statement pq:P582 ?end. }
+        OPTIONAL { ?player wdt:P569 ?birthDate. }
+        OPTIONAL { ?player wdt:P27 ?nationality. }
+        OPTIONAL { ?player wdt:P413 ?position. }
+        OPTIONAL { ?article schema:about ?player; schema:isPartOf <https://en.wikipedia.org/>; schema:name ?articleTitle. }
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+      } ORDER BY ?player ?start ?clubLabel`;
+      const url="https://query.wikidata.org/sparql?query="+encodeURIComponent(query)+"&format=json";
+      const response=await fetch(url,{headers:{Accept:"application/sparql-results+json"},cache:"force-cache"});
+      if(!response.ok)throw new Error("Wikidata career lookup failed ("+response.status+").");
+      const payload=await response.json();
+      const grouped=new Map<string,{name:string;birthDate:string;nationality:string;position:string;articleTitle:string;spells:Spell[]}>();
+      for(const row of payload.results?.bindings??[]){
+        const id=String(row.player?.value??"").split("/").pop()??"";
+        if(!/^Q\\d+$/.test(id))continue;
+        const name=String(row.playerLabel?.value??"").trim();
+        const club=String(row.clubLabel?.value??"").trim();
+        if(!name||!club)continue;
+        let item=grouped.get(id);
+        if(!item){item={name,birthDate:"",nationality:"",position:"",articleTitle:"",spells:[]};grouped.set(id,item);}
+        item.birthDate ||= String(row.birthDate?.value??"").slice(0,10);
+        item.nationality ||= String(row.nationalityLabel?.value??"");
+        item.position ||= String(row.positionLabel?.value??"");
+        item.articleTitle ||= String(row.articleTitle?.value??"");
+        const startValue=String(row.start?.value??"");
+        const endValue=String(row.end?.value??"");
+        const start=startValue?Number(startValue.slice(0,4)):null;
+        const end=endValue?Number(endValue.slice(0,4)):null;
+        const clubQid=String(row.club?.value??"").split("/").pop()??"";
+        const duplicate=item.spells.some(spell=>spell.clubQid===clubQid&&spell.start===start&&spell.end===end);
+        if(!duplicate)item.spells.push({
+          seq:item.spells.length,years:start===null?(end===null?"": "–"+end):end===null?start+"–":start===end?String(start):start+"–"+end,
+          start,end,club,clubLink:"",clubQid,loan:false,apps:null,goals:null,
+          sourceTitle:item.articleTitle||name,sourceRevision:null
+        });
+      }
+      return Array.from(grouped.entries()).map(([id,item]):Player=>{
+        item.spells.sort((a,b)=>(a.start??9999)-(b.start??9999)||a.club.localeCompare(b.club));
+        item.spells.forEach((spell,index)=>{spell.seq=index;});
+        return {
+          id,name:item.name,fullName:item.name,nationality:item.nationality,position:item.position,
+          height:null,birthDate:item.birthDate,birthPrecision:/^\\d{4}-\\d{2}-\\d{2}$/.test(item.birthDate)?11:null,
+          birthplace:"",spells:item.spells,stats:[],caps:null,internationalGoals:null,teams:[],
+          wikipediaUrl:item.articleTitle?"https://en.wikipedia.org/wiki/"+encodeURIComponent(item.articleTitle.replace(/ /g,"_")):"https://www.wikidata.org/wiki/"+id,
+          statsScope:"Wikidata club memberships (no verified appearance, goal or assist totals)"
+        };
+      }).filter(player=>player.spells.length>=2);
+    })().catch(error=>{wikidataCareerPromises.delete(cacheKey);throw error;});
+    wikidataCareerPromises.set(cacheKey,pending);
+  }
+  return pending;
+}
+
 const gamePoolPromises = new Map<string, Promise<ArchiveGamePlayer[]>>();
 
 /**
