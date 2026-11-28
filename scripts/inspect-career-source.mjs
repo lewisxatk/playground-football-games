@@ -72,7 +72,20 @@ if (pageResponse.ok) {
     });
     if (!scriptResponse.ok) continue;
     const source = await scriptResponse.text();
-    for (const term of ["careerTotals", "clubSeasons", "pl-history.v2.json"]) {
+    for (const term of ["function ox", "careerTotals.map", "clubSeasons", "pl-history.v2.json"]) {
+      let searchFrom = 0;
+      let found = 0;
+      while (found < 3) {
+        const at = source.indexOf(term, searchFrom);
+        if (at < 0) break;
+        console.log("SCRIPT_SCHEMA_CONTEXT", scriptUrl, term,
+          source.slice(Math.max(0, at - 700), Math.min(source.length, at + 2400)));
+        searchFrom = at + term.length;
+        found++;
+      }
+    }
+    /* old term loop removed */
+    for (const term of []) {
       const at = source.indexOf(term);
       if (at >= 0) {
         console.log("SCRIPT_SCHEMA_CONTEXT", scriptUrl, term,
