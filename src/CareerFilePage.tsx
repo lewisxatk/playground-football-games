@@ -254,6 +254,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     const desiredPool:PlayerPoolCategory=slot<95?"PREMIER_LEAGUE":slot<98?"EFL_LEGEND":"WORLD_LEGEND";
     let options:Candidate[]=[];
     let selectedPool=desiredPool;
+    let fallbackNotice="";
     staticPlayers.current.clear();
     setLoadingPlayer(true);
     if(desiredPool==="PREMIER_LEAGUE"){
@@ -270,6 +271,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
       if(!options.length){
         staticPlayers.current.clear();
         selectedPool="PREMIER_LEAGUE";
+        fallbackNotice=(desiredPool==="EFL_LEGEND"?"EFL legend source had no usable career record.":"Global legend source had no usable career record.")+" This slot used the Premier League backup instead.";
         options=deck.filter(candidate=>candidate.poolCategory==="PREMIER_LEAGUE"&&fits(candidate,selectedMode));
       }
     }
@@ -293,7 +295,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
           if(!timeline.length||!usable){lastProblem="This career did not have enough usable, sourced club records.";continue;}
           seen.current.add(choice.id);persistRecentCareerIds(seen.current);
           setPlayer(record);setRows(timeline);setRevealed([]);setOpened([]);
-          setRound(n=>n+1);setStatus("playing");setNote("");setGuess("");setAttempts(0);setScore(1000);
+          setRound(n=>n+1);setStatus("playing");setNote(fallbackNotice);setGuess("");setAttempts(0);setScore(1000);
           return;
         }catch(problem){lastProblem=problem instanceof Error?problem.message:"Could not read this player's career file.";}
       }
