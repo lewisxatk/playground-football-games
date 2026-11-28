@@ -27,4 +27,4 @@ jobs:
 # Schema audit includes the public Career Path bundle's data-field mapping.
 # This is a research-only fetch, not a production dependency.
 # Candidate-count audit compares strict and expanded pools by fame tier.
-# Reverse-engineering also checks for a separate full-career index.
+# Reverse-engineering also checks for a separate full-career index and its JSON URL.
