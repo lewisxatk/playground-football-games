@@ -37,6 +37,8 @@ The public [Quiz FC Career Path rules](https://quiz-fc.com/career-path/) provide
 
 A second research reference, [PL-History-Dashboard](https://github.com/ethankaufman/PL-History-Dashboard), reports 18,662 player-season-club rows covering 34 seasons (1992/93–2025/26), 5,112 players and 51 clubs, and describes cross-checking player-season data against Premier League records. Its README says it uses the Premier League's public statistics service, which is undocumented and could change. The repository does not make the player-data licence sufficiently clear in its README, so do not copy that file until its reuse terms are confirmed. It is a useful independent validation lead, not an approved import source.
 
+A separate Quiz FC file, [`career-grid.json`](https://quiz-fc.com/data/career-grid.json), was also inspected. Its metadata identifies a live Wikidata-derived index (CC0) of 4,382 PL-linked players and 101 English clubs. It stores player-to-club membership lists, but not spell dates, chronology, loan status or complete lower-league coverage. It is useful for cross-checking English club affiliations, **not** a reliable full career timeline. It should not be used to invent years or imply that every senior club is present.
+
 [English Football Vault](https://englishfootballvault.co.uk/about.html) remains a possible source for English league/team history across eight tiers from 1888/89, but it documents match/team results rather than the player-season appearance/goals dataset needed by Career File. It is not a drop-in player-career source.
 
 ## World Cup starting line-ups
