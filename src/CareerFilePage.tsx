@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { motion } from "motion/react";
-import { getCandidates, getPlayer, getStatEligibleCandidates, getTransferHints, type Candidate, type LeagueCode, type Player, type Transfer, type ArchiveGamePlayer, type CareerDifficulty } from "./careerFileData";
+import { getCandidates, getPlayer, getStatEligibleCandidates, type Candidate, type LeagueCode, type Player, type ArchiveGamePlayer, type CareerDifficulty } from "./careerFileData";
 import { getQuizFcCareerCandidates, getQuizFcCareerPlayer, getQuizFcStatEligibleCandidates } from "./quizFcCareerData";
 import { getStaticArchivePlayers } from "./useArchivePlayers";
 import "./career-file.css";
@@ -228,9 +228,6 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
   const [score,setScore]=useState(1000);
   const [revealed,setRevealed]=useState<string[]>([]);
   const [opened,setOpened]=useState<string[]>([]);
-  const [transfers,setTransfers]=useState<Transfer[]|null>(null);
-  const [feesBusy,setFeesBusy]=useState(false);
-  const [feesError,setFeesError]=useState("");
   const [status,setStatus]=useState<"playing"|"won"|"lost">("playing");
   const [busy,setBusy]=useState(true);
   const [loadingPlayer,setLoadingPlayer]=useState(false);
@@ -303,7 +300,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
 
   useEffect(()=>{
     let live=true;setBusy(true);setError("");
-    setPlayer(null);setRows([]);setOpened([]);setRevealed([]);setTransfers(null);setFeesError("");
+    setPlayer(null);setRows([]);setOpened([]);setRevealed([]);
     setGuess("");setAttempts(0);setScore(1000);setStatus("playing");setNote("");
     (async()=>{
       const isDaily=!dailyDone;
@@ -346,18 +343,6 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     setRevealed(v=>[...v,key]);
     setScore(v=>Math.max(0,v-cost));
   };
-  const revealFees=async()=>{
-    if(!player||opened.includes("fees")||status!=="playing"||feesBusy)return;
-    setFeesBusy(true);setFeesError("");
-    try{
-      const results=await getTransferHints([player.name,player.fullName]);
-      setTransfers(results);
-      setOpened(v=>[...v,"fees"]);
-      if(results.length>0)setScore(v=>Math.max(0,v-200));
-    }catch(e){
-      setFeesError(e instanceof Error?e.message:"Could not load the transfer dataset. No points were deducted; try again.");
-    }finally{setFeesBusy(false);}
-  };
   const submit=(event:FormEvent)=>{
     event.preventDefault();if(!player||!guess.trim()||status!=="playing")return;
     if(matches(guess,player)){setStatus("won");setNote("FILE CRACKED. Nice read.");setGuess("");if(!dailyDone)onDailyComplete?.(score);return;}
@@ -367,7 +352,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
   const next=async()=>{
     if(!pool.length)return;
     setPlayer(null);setRows([]);setGuess("");setAttempts(0);setScore(1000);setRevealed([]);setOpened([]);
-    setTransfers(null);setFeesError("");setStatus("playing");setNote("");setCopied(false);setError("");
+    setStatus("playing");setNote("");setCopied(false);setError("");
     try{await newPlayer(pool,mode);}catch(e){setError(e instanceof Error?e.message:"Could not load another player.");}
   };
   const share=async()=>{
@@ -461,11 +446,6 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
           <section className="cf-side-panel cf-hints"><div className="cf-hint-head"><span className="cf-side-kicker">05 / THE CLUE ROOM</span><span>SPEND TO REVEAL</span></div>
             {hints.filter(h=>h.available).map(h=><div className="cf-hint-row" key={h.id}><div><b>{h.label}</b>{opened.includes(h.id)&&<p>{h.value}</p>}</div>
               <button onClick={()=>unlock(h)} disabled={!h.available||opened.includes(h.id)||status!=="playing"}>{opened.includes(h.id)?"UNLOCKED ✓":h.available?"−"+h.cost+" PTS ↗":"NO DATA"}</button></div>)}
-            <div className="cf-hint-row cf-transfer-row"><div><b>Transfer history / fees</b>
-              {(opened.includes("fees")||Boolean(feesError))&&(feesBusy?<p>Searching the transfer archive…</p>:feesError?<p>{feesError}</p>:transfers?.length?
-                <div className="cf-transfer-list">{transfers.map((t,i)=><p key={i}><strong>{t.year||"Year ?"}</strong> · {t.from||"Unknown"} → {t.to||"Unknown"}<br/><b>{t.fee}</b>{t.league?" · "+t.league:""}</p>)}</div>:
-                <p>No matching entry in the 2005–2024 transfer dataset. No points were deducted. This does not mean the player moved for free.</p>)}
-            </div><button onClick={revealFees} disabled={opened.includes("fees")||feesBusy||status!=="playing"}>{feesBusy?"SEARCHING…":opened.includes("fees")?(transfers?.length?"UNLOCKED · −200 PTS ✓":"NO FEE RECORD · FREE ✓"):"−200 PTS ↗"}</button></div>
           </section>
           <div className="cf-side-actions"><button onClick={next} disabled={busy||loadingPlayer||!pool.length}>{loadingPlayer?"LOADING…":"NEXT PLAYER ↗"}</button><span>USED FILES ARE AVOIDED UNTIL THE DRAW REFRESHES.</span></div>
         </aside>
@@ -474,7 +454,6 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     <section className="cf-bottom-strip"><div><span>THE PLAYGROUND PLAYER ARCHIVE</span><strong>READ THE GAME.<br/>READ THE CAREER.</strong></div>
       <div className="cf-source-credits"><b>DATA & SOURCES</b>
         <p>Career File currently uses a dedicated Premier League history dataset covering 1992/93 onward. Player identities are linked through Wikidata; the source-provided prominence rank sets the difficulty bands. Season appearances and goals are adapted from Wikipedia club-season tables and senior-career infoboxes, cross-checked against openfootball results. The source has 4,866 player identities and 17,028 season-stat rows; 593 of 686 club-seasons have full appearances/goals coverage, 65 are goals-only and 28 have no statistics. Club timelines show the first/last recorded Premier League seasons only, not exact transfer dates, loans or complete senior careers. EFL, cup and European statistics are not included. Missing figures remain unrecorded. The data is CC BY-SA 4.0 and may be used commercially with attribution and share-alike; see the source attribution.</p>
-        <p>Transfer clues use Tiago Cumetti’s Football Transfers Dataset (2005–2024), collected from Transfermarkt pages. It is CC BY 4.0 and includes undisclosed or missing fees. No match does not mean a free transfer.</p>
         <a href="https://quiz-fc.com/data/pl-history.v2.json" target="_blank" rel="noreferrer">OPEN PL HISTORY DATA ↗</a>
         <a href="https://quiz-fc.com/data/ATTRIBUTION.md" target="_blank" rel="noreferrer">DATA ATTRIBUTION / CC BY-SA 4.0 ↗</a>
         <a href="https://doi.org/10.5281/zenodo.17921143" target="_blank" rel="noreferrer">TRANSFER DATA / DOI ↗</a>
