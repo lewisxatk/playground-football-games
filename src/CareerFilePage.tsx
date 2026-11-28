@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { motion } from "motion/react";
 import { getCandidates, getPlayer, getStatEligibleCandidates, getTransferHints, type Candidate, type LeagueCode, type Player, type Transfer, type ArchiveGamePlayer, type CareerDifficulty } from "./careerFileData";
+import { getQuizFcCareerCandidates, getQuizFcCareerPlayer, getQuizFcStatEligibleCandidates } from "./quizFcCareerData";
 import { getStaticArchivePlayers } from "./useArchivePlayers";
 import "./career-file.css";
 
@@ -158,8 +159,14 @@ const ageOf=(p:Player)=>{
   return String(age);
 };
 function fits(c:Candidate,m:Mode){
-  // Candidate apps/clubs describe ONLY the selected competition's clubs.
-  // Keep bands disjoint so a player cannot appear in several difficulties.
+  if(c.source==="quizfc-pl"&&c.fameRank!==undefined){
+    // Wikidata fame rank from the licensed PL history source: lower is more recognisable.
+    if(m==="EASY")return c.fameRank<=300;
+    if(m==="MEDIUM")return c.fameRank>300&&c.fameRank<=1200;
+    if(m==="HARD")return c.fameRank>1200&&c.fameRank<=2500;
+    return c.fameRank>2500;
+  }
+  // Legacy archive fallback uses disjoint recorded-appearance bands.
   if(m==="EASY")return c.apps>=450&&c.clubs>=2;
   if(m==="MEDIUM")return c.apps>=250&&c.apps<450&&c.clubs>=2;
   if(m==="HARD")return c.apps>=100&&c.apps<250&&c.clubs>=2;
@@ -170,7 +177,7 @@ function positionLabel(raw:string){
   if(/GK|GOALKEEPER/.test(value))return "Goalkeeper";
   if(/DF|DEFENDER|BACK/.test(value))return "Defender";
   if(/MF|MIDFIELDER|MID/.test(value))return "Midfielder";
-  if(/FW|FORWARD|STRIKER|ATTACK/.test(value))return "Forward";
+  if(/FW|FORWARD|STRIKER|ATTACK|^ATT$/.test(value))return "Forward";
   return raw.trim();
 }
 function randomFreeRows(rows:Row[],seed?:string):string[]{
@@ -200,9 +207,9 @@ function makeFreeNote(player:Player,seed?:string):FreeNote|null{
 }
 function matches(input:string,p:Player){
   const g=clean(input);if(!g)return false;
-  const accepted=new Set([clean(p.name),clean(p.fullName)]);
+  const accepted=new Set([clean(p.name),clean(p.fullName),...(p.aliases??[]).map(clean)]);
   const particles=new Set(["van","von","de","del","di","da","dos","das","du","la","le","ter","den","der"]);
-  for(const name of [p.name,p.fullName]){
+  for(const name of [p.name,p.fullName,...(p.aliases??[])]){
     const bits=clean(name).split(" ").filter(Boolean);
     if(bits.length){
       accepted.add(bits[bits.length-1]);
@@ -214,7 +221,10 @@ function matches(input:string,p:Player){
 }
 function careerHint(p:Player):Hint[]{
   const spells=ordered(p),first=spells[0],last=spells[spells.length-1];
-  const totalApps=p.spells.reduce((n,s)=>n+(s.apps??0),0),totalGoals=p.spells.reduce((n,s)=>n+(s.goals??0),0);
+  const totalApps=p.careerApps!==undefined?(p.careerApps??0):p.spells.reduce((n,s)=>n+(s.apps??0),0);
+  const totalGoals=p.careerGoals!==undefined?(p.careerGoals??0):p.spells.reduce((n,s)=>n+(s.goals??0),0);
+  const appsAvailable=p.careerApps!==undefined?p.careerApps!==null:totalApps>0;
+  const goalsAvailable=p.careerGoals!==undefined?p.careerGoals!==null:totalGoals>0;
   const age=ageOf(p);
   return [
     {id:"position",label:"Position",cost:90,value:positionLabel(p.position)||"Not listed in the top-five league squad records",available:true},
@@ -226,8 +236,8 @@ function careerHint(p:Player):Hint[]{
     {id:"last",label:"Latest Premier League club",cost:120,value:last?.club??"",available:!!last?.club},
     {id:"span",label:"Career span",cost:100,value:first?.start&&last?.end?first.start+"–"+last.end:"Career dates are incomplete",available:!!(first?.start||last?.end)},
     {id:"clubs",label:"Number of clubs",cost:90,value:new Set(p.spells.map(s=>s.club)).size+" different clubs",available:true},
-    {id:"apps",label:"Appearances at PL clubs",cost:150,value:fmt(totalApps)+" recorded appearances",available:totalApps>0},
-    {id:"goals",label:"Goals at PL clubs",cost:150,value:fmt(totalGoals)+" recorded goals",available:totalGoals>0},
+    {id:"apps",label:"Appearances at PL clubs",cost:150,value:appsAvailable?fmt(totalApps)+" recorded appearances":"Career appearance total not complete in the source",available:appsAvailable},
+    {id:"goals",label:"Goals at PL clubs",cost:150,value:goalsAvailable?fmt(totalGoals)+" recorded goals":"Career goal total not complete in the source",available:goalsAvailable},
     {id:"international",label:"International record",cost:160,value:p.caps==null?"International caps not recorded":fmt(p.caps)+" caps · "+fmt(p.internationalGoals)+" goals"+(p.teams.length?" · "+p.teams.slice(0,5).join(", "):""),available:p.caps!=null||p.teams.length>0}
   ];
 }
@@ -292,7 +302,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
           const cached=staticPlayers.current.get(candidate.id);
           return Boolean(cached&&randomFreeRows(makeRows(cached),dailyDraw?dailySeed+":"+candidate.id:undefined).length>=2);
         })
-        :await getStatEligibleCandidates(draw,league);
+        :draw[0]?.source==="quizfc-pl"?getQuizFcStatEligibleCandidates(draw):await getStatEligibleCandidates(draw,league);
       const rankByCoverage=(items:Candidate[])=>[...items].sort((a,b)=>b.statSeasons-a.statSeasons||a.id.localeCompare(b.id));
       const englishEligible=rankByCoverage(eligible.filter(candidate=>candidate.region==="ENGLISH"));
       const internationalEligible=rankByCoverage(eligible.filter(candidate=>candidate.region==="INTERNATIONAL"));
@@ -302,7 +312,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
       let lastProblem="No candidate in this draw had two complete season-stat rows.";
       for(const choice of ranked.slice(0,staticPlayers.current.size?36:12)){
         try{
-          const record=staticPlayers.current.get(choice.id)??await getPlayer(choice.id,league);
+          const record=staticPlayers.current.get(choice.id)??(choice.source==="quizfc-pl"?await getQuizFcCareerPlayer(choice.id):await getPlayer(choice.id,league));
           const timeline=makeRows(record);
           const free=randomFreeRows(timeline,dailyDraw?dailySeed+":"+choice.id:undefined);
           if(!timeline.length||free.length<2){lastProblem="This career did not have two complete, matching season-stat clues.";continue;}
@@ -340,7 +350,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
         }
       }
       staticPlayers.current.clear();
-      const list=await getCandidates(league,mode);
+      const list=league==="ENG-PL"?await getQuizFcCareerCandidates():await getCandidates(league,mode);
       if(!live)return;
       setPool(list);
       await newPlayer(list,mode);
@@ -457,8 +467,8 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
               <td><span className={shown?"":"cf-blur"}>{r.covered?fmt(r.goals):"—"}</span></td>
               <td>{shown?<span className="cf-revealed-tick">{freeRows.includes(r.id)?"FREE":"✓"}</span>:<button className="cf-reveal-row" onClick={()=>revealRow(r)} disabled={status!=="playing"}>−35 ↗</button>}</td>
             </motion.tr>;})}</tbody></table></div>
-          <div className="cf-record-foot"><span>APPS / GOALS: RECORDED TOTALS AT THESE CLUBS</span><span>— = NOT RECORDED</span></div>
-          <div className="cf-source-note">Career clues are restricted to Premier League clubs. Season figures combine the source’s listed non-total competition groups for each club and season, so they are not league-only totals. Missing totals are not guessed; source statistics are unverified. <a href={player.wikipediaUrl} target="_blank" rel="noreferrer">OPEN THE ORIGINAL PLAYER SOURCE ↗</a></div>
+          <div className="cf-record-foot"><span>APPS / GOALS: PREMIER LEAGUE SEASON TOTALS</span><span>— = NOT RECORDED</span></div>
+          <div className="cf-source-note">Season rows show Premier League league appearances and goals only (1992/93 onward). Cup and European figures are excluded. Some club-seasons have goals-only or missing coverage; those appearances remain blank. Career totals are shown only when the source marks them complete. <a href={player.wikipediaUrl} target="_blank" rel="noreferrer">OPEN PLAYER IDENTITY ↗</a></div>
         </section>
         <aside className="cf-side">
           <div className="cf-scorecard"><div><small>YOUR SCORE</small><strong>{score.toLocaleString("en-GB")}<i> PTS</i></strong></div><div><small>GUESSES LEFT</small><strong>{left}<i> / 10</i></strong></div>
@@ -487,9 +497,10 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     </section>
     <section className="cf-bottom-strip"><div><span>THE PLAYGROUND PLAYER ARCHIVE</span><strong>READ THE GAME.<br/>READ THE CAREER.</strong></div>
       <div className="cf-source-credits"><b>DATA & SOURCES</b>
-        <p>Career File is currently Premier League-only. Both player selection and the displayed club timeline are filtered through the source’s Premier League club list; overseas spells are excluded. This is not yet a complete history of every English club or every professional player. The underlying OpenFootballBase career and club-season figures have coverage limits and are not independently verified; source gaps remain blank. Wikipedia-derived text is CC BY-SA 4.0; Wikidata-derived fields are CC0.</p>
+        <p>Career File currently uses a dedicated Premier League history dataset covering 1992/93 onward. Player identities and fame ranking are linked through Wikidata; season appearances and goals are adapted from Wikipedia club-season tables and senior-career infoboxes, cross-checked against openfootball results. The source has 4,866 player identities and 17,028 season-stat rows; 593 of 686 club-seasons have full appearances/goals coverage, 65 are goals-only and 28 have no statistics. Missing figures remain unrecorded. The data is CC BY-SA 4.0 and may be used commercially with attribution and share-alike; see the source attribution.</p>
         <p>Transfer clues use Tiago Cumetti’s Football Transfers Dataset (2005–2024), collected from Transfermarkt pages. It is CC BY 4.0 and includes undisclosed or missing fees. No match does not mean a free transfer.</p>
-        <a href="https://github.com/florentfougeres/OpenFootballBase-Data" target="_blank" rel="noreferrer">OPEN FOOTBALL DATA SOURCE ↗</a>
+        <a href="https://quiz-fc.com/data/pl-history.v2.json" target="_blank" rel="noreferrer">OPEN PL HISTORY DATA ↗</a>
+        <a href="https://quiz-fc.com/data/ATTRIBUTION.md" target="_blank" rel="noreferrer">DATA ATTRIBUTION / CC BY-SA 4.0 ↗</a>
         <a href="https://doi.org/10.5281/zenodo.17921143" target="_blank" rel="noreferrer">TRANSFER DATA / DOI ↗</a>
       </div>
     </section>
