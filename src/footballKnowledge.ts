@@ -16,7 +16,6 @@ export type CC0DraftPlayer = {id:string;name:string;aliases:string[];positions:s
 export type WorldCupPlayerCard = {id:string;name:string;worldCups:number[];teams:string[];matchIds:string[];sourceKey?:string};
 export type CC0CareerSpell = {id:string;statementId:string;clubId:string;clubQid:string;club:string;startYear:number;endYear:number|null;years:string;source:string;licence:"CC0-1.0"};
 export type CC0CareerPlayer = {id:string;playerId:string;qid:string;name:string;fullName:string;nationality:string;position:string;aliases:string[];birthYears:number[];spells:CC0CareerSpell[];clubs:string[];firstYear:number|null;lastYear:number|null;source:string;licence:"CC0-1.0";sourceItemUrl:string;sourceRetrievedAt:string};
-export type CC0LinkUpPack = {id:string;answerPlayerId:string;startPlayerId:string;endPlayerId:string;startClub:string;startClubId:string;endClub:string;endClubId:string;optionPlayerIds:string[];explanation:string;source:{repo:string;licence:string;url:string};licence:"CC0-1.0"};
 
 type FootballKnowledgeShards = {
  core:{players:CC0FootballPlayer[];clubs:CC0Club[]};
@@ -33,7 +32,7 @@ type FootballKnowledgeShards = {
  "the-reveal":{playerCards:WorldCupPlayerCard[]};
  "goal-packs":{lowballPairs:CC0StatPack[];ladderPacks:CC0StatPack[];football501Packs:CC0StatPack[]};
  "player-stats":{players:CC0DraftPlayer[]};
- "career-history":{players:CC0CareerPlayer[];careerFileCandidates?:CC0CareerPlayer[];cultHeroCandidates?:CC0CareerPlayer[];linkUpPacks:CC0LinkUpPack[];meta:{status:string;endpoint:string;retrievedAt:string;rawRows:number;acceptedSpells:number;players:number;eligibleCareerFile:number;eligibleCultHero:number;error:string|null}};
+ "career-history":{players:CC0CareerPlayer[];careerFileCandidates?:CC0CareerPlayer[];cultHeroCandidates?:CC0CareerPlayer[];meta:{status:string;endpoint:string;retrievedAt:string;rawRows:number;acceptedSpells:number;players:number;eligibleCareerFile:number;eligibleCultHero:number;error:string|null}};
 };
 export type FootballKnowledgeKey=keyof FootballKnowledgeShards;
 const shardCache=new Map<FootballKnowledgeKey,Promise<unknown>>();
@@ -77,7 +76,6 @@ function validateShard<K extends FootballKnowledgeKey>(key:K,value:unknown):Foot
  if(key==="career-history"){
   const players=list("players") as Record<string,unknown>[];
   if(players.some(player=>!player.id||!player.qid||!Array.isArray(player.spells)))throw new Error("A Wikidata career profile is missing its QID or dated membership records.");
-  if(list("linkUpPacks").length<500||list("linkUpPacks").some(pack=>{const row=pack as Record<string,unknown>;return !row.id||!row.answerPlayerId||!Array.isArray(row.optionPlayerIds)||(row.optionPlayerIds as unknown[]).length!==6;}))throw new Error("The Wikidata Link Up puzzle shard is incomplete or malformed.");
  }
  if(key==="connections"&&list("players").length<500)throw new Error("The CC0 connections player list is incomplete.");
  if(key==="connections"){
