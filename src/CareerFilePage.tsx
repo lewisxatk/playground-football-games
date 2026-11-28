@@ -200,9 +200,13 @@ function positionLabel(raw:string){
 function hasOneUsablePLRow(rows:Row[]):boolean{
  return rows.some(row=>row.covered&&row.apps!==null&&row.goals!==null);
 }
-function hasTwoUsableCareerRows(rows:Row[]):boolean{
- const clubs=new Set(rows.filter(row=>row.covered).map(row=>row.clubKey));
- return clubs.size>=2;
+function hasUsableSpecialCareer(rows:Row[]):boolean{
+ const usable=rows.filter(row=>row.covered&&row.clubKey);
+ const clubs=new Set(usable.map(row=>row.clubKey));
+ if(clubs.size>=2)return true;
+ // Genuine one-club legends (e.g. long single-club careers) are valid files too.
+ // Require a sourced statistic or a recorded year range; never invent a second club.
+ return usable.some(row=>row.apps!==null||row.goals!==null||yearOf(row.season)!==null);
 }
 function matches(input:string,p:Player){
   const g=clean(input);if(!g)return false;
@@ -278,14 +282,14 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
       const playerById=new Map(wikidataRows.map(player=>[player.id,player]));
       for(const raw of archiveRows){
         const player=archivePlayerToCareerFile(raw);
-        if(hasTwoUsableCareerRows(makeRows(player)))playerById.set(player.id,player);
+        if(hasUsableSpecialCareer(makeRows(player)))playerById.set(player.id,player);
       }
       staticPlayers.current=playerById;
       options=Array.from(playerById.values()).map(player=>{
         const raw=archiveById.get(player.id);
         return raw&&player.statsScope?.startsWith("Wikipedia")?archivePlayerCandidate(player,raw,desiredPool):wikidataPlayerCandidate(player,desiredPool);
       }).filter(candidate=>fits(candidate,selectedMode))
-        .filter(candidate=>{const player=staticPlayers.current.get(candidate.id);return Boolean(player&&hasTwoUsableCareerRows(makeRows(player)));});
+        .filter(candidate=>{const player=staticPlayers.current.get(candidate.id);return Boolean(player&&hasUsableSpecialCareer(makeRows(player)));});
       if(!options.length){
         staticPlayers.current.clear();
         selectedPool="PREMIER_LEAGUE";
@@ -302,14 +306,14 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     try{
       const eligible=selectedPool==="PREMIER_LEAGUE"
         ?getQuizFcStatEligibleCandidates(draw)
-        :draw.filter(candidate=>{const cached=staticPlayers.current.get(candidate.id);return Boolean(cached&&hasTwoUsableCareerRows(makeRows(cached)));});
+        :draw.filter(candidate=>{const cached=staticPlayers.current.get(candidate.id);return Boolean(cached&&hasUsableSpecialCareer(makeRows(cached)));});
       const ranked=[...eligible].sort((a,b)=>b.statSeasons-a.statSeasons||a.id.localeCompare(b.id));
       let lastProblem="No player in this category had enough sourced career rows.";
       for(const choice of ranked.slice(0,36)){
         try{
           const record=staticPlayers.current.get(choice.id)??await getQuizFcCareerPlayer(choice.id);
           const timeline=makeRows(record);
-          const usable=selectedPool==="PREMIER_LEAGUE"?hasOneUsablePLRow(timeline):hasTwoUsableCareerRows(timeline);
+          const usable=selectedPool==="PREMIER_LEAGUE"?hasOneUsablePLRow(timeline):hasUsableSpecialCareer(timeline);
           if(!timeline.length||!usable){lastProblem="This career did not have enough usable, sourced club records.";continue;}
           seen.current.add(choice.id);persistRecentCareerIds(seen.current);
           setPlayer(record);setRows(timeline);setRevealed([]);setOpened([]);
