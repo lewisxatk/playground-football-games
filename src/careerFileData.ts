@@ -85,25 +85,24 @@ export async function getCandidates(league: LeagueCode): Promise<Candidate[]> {
   const archive = await careerArchive();
   const codes = league === "ALL" ? BIG_FIVE : [league];
   const marks = codes.map(() => "?").join(",");
-  // Require at least two real club-season statistical records so every round can offer free stats clues.
-  // Keep the initial draw lightweight: only scan career and club identity tables here.
-  // Season-stat validation happens on the selected player record, not in a global aggregation.
+  // A player must have a real spell at a club in the selected competition.
+  // Crucially, every field used for difficulty is aggregated from those selected
+  // clubs only; overseas/other-league spells must never inflate an English draw.
   const sql =
-    "WITH big_clubs AS (" +
-    " SELECT DISTINCT c.wikidata_qid AS qid FROM competition_club cc " +
+    "WITH selected_clubs AS (" +
+    " SELECT DISTINCT c.wikidata_qid AS club_qid FROM competition_club cc " +
     " JOIN club c ON c.wikipedia_title=cc.club " +
-    " WHERE cc.competition IN (" + marks + ") AND c.wikidata_qid IS NOT NULL" +
-    "), eligible AS (" +
-    " SELECT DISTINCT cr.player_qid FROM career cr JOIN big_clubs b ON b.qid=cr.club_qid " +
-    " WHERE cr.player_qid IS NOT NULL AND trim(cr.player_qid)<>''" +
+    " WHERE cc.competition IN (" + marks + ") AND coalesce(trim(c.wikidata_qid),'')<>''" +
     ") " +
     "SELECT cr.player_qid AS candidate_id, any_value(cr.player) AS player_name, " +
-    "COUNT(*) AS spells, COUNT(DISTINCT coalesce(nullif(cr.club_qid,''),cr.club_name)) AS clubs, " +
+    "COUNT(*) AS spells, COUNT(DISTINCT cr.club_qid) AS clubs, " +
     "SUM(coalesce(cr.apps,0)) AS apps " +
-    "FROM career cr JOIN eligible e ON e.player_qid=cr.player_qid " +
-    "GROUP BY cr.player_qid HAVING SUM(coalesce(cr.apps,0))>=20 " +
+    "FROM career cr JOIN selected_clubs sc ON sc.club_qid=cr.club_qid " +
+    "WHERE cr.player_qid IS NOT NULL AND trim(cr.player_qid)<>'' " +
+    "GROUP BY cr.player_qid " +
+    "HAVING SUM(coalesce(cr.apps,0))>=20 AND COUNT(DISTINCT cr.club_qid)>=2 " +
     " AND length(trim(any_value(cr.player)))>1 " +
-    " AND lower(trim(any_value(cr.player))) NOT IN ('unknown','unknown player','unnamed player') " +
+    " AND lower(trim(any_value(cr.player))) NOT IN ('unknown','unknown player','unnamed','unnamed player','n/a','tbd') " +
     "ORDER BY hash(cr.player_qid) LIMIT 2400";
   const rows = await archive.query(sql, codes);
   return rows.map((r: any) => ({
@@ -299,22 +298,30 @@ const n = (v: unknown): number | null => v == null || v === "" ? null : Number(v
  * This performs one grouped pass for the whole batch and only opens a full profile
  * after a candidate has at least two usable club/season rows.
  */
-export async function getStatEligibleCandidates(candidates: Candidate[]): Promise<Candidate[]> {
+export async function getStatEligibleCandidates(candidates: Candidate[], league: LeagueCode = "ENG-PL"): Promise<Candidate[]> {
   if (!candidates.length) return [];
   const archive = await careerArchive();
+  const codes = league === "ALL" ? BIG_FIVE : [league];
+  const competitionMarks = codes.map(() => "?").join(",");
   const eligible = new Map<string, number>();
   const batchSize = 120;
   for (let offset = 0; offset < candidates.length; offset += batchSize) {
     const batch = candidates.slice(offset, offset + batchSize);
     const ids = batch.map(candidate => candidate.id);
-    const marks = ids.map(() => "?").join(",");
+    const playerMarks = ids.map(() => "?").join(",");
     const rows = await archive.query(
-      "SELECT player_qid, COUNT(DISTINCT coalesce(nullif(club_qid,''), nullif(club_link,''), club) || '|' || season) AS stat_seasons " +
-      "FROM stat_club WHERE player_qid IN (" + marks + ") " +
-      "AND coalesce(competition_group,'') <> 'Total' AND apps IS NOT NULL AND goals IS NOT NULL " +
-      "AND coalesce(trim(season),'') <> '' GROUP BY player_qid " +
-      "HAVING COUNT(DISTINCT coalesce(nullif(club_qid,''), nullif(club_link,''), club) || '|' || season) >= 2",
-      ids
+      "WITH selected_clubs AS (" +
+      " SELECT DISTINCT c.wikidata_qid AS club_qid FROM competition_club cc " +
+      " JOIN club c ON c.wikipedia_title=cc.club " +
+      " WHERE cc.competition IN (" + competitionMarks + ") AND coalesce(trim(c.wikidata_qid),'')<>''" +
+      ") " +
+      "SELECT st.player_qid, COUNT(DISTINCT coalesce(nullif(st.club_qid,''), nullif(st.club_link,''), st.club) || '|' || st.season) AS stat_seasons " +
+      "FROM stat_club st JOIN selected_clubs sc ON sc.club_qid=st.club_qid " +
+      "WHERE st.player_qid IN (" + playerMarks + ") " +
+      "AND coalesce(st.competition_group,'') <> 'Total' AND st.apps IS NOT NULL AND st.goals IS NOT NULL " +
+      "AND coalesce(trim(st.season),'') <> '' GROUP BY st.player_qid " +
+      "HAVING COUNT(DISTINCT coalesce(nullif(st.club_qid,''), nullif(st.club_link,''), st.club) || '|' || st.season) >= 2",
+      [...codes, ...ids]
     );
     for (const row of rows) eligible.set(String(row.player_qid), Number(row.stat_seasons ?? 0));
   }
@@ -323,12 +330,28 @@ export async function getStatEligibleCandidates(candidates: Candidate[]): Promis
     .map(candidate => ({ ...candidate, statSeasons: eligible.get(candidate.id) ?? 0 }));
 }
 
-export async function getPlayer(id: string): Promise<Player> {
+export async function getPlayer(id: string, league: LeagueCode = "ENG-PL"): Promise<Player> {
   const a = await careerArchive();
+  const codes = league === "ALL" ? BIG_FIVE : [league];
+  const competitionMarks = codes.map(() => "?").join(",");
+  const selectedClubsCte =
+    "WITH selected_clubs AS (" +
+    " SELECT DISTINCT c.wikidata_qid AS club_qid FROM competition_club cc " +
+    " JOIN club c ON c.wikipedia_title=cc.club " +
+    " WHERE cc.competition IN (" + competitionMarks + ") AND coalesce(trim(c.wikidata_qid),'')<>''" +
+    ") ";
+  // Keep both the visible career and its season clues inside the same selected
+  // competition. Filtering candidates alone is not enough: it previously allowed
+  // one PL club to qualify a player, then exposed every overseas spell in the UI.
   // Run queries sequentially on the shared DuckDB connection; concurrent prepared queries can contend on one connection.
-  const spells = await a.query("SELECT * FROM career WHERE player_qid=? ORDER BY seq", [id]);
-  const stats = await a.query("SELECT club,club_link,club_qid,season,SUM(apps) apps,SUM(goals) goals,SUM(assists) assists " +
-    "FROM stat_club WHERE player_qid=? AND coalesce(competition_group,'')<>'Total' GROUP BY club,club_link,club_qid,season", [id]);
+  const spells = await a.query(selectedClubsCte +
+    "SELECT cr.* FROM career cr JOIN selected_clubs sc ON sc.club_qid=cr.club_qid " +
+    "WHERE cr.player_qid=? ORDER BY cr.seq", [...codes, id]);
+  const stats = await a.query(selectedClubsCte +
+    "SELECT st.club,st.club_link,st.club_qid,st.season,SUM(st.apps) apps,SUM(st.goals) goals,SUM(st.assists) assists " +
+    "FROM stat_club st JOIN selected_clubs sc ON sc.club_qid=st.club_qid " +
+    "WHERE st.player_qid=? AND coalesce(st.competition_group,'')<>'Total' " +
+    "GROUP BY st.club,st.club_link,st.club_qid,st.season", [...codes, id]);
   const profile = await a.query("SELECT * FROM player_profile WHERE player_qid=? LIMIT 1", [id]);
   const birth = await a.query("SELECT birth_date,precision FROM birth WHERE player_qid=? LIMIT 1", [id]);
   const national = await a.query("SELECT SUM(caps) caps,SUM(goals) goals,list(team_name) teams, " +
