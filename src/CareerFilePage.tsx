@@ -442,9 +442,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
       </motion.button>)}</div>
     </section>
     <section className="cf-game-area cf-game-area-compact">
-      <div className="cf-game-heading"><div><span>03 / THE DOSSIER</span><h2>WHO'S THE<br/><em>PLAYER?</em></h2></div>
-        <div className="cf-round-count"><small>FILE NUMBER</small><strong>{String(round||1).padStart(3,"0")}</strong><span>NEW FILE EACH ROUND</span></div>
-      </div>
+      <div className="cf-game-heading cf-game-heading-compact"><div><span>CAREER FILE</span><strong>Identify the player</strong></div><div className="cf-round-count"><small>ROUND</small><strong>{String(round||1).padStart(3,"0")}</strong></div></div>
       {(busy||loadingPlayer)&&<div className="cf-loading"><motion.div animate={{rotate:360}} transition={{repeat:Infinity,duration:1.6,ease:"linear"}}>✳</motion.div>
         <b>{busy?"OPENING THE PLAYER ARCHIVE":"BUILDING THE CAREER FILE"}</b><span>Preparing a random file from the career archive. Season-stat coverage is checked in batches.</span></div>}
       {error&&<div className="cf-error"><strong>THE ARCHIVE HIT A SNAG</strong><p>{error}</p><button onClick={()=>window.location.reload()}>TRY AGAIN ↗</button></div>}
