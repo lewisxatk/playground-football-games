@@ -291,7 +291,7 @@ function LowballPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
  };
  const restart=(newMode:Mode=mode)=>{
    setStep(0);setScore(0);setPick(null);setRunDone(false);setUsed([]);
-   if(newMode==="practice"){setPracticeSeed(String(Math.floor(Math.random()*1e12)));setPracticeRerolls(0);}
+   if(newMode==="practice"){setPracticeSeed(String(Math.floor(Math.random()*1e12)));}
  };
  return <Frame account={account} game="lowball" eyebrow="STAT FACE-OFF / QUICK FIRE" title="WHO'S GOT MORE?" description="Two players. One number. Pick the bigger recorded league goal total. Your streak gets harder every five correct answers." number="01" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
   {done&&mode==="daily"?<Success title="DAILY DONE." detail="Today's ten-duel challenge is banked. Practice runs are unlimited." button="PRACTICE" onAgain={()=>{setMode("practice");restart("practice");}}/>:
