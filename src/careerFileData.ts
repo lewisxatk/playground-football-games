@@ -187,6 +187,7 @@ export async function getWikidataCareerPlayersByNames(names:string[]):Promise<Pl
         ?player rdfs:label ?wantedName; p:P54 ?statement.
         ?statement ps:P54 ?club.
         ?club wdt:P31/wdt:P279* wd:Q476028.
+        FILTER NOT EXISTS { ?club wdt:P31/wdt:P279* wd:Q6979593. }
         OPTIONAL { ?statement pq:P580 ?start. }
         OPTIONAL { ?statement pq:P582 ?end. }
         OPTIONAL { ?player p:P569/psv:P569 ?birthDateNode. ?birthDateNode wikibase:timeValue ?birthDate; wikibase:timePrecision ?birthPrecision. }
