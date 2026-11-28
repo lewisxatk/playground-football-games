@@ -127,6 +127,8 @@ function makeRows(p:Player):Row[]{
    const lastYear=spell.end??(knownYears.length?Math.max(...knownYears):firstYear);
    const total=(key:"apps"|"goals"|"assists")=>{
      if(!matchingStats.length||matchingStats.some(stat=>stat[key]===null||stat[key]===undefined))return null;
+     if(key==="apps"&&matchingStats.some(stat=>stat.statsLevel!==undefined&&stat.statsLevel!=="full"))return null;
+     if(key==="goals"&&matchingStats.some(stat=>stat.statsLevel==="none"))return null;
      return matchingStats.reduce((sum,stat)=>sum+(stat[key]??0),0);
    };
    rows.push({
