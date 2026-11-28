@@ -80,6 +80,8 @@
 
 ## 4. Data integrity and final sign-off
 
+- [ ] Correct historical English competition labels: the generated club index currently lists 464 clubs as “Premier League”, which likely includes pre-1992 First Division clubs because the source uses a shared top-tier filename. Verify the pinned OpenFootball season structure and map the top four divisions to their historically correct names before treating Career File and the Premier League-first club index as final.
+
 - [ ] Audit remaining CC0 source manifests, licences, stable IDs, provenance and deduplication.
 - [ ] Check for duplicate or contradictory question facts across all pools.
 - [ ] Confirm no invented facts, unsupported club memberships, misleading international labels or ambiguous answers.
@@ -88,7 +90,7 @@
 
 ## 5. Resume pointer
 
-**Next action:** poll GitHub Actions run `46086616899`. If it succeeds, inspect its build report and generated pool counts, then mark the automated checks above. If it fails, fix the first failing stage before making unrelated changes.
+**Next action:** inspect the pinned OpenFootball England source structure and correct historical division labels, then rerun the full database build. After that, verify the Link Up and Football Grid runtime pool counters in a browser and finish the visual/mobile QA.
 
 Keep this checklist current after every commit. Do not claim a successful build or a 500+ runtime pool until the evidence is visible.
 
