@@ -1,5 +1,5 @@
 export type GridDifficulty = "EASY" | "HARD";
-export type GridKind = "CLUB_NATION" | "CLUB_CLUB";
+export type GridKind = "PREM_PREM" | "PREM_EUROPE" | "PREM_NATION";
 export type GridCandidate = {archiveId:string;clubs:string[];nationality:string;name:string};
 export type GridPuzzle = {rows:string[];columns:string[];rowKind:"club";columnKind:"nation"|"club";answers:GridCandidate[][][];solutions:GridCandidate[];quality:number};
 export function assignDistinctAnswers(cells:GridCandidate[][]):GridCandidate[]|null;
