@@ -42,3 +42,32 @@ Build a distinct seven-question daily game, English football first:
 - [ ] Rarity scores come from actual anonymised Playground answers, not fabricated crowd data.
 - [ ] Leaderboard sorts by lowest total score.
 - [ ] Answer challenges can be reviewed and corrected without silently rejecting a legitimate answer.
+
+
+## Additional research — comparable rarity quiz (27 November 2026)
+
+A separate public game, Longshots, now documents a closely related answer-rarity format. It is **not ClubPark Lowball**, so use it as a design reference rather than assuming the products share rules.
+
+What Longshots publicly documents:
+- Seven free-text questions per daily round, with 25 seconds per question.
+- Any factually correct answer can be accepted; there are no multiple-choice options.
+- Correct answers are assigned one of five rarity bands (6, 18, 40, 55 or 100 yards) based on how many people playing that day supplied the answer.
+- Its answer sheet shows accepted answers and the share of players who gave them.
+- Its published answer guidance describes alias and spelling normalization, while warning that answer lists can still miss valid responses.
+
+How this informs Playground:
+- Keep the seven-question, free-text, verified-answer-set approach.
+- Build answer aliases and a visible challenge/correction process before launch; incomplete answer lists are a known source of player frustration.
+- Use actual Playground responses for Lowball's rarity distribution. Do not copy Longshots' distance bands or reverse its scoring direction: ClubPark's public description says the lowest total wins.
+- Do not add a 25-second timer to ClubPark-style Lowball unless we independently confirm that is part of the reference rules.
+- The ClubPark App Store version notes also say its website and app share leaderboards and that players can connect an account for the verified table or compare with friends. This is a useful product requirement, but Playground needs its own privacy-conscious leaderboard design.
+
+Sources checked:
+- ClubPark App Store version notes (Lowball: seven daily questions, lowest score wins, shared website/app leaderboards): https://apps.apple.com/ng/app/clubpark-your-football-hub/id6809030038
+- Longshots official rules: https://longshots.games/how-to-play
+- Longshots official scoring explanation: https://longshots.pro/scoring/
+- Longshots official research and answer-quality notes: https://longshots.games/about
+- Longshots launch discussion: https://www.reddit.com/r/browser_gaming/comments/1xn0z42/longshots_a_daily_football_quiz_where_obscure/
+
+Limitations:
+- Public ClubPark material confirms the seven-question / lowest-total format and the 100-fan panel concept, but does not publish the exact score bands, panel sampling process, answer normalization algorithm or appeal workflow. Those details must remain marked unknown until independently verified.
