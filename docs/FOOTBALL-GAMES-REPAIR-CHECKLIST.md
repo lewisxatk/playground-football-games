@@ -25,6 +25,7 @@
 
 ### Strands
 - [x] Import a 34,637-word CC0 English dictionary from `outparse/english-dictionary-dataset`. Commit: `44166c4223`.
+- [x] Add exact source commit, source file, normalization and CC0 licence metadata for the dictionary. Commit: `bb708414ff`.
 - [x] Validate bonus words against the dictionary and award a hint for every three recognised bonus words. Commit: `94420320cc`.
 - [x] Fix dictionary initialization syntax and mode-switch reset state. Commits: `ff2de43627`, `ed0bf93d76`.
 - [x] Improve board styling, tile contrast, selected/found states and mobile usability. Commit: `2b9ef09dd9`.
