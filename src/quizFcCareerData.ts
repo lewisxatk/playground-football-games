@@ -164,6 +164,7 @@ export async function getQuizFcCareerCandidates(): Promise<Candidate[]> {
   const data = await getDataset();
   const candidates: Candidate[] = [];
   for (const player of data.players) {
+    if (!player.id || !player.name) continue;
     const rows = (data.statsByPlayer.get(player.index) ?? []).filter(row =>
       row.statsLevel === "full" && row.apps !== null && row.goals !== null
     );
@@ -212,27 +213,18 @@ function buildSpells(rows: NormalStat[], clubs: Dataset["clubs"]): Player["spell
   for (const [clubIndex, group] of byClub) {
     const sorted = [...group].sort((a, b) => a.seasonEndYear - b.seasonEndYear);
     const club = clubs[clubIndex];
-    const segments: NormalStat[][] = [];
-    for (const row of sorted) {
-      const current = segments[segments.length - 1];
-      const previous = current?.[current.length - 1];
-      // Split a return to the same club when there is a missing PL season
-      // between recorded spells. The optional source sequence is a row-order
-      // tie-breaker, not a stable career-spell identifier.
-      if (!current || (previous && row.seasonEndYear > previous.seasonEndYear + 1)) segments.push([row]);
-      else current.push(row);
-    }
-    for (const segment of segments) {
-      const first = segment[0].seasonEndYear - 1;
-      const last = segment[segment.length - 1].seasonEndYear - 1;
-      spells.push({
-        seq: spellSeq++,
-        years: first === last ? String(first) : first + "–" + last,
-        start: first, end: last, club: club.name,
-        clubLink: club.id, clubQid: "", loan: false,
-        apps: null, goals: null, sourceTitle: "", sourceRevision: null
-      });
-    }
+    const first = sorted[0].seasonEndYear - 1;
+    const last = sorted[sorted.length - 1].seasonEndYear - 1;
+    // The source has season-by-season PL club participation, not exact
+    // transfer dates or loan spells. Keep one record per club and leave
+    // missing seasons blank rather than inventing separate return spells.
+    spells.push({
+      seq: spellSeq++,
+      years: first === last ? String(first) : first + "–" + last,
+      start: first, end: last, club: club.name,
+      clubLink: club.id, clubQid: "", loan: false,
+      apps: null, goals: null, sourceTitle: "", sourceRevision: null
+    });
   }
   return spells.sort((a, b) => (a.start ?? 9999) - (b.start ?? 9999) || a.seq - b.seq);
 }
@@ -262,7 +254,7 @@ export async function getQuizFcCareerPlayer(id: string): Promise<Player> {
   const birthPrecision = /^\d{4}-\d{2}-\d{2}$/.test(birthDate) ? 11 : /^\d{4}$/.test(birthDate) ? 9 : null;
   const player: Player = {
     id: source.id, name: source.name, fullName: source.name,
-    nationality: NATIONALITIES[source.nationality] ?? source.nationality,
+    nationality: source.nationality === "UNK" ? "" : (NATIONALITIES[source.nationality] ?? source.nationality),
     position: positionName(source.position),
     height: null, birthDate, birthPrecision, birthplace: "",
     spells: buildSpells(rows, data.clubs), stats,
@@ -278,7 +270,7 @@ export async function getQuizFcCareerPlayer(id: string): Promise<Player> {
 }
 
 export function getQuizFcSourceNote(): string {
-  return "Premier League league statistics only (1992/93 onward). Missing appearances, goals and incomplete career totals remain unrecorded; cup and European figures are not included.";
+  return "Premier League league statistics only (1992/93 onward). Club dates are first/last recorded PL seasons, not exact transfer dates; gaps remain unrecorded. Missing appearances, goals and incomplete career totals remain unrecorded; cup, European and EFL figures are not included.";
 }
 
 export type { CareerDifficulty };
