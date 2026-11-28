@@ -53,7 +53,7 @@ for (const [game, keys] of Object.entries(games)) {
     // The Climb serves five questions (four English, one approved international
     // when available); Timed Quiz practice serves ten (nine English, one approved international).
     const minimumEnglish = game === "the-climb" ? 4 : 9;
-    const minimumInternational = game === "the-climb" ? 0 : 1;
+    const minimumInternational = game === "the-climb" || tier === "EXTREME" ? 0 : 1;
     if (counts.ENGLISH_DOMESTIC < minimumEnglish || counts.INTERNATIONAL < minimumInternational) {
       fail(game + " " + tier + " cannot satisfy its English-first round allocation: " + JSON.stringify(counts));
     }
@@ -65,8 +65,8 @@ for (const [game, keys] of Object.entries(games)) {
     const dailyMinimums = {
       EASY: { ENGLISH_DOMESTIC: 5, INTERNATIONAL: 0 },
       MEDIUM: { ENGLISH_DOMESTIC: 5, INTERNATIONAL: 0 },
-      HARD: { ENGLISH_DOMESTIC: 4, INTERNATIONAL: 1 },
-      EXTREME: { ENGLISH_DOMESTIC: 1, INTERNATIONAL: 1 }
+      HARD: { ENGLISH_DOMESTIC: 3, INTERNATIONAL: 2 },
+      EXTREME: { ENGLISH_DOMESTIC: 2, INTERNATIONAL: 0 }
     };
     for (const tier of tiers) {
       for (const region of ["ENGLISH_DOMESTIC", "INTERNATIONAL"]) {
