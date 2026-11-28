@@ -27,14 +27,19 @@ export function buildGridPuzzle(players,difficulty,kind,seed){
  if(rowKeys.length<4||colKeys.length<4)return null;
  const rowPool=rowKeys.slice(0,easy?120:180),colPool=colKeys.slice(0,easy?120:180);let best=null;const attempts=kind==="CLUB_CLUB"?2400:2000;
  for(let attempt=0;attempt<attempts;attempt++){
-  const chosenRows=shuffle(rowPool,seed+attempt*19).slice(0,4);let chosenCols;
-  if(kind==="CLUB_CLUB"){const common=[...(clubNeighbors.get(chosenRows[0])??[])].filter(candidate=>!chosenRows.includes(candidate)&&chosenRows.every(row=>clubNeighbors.get(row)?.has(candidate)));chosenCols=shuffle(common.filter(key=>colPool.includes(key)),seed+attempt*37+7).slice(0,4);}
-  else {
-    // Pick nations genuinely shared by all four selected clubs.
-    // Drawing from the entire nation pool made 4x4 intersections extremely rare.
-    const common=[...nationKeys].filter(candidate=>chosenRows.every(row=>
-      (clubNationPairs.get(row+"::"+candidate)?.length??0)>0));
+  let chosenRows,chosenCols;
+  if(kind==="CLUB_CLUB"){
+    chosenRows=shuffle(rowPool,seed+attempt*19).slice(0,4);
+    const common=[...(clubNeighbors.get(chosenRows[0])??[])].filter(candidate=>!chosenRows.includes(candidate)&&chosenRows.every(row=>clubNeighbors.get(row)?.has(candidate)));
     chosenCols=shuffle(common.filter(key=>colPool.includes(key)),seed+attempt*37+7).slice(0,4);
+  } else {
+    // Build from the column side: choose four nations first, then rebuild
+    // the row set from clubs that genuinely intersect every chosen nation.
+    // This avoids wasting attempts on four clubs with no shared nation set.
+    chosenCols=shuffle(colPool,seed+attempt*37+7).slice(0,4);
+    const common=rowPool.filter(row=>chosenCols.every(col=>
+      (clubNationPairs.get(row+"::"+col)?.length??0)>0));
+    chosenRows=shuffle(common,seed+attempt*19+13).slice(0,4);
   }
   if(chosenCols.length!==4)continue;
   const hasFormerClub=[...chosenRows,...chosenCols].some(key=>FORMER_PL_CLUBS.has(key)),hasRareNation=kind==="CLUB_NATION"&&chosenCols.some(key=>nationRarity(key)<=18);
