@@ -174,19 +174,9 @@ function positionLabel(raw:string){
   if(/FW|FORWARD|STRIKER|ATTACK|^ATT$/.test(value))return "Forward";
   return raw.trim();
 }
-function randomFreeRows(rows:Row[],seed?:string):string[]{
-  const available=rows.filter(row=>row.covered&&row.apps!==null&&row.goals!==null);
-  const shuffled=shuffleCandidates(available,available.length,seed);
-  const selected:Row[]=[];
-  for(const row of shuffled){
-    if(selected.length>=2)break;
-    if(!selected.some(existing=>existing.clubKey===row.clubKey))selected.push(row);
-  }
-  for(const row of shuffled){
-    if(selected.length>=2)break;
-    if(!selected.some(existing=>existing.id===row.id))selected.push(row);
-  }
-  return selected.map(row=>row.id);
+function hasTwoUsableClubRows(rows:Row[]):boolean{
+ const clubs=new Set(rows.filter(row=>row.covered&&row.apps!==null&&row.goals!==null).map(row=>row.clubKey));
+ return clubs.size>=2;
 }
 function matches(input:string,p:Player){
   const g=clean(input);if(!g)return false;
@@ -270,7 +260,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
       const eligible=staticPlayers.current.size
         ?draw.filter(candidate=>{
           const cached=staticPlayers.current.get(candidate.id);
-          return Boolean(cached&&randomFreeRows(makeRows(cached),dailyDraw?dailySeed+":"+candidate.id:undefined).length>=2);
+          return Boolean(cached&&hasTwoUsableClubRows(makeRows(cached)));
         })
         :draw[0]?.source==="quizfc-pl"?getQuizFcStatEligibleCandidates(draw):await getStatEligibleCandidates(draw,league);
       const rankByCoverage=(items:Candidate[])=>[...items].sort((a,b)=>b.statSeasons-a.statSeasons||a.id.localeCompare(b.id));
@@ -284,8 +274,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
         try{
           const record=staticPlayers.current.get(choice.id)??(choice.source==="quizfc-pl"?await getQuizFcCareerPlayer(choice.id):await getPlayer(choice.id,league));
           const timeline=makeRows(record);
-          const free=randomFreeRows(timeline,dailyDraw?dailySeed+":"+choice.id:undefined);
-          if(!timeline.length||free.length<2){lastProblem="This career did not have two complete, matching season-stat clues.";continue;}
+          if(!timeline.length||!hasTwoUsableClubRows(timeline)){lastProblem="This career did not have two complete, matching season-stat clues.";continue;}
           seen.current.add(choice.id);persistRecentCareerIds(seen.current);
           setPlayer(record);setRows(timeline);setRevealed([]);
           setOpened(note?[note.id]:[]);setRound(n=>n+1);setStatus("playing");setNote("");
