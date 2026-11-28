@@ -44,6 +44,7 @@
 - [x] Show the source attribution: OpenFootballBase-Data, CC BY-SA 4.0.
 - [x] Keep the CC0 Wikidata career-history shard limited to verified English-club career profiles for Career File/Cult Hero; remove the obsolete Wikidata Link Up pack generator and its 500-pack validator because Link Up now generates from the season archive. Commits: `49003989e8`, `336c9b7705`, `f65880e142`, `b4b61732c8`.
 - [x] Remove the stale `linkUpPacks` build-report reference and report the archive-player count separately from the runtime puzzle target. Commit: `64cb68812e`.
+- [x] Remove the remaining obsolete Wikidata Link Up ID/options validation blocks from the canonical builder. Commit: `2e84ffcd8a`.
 
 ### Career File and archive
 - [x] Restrict Career File eligibility to Premier League players with at least two seasons; add appearance clues and unlockable identity hints. Commits: `41d97fce33`, `cb49370295`.
@@ -61,7 +62,7 @@
 - [ ] Confirm generated database manifests, shard counts, licences and provenance.
 - [ ] Confirm every required game pool reaches its target without fabricated or duplicate facts.
 
-**Current build:** GitHub Actions run `46086405690` is building commit `64cb68812ecc7bdc5dc5291f93fcd7d4d74ff609` at the last check. The previous 77 MB career-history shard was fixed by capping the separate Wikidata Cult Hero snapshot to one 50,000-row page; Link Up now uses the full season archive. The current run must complete canonical generation, data validation and TypeScript/site build before being marked green. Upstream licence checks passed. The canonical generation step must prove all remaining shard minimums and keep the career-history payload under the 24 MB per-asset limit before the typecheck/site build can run. Do not mark the build complete until the newest run finishes successfully and its generated report is inspected.
+**Current build:** GitHub Actions run `46086405690` was building commit `64cb68812ecc7bdc5dc5291f93fcd7d4d74ff609`; the final cleanup is now committed as `2e84ffcd8a` and needs a fresh build run. The previous 77 MB career-history shard was fixed by capping the separate Wikidata Cult Hero snapshot to one 50,000-row page; Link Up now uses the full season archive. The current run must complete canonical generation, data validation and TypeScript/site build before being marked green. Upstream licence checks passed. The canonical generation step must prove all remaining shard minimums and keep the career-history payload under the 24 MB per-asset limit before the typecheck/site build can run. Do not mark the build complete until the newest run finishes successfully and its generated report is inspected.
 
 ## 3. Live game verification still required
 
@@ -85,7 +86,7 @@
 
 ## 5. Resume pointer
 
-**Next action:** poll GitHub Actions run `46086405690`. If it succeeds, inspect its build report and generated pool counts, then mark the automated checks above. If it fails, fix the first failing stage before making unrelated changes.
+**Next action:** poll the replacement GitHub Actions build run after commit `2e84ffcd8a`. If it succeeds, inspect its build report and generated pool counts, then mark the automated checks above. If it fails, fix the first failing stage before making unrelated changes.
 
 Keep this checklist current after every commit. Do not claim a successful build or a 500+ runtime pool until the evidence is visible.
 
