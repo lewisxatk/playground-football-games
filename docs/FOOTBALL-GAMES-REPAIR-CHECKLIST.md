@@ -86,7 +86,7 @@
 
 ## 5. Resume pointer
 
-**Next action:** poll the replacement GitHub Actions build run after commit `2e84ffcd8a`. If it succeeds, inspect its build report and generated pool counts, then mark the automated checks above. If it fails, fix the first failing stage before making unrelated changes.
+**Next action:** poll GitHub Actions run `46086484586`. If it succeeds, inspect its build report and generated pool counts, then mark the automated checks above. If it fails, fix the first failing stage before making unrelated changes.
 
 Keep this checklist current after every commit. Do not claim a successful build or a 500+ runtime pool until the evidence is visible.
 
