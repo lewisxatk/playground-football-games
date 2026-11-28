@@ -624,13 +624,13 @@ function ConnectionsPage({account,onDaily}:{account:Account;onDaily:(id:GameId,s
 }
 
 type GridDifficulty="EASY"|"HARD";
-type GridKind="CLUB_NATION"|"CLUB_CLUB";
+type GridKind="PREM_PREM"|"PREM_EUROPE"|"PREM_NATION";
 const GRID_LEVELS:GridDifficulty[]=["EASY","HARD"];
 const GRID_VARIANT_TARGET=300;
 function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();
  const [difficulty,setDifficulty]=useState<GridDifficulty>("EASY");
- const [kind,setKind]=useState<GridKind>("CLUB_NATION");
+ const [kind,setKind]=useState<GridKind>("PREM_NATION");
  const [values,setValues]=useState<string[]>(Array(16).fill(""));
  const [opened,setOpened]=useState<number[]>([]);
  const [active,setActive]=useState<number|null>(null);
@@ -697,7 +697,7 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
    if(next.length===16)finish(nextScore);
  };
  const shareResult=async()=>{
-   const summary="PLAYGROUND FOOTBALL GRID · "+difficulty+" · "+kind.replace("_"," × ")+" · "+opened.length+"/16 cells · "+score+" points";
+   const summary="PLAYGROUND FOOTBALL GRID · "+difficulty+" · "+({PREM_PREM:"PREM × PREM",PREM_EUROPE:"PREM × EUROPE",PREM_NATION:"PREM × NATIONS"}[kind])+" · "+opened.length+"/16 cells · "+score+" points";
    try{if(navigator.share)await navigator.share({title:"PLAYGROUND Football Grid",text:summary});else if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(summary);setGridNotice("Your grid result has been copied to the clipboard.");}}
    catch{/* sharing may be cancelled */}
  };
@@ -707,12 +707,12 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
    setDifficulty(newDifficulty);setKind(newKind);
  };
  const usedNames=new Set(values.filter(Boolean).map(normalise));
- const suggestions=guess.trim().length>=2?playerPool.filter(p=>!usedNames.has(normalise(p.name))&&normalise(p.name).includes(normalise(guess))).slice(0,7):[];
- return <Frame account={account} game="football-grid" eyebrow="THE EDITORIAL FOOTBALL PUZZLE / 4 × 4" title="FOOTBALL GRID." description="Connect the clubs and nations. Sixteen intersections. Sixteen different footballers. Easy or Hard — every board is generated from real career links." number="07" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
+ const suggestions=guess.trim().length>=2?playerPool.filter(p=>!usedNames.has(normalise(p.name))&&normalise(p.name).includes(normalise(guess))).sort((a,b)=>Number(!normalise(a.name).startsWith(normalise(guess)))-Number(!normalise(b.name).startsWith(normalise(guess)))||a.name.localeCompare(b.name)):[];
+ return <Frame account={account} game="football-grid" eyebrow="THE EDITORIAL FOOTBALL PUZZLE / 4 × 4" title="FOOTBALL GRID." description="English Premier League clubs against each other, Europe’s biggest sides or international nations. Past and present players. Sixteen different footballers." number="07" mode={mode} setMode={m=>{setMode(m);reset(m);}}>
  {done&&mode==="daily"?<Success title="TODAY'S GRID IS COMPLETE." detail="Your daily result is saved. Play unlimited practice for a fresh board." button="PRACTICE GRID" onAgain={()=>{setMode("practice");reset("practice");}}/>:
   <Card className="grid-game grid-editorial">
    <div className="grid-editorial-hero"><div><small>THE FOOTBALL KNOWLEDGE TEST</small><h2>FOOTBALL GRID <em>4 × 4</em></h2><p>CONNECT THE CLUBS AND NATIONS</p></div><span className="grid-hero-mark">PG / 07<br/>{GRID_VARIANT_TARGET}+ BOARD TARGET</span></div>
-   <div className="grid-mode-row"><button className={kind==="CLUB_NATION"?"active":""} onClick={()=>reset(mode,difficulty,"CLUB_NATION")}>CLUB × NATION</button><button className={kind==="CLUB_CLUB"?"active":""} onClick={()=>reset(mode,difficulty,"CLUB_CLUB")}>CLUB × CLUB</button></div>
+   <div className="grid-mode-row"><button className={kind==="PREM_PREM"?"active":""} onClick={()=>reset(mode,difficulty,"PREM_PREM")}>PREM × PREM</button><button className={kind==="PREM_EUROPE"?"active":""} onClick={()=>reset(mode,difficulty,"PREM_EUROPE")}>PREM × EUROPE</button><button className={kind==="PREM_NATION"?"active":""} onClick={()=>reset(mode,difficulty,"PREM_NATION")}>PREM × NATIONS</button></div>
    <div className="grid-difficulty">{GRID_LEVELS.map(level=><button key={level} className={difficulty===level?"active":""} onClick={()=>reset(mode,level,kind)}>{level==="EASY"?"EASY / STANDARD":"HARD"}</button>)}</div><p className="arc-muted">{difficulty==="EASY"?"A standard mix of well-known clubs and nations, with the occasional trickier square.":"Less obvious players and nations, plus clubs with Premier League history where the archive supports them."}</p>
    <div className="grid-editorial-stats"><span><small>SCORE</small><b>{score.toLocaleString("en-GB")} PTS</b></span><span><small>ATTEMPTS</small><b>{attempts}/{maxAttempts}</b></span><span><small>CELLS</small><b>{opened.length}/16</b></span><span><small>RARITY</small><b>SCORING ON</b></span></div>
    {loading&&playerPool.length===0?<div className="grid-loading"><motion.div animate={{rotate:360}} transition={{duration:1.5,repeat:Infinity,ease:"linear"}}>⚽</motion.div><b>BUILDING YOUR GRID</b><span>Checking all sixteen intersections against the player archive.</span></div>:
@@ -723,7 +723,7 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
      <div className="grid-editorial-actions"><button onClick={()=>setShowSolutions(v=>!v)}>SOLUTIONS / {showSolutions?"HIDE":"REVEAL"}</button><button onClick={()=>{if(active!==null)revealHint();else setGridNotice("Select an empty square first to reveal its answer.");}}>HINT</button><button onClick={shareResult}>SHARE RESULT ↗</button><button onClick={()=>reset(mode,difficulty,kind)}>NEW GRID ↻</button></div>
      {showSolutions&&<div className="grid-solution-list"><b>VALID ANSWERS FOR THIS GRID</b>{puzzle.solutions.map((p,i)=><div key={i}><b>{p.name}</b><small>{puzzle.rows[Math.floor(i/4)]} × {puzzle.columns[i%4]}</small></div>)}</div>}
      {finished&&<div className="arc-feedback"><b>{opened.length===16?"GRID COMPLETE":"TIME TO REVIEW THE GRID"}</b><p>{opened.length}/16 cells · {attempts} wrong attempts · {score} points</p><button className="arc-button" onClick={()=>setShowSolutions(true)}>REVEAL ALL ANSWERS ↗</button><button className="arc-quiet" onClick={()=>reset("practice",difficulty,kind)}>NEW PRACTICE GRID</button></div>}
-     <p className="arc-muted">Only players in this board's sampled archive are accepted. A real-world career link missing from this sample will not count. Every displayed solution is checked against both clues, and each player can fill only one square.</p>
+     <p className="arc-muted">Only players in the loaded archive sample are accepted. Search checks the full loaded player pool, including past and present players with recorded career clubs. A real-world career link missing from this sample will not count. Every displayed solution is checked against both clues, and each player can fill only one square.</p>
     </>:
     <div className="arc-feedback"><b>{error?"PLAYER ARCHIVE UNAVAILABLE":"NO VALID 4×4 GRID IN THIS DRAW"}</b><p>{error||"The current sampled archive could not produce sixteen answerable intersections with distinct players. Try the other difficulty or grid type."}</p><button className="arc-button" onClick={()=>{retry();reset(mode,difficulty,kind);}}>RETRY / NEW DRAW ↗</button></div>}
   </Card>}
