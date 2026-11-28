@@ -110,7 +110,7 @@ if (pageResponse.ok) {
     });
     if (!scriptResponse.ok) continue;
     const source = await scriptResponse.text();
-    for (const term of ["function ox", "careerTotals.map", "clubSeasons", "pl-history.v2.json"]) {
+    for (const term of ["function ox", "careerTotals.map", "clubSeasons", "pl-history.v2.json", "career-index", "careerIndex", "Career index data"]) {
       let searchFrom = 0;
       let found = 0;
       while (found < 3) {
