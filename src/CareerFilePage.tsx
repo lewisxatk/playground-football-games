@@ -7,7 +7,6 @@ import "./career-file.css";
 
 type Mode = CareerDifficulty;
 type Row = { id:string; season:string; club:string; clubKey:string; loan:boolean; apps:number|null; goals:number|null; assists:number|null; covered:boolean };
-type FreeNote = { id:string; label:string; value:string };
 type Hint = { id:string; label:string; cost:number; value:string; available:boolean };
 
 function archivePlayerToCareerFile(raw:ArchiveGamePlayer):Player{
@@ -187,17 +186,6 @@ function randomFreeRows(rows:Row[],seed?:string):string[]{
   }
   return selected.map(row=>row.id);
 }
-function makeFreeNote(player:Player,seed?:string):FreeNote|null{
-  const career=ordered(player);
-  const first=career[0],last=career[career.length-1];
-  const broadPosition=positionLabel(player.position);
-  const options:FreeNote[]=[];
-  if(broadPosition)options.push({id:"position",label:"Position group",value:broadPosition});
-  if(player.nationality)options.push({id:"nationality",label:"Nationality",value:player.nationality});
-  if(first?.start&&last?.end)options.push({id:"span",label:"Career window",value:first.start+"–"+last.end});
-  if(!options.length)return null;
-  return options[seed?Math.floor(seededRandom(stableHash(seed))()*options.length):Math.floor(Math.random()*options.length)];
-}
 function matches(input:string,p:Player){
   const g=clean(input);if(!g)return false;
   const accepted=new Set([clean(p.name),clean(p.fullName),...(p.aliases??[]).map(clean)]);
@@ -237,8 +225,6 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
   const [attempts,setAttempts]=useState(0);
   const [score,setScore]=useState(1000);
   const [revealed,setRevealed]=useState<string[]>([]);
-  const [freeRows,setFreeRows]=useState<string[]>([]);
-  const [freeNote,setFreeNote]=useState<FreeNote|null>(null);
   const [opened,setOpened]=useState<string[]>([]);
   const [transfers,setTransfers]=useState<Transfer[]|null>(null);
   const [feesBusy,setFeesBusy]=useState(false);
@@ -301,9 +287,8 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
           const timeline=makeRows(record);
           const free=randomFreeRows(timeline,dailyDraw?dailySeed+":"+choice.id:undefined);
           if(!timeline.length||free.length<2){lastProblem="This career did not have two complete, matching season-stat clues.";continue;}
-          const note=makeFreeNote(record,dailyDraw?dailySeed+":"+choice.id:undefined);
           seen.current.add(choice.id);persistRecentCareerIds(seen.current);
-          setPlayer(record);setRows(timeline);setFreeRows([]);setRevealed([]);setFreeNote(null);
+          setPlayer(record);setRows(timeline);setRevealed([]);
           setOpened(note?[note.id]:[]);setRound(n=>n+1);setStatus("playing");setNote("");
           return;
         }catch(problem){
@@ -316,7 +301,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
 
   useEffect(()=>{
     let live=true;setBusy(true);setError("");
-    setPlayer(null);setRows([]);setOpened([]);setRevealed([]);setFreeRows([]);setFreeNote(null);setTransfers(null);setFeesError("");
+    setPlayer(null);setRows([]);setOpened([]);setRevealed([]);setTransfers(null);setFeesError("");
     setGuess("");setAttempts(0);setScore(1000);setStatus("playing");setNote("");
     (async()=>{
       const isDaily=!dailyDone;
@@ -346,7 +331,9 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
   },[league,mode,newPlayer]);
 
   const hints=useMemo(()=>player?careerHint(player):[],[player]);
-  const left=Math.max(0,10-attempts),revealedCount=revealed.length;
+  const goalsAvailable=rows.some(row=>row.goals!==null);
+  const assistsAvailable=rows.some(row=>row.assists!==null);
+  const left=Math.max(0,10-attempts);
   const unlock=(hint:Hint)=>{
     if(!player||opened.includes(hint.id)||!hint.available||status!=="playing")return;
     setOpened(v=>[...v,hint.id]);setScore(v=>Math.max(0,v-hint.cost));
@@ -373,11 +360,11 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     event.preventDefault();if(!player||!guess.trim()||status!=="playing")return;
     if(matches(guess,player)){setStatus("won");setNote("FILE CRACKED. Nice read.");setGuess("");if(!dailyDone)onDailyComplete?.(score);return;}
     const next=attempts+1;setAttempts(next);setScore(v=>Math.max(0,v-50));setNote("Not that one. Keep reading the file.");setGuess("");
-    if(next>=10){setStatus("lost");setRevealed(rows.map(r=>r.id));if(!dailyDone)onDailyComplete?.(0);}
+    if(next>=10){setStatus("lost");setRevealed(["goals","assists"]);if(!dailyDone)onDailyComplete?.(0);}
   };
   const next=async()=>{
     if(!pool.length)return;
-    setPlayer(null);setRows([]);setGuess("");setAttempts(0);setScore(1000);setRevealed([]);setFreeRows([]);setFreeNote(null);setOpened([]);
+    setPlayer(null);setRows([]);setGuess("");setAttempts(0);setScore(1000);setRevealed([]);setOpened([]);
     setTransfers(null);setFeesError("");setStatus("playing");setNote("");setCopied(false);setError("");
     try{await newPlayer(pool,mode);}catch(e){setError(e instanceof Error?e.message:"Could not load another player.");}
   };
@@ -442,8 +429,8 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
           <div className="cf-timeline-toolbar cf-pathway-toolbar">
             <div><b>PREMIER LEAGUE CLUB PATHWAY</b><small>{rows.length} CLUB SPELLS · CHRONOLOGICAL</small></div>
             <div className="cf-stat-unlocks">
-              <button onClick={()=>revealStat("goals")} disabled={status!=="playing"||revealed.includes("goals")}> {revealed.includes("goals")?"GOALS SHOWN ✓":"REVEAL GOALS · −100 PTS"}</button>
-              <button onClick={()=>revealStat("assists")} disabled={status!=="playing"||revealed.includes("assists")}> {revealed.includes("assists")?"ASSISTS SHOWN ✓":"REVEAL ASSISTS · −100 PTS"}</button>
+              <button onClick={()=>revealStat("goals")} disabled={status!=="playing"||revealed.includes("goals")||!goalsAvailable}> {revealed.includes("goals")?"GOALS SHOWN ✓":goalsAvailable?"REVEAL GOALS · −100 PTS":"GOALS NOT RECORDED"}</button>
+              <button onClick={()=>revealStat("assists")} disabled={status!=="playing"||revealed.includes("assists")||!assistsAvailable}> {revealed.includes("assists")?"ASSISTS SHOWN ✓":assistsAvailable?"REVEAL ASSISTS · −100 PTS":"ASSISTS NOT RECORDED"}</button>
             </div>
           </div>
           <div className="cf-table-wrap"><table className="cf-table cf-pathway-table"><thead><tr><th>CLUB PATHWAY</th><th>APPS</th><th>GOALS</th><th>ASSISTS</th></tr></thead>
@@ -451,8 +438,8 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
               initial={{opacity:0,x:-8}} animate={{opacity:1,x:0}} transition={{delay:Math.min(i*.025,.35)}}>
               <td><strong>{r.club}</strong><small className="cf-pathway-years">{r.season}</small>{r.loan&&<small className="cf-loan">LOAN</small>}</td>
               <td>{fmt(r.apps)}</td>
-              <td><span className={revealed.includes("goals")?"":"cf-blur"}>{fmt(r.goals)}</span></td>
-              <td><span className={revealed.includes("assists")?"":"cf-blur"}>{fmt(r.assists)}</span></td>
+              <td><span className={status!=="playing"||revealed.includes("goals")||r.goals===null?"":"cf-blur"}>{fmt(r.goals)}</span></td>
+              <td><span className={status!=="playing"||revealed.includes("assists")||r.assists===null?"":"cf-blur"}>{fmt(r.assists)}</span></td>
             </motion.tr>)}</tbody></table></div>
           <div className="cf-record-foot"><span>APPS / GOALS / ASSISTS: PREMIER LEAGUE LEAGUE TOTALS</span><span>— = NOT RECORDED</span></div>
           <div className="cf-source-note">Club pathway rows aggregate Premier League league appearances, goals and assists (1992/93 onward). Cup, European and EFL figures are excluded. Club dates are the first and last recorded PL seasons, not exact transfer dates; gaps remain unrecorded. Some club-seasons have goals-only or missing coverage; those appearances remain blank. Career totals are shown only when the source marks them complete. <a href={player.wikipediaUrl} target="_blank" rel="noreferrer">OPEN PLAYER IDENTITY ↗</a></div>
@@ -470,8 +457,8 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
               <button onClick={share}>{copied?"COPIED ✓":"SHARE RESULT ↗"}</button></div>}
           </section>
           <section className="cf-side-panel cf-hints"><div className="cf-hint-head"><span className="cf-side-kicker">05 / THE CLUE ROOM</span><span>SPEND TO REVEAL</span></div>
-            {hints.map(h=><div className="cf-hint-row" key={h.id}><div><b>{h.label}</b>{opened.includes(h.id)&&<p>{h.value}</p>}</div>
-              <button onClick={()=>unlock(h)} disabled={!h.available||opened.includes(h.id)||status!=="playing"}>{opened.includes(h.id)?(freeNote?.id===h.id?"FREE ✓":"UNLOCKED ✓"):h.available?"−"+h.cost+" PTS ↗":"NO DATA"}</button></div>)}
+            {hints.filter(h=>h.available).map(h=><div className="cf-hint-row" key={h.id}><div><b>{h.label}</b>{opened.includes(h.id)&&<p>{h.value}</p>}</div>
+              <button onClick={()=>unlock(h)} disabled={!h.available||opened.includes(h.id)||status!=="playing"}>{opened.includes(h.id)?"UNLOCKED ✓":h.available?"−"+h.cost+" PTS ↗":"NO DATA"}</button></div>)}
             <div className="cf-hint-row cf-transfer-row"><div><b>Transfer history / fees</b>
               {(opened.includes("fees")||Boolean(feesError))&&(feesBusy?<p>Searching the transfer archive…</p>:feesError?<p>{feesError}</p>:transfers?.length?
                 <div className="cf-transfer-list">{transfers.map((t,i)=><p key={i}><strong>{t.year||"Year ?"}</strong> · {t.from||"Unknown"} → {t.to||"Unknown"}<br/><b>{t.fee}</b>{t.league?" · "+t.league:""}</p>)}</div>:
