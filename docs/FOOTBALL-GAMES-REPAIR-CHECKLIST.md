@@ -60,6 +60,7 @@
 
 ## 3. Live game verification still required
 
+- [ ] Rebuild Lowball as a seven-question English-football daily game where uncommon valid answers score lower. Reference research and non-fabricated crowd-score rules: `docs/LOWBALL_RESEARCH_AND_PLAN.md`.
 - [ ] Footle: answer acceptance, keyboard feedback, hint costs, scoring, win/loss and iPhone layout.
 - [ ] Football Grid: confirm 16 valid intersections, no player reuse, aliases, fresh retry sample and mobile layout.
 - [ ] Strands: confirm dictionary loading, bonus-word validation, all theme paths, multi-hints, scoring and touch dragging.
