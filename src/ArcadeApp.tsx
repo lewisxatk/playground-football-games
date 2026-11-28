@@ -9,7 +9,7 @@ import { ClubBadge, CountryFlag } from "./ClubBadge";
 import type { ArchiveGamePlayer, ArchiveCareerSpell, ArchiveGameStat } from "./careerFileData";
 import CareerFilePage from "./CareerFilePage";
 import { getStaticArchivePlayers } from "./useArchivePlayers";
-import { buildLowballQuestions, type LowballAnswer, type LowballClubIndex } from "./lowball";
+import { selectLowballQuestions, matchLowballAnswer, type LowballAnswer, type LowballQuestionBank } from "./lowball";
 import CultHeroPage from "./CultHeroPage";
 import CultHeroCollectionPage from "./CultHeroCollectionPage";
 import { useFootballKnowledge, useFootballQuizKnowledge, makeCC0QuizRound, makeCC0DailyQuizRound, type CC0QuizTier as QuizTier } from "./footballKnowledge";
@@ -250,8 +250,7 @@ function AccountPage({account,setAccount}:{account:Account;setAccount:(a:Account
 
 function LowballPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:number)=>void}){
  const [mode,setMode]=useMode();
- const [archivePlayers,setArchivePlayers]=useState<ArchiveGamePlayer[]>([]);
- const [clubIndex,setClubIndex]=useState<LowballClubIndex|null>(null);
+ const [questionBank,setQuestionBank]=useState<LowballQuestionBank|null>(null);
  const [loading,setLoading]=useState(true);
  const [loadError,setLoadError]=useState("");
  const [retryToken,setRetryToken]=useState(0);
@@ -269,25 +268,24 @@ function LowballPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
  useEffect(()=>{
   let live=true;
   setLoading(true);setLoadError("");
-  Promise.all([
-   getStaticArchivePlayers("ENGLISH-FOOTBALL-ARCHIVE"+retryToken,3200),
-   fetch("/data/football-knowledge-football-grid-clubs.cc0.json",{cache:"force-cache"}).then(response=>{
-    if(!response.ok)throw new Error("English club index unavailable");
-    return response.json() as Promise<LowballClubIndex>;
-   })
-  ]).then(([players,index])=>{
+  fetch("/data/lowball-questions.json",{cache:"force-cache"}).then(response=>{
+   if(!response.ok)throw new Error("English Lowball question bank unavailable");
+   return response.json() as Promise<LowballQuestionBank>;
+  }).then(bank=>{
    if(!live)return;
-   if(!players?.length||!Array.isArray(index?.englishLeagueClubs))throw new Error("English player archive or club index is incomplete");
-   setArchivePlayers(players);setClubIndex(index);setLoading(false);
+   if(bank.source!=="OpenFootballBase-Data"||bank.licence!=="CC BY-SA 4.0"||!Array.isArray(bank.questions)||bank.questions.length<50){
+    throw new Error("The full English Lowball question bank failed its source or completeness check.");
+   }
+   setQuestionBank(bank);setLoading(false);
   }).catch(error=>{
    if(!live)return;
-   setLoadError(error instanceof Error?error.message:"The English football archive could not be loaded.");
+   setLoadError(error instanceof Error?error.message:"The English Lowball question bank could not be loaded.");
    setLoading(false);
   });
   return()=>{live=false};
  },[retryToken]);
 
- const questions=useMemo(()=>buildLowballQuestions(archivePlayers,clubIndex,hashSeed(seed)),[archivePlayers,clubIndex,seed]);
+ const questions=useMemo(()=>selectLowballQuestions(questionBank,hashSeed(seed)),[questionBank,seed]);
  const question=questions[step];
  const completedScore=results.reduce((sum,result)=>sum+result.score,0);
  const currentScore=completedScore+(picked?.score??(skipped?100:0));
@@ -299,11 +297,15 @@ function LowballPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
  const submit=(event:FormEvent<HTMLFormElement>)=>{
   event.preventDefault();
   if(!question||picked||skipped||runDone)return;
-  const key=guess.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("en-GB").replace(/[^a-z0-9]/g,"");
-  if(!key){setFeedback("ENTER A PLAYER NAME TO LOCK IN.");return;}
-  const answer=question.answers.find(candidate=>candidate.aliases.some(alias=>alias.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("en-GB").replace(/[^a-z0-9]/g,"")===key));
+  const answer=matchLowballAnswer(question,guess);
   if(!answer){setFeedback("NOT IN THE VERIFIED ANSWER SET. TRY A FULL NAME OR A UNIQUE SURNAME.");return;}
   setPicked(answer);setGuess("");setFeedback("ANSWER ACCEPTED.");
+ };
+ const copyAppeal=async()=>{
+  if(!question||!guess.trim())return;
+  const report="PLAYGROUND LOWBALL ANSWER REVIEW\\nQuestion: "+question.prompt+"\\nUnaccepted answer: "+guess+"\\nScope: "+question.scope+"\\nSource: OpenFootballBase-Data · CC BY-SA 4.0";
+  try{await navigator.clipboard.writeText(report);setFeedback("REVIEW REPORT COPIED. SEND IT FOR ANSWER-POOL REVIEW.");}
+  catch{setFeedback("COPY UNAVAILABLE. NOTE THE QUESTION AND PLAYER NAME FOR REVIEW.");}
  };
  const skip=()=>{
   if(picked||skipped||runDone||!question)return;
@@ -322,12 +324,12 @@ function LowballPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
  };
  const beginPractice=()=>{setMode("practice");restart("practice");};
  const totalScore=runDone?results.reduce((sum,result)=>sum+result.score,0):completedScore;
- return <Frame account={account} game="lowball" eyebrow="SEVEN QUESTIONS / LOW SCORE WINS" title="LOWBALL." description="Name a valid player from the English league archive. Less obvious careers earn fewer provisional points. Lowest total wins." number="01" mode={mode} setMode={nextMode=>{setMode(nextMode);restart(nextMode);}}>
-  {done&&mode==="daily"&&!runDone?<Success title="TODAY'S LOWBALL IS BANKED." detail="Your seven-question daily challenge is complete. Practice runs use fresh English-football questions." button="PRACTICE LOWBALL" onAgain={beginPractice}/>:
-   loading?<Card className="lb-panel lb-loading"><motion.div className="lb-loading-ball" animate={{y:[0,-12,0],rotate:[0,180,360]}} transition={{duration:1.2,repeat:Infinity,ease:"easeInOut"}}>⚽</motion.div><b>SCOUTING THE ENGLISH ARCHIVE</b><p>Loading player careers and recorded league statistics…</p><span>THE FIRST LOAD CACHES THE PLAYER SHARDS FOR THE OTHER GAMES.</span></Card>:
-   loadError||questions.length<7?<Card className="lb-panel lb-loading"><b>LOWBALL DATA NEEDS A RETRY.</b><p>{loadError||("Only "+questions.length+" complete questions could be built from this archive sample.")}</p><button className="arc-button" onClick={()=>setRetryToken(value=>value+1)}>RETRY ENGLISH ARCHIVE ↗</button><div className="lb-data-note"><b>DATA RULE</b><span>Only recorded English-club league appearances and goals are accepted. Missing records are not guessed.</span></div></Card>:
+ return <Frame account={account} game="lowball" eyebrow="SEVEN QUESTIONS / LOW SCORE WINS" title="LOWBALL." description="Name a valid player from the full English league archive. Less obvious careers earn fewer provisional points. Lowest total wins." number="01" mode={mode} setMode={nextMode=>{setMode(nextMode);restart(nextMode);}}>
+  {done&&mode==="daily"&&!runDone?<Success title="TODAY'S LOWBALL IS BANKED." detail="Your seven-question daily challenge is complete. Practice runs draw from the full English question bank." button="PRACTICE LOWBALL" onAgain={beginPractice}/>:
+   loading?<Card className="lb-panel lb-loading"><motion.div className="lb-loading-ball" animate={{y:[0,-12,0],rotate:[0,180,360]}} transition={{duration:1.2,repeat:Infinity,ease:"easeInOut"}}>⚽</motion.div><b>SCOUTING THE ENGLISH ARCHIVE</b><p>Loading the complete answer bank from 60,000+ recorded player careers…</p><span>ONE SMALL QUESTION FILE · FULL ARCHIVE ANSWER SETS.</span></Card>:
+   loadError||questions.length<7?<Card className="lb-panel lb-loading"><b>LOWBALL DATA NEEDS A RETRY.</b><p>{loadError||("Only "+questions.length+" complete questions were available.")}</p><button className="arc-button" onClick={()=>setRetryToken(value=>value+1)}>RETRY QUESTION BANK ↗</button><div className="lb-data-note"><b>DATA RULE</b><span>Every accepted answer is drawn from the complete recorded English-league archive. Missing records are not guessed.</span></div></Card>:
    runDone?<Card className="lb-panel lb-lowball-result">
-    <div className="arc-game-meta"><span>DAILY RESULT / SEVEN QUESTIONS</span><b>LOWER IS BETTER</b></div>
+    <div className="arc-game-meta"><span>{mode==="daily"?"DAILY RESULT":"PRACTICE RESULT"} / SEVEN QUESTIONS</span><b>LOWER IS BETTER</b></div>
     <div className="lb-lowball-final"><small>YOUR LOWBALL TOTAL</small><strong>{totalScore}<em> / 700</em></strong><span>{Math.max(0,700-totalScore)} PLAYGROUND POINTS BANKED</span></div>
     <div className="lb-lowball-results">{results.map((result,index)=><div className="lb-lowball-result-row" key={result.questionId}><span>{String(index+1).padStart(2,"0")}</span><div><b>{result.answer?.name??"SKIPPED"}</b><small>{result.answer?.evidence??"No answer submitted"}</small></div><strong>{result.score} PTS</strong></div>)}</div>
     <div className="lb-data-note"><b>PROVISIONAL ARCHIVE RARITY</b><span>These are transparent estimates based on recorded English-league appearances and goals, not votes from a 100-person fan panel. Real crowd scoring needs a live response sample.</span><small>Source: OpenFootballBase-Data · CC BY-SA 4.0</small></div>
@@ -340,8 +342,9 @@ function LowballPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
     {!picked&&!skipped?<form className="lb-lowball-answer-form" onSubmit={submit}><input value={guess} onChange={event=>setGuess(event.target.value)} placeholder="ENTER PLAYER NAME…" autoComplete="off" autoCapitalize="words"/><button type="submit" disabled={!guess.trim()}>LOCK ANSWER ↗</button></form>:
      <div className="lb-lowball-accepted"><small>{skipped?"QUESTION SKIPPED":"ANSWER ACCEPTED"}</small><strong>{picked?.name??"NO ANSWER"}</strong><span>{picked?("PROVISIONAL RARITY · "+picked.score+" POINTS"):"100 POINTS · SKIP PENALTY"}</span>{picked&&<p>{picked.evidence}</p>}<button className="arc-button" onClick={next}>{step===6?"FINISH DAILY LOWBALL":"NEXT QUESTION"} ↗</button></div>}
     {feedback&&<div className="lb-lowball-feedback">{feedback}</div>}
+    {feedback.startsWith("NOT IN")&&<button className="lb-lowball-skip" onClick={copyAppeal}>COPY MISSING ANSWER REPORT ↗</button>}
     {!picked&&!skipped&&<button className="lb-lowball-skip" onClick={skip}>CAN'T FIND ONE? SKIP · 100 PTS</button>}
-    <div className="lb-lowball-running"><span>COMPLETED {results.length} / 7</span><span>{completedScore} POINTS BANKED</span></div>
+    <div className="lb-lowball-running"><span>COMPLETED {results.length} / 7</span><span>{completedScore} POINTS BANKED</span><span>{questionBank?.questions.length??0} QUESTION POOL</span></div>
     <div className="lb-data-note"><b>PROVISIONAL ARCHIVE RARITY</b><span>Lower points are assigned to less prominent recorded careers. This is not a live fan survey; real crowd scores will replace these estimates when enough answers are collected.</span><small>OpenFootballBase-Data · CC BY-SA 4.0</small></div>
    </Card>}
  </Frame>;
