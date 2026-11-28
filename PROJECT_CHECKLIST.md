@@ -89,7 +89,7 @@
 - [~] Faster bounded player draw committed; live usability and repeat avoidance still require real-device verification.
 - [~] Candidate selection, difficulty totals, season-stat preflight and displayed timeline now use the same Premier League club identity filter on branch `fix/career-file-premier-league-only`. The previous code admitted a player through one Premier League club, then counted and displayed every career spell including overseas clubs.
 - [~] Difficulty bands are now mutually exclusive and are calculated from appearances/clubs at qualifying Premier League clubs: Easy 450+ appearances; Medium 250–449; Hard 100–249; Extreme 20–99. All require at least two clubs. Candidate counts and a gameplay sample still need verification.
-- [~] Invalid dated spells (missing start year or end year earlier than start year) are excluded from the database draw. A same-year spell can still be legitimate source data and must not be automatically treated as a date error.
+- [~] Invalid dated spells (missing start year or end year earlier than start year) are excluded from the database draw. A same-year spell is displayed as one year, not a redundant `2005–2005` range. A blank source end year means ongoing OR unknown, so the timeline preserves that uncertainty and does not invent a finish date.
 - [ ] Confirm the available candidate counts for all four difficulty levels against the live archive and adjust thresholds only from measured coverage.
 - [ ] Show two free season clues with club, season, appearances and goals only when both statistics are present.
 - [ ] Make season rows and club spells readable, with clear gaps and unavailable statistics.
