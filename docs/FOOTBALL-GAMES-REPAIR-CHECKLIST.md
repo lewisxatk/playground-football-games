@@ -56,6 +56,8 @@
 
 - [x] `npm run validate:football-content` passed on commit `1a593d123f` (GitHub Actions run `46085667903`).
 - [x] Re-ran `validate:football-content` after the archive and Link Up changes; passed on commit `b4b61732c8` (GitHub Actions run `46086336629`).
+- [x] Canonical database generation completed successfully on run `46086484586`; the next stage exposed an overly strict Extreme-tier international minimum.
+- [x] Correct the daily quiz allocation to 15 English domestic + 2 approved international questions, placing both international questions in Hard; allow Extreme practice to be all-English when no approved international data exists. Commits: `0c4cd537af`, `084177f464`.
 - [ ] Full CC0 database generation and `npm run validate:data`, including the lean English-only career-history shard and 24 MB per-asset size limit.
 - [x] Fix TypeScript build errors from the archive adapter cleanup and Strands fallback pack type; remove the now-unused position helper. Commits: `1adb3a538e`, `f8f057a181`.
 - [ ] Full site typecheck and production build.
@@ -86,7 +88,7 @@
 
 ## 5. Resume pointer
 
-**Next action:** poll GitHub Actions run `46086484586`. If it succeeds, inspect its build report and generated pool counts, then mark the automated checks above. If it fails, fix the first failing stage before making unrelated changes.
+**Next action:** poll GitHub Actions run `46086616899`. If it succeeds, inspect its build report and generated pool counts, then mark the automated checks above. If it fails, fix the first failing stage before making unrelated changes.
 
 Keep this checklist current after every commit. Do not claim a successful build or a 500+ runtime pool until the evidence is visible.
 
