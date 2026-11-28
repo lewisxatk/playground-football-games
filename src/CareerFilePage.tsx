@@ -50,7 +50,8 @@ function archivePlayerToCareerFile(raw:ArchiveGamePlayer):Player{
    caps:raw.caps??null,
    internationalGoals:raw.internationalGoals??null,
    teams:raw.nationalTeams??[],
-   wikipediaUrl:article?"https://en.wikipedia.org/wiki/"+encodeURIComponent(article.replace(/ /g,"_")):""
+   wikipediaUrl:article?"https://en.wikipedia.org/wiki/"+encodeURIComponent(article.replace(/ /g,"_")):"",
+   statsScope:"Wikipedia senior-career club-spell totals (unverified; may include more than league appearances)"
  };
 }
 function archivePlayerCandidate(player:Player,raw:ArchiveGamePlayer,poolCategory:PlayerPoolCategory):Candidate{
@@ -158,7 +159,7 @@ function makeRows(p:Player):Row[]{
      apps:total("apps"),
      goals:total("goals"),
      assists:total("assists"),
-     covered:matchingStats.length>0||(p.statsScope===undefined&&(spell.apps!==null||spell.goals!==null))
+     covered:matchingStats.length>0||(p.statsScope!==undefined&&(spell.apps!==null||spell.goals!==null))
    });
  }
  return rows.filter(row=>row.club.trim().length>0);
@@ -252,16 +253,17 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
   const newPlayer=useCallback(async(deck:Candidate[],selectedMode:Mode)=>{
     const dailyDraw=!dailyDone;
     const dailySeed="PLAYGROUND-CAREER-FILE:"+new Date().toISOString().slice(0,10)+":"+selectedMode+":"+league;
-    const slot=dailyDraw?stableHash(dailySeed)%100:round%100;
+    const slot=dailyDraw?stableHash(dailySeed)%100:seen.current.size%100;
     const desiredPool:PlayerPoolCategory=slot<95?"PREMIER_LEAGUE":slot<98?"EFL_LEGEND":"WORLD_LEGEND";
     let options:Candidate[]=[];
+    let selectedPool=desiredPool;
     staticPlayers.current.clear();
     if(desiredPool==="PREMIER_LEAGUE"){
       options=deck.filter(candidate=>candidate.poolCategory==="PREMIER_LEAGUE"&&fits(candidate,selectedMode));
     }else{
       const names=desiredPool==="EFL_LEGEND"?EFL_LEGEND_NAMES:WORLD_LEGEND_NAMES;
       setNote("Loading the curated "+(desiredPool==="EFL_LEGEND"?"EFL legends":"world legends")+" files…");
-      const archiveRows=await getArchiveGamePlayersByNames(names);
+      const archiveRows=await getArchiveGamePlayersByNames(names).catch(()=>[]);
       const mapped=archiveRows.map(raw=>archivePlayerToCareerFile(raw));
       staticPlayers.current=new Map(mapped.map(player=>[player.id,player]));
       options=archiveRows.map(raw=>archivePlayerCandidate(staticPlayers.current.get(raw.id)!,raw,desiredPool))
@@ -269,6 +271,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
         .filter(candidate=>{const player=staticPlayers.current.get(candidate.id);return Boolean(player&&hasTwoUsableCareerRows(makeRows(player)));});
       if(!options.length){
         staticPlayers.current.clear();
+        selectedPool="PREMIER_LEAGUE";
         options=deck.filter(candidate=>candidate.poolCategory==="PREMIER_LEAGUE"&&fits(candidate,selectedMode));
       }
     }
@@ -276,11 +279,11 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     const unused=options.filter(candidate=>!seen.current.has(candidate.id));
     const source=dailyDraw?options:(unused.length?unused:options);
     if(!dailyDraw&&!unused.length){seen.current.clear();persistRecentCareerIds(seen.current);setNote("You have worked through this player pool. The draw has restarted.");}
-    const draw=shuffleCandidates(source,Math.min(180,source.length),dailyDraw?dailySeed+":"+desiredPool:undefined);
+    const draw=shuffleCandidates(source,Math.min(180,source.length),dailyDraw?dailySeed+":"+selectedPool:undefined);
     setLoadingPlayer(true);
-    setNote("Picking a "+(desiredPool==="PREMIER_LEAGUE"?"former Premier League":desiredPool==="EFL_LEGEND"?"EFL legend":"world legend")+" career…");
+    setNote("Picking a "+(selectedPool==="PREMIER_LEAGUE"?"former Premier League":selectedPool==="EFL_LEGEND"?"EFL legend":"world legend")+" career…");
     try{
-      const eligible=desiredPool==="PREMIER_LEAGUE"
+      const eligible=selectedPool==="PREMIER_LEAGUE"
         ?getQuizFcStatEligibleCandidates(draw)
         :draw.filter(candidate=>{const cached=staticPlayers.current.get(candidate.id);return Boolean(cached&&hasTwoUsableCareerRows(makeRows(cached)));});
       const ranked=[...eligible].sort((a,b)=>b.statSeasons-a.statSeasons||a.id.localeCompare(b.id));
@@ -289,7 +292,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
         try{
           const record=staticPlayers.current.get(choice.id)??(choice.source==="quizfc-pl"?await getQuizFcCareerPlayer(choice.id):await getPlayer(choice.id,league));
           const timeline=makeRows(record);
-          const usable=desiredPool==="PREMIER_LEAGUE"?hasOneUsablePLRow(timeline):hasTwoUsableCareerRows(timeline);
+          const usable=selectedPool==="PREMIER_LEAGUE"?hasOneUsablePLRow(timeline):hasTwoUsableCareerRows(timeline);
           if(!timeline.length||!usable){lastProblem="This career did not have enough usable, sourced club records.";continue;}
           seen.current.add(choice.id);persistRecentCareerIds(seen.current);
           setPlayer(record);setRows(timeline);setRevealed([]);setOpened([]);
@@ -299,7 +302,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
       }
       throw new Error("This draw did not contain a complete player file. Choose Next Player to draw again. "+lastProblem);
     }finally{setLoadingPlayer(false);}
-  },[dailyDone,league,round]);
+  },[dailyDone,league]);
   useEffect(()=>{
     let live=true;setBusy(true);setError("");
     setPlayer(null);setRows([]);setOpened([]);setRevealed([]);
