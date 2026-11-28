@@ -1,0 +1,10 @@
+{
+  "id": "english-wordlist",
+  "source": "https://github.com/outparse/english-dictionary-dataset",
+  "sourceFile": "txt/words.txt",
+  "sourceCommit": "4f9141873fa019560b9432411c6e437910f40e28",
+  "license": "CC0-1.0",
+  "entryCount": 34637,
+  "normalization": "Unique lowercase ASCII words, 4–12 letters",
+  "intendedUse": "Strands bonus-word validation; not a football-answer source"
+}
