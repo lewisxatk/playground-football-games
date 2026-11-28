@@ -526,3 +526,7 @@
 .grid-solution-list>div{display:flex;flex-direction:column;gap:2px;padding:6px 0;border-bottom:1px solid #d4d1c6}
 .grid-solution-list>div b{font-size:10px}
 .grid-solution-list>div small{font-size:8px;color:#727b64}
+
+
+.grid-editorial-actions{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:560px){.grid-editorial-actions{grid-template-columns:repeat(2,minmax(0,1fr))}}
