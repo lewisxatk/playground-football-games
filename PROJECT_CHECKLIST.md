@@ -498,6 +498,9 @@ At the end of every implementation update:
 ## 2026-11-28 — Career File pool expansion batch
 
 - [x] Expanded the EFL and world-legend source lookup name lists to well over 100 candidate names per category.
+- [x] Special-pool selection now requires source-backed category classification: EFL candidates must resolve through OpenFootballBase with an English-football classification; world candidates must resolve as international; both are deduplicated against the Premier League identity deck.
+- [x] Removed silent Premier League substitution when a special category has no verified candidates; the game now reports a clear source-coverage error instead of presenting the wrong category.
+- [~] Actual eligible profile counts (500+ PL, 100+ EFL, 100+ world) remain unmeasured against the live sources; candidate-name totals are not playable-profile totals.
 - [x] Special-category candidates are deduplicated against the Premier League candidate deck by stable player ID/QID before draw selection.
 - [x] Existing source-quality gate retained: special profiles need a usable sourced career pathway; Wikidata-only profiles do not receive invented apps/goals/assists.
 - [~] Actual live Premier League eligible count (target 500+) still needs to be measured against the deployed Quiz FC history endpoint.
