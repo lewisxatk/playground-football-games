@@ -516,7 +516,7 @@ At the end of every implementation update:
 ### Core game direction
 - [~] 4×4 board and 16 intersections are implemented in the current Grid page; build/runtime verification pending.
 - [~] Club × Nation and Club × Club selectors and relationship lookups are implemented; actual live-pool generation coverage is not yet measured.
-- [~] Duplicate-player prevention and a distinct-player matching check are implemented; automated runtime tests pending.
+- [~] Duplicate-player prevention and a 16-cell bipartite augmenting-path matcher are implemented; this replaces exponential backtracking for dense candidate pools. Automated runtime tests and thousands-of-board QA remain pending.
 - [~] Correct cells lock; wrong answers deduct points and leave cells open; runtime QA pending.
 - [~] Custom mobile autocomplete searches the sampled archive; matching normalises accents and aliases. Full canonical identity coverage remains outstanding.
 - [~] Easy/Medium/Hard/Extreme now have different candidate thresholds and attempt limits; statistical calibration against live archive remains outstanding.
