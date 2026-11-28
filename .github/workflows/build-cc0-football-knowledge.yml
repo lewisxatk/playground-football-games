@@ -84,7 +84,9 @@ jobs:
           grep -q "CC0 1.0 Universal" .sources/openfootball-england/LICENSE.md
           grep -q "CC0 1.0 Universal" .sources/openfootball-champions-league/LICENSE.md
       - name: Build canonical database and game pools
-        run: node scripts/build-cc0-football-knowledge.mjs
+        run: |
+          node scripts/build-cc0-football-knowledge.mjs
+          node scripts/build-lowball-pools.mjs
       - name: Install dependencies, validate all data and verify full site build
         run: npm install && npm run validate:data && npm run build
       - name: Publish generated database to feature branch
