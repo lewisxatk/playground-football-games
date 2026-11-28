@@ -42,3 +42,17 @@ That repository-level licence is not a blanket clearance of every underlying clu
 ## Animation and UI assets
 
 The game visuals and motion effects are implemented in CSS/SVG and Motion for React. No third-party video or stock motion clips are bundled into the games. The `motion` dependency is the code package; its code licence does not change the rights in club crests or football data.
+
+
+## Career File future hint enrichment: caps and honours
+
+The current Quiz FC Premier League history endpoint provides the player identity, position, nationality, birth date and Premier League club-season statistics used by Career File. It does not currently provide broad international-cap totals or a player-honours field, so those hints are hidden when the current player record has no supported value.
+
+A candidate enrichment source has been researched: [OpenFootballBase-Data](https://github.com/florentfougeres/OpenFootballBase-Data) and its [data model](https://github.com/florentfougeres/OpenFootballBase-Data/blob/main/docs/en/data-model.md). The published release describes:
+- `national`: national-team caps and goals copied from player infoboxes. The source explicitly marks these values unverified and includes youth teams.
+- `stat_national`: national-team appearances by team/year, also copied from Wikipedia career-stat tables and unverified.
+- `national_title`: players listed in winning national-team tournament squads. The source explicitly warns that a listed player may not have played.
+- `award`: Ballon d'Or rankings since 2000, not a general list of every player honour.
+- `winner`: competition-season winners, keyed to club/competition/season rather than proof that a specific player earned a medal.
+
+The dataset is derived from Wikipedia (CC BY-SA 4.0, with attribution to the source pages/revisions) and Wikidata (CC0). Before wiring any of these fields into a paid hint, match players by canonical Wikidata QID, keep senior and youth caps separate, preserve the unverified-source warning, and label squad-list honours as "listed in winning squad" rather than claiming the player personally appeared or won an individual medal. This enrichment is researched but not yet imported into Career File.
