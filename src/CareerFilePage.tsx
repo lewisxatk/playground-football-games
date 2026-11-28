@@ -166,6 +166,9 @@ const ageOf=(p:Player)=>{
   return String(age);
 };
 function fits(c:Candidate,m:Mode){
+  // The small EFL/global pools are curated legends and stay eligible at every difficulty;
+  // the difficulty bands are driven by the much larger Premier League core.
+  if(c.poolCategory==="EFL_LEGEND"||c.poolCategory==="WORLD_LEGEND")return true;
   if(c.source==="quizfc-pl"&&c.fameRank!==undefined){
     // Source-provided prominence rank: lower ranks indicate more recognisable players.
     if(m==="EASY")return c.fameRank<=300;
@@ -245,8 +248,9 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
 
   const newPlayer=useCallback(async(deck:Candidate[],selectedMode:Mode)=>{
     const dailyDraw=!dailyDone;
-    const dailySeed="PLAYGROUND-CAREER-FILE:"+new Date().toISOString().slice(0,10)+":"+selectedMode+":MIXED;
-    const slot=dailyDraw?stableHash(dailySeed)%100:seen.current.size%100;
+    const today=new Date().toISOString().slice(0,10);
+    const dailySeed="PLAYGROUND-CAREER-FILE:"+today+":"+selectedMode+":MIXED;
+    const slot=dailyDraw?Math.floor(Date.parse(today+"T00:00:00Z")/86400000)%100:seen.current.size%100;
     const desiredPool:PlayerPoolCategory=slot<95?"PREMIER_LEAGUE":slot<98?"EFL_LEGEND":"WORLD_LEGEND";
     let options:Candidate[]=[];
     let selectedPool=desiredPool;
@@ -379,7 +383,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
       <div className="cf-mode-grid">{MODES.map((m,i)=><motion.button key={m.name}
         className={"cf-mode-card "+m.colour+(mode===m.name?" chosen":"")} onClick={()=>setMode(m.name)}
         whileHover={{y:-5,rotate:i%2?1:-1}} whileTap={{scale:.98}}>
-        <span className="cf-mode-index">0{i+1} / PG</span><strong>{m.name}</strong><small>{m.note}</small><small className="cf-mode-count">{pool.length?pool.filter(c=>fits(c,m.name)).length+" FILES IN THE DRAW":"READING PLAYER POOL"}</small><i>{mode===m.name?"SELECTED ✓":"SELECT ↗"}</i>
+        <span className="cf-mode-index">0{i+1} / PG</span><strong>{m.name}</strong><small>{m.note}</small><small className="cf-mode-count">{pool.length?pool.filter(c=>fits(c,m.name)).length+" PL CORE FILES":"READING PLAYER POOL"}</small><i>{mode===m.name?"SELECTED ✓":"SELECT ↗"}</i>
       </motion.button>)}</div>
       <div className="cf-round-note"><span><b>{mode}</b> / MIXED FOOTBALL PLAYER POOL</span><span>10 GUESSES · 1,000 STARTING POINTS · CLUB PATHWAY VISIBLE</span></div>
     </section>
