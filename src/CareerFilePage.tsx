@@ -227,8 +227,8 @@ function careerHint(p:Player):Hint[]{
   const goalsAvailable=p.careerGoals!==undefined?p.careerGoals!==null:totalGoals>0;
   const age=ageOf(p);
   return [
-    {id:"position",label:"Position",cost:90,value:positionLabel(p.position)||"Not listed in the top-five league squad records",available:true},
-    {id:"nationality",label:"Nationality",cost:90,value:p.nationality||"Not listed in the top-five league squad records",available:true},
+    {id:"position",label:"Position",cost:90,value:positionLabel(p.position)||"Position not recorded",available:!!p.position},
+    {id:"nationality",label:"Nationality",cost:90,value:p.nationality||"Nationality not recorded",available:!!p.nationality},
     {id:"age",label:"Age / birth year",cost:90,value:age?age+" years old":p.birthDate?"Born "+p.birthDate.slice(0,4):"Birth date not recorded",available:!!(age||p.birthDate)},
     {id:"height",label:"Height",cost:70,value:p.height?p.height+" cm":"Height not recorded",available:p.height!=null},
     {id:"birthplace",label:"Birthplace",cost:100,value:p.birthplace||"Birthplace not recorded",available:!!p.birthplace},
@@ -468,7 +468,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
               <td>{shown?<span className="cf-revealed-tick">{freeRows.includes(r.id)?"FREE":"✓"}</span>:<button className="cf-reveal-row" onClick={()=>revealRow(r)} disabled={status!=="playing"}>−35 ↗</button>}</td>
             </motion.tr>;})}</tbody></table></div>
           <div className="cf-record-foot"><span>APPS / GOALS: PREMIER LEAGUE SEASON TOTALS</span><span>— = NOT RECORDED</span></div>
-          <div className="cf-source-note">Season rows show Premier League league appearances and goals only (1992/93 onward). Cup and European figures are excluded. Some club-seasons have goals-only or missing coverage; those appearances remain blank. Career totals are shown only when the source marks them complete. <a href={player.wikipediaUrl} target="_blank" rel="noreferrer">OPEN PLAYER IDENTITY ↗</a></div>
+          <div className="cf-source-note">Season rows show Premier League league appearances and goals only (1992/93 onward). Cup, European and EFL figures are excluded. Club dates are the first and last recorded PL seasons, not exact transfer dates; gaps remain unrecorded. Some club-seasons have goals-only or missing coverage; those appearances remain blank. Career totals are shown only when the source marks them complete. <a href={player.wikipediaUrl} target="_blank" rel="noreferrer">OPEN PLAYER IDENTITY ↗</a></div>
         </section>
         <aside className="cf-side">
           <div className="cf-scorecard"><div><small>YOUR SCORE</small><strong>{score.toLocaleString("en-GB")}<i> PTS</i></strong></div><div><small>GUESSES LEFT</small><strong>{left}<i> / 10</i></strong></div>
@@ -497,7 +497,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     </section>
     <section className="cf-bottom-strip"><div><span>THE PLAYGROUND PLAYER ARCHIVE</span><strong>READ THE GAME.<br/>READ THE CAREER.</strong></div>
       <div className="cf-source-credits"><b>DATA & SOURCES</b>
-        <p>Career File currently uses a dedicated Premier League history dataset covering 1992/93 onward. Player identities and fame ranking are linked through Wikidata; season appearances and goals are adapted from Wikipedia club-season tables and senior-career infoboxes, cross-checked against openfootball results. The source has 4,866 player identities and 17,028 season-stat rows; 593 of 686 club-seasons have full appearances/goals coverage, 65 are goals-only and 28 have no statistics. Missing figures remain unrecorded. The data is CC BY-SA 4.0 and may be used commercially with attribution and share-alike; see the source attribution.</p>
+        <p>Career File currently uses a dedicated Premier League history dataset covering 1992/93 onward. Player identities and fame ranking are linked through Wikidata; season appearances and goals are adapted from Wikipedia club-season tables and senior-career infoboxes, cross-checked against openfootball results. The source has 4,866 player identities and 17,028 season-stat rows; 593 of 686 club-seasons have full appearances/goals coverage, 65 are goals-only and 28 have no statistics. Club timelines show the first/last recorded Premier League seasons only, not exact transfer dates, loans or complete senior careers. EFL, cup and European statistics are not included. Missing figures remain unrecorded. The data is CC BY-SA 4.0 and may be used commercially with attribution and share-alike; see the source attribution.</p>
         <p>Transfer clues use Tiago Cumetti’s Football Transfers Dataset (2005–2024), collected from Transfermarkt pages. It is CC BY 4.0 and includes undisclosed or missing fees. No match does not mean a free transfer.</p>
         <a href="https://quiz-fc.com/data/pl-history.v2.json" target="_blank" rel="noreferrer">OPEN PL HISTORY DATA ↗</a>
         <a href="https://quiz-fc.com/data/ATTRIBUTION.md" target="_blank" rel="noreferrer">DATA ATTRIBUTION / CC BY-SA 4.0 ↗</a>
