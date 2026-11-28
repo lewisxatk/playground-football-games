@@ -41,6 +41,7 @@
 - [x] Add four progressive hints, three guesses, an optional fourth attempt, and a skip that does not reveal the answer. Commit: `199a453e74`.
 - [x] Display the actual verified candidate-pool count in the game header. Commit: `4b4f872586`.
 - [x] Show the source attribution: OpenFootballBase-Data, CC BY-SA 4.0.
+- [x] Retain a secondary CC0 Wikidata Link Up shard, generated from paginated career statements with a 750-pack target; the validator requires at least 500 unique bridge packs. Commit: `dbb6a8fcc3`. Runtime play uses the larger season archive.
 
 ### Career File and archive
 - [x] Restrict Career File eligibility to Premier League players with at least two seasons; add appearance clues and unlockable identity hints. Commits: `41d97fce33`, `cb49370295`.
@@ -51,13 +52,13 @@
 ## 2. Automated verification
 
 - [x] `npm run validate:football-content` passed on commit `1a593d123f` (GitHub Actions run `46085667903`).
-- [ ] Full CC0 database generation and `npm run validate:data`.
+- [ ] Full CC0 database generation and `npm run validate:data`, including the secondary `career-history.linkUpPacks` minimum of 500.
 - [x] Fix TypeScript build errors from the archive adapter cleanup and Strands fallback pack type; remove the now-unused position helper. Commits: `1adb3a538e`, `f8f057a181`.
 - [ ] Full site typecheck and production build.
 - [ ] Confirm generated database manifests, shard counts, licences and provenance.
 - [ ] Confirm every required game pool reaches its target without fabricated or duplicate facts.
 
-**Current build:** run `46085851722` was building commit `8ceab63d6e` at the last check; newer TypeScript fixes are in `1adb3a538e`. If the run is cancelled by the newer push, wait for the replacement run. Upstream licence checks passed on the previous attempt. Do not mark the build complete until the newest run finishes successfully and its generated report is inspected.
+**Current build:** GitHub Actions run `46085891374` was building commit `1adb3a538e` at the last check. Upstream licence checks passed. The canonical generation step must prove the 500+ secondary Wikidata Link Up pool and all other shard minimums before the typecheck/site build can run. Do not mark the build complete until the newest run finishes successfully and its generated report is inspected.
 
 ## 3. Live game verification still required
 
@@ -81,6 +82,6 @@
 
 ## 5. Resume pointer
 
-**Next action:** poll GitHub Actions run `46085667980`. If it succeeds, inspect its build report and generated pool counts, then mark the automated checks above. If it fails, fix the first failing stage before making unrelated changes.
+**Next action:** poll GitHub Actions run `46085891374`. If it succeeds, inspect its build report and generated pool counts, then mark the automated checks above. If it fails, fix the first failing stage before making unrelated changes.
 
 Keep this checklist current after every commit. Do not claim a successful build or a 500+ runtime pool until the evidence is visible.
