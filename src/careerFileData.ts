@@ -238,7 +238,7 @@ export async function getArchiveGamePlayers(limit = 1600, seed = "PLAYGROUND-GAM
         "), national_rollup AS (" +
         " SELECT nt.player_qid, SUM(nt.caps) AS caps, SUM(nt.goals) AS international_goals " +
         " FROM national nt JOIN picked p ON p.player_qid=nt.player_qid " +
-        " WHERE NOT regexp_matches(coalesce(nt.team_name,''), '(?i)\\bU(1[789]|2[0-3])\\b') GROUP BY nt.player_qid" +
+        " WHERE NOT regexp_matches(coalesce(nt.team_name,''), '(?i)\\bU[- ]?(1[789]|2[0-3])\\b') GROUP BY nt.player_qid" +
         "), club_rollup AS (" +
         " SELECT wikidata_qid, any_value(country) AS country, any_value(league) AS league, " +
         " any_value(division) AS division FROM club GROUP BY wikidata_qid" +
