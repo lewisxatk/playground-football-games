@@ -519,7 +519,7 @@ At the end of every implementation update:
 - [~] Duplicate-player prevention and a 16-cell bipartite augmenting-path matcher are implemented; this replaces exponential backtracking for dense candidate pools. Automated runtime tests and thousands-of-board QA remain pending.
 - [~] Correct cells lock; wrong answers deduct points and leave cells open; runtime QA pending.
 - [~] Custom mobile autocomplete searches the sampled archive; matching normalises accents and aliases. Full canonical identity coverage remains outstanding.
-- [~] Football Grid now has two levels: Easy / Standard (a familiar mixed board) and Hard (rarer player pools, less common nations and curated clubs with Premier League history where source coverage supports them). Difficulty is driven by candidate-pool rarity, not colour alone; live calibration remains outstanding.
+- [~] Football Grid now has two levels: Easy / Standard (a familiar mixed board) and Hard (rarer player pools, less common nations and curated clubs with Premier League history where source coverage supports them). Difficulty is driven by candidate-pool rarity, not colour alone; live calibration remains outstanding. Grid generation now samples up to 3,200 archive players (four verified static shards) rather than 1,600 to improve sparse intersections; mobile load/performance still needs QA.
 - [~] Daily uses a deterministic UTC seed and practice uses separate random seeds. Practice stores the last 300 board signatures locally and retries recent repeats up to eight times; 300 genuinely distinct valid boards still need measured archive-generation verification. Server-persisted puzzle versioning and cross-device consistency remain outstanding.
 - [~] Score, cells-completed progress, attempts, rarity bonuses, share action and assigned-answer review are implemented; real device testing pending.
 - [ ] Rarity initially based on eligible answer-pool size; later improve with actual anonymised answer-frequency data if collected.
@@ -531,7 +531,7 @@ At the end of every implementation update:
 - [ ] Validate all 16 intersections against the full eligible player identity/relationship index.
 - [ ] Reject boards with zero-answer cells, insufficient alternatives, duplicate-only solutions or no valid complete matching.
 - [ ] Target at least 2–3 eligible players per cell; prefer more where source coverage permits.
-- [ ] Validate that 16 distinct players can fill the board (matching/constraint check), not merely that each cell independently has an answer.
+- [x] Generator validates all 16 intersections and uses bipartite matching to guarantee 16 distinct archive player IDs before displaying a board.
 - [ ] Persist daily puzzle and its data/version so all users get the same board.
 - [ ] Distinguish “no valid player” from “not in sampled pool”; do not infer impossibility from the current 1,600-record sampled archive.
 - [ ] Verify at least 300 distinct valid boards across Club × Nation and Club × Club, then test thousands of generated boards and report empty/sparse intersections, duplicate conflicts and Easy/Hard distribution.
