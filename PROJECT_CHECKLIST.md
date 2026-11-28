@@ -484,3 +484,11 @@ At the end of every implementation update:
 - [x] Removed ambiguous short-name duplicates (Kaká, Pelé, Ronaldo, Romário) from the global-legend candidate list.
 - [!] Re-run CI and production deployment after the final source-query/name-list hardening commits.
 - [!] Manually test the live game in iPhone Safari and confirm the EFL/global category rounds behave as intended.
+
+
+## 20. One-club legend eligibility (2026-11-28)
+
+- [x] Permit a single sourced club spell when it has recorded dates or appearances/goals.
+- [x] Keep multi-club special careers eligible and reject records with no usable dates or statistics.
+- [x] Preserve the explicit no-invented-statistics rule for Wikidata-only club memberships.
+- [!] Re-run CI and confirm the final Cloudflare production build after this eligibility change.
