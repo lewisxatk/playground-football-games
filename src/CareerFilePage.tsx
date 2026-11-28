@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { motion } from "motion/react";
-import { getCandidates, getPlayer, getStatEligibleCandidates, getArchiveGamePlayersByNames, type Candidate, type LeagueCode, type Player, type ArchiveGamePlayer, type CareerDifficulty, type PlayerPoolCategory } from "./careerFileData";
+import { getArchiveGamePlayersByNames, type Candidate, type Player, type ArchiveGamePlayer, type CareerDifficulty, type PlayerPoolCategory } from "./careerFileData";
 import { getQuizFcCareerCandidates, getQuizFcCareerPlayer, getQuizFcStatEligibleCandidates } from "./quizFcCareerData";
-import { getStaticArchivePlayers } from "./useArchivePlayers";
 import "./career-file.css";
 
 type Mode = CareerDifficulty;
@@ -99,11 +98,6 @@ const MODES: { name:Mode; note:string; colour:string }[] = [
   {name:"EXTREME",note:"Shorter, older or specialist Premier League careers",colour:"violet"}
 ];
 
-const LEAGUES: {label:string;code:LeagueCode}[] = [
-  // Career File is English-football-first. Keep the public selector on the
-  // Premier League until the EFL career archive has its own validated filters.
-  {label:"Premier League",code:"ENG-PL"}
-];
 const clean=(s:string)=>s.toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
 const yearOf=(s:string):number|null=>{const m=s.match(/(?:19|20)\d{2}/);return m?Number(m[0]):null;};
 const fmt=(v:number|null|undefined)=>v==null?"—":v.toLocaleString("en-GB");
@@ -231,7 +225,6 @@ function careerHint(p:Player):Hint[]{
 
 export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyDone?:boolean;onDailyComplete?:(score:number)=>void}){
   const [mode,setMode]=useState<Mode>("EASY");
-  const [league,setLeague]=useState<LeagueCode>("ENG-PL");
   const [pool,setPool]=useState<Candidate[]>([]);
   const [player,setPlayer]=useState<Player|null>(null);
   const [rows,setRows]=useState<Row[]>([]);
@@ -252,7 +245,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
 
   const newPlayer=useCallback(async(deck:Candidate[],selectedMode:Mode)=>{
     const dailyDraw=!dailyDone;
-    const dailySeed="PLAYGROUND-CAREER-FILE:"+new Date().toISOString().slice(0,10)+":"+selectedMode+":"+league;
+    const dailySeed="PLAYGROUND-CAREER-FILE:"+new Date().toISOString().slice(0,10)+":"+selectedMode+":MIXED;
     const slot=dailyDraw?stableHash(dailySeed)%100:seen.current.size%100;
     const desiredPool:PlayerPoolCategory=slot<95?"PREMIER_LEAGUE":slot<98?"EFL_LEGEND":"WORLD_LEGEND";
     let options:Candidate[]=[];
@@ -290,7 +283,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
       let lastProblem="No player in this category had enough sourced career rows.";
       for(const choice of ranked.slice(0,36)){
         try{
-          const record=staticPlayers.current.get(choice.id)??(choice.source==="quizfc-pl"?await getQuizFcCareerPlayer(choice.id):await getPlayer(choice.id,league));
+          const record=staticPlayers.current.get(choice.id)??(choice.source==="quizfc-pl"?await getQuizFcCareerPlayer(choice.id):await getQuizFcCareerPlayer(choice.id));
           const timeline=makeRows(record);
           const usable=selectedPool==="PREMIER_LEAGUE"?hasOneUsablePLRow(timeline):hasTwoUsableCareerRows(timeline);
           if(!timeline.length||!usable){lastProblem="This career did not have enough usable, sourced club records.";continue;}
@@ -302,7 +295,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
       }
       throw new Error("This draw did not contain a complete player file. Choose Next Player to draw again. "+lastProblem);
     }finally{setLoadingPlayer(false);}
-  },[dailyDone,league]);
+  },[dailyDone]);
   useEffect(()=>{
     let live=true;setBusy(true);setError("");
     setPlayer(null);setRows([]);setOpened([]);setRevealed([]);
@@ -359,9 +352,9 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     </header>
     <section className="cf-hero">
       <div className="cf-hero-copy">
-        <div className="cf-eyebrow"><i/> PREMIER LEAGUE PLAYER IDENTITY GAME <span>ISSUE № 01</span></div>
+        <div className="cf-eyebrow"><i/> FOOTBALL CAREER IDENTITY GAME <span>ISSUE № 01</span></div>
         <h1>CAREER<br/><em>FILE.</em></h1>
-        <p>One player. A career pathway. One name to find. Follow the Premier League clubs, compare appearances and unlock the hidden stats.</p>
+        <p>One player. A career pathway. One name to find. Follow the club pathway, compare appearances and unlock hidden stats across Premier League careers, EFL legends and global greats.</p>
         <div className="cf-hero-foot"><b>SELECT A FILE.</b><span>DON'T GUESS. INVESTIGATE.</span></div>
       </div>
       <div className="cf-hero-art" aria-label="Animated football pitch graphic">
@@ -377,9 +370,9 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
       </div>
     </section>
     {dailyDone&&<div className="cf-daily-complete">TODAY'S CAREER FILE IS BANKED · NEXT FILES ARE PRACTICE</div>}
-    <section className="cf-controlbar">
-      <div className="cf-control-title"><span>01 / CHOOSE YOUR COMPETITION</span><strong>WHERE DID THEY PLAY?</strong></div>
-      <div className="cf-leagues">{LEAGUES.map(x=><button key={x.code} className={league===x.code?"active":""} onClick={()=>setLeague(x.code)}>{x.label}</button>)}</div>
+    <section className="cf-controlbar cf-pool-mix">
+      <div className="cf-control-title"><span>01 / PLAYER DATABASE</span><strong>THREE FOOTBALL WORLDS. ONE DRAW.</strong></div>
+      <div className="cf-pool-mix-items"><span><b>95%</b> FORMER PREMIER LEAGUE</span><span><b>3%</b> EFL LEGENDS</span><span><b>2%</b> WORLD LEGENDS</span></div>
     </section>
     <section className="cf-mode-area">
       <div className="cf-mode-title"><span>02 / SET THE DIFFICULTY</span><span>THE HARDER THE FILE, THE LESS OBVIOUS THE NAME</span></div>
@@ -388,7 +381,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
         whileHover={{y:-5,rotate:i%2?1:-1}} whileTap={{scale:.98}}>
         <span className="cf-mode-index">0{i+1} / PG</span><strong>{m.name}</strong><small>{m.note}</small><small className="cf-mode-count">{pool.length?pool.filter(c=>fits(c,m.name)).length+" FILES IN THE DRAW":"READING PLAYER POOL"}</small><i>{mode===m.name?"SELECTED ✓":"SELECT ↗"}</i>
       </motion.button>)}</div>
-      <div className="cf-round-note"><span><b>{mode}</b> / {league==="ALL"?"ALL FIVE LEAGUES":LEAGUES.find(x=>x.code===league)?.label.toUpperCase()}</span><span>10 GUESSES · 1,000 STARTING POINTS · CLUB PATHWAY VISIBLE</span></div>
+      <div className="cf-round-note"><span><b>{mode}</b> / MIXED FOOTBALL PLAYER POOL</span><span>10 GUESSES · 1,000 STARTING POINTS · CLUB PATHWAY VISIBLE</span></div>
     </section>
     <section className="cf-game-area">
       <div className="cf-game-heading"><div><span>03 / THE DOSSIER</span><h2>WHO'S THE<br/><em>PLAYER?</em></h2></div>
@@ -399,10 +392,10 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
       {error&&<div className="cf-error"><strong>THE ARCHIVE HIT A SNAG</strong><p>{error}</p><button onClick={()=>window.location.reload()}>TRY AGAIN ↗</button></div>}
       {player&&!busy&&!loadingPlayer&&<div className="cf-layout">
         <section className="cf-record">
-          <div className="cf-record-head"><span>CONFIDENTIAL / PREMIER LEAGUE CAREER PATHWAY</span><span>SUBJECT: ████████</span></div>
-          <div className="cf-subject"><div><small>IDENTITY HIDDEN</small><strong>THE<br/><em>JOURNEY.</em></strong><span>{rows.length} CLUB SPELLS / PREMIER LEAGUE CAREER</span></div><div className="cf-crest-stack"><span>PG</span><span>?</span><span>90</span></div></div>
+          <div className="cf-record-head"><span>CONFIDENTIAL / FOOTBALL CAREER PATHWAY</span><span>SUBJECT: ████████</span></div>
+          <div className="cf-subject"><div><small>IDENTITY HIDDEN</small><strong>THE<br/><em>JOURNEY.</em></strong><span>{rows.length} CLUB SPELLS / CAREER PATHWAY</span></div><div className="cf-crest-stack"><span>PG</span><span>?</span><span>90</span></div></div>
           <div className="cf-timeline-toolbar cf-pathway-toolbar">
-            <div><b>PREMIER LEAGUE CLUB PATHWAY</b><small>{rows.length} CLUB SPELLS · CHRONOLOGICAL</small></div>
+            <div><b>CLUB PATHWAY</b><small>{rows.length} CLUB SPELLS · CHRONOLOGICAL</small></div>
             <div className="cf-stat-unlocks">
               <button onClick={()=>revealStat("goals")} disabled={status!=="playing"||revealed.includes("goals")||!goalsAvailable}> {revealed.includes("goals")?"GOALS SHOWN ✓":goalsAvailable?"REVEAL GOALS · −100 PTS":"GOALS NOT RECORDED"}</button>
               <button onClick={()=>revealStat("assists")} disabled={status!=="playing"||revealed.includes("assists")||!assistsAvailable}> {revealed.includes("assists")?"ASSISTS SHOWN ✓":assistsAvailable?"REVEAL ASSISTS · −100 PTS":"ASSISTS NOT RECORDED"}</button>
@@ -416,8 +409,8 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
               <td><span className={status!=="playing"||revealed.includes("goals")||r.goals===null?"":"cf-blur"}>{fmt(r.goals)}</span></td>
               <td><span className={status!=="playing"||revealed.includes("assists")||r.assists===null?"":"cf-blur"}>{fmt(r.assists)}</span></td>
             </motion.tr>)}</tbody></table></div>
-          <div className="cf-record-foot"><span>APPS / GOALS / ASSISTS: PREMIER LEAGUE LEAGUE TOTALS</span><span>— = NOT RECORDED</span></div>
-          <div className="cf-source-note">Club pathway rows aggregate Premier League league appearances, goals and assists (1992/93 onward). Cup, European and EFL figures are excluded. Club dates are the first and last recorded PL seasons, not exact transfer dates; gaps remain unrecorded. Some club-seasons have goals-only or missing coverage; those appearances remain blank. Career totals are shown only when the source marks them complete. <a href={player.wikipediaUrl} target="_blank" rel="noreferrer">OPEN PLAYER IDENTITY ↗</a></div>
+          <div className="cf-record-foot"><span>{player.statsScope?"APPS / GOALS: WIKIPEDIA CLUB-SPELL TOTALS · UNVERIFIED":"APPS / GOALS / ASSISTS: PREMIER LEAGUE LEAGUE TOTALS"}</span><span>— = NOT RECORDED</span></div>
+          <div className="cf-source-note">{player.statsScope?"EFL and world-legend appearances and goals are sourced from Wikipedia senior-career club-spell infoboxes. These figures are unverified and are not directly comparable with Premier League league-only statistics. Assists are shown only where separately sourced.":"Premier League league appearances, goals and assists (1992/93 onward). Cup, European and EFL figures are excluded. Club dates are first and last recorded PL seasons, not exact transfer dates; gaps remain unrecorded. Missing figures remain unrecorded."} <a href={player.wikipediaUrl} target="_blank" rel="noreferrer">OPEN PLAYER IDENTITY ↗</a></div>
         </section>
         <aside className="cf-side">
           <div className="cf-scorecard"><div><small>YOUR SCORE</small><strong>{score.toLocaleString("en-GB")}<i> PTS</i></strong></div><div><small>GUESSES LEFT</small><strong>{left}<i> / 10</i></strong></div>
@@ -441,8 +434,9 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     </section>
     <section className="cf-bottom-strip"><div><span>THE PLAYGROUND PLAYER ARCHIVE</span><strong>READ THE GAME.<br/>READ THE CAREER.</strong></div>
       <div className="cf-source-credits"><b>DATA & SOURCES</b>
-        <p>Career File currently uses a dedicated Premier League history dataset covering 1992/93 onward. Player identities are linked through Wikidata; the source-provided prominence rank sets the difficulty bands. Season appearances and goals are adapted from Wikipedia club-season tables and senior-career infoboxes, cross-checked against openfootball results. The source has 4,866 player identities and 17,028 season-stat rows; 593 of 686 club-seasons have full appearances/goals coverage, 65 are goals-only and 28 have no statistics. Club timelines show the first/last recorded Premier League seasons only, not exact transfer dates, loans or complete senior careers. EFL, cup and European statistics are not included. Missing figures remain unrecorded. The data is CC BY-SA 4.0 and may be used commercially with attribution and share-alike; see the source attribution.</p>
+        <p>Player draw is weighted across three pools: 95% Premier League players (including former players), 3% EFL legends and 2% global legends. The Premier League core uses Quiz FC PL history data (1992/93 onward). EFL and global legend files are looked up by curated player lists against OpenFootballBase career records. Premier League stats are league-only; EFL and global legend appearances/goals use Wikipedia senior-career infobox totals and are labelled unverified. Missing figures are not invented. OpenFootballBase is Wikipedia CC BY-SA 4.0 and Wikidata CC0; attribution is provided with the data-source links.</p>
         <a href="https://quiz-fc.com/data/pl-history.v2.json" target="_blank" rel="noreferrer">OPEN PL HISTORY DATA ↗</a>
+        <a href="https://github.com/florentfougeres/OpenFootballBase-Data" target="_blank" rel="noreferrer">OPENFOOTBALLBASE CAREER DATA ↗</a>
         <a href="https://quiz-fc.com/data/ATTRIBUTION.md" target="_blank" rel="noreferrer">DATA ATTRIBUTION / CC BY-SA 4.0 ↗</a>
       </div>
     </section>
