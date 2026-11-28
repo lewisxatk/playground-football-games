@@ -39,8 +39,7 @@ export function buildGridPuzzle(players,difficulty,kind,seed){
     // the row set from clubs that genuinely intersect every chosen nation.
     // This avoids wasting attempts on four clubs with no shared nation set.
     chosenCols=shuffle(colPool,seed+attempt*37+7).slice(0,4);
-    const common=rowPool.filter(row=>chosenCols.every(col=>
-      (clubPairs.get([row,col].sort().join("::"))?.length??0)>0));
+    const common=rowPool.filter(row=>chosenCols.every(col=>kind==="PREM_NATION"?(clubNationPairs.get(row+"::"+col)?.length??0)>0:(clubPairs.get([row,col].sort().join("::"))?.length??0)>0));
     chosenRows=shuffle(common,seed+attempt*19+13).slice(0,4);
   }
   if(chosenCols.length!==4)continue;
