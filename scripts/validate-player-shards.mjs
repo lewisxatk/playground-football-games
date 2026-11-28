@@ -33,7 +33,7 @@ for (const shard of manifest.shards) {
     if (!player?.id || !player?.name) fail(shard.file + " contains a player without a stable ID or name");
     if (ids.has(player.id)) fail("duplicate player ID across shards: " + player.id);
     ids.add(player.id);
-    if (!Array.isArray(player.careerSpells)) fail(shard.file + " contains a player without career-spell data");
+    if (!Array.isArray(player.spells)) fail(shard.file + " contains a player without career-spell data");
   }
   total += payload.players.length;
 }
