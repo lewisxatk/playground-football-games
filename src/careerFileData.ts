@@ -90,7 +90,7 @@ export async function getCandidates(league: LeagueCode): Promise<Candidate[]> {
   // clubs only; overseas/other-league spells must never inflate an English draw.
   const sql =
     "WITH selected_clubs AS (" +
-    " SELECT DISTINCT c.wikidata_qid AS club_qid FROM competition_club cc " +
+    " SELECT DISTINCT c.wikidata_qid AS club_qid, c.wikipedia_title AS club_title FROM competition_club cc " +
     " JOIN club c ON c.wikipedia_title=cc.club " +
     " WHERE cc.competition IN (" + marks + ") AND coalesce(trim(c.wikidata_qid),'')<>''" +
     ") " +
@@ -312,12 +312,12 @@ export async function getStatEligibleCandidates(candidates: Candidate[], league:
     const playerMarks = ids.map(() => "?").join(",");
     const rows = await archive.query(
       "WITH selected_clubs AS (" +
-      " SELECT DISTINCT c.wikidata_qid AS club_qid FROM competition_club cc " +
+      " SELECT DISTINCT c.wikidata_qid AS club_qid, c.wikipedia_title AS club_title FROM competition_club cc " +
       " JOIN club c ON c.wikipedia_title=cc.club " +
       " WHERE cc.competition IN (" + competitionMarks + ") AND coalesce(trim(c.wikidata_qid),'')<>''" +
       ") " +
       "SELECT st.player_qid, COUNT(DISTINCT coalesce(nullif(st.club_qid,''), nullif(st.club_link,''), st.club) || '|' || st.season) AS stat_seasons " +
-      "FROM stat_club st JOIN selected_clubs sc ON sc.club_qid=st.club_qid " +
+      "FROM stat_club st JOIN selected_clubs sc ON (sc.club_qid=st.club_qid OR (coalesce(trim(st.club_qid),'')='' AND lower(trim(st.club_link))=lower(trim(sc.club_title)))) " +
       "WHERE st.player_qid IN (" + playerMarks + ") " +
       "AND coalesce(st.competition_group,'') <> 'Total' AND st.apps IS NOT NULL AND st.goals IS NOT NULL " +
       "AND coalesce(trim(st.season),'') <> '' GROUP BY st.player_qid " +
@@ -337,7 +337,7 @@ export async function getPlayer(id: string, league: LeagueCode = "ENG-PL"): Prom
   const competitionMarks = codes.map(() => "?").join(",");
   const selectedClubsCte =
     "WITH selected_clubs AS (" +
-    " SELECT DISTINCT c.wikidata_qid AS club_qid FROM competition_club cc " +
+    " SELECT DISTINCT c.wikidata_qid AS club_qid, c.wikipedia_title AS club_title FROM competition_club cc " +
     " JOIN club c ON c.wikipedia_title=cc.club " +
     " WHERE cc.competition IN (" + competitionMarks + ") AND coalesce(trim(c.wikidata_qid),'')<>''" +
     ") ";
@@ -351,7 +351,7 @@ export async function getPlayer(id: string, league: LeagueCode = "ENG-PL"): Prom
     "AND (cr.end_year IS NULL OR cr.end_year>=cr.start_year) ORDER BY cr.seq", [...codes, id]);
   const stats = await a.query(selectedClubsCte +
     "SELECT st.club,st.club_link,st.club_qid,st.season,SUM(st.apps) apps,SUM(st.goals) goals,SUM(st.assists) assists " +
-    "FROM stat_club st JOIN selected_clubs sc ON sc.club_qid=st.club_qid " +
+    "FROM stat_club st JOIN selected_clubs sc ON (sc.club_qid=st.club_qid OR (coalesce(trim(st.club_qid),'')='' AND lower(trim(st.club_link))=lower(trim(sc.club_title)))) " +
     "WHERE st.player_qid=? AND coalesce(st.competition_group,'')<>'Total' " +
     "AND coalesce(trim(st.season),'')<>'' " +
     "GROUP BY st.club,st.club_link,st.club_qid,st.season", [...codes, id]);
