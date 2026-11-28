@@ -146,7 +146,7 @@ export function useFootballQuizKnowledge(game:"the-climb"|"timed-quiz"){
 function isApprovedInternationalQuizQuestion(question:CC0QuizQuestion):boolean{
  if(question.region!=="INTERNATIONAL")return false;
  const category=(question.category??"").toLowerCase();
- return category==="fifa world cup"||category==="world cup"||category==="uefa champions league";
+ return /(?:fifa )?world cup|uefa champions league/i.test(category);
 }
 function seededShuffle<T>(items:T[],seed:number):T[]{const copy=[...items];let state=seed>>>0;for(let i=copy.length-1;i>0;i--){state=(Math.imul(state,1664525)+1013904223)>>>0;const j=state%(i+1);[copy[i],copy[j]]=[copy[j],copy[i]]}return copy}
 function balancedEnglishQuota(count:number,seed:number):number{
