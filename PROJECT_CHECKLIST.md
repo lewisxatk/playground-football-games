@@ -519,8 +519,8 @@ At the end of every implementation update:
 - [~] Duplicate-player prevention and a 16-cell bipartite augmenting-path matcher are implemented; this replaces exponential backtracking for dense candidate pools. Automated runtime tests and thousands-of-board QA remain pending.
 - [~] Correct cells lock; wrong answers deduct points and leave cells open; runtime QA pending.
 - [~] Custom mobile autocomplete searches the sampled archive; matching normalises accents and aliases. Full canonical identity coverage remains outstanding.
-- [~] Easy/Medium/Hard/Extreme now have different candidate thresholds and attempt limits; statistical calibration against live archive remains outstanding.
-- [~] Daily uses a deterministic UTC seed and practice uses separate random seeds; server-persisted puzzle versioning and cross-device consistency are outstanding.
+- [~] Football Grid now has two levels: Easy / Standard (a familiar mixed board) and Hard (rarer player pools, less common nations and curated clubs with Premier League history where source coverage supports them). Difficulty is driven by candidate-pool rarity, not colour alone; live calibration remains outstanding.
+- [~] Daily uses a deterministic UTC seed and practice uses separate random seeds. Practice stores the last 300 board signatures locally and retries recent repeats up to eight times; 300 genuinely distinct valid boards still need measured archive-generation verification. Server-persisted puzzle versioning and cross-device consistency remain outstanding.
 - [~] Score, cells-completed progress, attempts, rarity bonuses, share action and assigned-answer review are implemented; real device testing pending.
 - [ ] Rarity initially based on eligible answer-pool size; later improve with actual anonymised answer-frequency data if collected.
 - [~] Per-cell paid hint and solution review are implemented; runtime QA pending.
@@ -534,7 +534,7 @@ At the end of every implementation update:
 - [ ] Validate that 16 distinct players can fill the board (matching/constraint check), not merely that each cell independently has an answer.
 - [ ] Persist daily puzzle and its data/version so all users get the same board.
 - [ ] Distinguish “no valid player” from “not in sampled pool”; do not infer impossibility from the current 1,600-record sampled archive.
-- [ ] Test thousands of generated boards and report empty/sparse intersections, duplicate conflicts and difficulty distribution.
+- [ ] Verify at least 300 distinct valid boards across Club × Nation and Club × Club, then test thousands of generated boards and report empty/sparse intersections, duplicate conflicts and Easy/Hard distribution.
 
 ### Visual and identity system
 - [x] User selected Editorial Clubhouse: warm ivory, black editorial typography and lime accents, with a standalone page identity.
@@ -551,7 +551,7 @@ At the end of every implementation update:
 - [x] Editorial Clubhouse selected; core rules agreed in this brief.
 - [ ] Build canonical player-to-club and player-to-nationality eligibility index, including provenance and coverage flags.
 - [ ] Build deterministic valid-board generator and test suite.
-- [~] Implemented in source; build and interaction tests pending.
+- [~] Implemented in source; build and interaction tests pending. Two-level difficulty and recent-practice board de-duplication are now committed, pending CI and archive QA.
 - [~] Daily/practice separation implemented; persistent puzzle versioning outstanding.
 - [ ] Manual iPhone Safari + desktop acceptance tests; verify no impossible cells or false-positive players.
 - [ ] Update this checklist with evidence; do not mark done from a mock-up alone.
