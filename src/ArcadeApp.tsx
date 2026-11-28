@@ -688,7 +688,7 @@ function buildGridPuzzle(players:GamePlayer[],difficulty:GridDifficulty,kind:Gri
    const chosenRows=shuffle(rowKeys,seed+attempt*19).slice(0,4);
    let chosenCols:string[];
    if(kind==="CLUB_CLUB"){
-     const common=[...clubNeighbors.get(chosenRows[0])??[]].filter(candidate=>!chosenRows.includes(candidate)&&chosenRows.every(row=>clubNeighbors.get(row)?.has(candidate)));
+     const common=[...(clubNeighbors.get(chosenRows[0])??[])].filter(candidate=>!chosenRows.includes(candidate)&&chosenRows.every(row=>clubNeighbors.get(row)?.has(candidate)));
      chosenCols=shuffle(common,seed+attempt*37+7).slice(0,4);
    }else chosenCols=shuffle(colKeys,seed+attempt*37+7).slice(0,4);
    if(chosenCols.length!==4)continue;
