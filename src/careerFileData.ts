@@ -202,7 +202,7 @@ export async function getWikidataCareerPlayersByNames(names:string[]):Promise<Pl
       const grouped=new Map<string,{name:string;birthDate:string;nationality:string;position:string;articleTitle:string;spells:Spell[]}>();
       for(const row of payload.results?.bindings??[]){
         const id=String(row.player?.value??"").split("/").pop()??"";
-        if(!/^Q\\d+$/.test(id))continue;
+        if(!/^Q\d+$/.test(id))continue;
         const name=String(row.playerLabel?.value??"").trim();
         const club=String(row.clubLabel?.value??"").trim();
         if(!name||!club)continue;
@@ -229,7 +229,7 @@ export async function getWikidataCareerPlayersByNames(names:string[]):Promise<Pl
         item.spells.forEach((spell,index)=>{spell.seq=index;});
         return {
           id,name:item.name,fullName:item.name,nationality:item.nationality,position:item.position,
-          height:null,birthDate:item.birthDate,birthPrecision:/^\\d{4}-\\d{2}-\\d{2}$/.test(item.birthDate)?11:null,
+          height:null,birthDate:item.birthDate,birthPrecision:/^\d{4}-\d{2}-\d{2}$/.test(item.birthDate)?11:null,
           birthplace:"",spells:item.spells,stats:[],caps:null,internationalGoals:null,teams:[],
           wikipediaUrl:item.articleTitle?"https://en.wikipedia.org/wiki/"+encodeURIComponent(item.articleTitle.replace(/ /g,"_")):"https://www.wikidata.org/wiki/"+id,
           statsScope:"Wikidata club memberships (no verified appearance, goal or assist totals)"
