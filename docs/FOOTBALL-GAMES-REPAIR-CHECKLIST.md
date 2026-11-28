@@ -61,7 +61,7 @@
 - [ ] Confirm generated database manifests, shard counts, licences and provenance.
 - [ ] Confirm every required game pool reaches its target without fabricated or duplicate facts.
 
-**Current build:** GitHub Actions run `46086104358` is building commit `b53cbea6ab45bf773808c0c8afe1fafd5c897104` (the latest source changes) at the last check. Upstream licence checks passed. The canonical generation step must prove all remaining shard minimums and keep the career-history payload under the 24 MB per-asset limit before the typecheck/site build can run. Do not mark the build complete until the newest run finishes successfully and its generated report is inspected.
+**Current build:** GitHub Actions run `46086405690` is building commit `64cb68812ecc7bdc5dc5291f93fcd7d4d74ff609` at the last check. The previous 77 MB career-history shard was fixed by capping the separate Wikidata Cult Hero snapshot to one 50,000-row page; Link Up now uses the full season archive. The current run must complete canonical generation, data validation and TypeScript/site build before being marked green. Upstream licence checks passed. The canonical generation step must prove all remaining shard minimums and keep the career-history payload under the 24 MB per-asset limit before the typecheck/site build can run. Do not mark the build complete until the newest run finishes successfully and its generated report is inspected.
 
 ## 3. Live game verification still required
 
