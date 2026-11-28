@@ -8,6 +8,7 @@ Rule: after every successful GitHub commit, update this checklist in the next co
 - [x] Rebalance quiz runtime allocation to favour English domestic football; keep international questions occasional.
 - [x] Restrict quiz runtime selection to English domestic, UEFA Champions League and FIFA World Cup categories only; block unrelated internationals and fallback leakage. Commit: `89ed93ff83`.
 - [x] Strengthen quiz-pool validation to require sufficient English/approved international coverage in every tier and verify the exact 15/2 daily mix quotas. Commit: `1a593d123f`.
+- [x] Update the engine documentation and project roadmap to the new 80% English five-question / 90% English practice / 15-of-17 English daily policy, with only Champions League and World Cup exceptions. Commits: `270f40b816`, `da918ba6c3`.
 - [x] Restrict quiz answer distractors to the same competition pool and deduplicate candidate answers.
 - [x] Build Link Up eligible-club list from clubs appearing in the English domestic match archive.
 - [x] Import the 34,637-entry English dictionary from `outparse/english-dictionary-dataset` (CC0 1.0) to `public/data/english-wordlist.cc0.txt`.
@@ -83,7 +84,7 @@ The full CC0 database build passed the Football Grid stage after moving it to th
 Latest data-generator fixes: `2713f3da463fe81e8a77846980ac71da0e51d0a7` (P27 nationality coverage); `0c822718d9` (Strands 500-board fallback); `dbb6a8fcc35bade22960e8bd6fc0f8bc0a920d18` (Wikidata pagination retained as a secondary archive).
 Latest Grid runtime fixes: `18b31b793394ed8808fbe5b97ba08bfc79441f44` (club-name normalization); `720b3fba6e` and `1cf67dd5bf` (static archive + generated club index); `ca2904fc9127738b4db1d6abfdd221a336a80df4` (static-shard retry rotation).
 
-Next action: verify the latest selector-filter and stricter validator commits with the full CC0 database build; inspect quiz counts, Football Grid pack counts and Link Up sample uniqueness; then audit all games and run the full typecheck/validation/build suite.
+Next action: verify the selector-filter and stricter validator commits with the full CC0 database build; inspect quiz counts, Football Grid pack counts and Link Up sample uniqueness; then audit all games and run the full typecheck/validation/build suite.
 
 - [x] Remove obsolete duplicate Grid builder and normalize dotted club suffixes in active runtime index. Commit: `f4dba2319d2bd2c3ba5cdf8a4aeff10d438052d7`.
 
