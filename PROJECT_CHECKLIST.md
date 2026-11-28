@@ -452,7 +452,8 @@ At the end of every implementation update:
 - [x] Unavailable hints are hidden rather than displayed as dead "NO DATA" controls.
 - [x] Completing or losing a round reveals the hidden goals/assists columns; no further point purchase is needed after the result.
 - [x] Kept wrong guesses at −50 and the starting score at 1,000.
-- [!] Honours are not yet offered: the current Premier League history source does not include a verified honours field. Add only after a separately sourced, attributable honours dataset is available.
+- [!] Honours are not yet offered by the active Quiz FC PL endpoint. Research identified OpenFootballBase-Data as a possible enrichment source: it publishes national-title squad lists, competition winners and Ballon d’Or rankings under a Wikipedia-derived CC BY-SA 4.0 data licence. National-title lists can include squad members who did not play, so the hint must be labelled precisely and not presented as a medal actually won by the player.
 - [!] International caps are not populated by the current Quiz FC Premier League source; the hint appears only for player records where a verified cap total exists. A separate international-stat enrichment is needed for broad coverage.
 - [!] Validate club-spell aggregation against known player examples and verify that missing/partial season stats are not presented as complete totals.
+- [x] Removed the unreliable Transfermarkt-fee hint from Career File so the new hint list and point economy are consistent.
 - [!] Run GitHub Actions typecheck/data validation/production build and test the deployed Career File on iPhone Safari before calling this update complete.
