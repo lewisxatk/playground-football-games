@@ -54,3 +54,31 @@ function inspect(value, path = "$", depth = 0) {
   }
 }
 inspect(payload);
+
+// Read only the public Career Path bundle references to understand compact
+// array indexes. This is a schema audit; no application code is copied.
+const pageResponse = await fetch("https://quiz-fc.com/career-path/", {
+  headers: { "user-agent": "PLAYGROUND-CareerFile-Research/1.0" }
+});
+console.log("CAREER_PATH_PAGE_HTTP", pageResponse.status);
+if (pageResponse.ok) {
+  const html = await pageResponse.text();
+  const scriptUrls = [...html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)]
+    .map((match) => new URL(match[1], "https://quiz-fc.com").href);
+  console.log("CAREER_PATH_SCRIPT_COUNT", scriptUrls.length);
+  for (const scriptUrl of scriptUrls) {
+    const scriptResponse = await fetch(scriptUrl, {
+      headers: { "user-agent": "PLAYGROUND-CareerFile-Research/1.0" }
+    });
+    if (!scriptResponse.ok) continue;
+    const source = await scriptResponse.text();
+    for (const term of ["careerTotals", "clubSeasons", "pl-history.v2.json"]) {
+      const at = source.indexOf(term);
+      if (at >= 0) {
+        console.log("SCRIPT_SCHEMA_CONTEXT", scriptUrl, term,
+          source.slice(Math.max(0, at - 450), Math.min(source.length, at + 900)));
+      }
+    }
+  }
+}
+
