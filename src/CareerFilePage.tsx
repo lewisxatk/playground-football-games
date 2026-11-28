@@ -251,6 +251,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     let options:Candidate[]=[];
     let selectedPool=desiredPool;
     staticPlayers.current.clear();
+    setLoadingPlayer(true);
     if(desiredPool==="PREMIER_LEAGUE"){
       options=deck.filter(candidate=>candidate.poolCategory==="PREMIER_LEAGUE"&&fits(candidate,selectedMode));
     }else{
@@ -268,13 +269,12 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
         options=deck.filter(candidate=>candidate.poolCategory==="PREMIER_LEAGUE"&&fits(candidate,selectedMode));
       }
     }
-    if(!options.length)throw new Error("There are no verified player files for "+selectedMode+". Choose another difficulty.");
+    if(!options.length){setLoadingPlayer(false);throw new Error("There are no verified player files for "+selectedMode+". Choose another difficulty.");}
     const unused=options.filter(candidate=>!seen.current.has(candidate.id));
     const source=dailyDraw?options:(unused.length?unused:options);
     if(!dailyDraw&&!unused.length){seen.current.clear();persistRecentCareerIds(seen.current);setNote("You have worked through this player pool. The draw has restarted.");}
     const draw=shuffleCandidates(source,Math.min(180,source.length),dailyDraw?dailySeed+":"+selectedPool:undefined);
-    setLoadingPlayer(true);
-    setNote("Picking a "+(selectedPool==="PREMIER_LEAGUE"?"former Premier League":selectedPool==="EFL_LEGEND"?"EFL legend":"world legend")+" career…");
+    setNote("Picking a "(selectedPool==="PREMIER_LEAGUE"?"former Premier League":selectedPool==="EFL_LEGEND"?"EFL legend":"world legend")+" career…");
     try{
       const eligible=selectedPool==="PREMIER_LEAGUE"
         ?getQuizFcStatEligibleCandidates(draw)
@@ -283,7 +283,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
       let lastProblem="No player in this category had enough sourced career rows.";
       for(const choice of ranked.slice(0,36)){
         try{
-          const record=staticPlayers.current.get(choice.id)??(choice.source==="quizfc-pl"?await getQuizFcCareerPlayer(choice.id):await getQuizFcCareerPlayer(choice.id));
+          const record=staticPlayers.current.get(choice.id)??await getQuizFcCareerPlayer(choice.id);
           const timeline=makeRows(record);
           const usable=selectedPool==="PREMIER_LEAGUE"?hasOneUsablePLRow(timeline):hasTwoUsableCareerRows(timeline);
           if(!timeline.length||!usable){lastProblem="This career did not have enough usable, sourced club records.";continue;}
