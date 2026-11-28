@@ -22,3 +22,5 @@ jobs:
           node-version: 22
       - name: Inspect published Quiz FC dataset schema
         run: node scripts/inspect-career-source.mjs
+
+# Research-only workflow; this does not feed production data.
