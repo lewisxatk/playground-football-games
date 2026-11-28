@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { motion } from "motion/react";
-import { getCandidates, getPlayer, getStatEligibleCandidates, type Candidate, type LeagueCode, type Player, type ArchiveGamePlayer, type CareerDifficulty } from "./careerFileData";
+import { getCandidates, getPlayer, getStatEligibleCandidates, getArchiveGamePlayersByNames, type Candidate, type LeagueCode, type Player, type ArchiveGamePlayer, type CareerDifficulty, type PlayerPoolCategory } from "./careerFileData";
 import { getQuizFcCareerCandidates, getQuizFcCareerPlayer, getQuizFcStatEligibleCandidates } from "./quizFcCareerData";
 import { getStaticArchivePlayers } from "./useArchivePlayers";
 import "./career-file.css";
@@ -53,7 +53,7 @@ function archivePlayerToCareerFile(raw:ArchiveGamePlayer):Player{
    wikipediaUrl:article?"https://en.wikipedia.org/wiki/"+encodeURIComponent(article.replace(/ /g,"_")):""
  };
 }
-function archivePlayerCandidate(player:Player,raw:ArchiveGamePlayer):Candidate{
+function archivePlayerCandidate(player:Player,raw:ArchiveGamePlayer,poolCategory:PlayerPoolCategory):Candidate{
  const country=clean(raw.currentCountry??"");
  const league=clean(raw.currentLeague??"");
  const normalisedLeague=league.replace(/[^a-z]/g,"");
@@ -70,10 +70,27 @@ function archivePlayerCandidate(player:Player,raw:ArchiveGamePlayer):Candidate{
    spells:player.spells.length,
    clubs:new Set(player.spells.map(spell=>spell.clubQid||clean(spell.clubLink||spell.club)).filter(Boolean)).size,
    statSeasons:raw.seasons??0,
-   region
+   region, source:"openfootballbase", poolCategory
  };
 }
 
+const EFL_LEGEND_NAMES = [
+ "Bartosz Bialkowski","Richard Keogh","Aden Flint","Tom Lees","Jed Wallace","Lewis McGugan",
+ "Paul McKenna","Sean Scannell","Fernando Forestieri","Lee Trundle","Ross McCormack",
+ "Britt Assombalonga","Dele Adebola","Will Grigg","Billy Paynter","Brett Pitman",
+ "Robin Friday","Steve Fletcher","Simon Garner","Graham Ford","Geoff Bradford",
+ "Wilf Kirkham","Dean Lewington","Viktor Gyokeres","Viktor Gyökeres"
+];
+const WORLD_LEGEND_NAMES = [
+ "Lionel Messi","Diego Maradona","Zinedine Zidane","Ronaldinho","Xavi","Andres Iniesta",
+ "Andrés Iniesta","Paolo Maldini","Gianluigi Buffon","Andrea Pirlo","Francesco Totti",
+ "Alessandro Del Piero","Kaka","Kaká","Ronaldo","Ronaldo Nazario","Ronaldo Luís Nazário de Lima",
+ "Pele","Pelé","Johan Cruyff","Franz Beckenbauer","Eusebio","Eusébio","Michel Platini",
+ "Roberto Baggio","Hristo Stoichkov","Luis Figo","Luís Figo","Romario","Romário","Zico",
+ "Iker Casillas","Raul","Raúl","Juan Roman Riquelme","Juan Román Riquelme","Gabriel Batistuta",
+ "Miroslav Klose","Lothar Matthaus","Lothar Matthäus","Rivaldo","Neymar","Karim Benzema",
+ "Robert Lewandowski","Luka Modric","Luka Modrić"
+];
 const MODES: { name:Mode; note:string; colour:string }[] = [
   {name:"EASY",note:"Well-known Premier League careers and major clubs",colour:"lime"},
   {name:"MEDIUM",note:"Established Premier League players with less obvious paths",colour:"blue"},
@@ -126,6 +143,7 @@ function makeRows(p:Player):Row[]{
    const firstYear=start??(knownYears.length?Math.min(...knownYears):null);
    const lastYear=spell.end??(knownYears.length?Math.max(...knownYears):firstYear);
    const total=(key:"apps"|"goals"|"assists")=>{
+     if(p.statsScope&&key!=="assists")return spell[key]??null;
      if(!matchingStats.length||matchingStats.some(stat=>stat[key]===null||stat[key]===undefined))return null;
      if(key==="apps"&&matchingStats.some(stat=>stat.statsLevel!==undefined&&stat.statsLevel!=="full"))return null;
      if(key==="goals"&&matchingStats.some(stat=>stat.statsLevel==="none"))return null;
@@ -140,7 +158,7 @@ function makeRows(p:Player):Row[]{
      apps:total("apps"),
      goals:total("goals"),
      assists:total("assists"),
-     covered:matchingStats.length>0
+     covered:matchingStats.length>0||(p.statsScope===undefined&&(spell.apps!==null||spell.goals!==null))
    });
  }
  return rows.filter(row=>row.club.trim().length>0);
@@ -174,8 +192,11 @@ function positionLabel(raw:string){
   if(/FW|FORWARD|STRIKER|ATTACK|^ATT$/.test(value))return "Forward";
   return raw.trim();
 }
-function hasTwoUsableClubRows(rows:Row[]):boolean{
- const clubs=new Set(rows.filter(row=>row.covered&&row.apps!==null&&row.goals!==null).map(row=>row.clubKey));
+function hasOneUsablePLRow(rows:Row[]):boolean{
+ return rows.some(row=>row.covered&&row.apps!==null&&row.goals!==null);
+}
+function hasTwoUsableCareerRows(rows:Row[]):boolean{
+ const clubs=new Set(rows.filter(row=>row.covered&&(row.apps!==null||row.goals!==null)).map(row=>row.clubKey));
  return clubs.size>=2;
 }
 function matches(input:string,p:Player){
@@ -229,95 +250,70 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
   const staticPlayers=useRef<Map<string,Player>>(new Map());
 
   const newPlayer=useCallback(async(deck:Candidate[],selectedMode:Mode)=>{
-    const options=deck.filter(c=>fits(c,selectedMode));
-    if(!options.length)throw new Error("There are no candidate files for "+selectedMode+" in this league selection. Choose another difficulty.");
     const dailyDraw=!dailyDone;
     const dailySeed="PLAYGROUND-CAREER-FILE:"+new Date().toISOString().slice(0,10)+":"+selectedMode+":"+league;
-    const unused=options.filter(c=>!seen.current.has(c.id));
-    const source=dailyDraw?options:(unused.length?unused:options);
-    if(!dailyDraw&&!unused.length){seen.current.clear();persistRecentCareerIds(seen.current);setNote("You have worked through this difficulty and league pool. The player draw has restarted.");}
-    // Candidate selection and visible clues stay inside the selected competition.
-    // The public game currently exposes Premier League only.
-    const balancedSource=league==="ALL"?(()=>{
-      const english=source.filter(candidate=>candidate.region==="ENGLISH");
-      const international=source.filter(candidate=>candidate.region==="INTERNATIONAL");
-      if(english.length>=54&&international.length>=18){
-        return [
-          ...shuffleCandidates(english,54,dailyDraw?dailySeed+":EN":undefined),
-          ...shuffleCandidates(international,18,dailyDraw?dailySeed+":INT":undefined)
-        ];
+    const slot=dailyDraw?stableHash(dailySeed)%100:round%100;
+    const desiredPool:PlayerPoolCategory=slot<95?"PREMIER_LEAGUE":slot<98?"EFL_LEGEND":"WORLD_LEGEND";
+    let options:Candidate[]=[];
+    staticPlayers.current.clear();
+    if(desiredPool==="PREMIER_LEAGUE"){
+      options=deck.filter(candidate=>candidate.poolCategory==="PREMIER_LEAGUE"&&fits(candidate,selectedMode));
+    }else{
+      const names=desiredPool==="EFL_LEGEND"?EFL_LEGEND_NAMES:WORLD_LEGEND_NAMES;
+      setNote("Loading the curated "+(desiredPool==="EFL_LEGEND"?"EFL legends":"world legends")+" files…");
+      const archiveRows=await getArchiveGamePlayersByNames(names);
+      const mapped=archiveRows.map(raw=>archivePlayerToCareerFile(raw));
+      staticPlayers.current=new Map(mapped.map(player=>[player.id,player]));
+      options=archiveRows.map(raw=>archivePlayerCandidate(staticPlayers.current.get(raw.id)!,raw,desiredPool))
+        .filter(candidate=>fits(candidate,selectedMode))
+        .filter(candidate=>{const player=staticPlayers.current.get(candidate.id);return Boolean(player&&hasTwoUsableCareerRows(makeRows(player)));});
+      if(!options.length){
+        staticPlayers.current.clear();
+        options=deck.filter(candidate=>candidate.poolCategory==="PREMIER_LEAGUE"&&fits(candidate,selectedMode));
       }
-      return source;
-    })():source;
-    // The first file of each UTC day is deterministic for everyone on the same
-    // difficulty/league. Subsequent files are random practice and avoid repeats.
-    // Keep the phone draw bounded: 72 candidates and at most six full lookups.
-    const dailyCandidates=dailyDraw?[...balancedSource].sort((a,b)=>a.id.localeCompare(b.id)):balancedSource;
-    const draw=shuffleCandidates(dailyCandidates,180,dailyDraw?dailySeed:undefined);
+    }
+    if(!options.length)throw new Error("There are no verified player files for "+selectedMode+". Choose another difficulty.");
+    const unused=options.filter(candidate=>!seen.current.has(candidate.id));
+    const source=dailyDraw?options:(unused.length?unused:options);
+    if(!dailyDraw&&!unused.length){seen.current.clear();persistRecentCareerIds(seen.current);setNote("You have worked through this player pool. The draw has restarted.");}
+    const draw=shuffleCandidates(source,Math.min(180,source.length),dailyDraw?dailySeed+":"+desiredPool:undefined);
     setLoadingPlayer(true);
-    setNote("Picking a fresh file from "+options.length.toLocaleString("en-GB")+" sampled careers in this difficulty…");
+    setNote("Picking a "+(desiredPool==="PREMIER_LEAGUE"?"former Premier League":desiredPool==="EFL_LEGEND"?"EFL legend":"world legend")+" career…");
     try{
-      const eligible=staticPlayers.current.size
-        ?draw.filter(candidate=>{
-          const cached=staticPlayers.current.get(candidate.id);
-          return Boolean(cached&&hasTwoUsableClubRows(makeRows(cached)));
-        })
-        :draw[0]?.source==="quizfc-pl"?getQuizFcStatEligibleCandidates(draw):await getStatEligibleCandidates(draw,league);
-      const rankByCoverage=(items:Candidate[])=>[...items].sort((a,b)=>b.statSeasons-a.statSeasons||a.id.localeCompare(b.id));
-      const englishEligible=rankByCoverage(eligible.filter(candidate=>candidate.region==="ENGLISH"));
-      const internationalEligible=rankByCoverage(eligible.filter(candidate=>candidate.region==="INTERNATIONAL"));
-      const ranked=league==="ALL"&&englishEligible.length>=27&&internationalEligible.length>=9
-        ?[...englishEligible.slice(0,27),...internationalEligible.slice(0,9)]
-        :rankByCoverage(eligible);
-      let lastProblem="No candidate in this draw had two complete season-stat rows.";
-      for(const choice of ranked.slice(0,staticPlayers.current.size?36:12)){
+      const eligible=desiredPool==="PREMIER_LEAGUE"
+        ?getQuizFcStatEligibleCandidates(draw)
+        :draw.filter(candidate=>{const cached=staticPlayers.current.get(candidate.id);return Boolean(cached&&hasTwoUsableCareerRows(makeRows(cached)));});
+      const ranked=[...eligible].sort((a,b)=>b.statSeasons-a.statSeasons||a.id.localeCompare(b.id));
+      let lastProblem="No player in this category had enough sourced career rows.";
+      for(const choice of ranked.slice(0,36)){
         try{
           const record=staticPlayers.current.get(choice.id)??(choice.source==="quizfc-pl"?await getQuizFcCareerPlayer(choice.id):await getPlayer(choice.id,league));
           const timeline=makeRows(record);
-          if(!timeline.length||!hasTwoUsableClubRows(timeline)){lastProblem="This career did not have two complete, matching season-stat clues.";continue;}
+          const usable=desiredPool==="PREMIER_LEAGUE"?hasOneUsablePLRow(timeline):hasTwoUsableCareerRows(timeline);
+          if(!timeline.length||!usable){lastProblem="This career did not have enough usable, sourced club records.";continue;}
           seen.current.add(choice.id);persistRecentCareerIds(seen.current);
-          setPlayer(record);setRows(timeline);setRevealed([]);
-          setOpened(note?[note.id]:[]);setRound(n=>n+1);setStatus("playing");setNote("");
+          setPlayer(record);setRows(timeline);setRevealed([]);setOpened([]);
+          setRound(n=>n+1);setStatus("playing");setNote("");setGuess("");setAttempts(0);setScore(1000);
           return;
-        }catch(problem){
-          lastProblem=problem instanceof Error?problem.message:"Could not read this player's career file.";
-        }
+        }catch(problem){lastProblem=problem instanceof Error?problem.message:"Could not read this player's career file.";}
       }
       throw new Error("This draw did not contain a complete player file. Choose Next Player to draw again. "+lastProblem);
     }finally{setLoadingPlayer(false);}
-  },[dailyDone,league]);
-
+  },[dailyDone,league,round]);
   useEffect(()=>{
     let live=true;setBusy(true);setError("");
     setPlayer(null);setRows([]);setOpened([]);setRevealed([]);
-    setGuess("");setAttempts(0);setScore(1000);setStatus("playing");setNote("");
+    setGuess("");setAttempts(0);setScore(1000);setStatus("playing");setNote("");setRound(0);
     (async()=>{
-      const isDaily=!dailyDone;
-      const seed=isDaily
-        ?"PLAYGROUND-CAREER-FILE:"+new Date().toISOString().slice(0,10)+":"+mode+":"+league
-        :"PLAYGROUND-CAREER-FILE:PRACTICE:"+String(Date.now())+":"+mode+":"+league;
-      if(league==="ALL"){
-        const rawPlayers=await getStaticArchivePlayers(seed,3200);
-        if(live&&rawPlayers?.length){
-          const mapped=rawPlayers.map(archivePlayerToCareerFile);
-          staticPlayers.current=new Map(mapped.map(player=>[player.id,player]));
-          const list=mapped.map(player=>archivePlayerCandidate(player,rawPlayers.find(raw=>raw.id===player.id)!));
-          setPool(list);
-          await newPlayer(list,mode);
-          return;
-        }
-      }
-      staticPlayers.current.clear();
-      const list=league==="ENG-PL"?await getQuizFcCareerCandidates():await getCandidates(league,mode);
+      const list=await getQuizFcCareerCandidates();
       if(!live)return;
+      staticPlayers.current.clear();
       setPool(list);
       await newPlayer(list,mode);
-    })()
-      .catch(e=>{if(live)setError(e instanceof Error?e.message:"Could not open the player archive.");})
+    })().catch(e=>{if(live)setError(e instanceof Error?e.message:"Could not open the player archive.");})
       .finally(()=>{if(live)setBusy(false);});
     return()=>{live=false;};
-  },[league,mode,newPlayer]);
-
+  },[mode,newPlayer]);
   const hints=useMemo(()=>player?careerHint(player):[],[player]);
   const goalsAvailable=rows.some(row=>row.goals!==null);
   const assistsAvailable=rows.some(row=>row.assists!==null);
