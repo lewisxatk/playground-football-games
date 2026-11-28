@@ -87,15 +87,18 @@
 
 ### 3.1 Career File
 - [~] Faster bounded player draw committed; live usability and repeat avoidance still require real-device verification.
-- [ ] Connect a substantially larger, diversified candidate source so Easy/Medium/Hard/Cult Hero/Extreme stop repeating a tiny set.
-- [ ] Persist a recent-player exclusion list (at least across page refreshes on the same device) and only recycle after the eligible pool has been exhausted.
-- [ ] Confirm difficulty tiers produce genuinely appropriate players, with visible sample counts and balanced coverage.
+- [~] Candidate selection, difficulty totals, season-stat preflight and displayed timeline now use the same Premier League club identity filter on branch `fix/career-file-premier-league-only`. The previous code admitted a player through one Premier League club, then counted and displayed every career spell including overseas clubs.
+- [~] Difficulty bands are now mutually exclusive and are calculated from appearances/clubs at qualifying Premier League clubs: Easy 450+ appearances; Medium 250–449; Hard 100–249; Extreme 20–99. All require at least two clubs. Candidate counts and a gameplay sample still need verification.
+- [~] Invalid dated spells (missing start year or end year earlier than start year) are excluded from the database draw. A same-year spell can still be legitimate source data and must not be automatically treated as a date error.
+- [ ] Confirm the available candidate counts for all four difficulty levels against the live archive and adjust thresholds only from measured coverage.
 - [ ] Show two free season clues with club, season, appearances and goals only when both statistics are present.
 - [ ] Make season rows and club spells readable, with clear gaps and unavailable statistics.
 - [ ] Keep purchasable position, nationality, career dates, club count, appearances/goals, international record and transfer-fee hints.
 - [ ] Ensure each hint has a clear point cost; failed/unavailable data lookups must not deduct points.
-- [ ] Fix mobile form sizing/keyboard behaviour and all low-contrast text.
+- [x] Mobile form sizing/keyboard behaviour has an iPhone Safari focus-zoom guard; continue real-device review for contrast and layout.
+- [ ] Run CI/build, deploy the change, then test at least 20 consecutive rounds across all four difficulties and check for foreign clubs, invalid dates and duplicate draws.
 - [ ] Test thousands of draws across every difficulty/league filter and check duplicate rate.
+
 
 ### 3.2 Who’s Got More? / Lowball
 - [x] Hide totals until the player chooses; reveal the correct answer after the choice.
