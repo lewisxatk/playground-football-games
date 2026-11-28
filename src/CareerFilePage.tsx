@@ -82,8 +82,9 @@ const MODES: { name:Mode; note:string; colour:string }[] = [
 ];
 
 const LEAGUES: {label:string;code:LeagueCode}[] = [
-  {label:"All top five",code:"ALL"},{label:"Premier League",code:"ENG-PL"},{label:"La Liga",code:"ESP-LL"},
-  {label:"Serie A",code:"ITA-SA"},{label:"Bundesliga",code:"DEU-BL"},{label:"Ligue 1",code:"FRA-L1"}
+  // Career File is English-football-first. Keep the public selector on the
+  // Premier League until the EFL career archive has its own validated filters.
+  {label:"Premier League",code:"ENG-PL"}
 ];
 const clean=(s:string)=>s.toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
 const yearOf=(s:string):number|null=>{const m=s.match(/(?:19|20)\d{2}/);return m?Number(m[0]):null;};
@@ -224,7 +225,7 @@ function careerHint(p:Player):Hint[]{
 
 export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyDone?:boolean;onDailyComplete?:(score:number)=>void}){
   const [mode,setMode]=useState<Mode>("EASY");
-  const [league,setLeague]=useState<LeagueCode>("ALL");
+  const [league,setLeague]=useState<LeagueCode>("ENG-PL");
   const [pool,setPool]=useState<Candidate[]>([]);
   const [player,setPlayer]=useState<Player|null>(null);
   const [rows,setRows]=useState<Row[]>([]);
@@ -250,7 +251,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
 
   const newPlayer=useCallback(async(deck:Candidate[],selectedMode:Mode)=>{
     const options=deck.filter(c=>fits(c,selectedMode));
-    if(!options.length)throw new Error("There are no candidate files for "+selectedMode+" in this league selection. Try All Top Five or another difficulty.");
+    if(!options.length)throw new Error("There are no candidate files for "+selectedMode+" in this league selection. Choose another difficulty.");
     const dailyDraw=!dailyDone;
     const dailySeed="PLAYGROUND-CAREER-FILE:"+new Date().toISOString().slice(0,10)+":"+selectedMode+":"+league;
     const unused=options.filter(c=>!seen.current.has(c.id));
