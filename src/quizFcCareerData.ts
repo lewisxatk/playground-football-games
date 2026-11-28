@@ -244,7 +244,7 @@ export async function getQuizFcCareerPlayer(id: string): Promise<Player> {
     return {
       club: club.name, clubLink: club.id, clubQid: "",
       season: seasonLabel(row.seasonEndYear),
-      apps: row.apps, goals: row.goals, assists: row.assists, seq: row.seq
+      apps: row.apps, goals: row.goals, assists: row.assists, seq: row.seq, statsLevel: row.statsLevel
     };
   });
   const total = data.totalsByPlayer.get(playerIndex);
