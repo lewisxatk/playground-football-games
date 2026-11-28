@@ -20,6 +20,15 @@ for (const key of ["competitions", "seasons", "clubs", "players", "stats", "club
   if (Array.isArray(rows) && rows.length) {
     console.log("SAMPLE_ROW", key, JSON.stringify(rows[0]));
     if (rows.length > 1) console.log("SAMPLE_ROW_2", key, JSON.stringify(rows[1]));
+    if (key === "players") {
+      for (const index of [394, 558]) console.log("PLAYER_INDEX_SAMPLE", index, JSON.stringify(rows[index] ?? null));
+    }
+    if (key === "careerTotals") {
+      for (const index of [394, 558]) console.log("CAREER_TOTAL_INDEX_SAMPLE", index, JSON.stringify(rows[index] ?? null));
+    }
+    if (key === "stats") {
+      for (const index of [0, 1, 2, 3]) console.log("STAT_INDEX_SAMPLE", index, JSON.stringify(rows[index] ?? null));
+    }
   }
 }
 
