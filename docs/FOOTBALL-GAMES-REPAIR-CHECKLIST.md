@@ -86,3 +86,5 @@
 **Next action:** poll GitHub Actions run `46085891374`. If it succeeds, inspect its build report and generated pool counts, then mark the automated checks above. If it fails, fix the first failing stage before making unrelated changes.
 
 Keep this checklist current after every commit. Do not claim a successful build or a 500+ runtime pool until the evidence is visible.
+
+- [x] Keep the CC0 Wikidata career snapshot at one 50,000-statement page (about 9 MB in the last committed manifest) for Cult Hero; Link Up now uses the separate 60k-player season archive, so a 200k-row career shard is unnecessary and exceeded the 24 MB Pages asset cap. Commit: `336c9b7705`.
