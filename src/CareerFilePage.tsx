@@ -315,10 +315,6 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     setPlayer(null);setRows([]);setOpened([]);setRevealed([]);setFreeRows([]);setFreeNote(null);setTransfers(null);setFeesError("");
     setGuess("");setAttempts(0);setScore(1000);setStatus("playing");setNote("");
     (async()=>{
-      const isDaily=!dailyDone;
-      const seed=isDaily
-        ?"PLAYGROUND-CAREER-FILE:"+new Date().toISOString().slice(0,10)+":"+mode+":"+league
-        :"PLAYGROUND-CAREER-FILE:PRACTICE:"+String(Date.now())+":"+mode+":"+league;
       const [rawPlayers,clubResponse]=await Promise.all([
         getStaticArchivePlayers("ENGLISH-FOOTBALL-ARCHIVE",3200),
         fetch("/data/football-knowledge-football-grid-clubs.cc0.json",{cache:"force-cache"})
