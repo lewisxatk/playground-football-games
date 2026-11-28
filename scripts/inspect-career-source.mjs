@@ -24,7 +24,7 @@ for (const key of ["competitions", "seasons", "clubs", "players", "stats", "club
       for (const index of [394, 558]) console.log("PLAYER_INDEX_SAMPLE", index, JSON.stringify(rows[index] ?? null));
     }
     if (key === "careerTotals") {
-      for (const index of [394, 558]) console.log("CAREER_TOTAL_INDEX_SAMPLE", index, JSON.stringify(rows[index] ?? null));
+      for (const index of [0, 394, 558]) console.log("CAREER_TOTAL_BY_PLAYER", index, JSON.stringify(rows.find((row) => row[0] === index) ?? null));
     }
     if (key === "stats") {
       for (const index of [0, 1, 2, 3]) console.log("STAT_INDEX_SAMPLE", index, JSON.stringify(rows[index] ?? null));
