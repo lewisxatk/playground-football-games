@@ -248,7 +248,7 @@ async function fetchWikidataCareers(players){
  let lastError=null;
  for(const endpoint of endpoints){
   try{
-   const pageSize=50000,maxPages=4,collected=[];
+   const pageSize=50000,maxPages=1,collected=[];
    for(let page=0;page<maxPages;page++){
     const url=new URL(endpoint);
     const query=queryBase+" ORDER BY ?player ?statement LIMIT "+pageSize+" OFFSET "+(page*pageSize);
