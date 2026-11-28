@@ -189,9 +189,9 @@ console.log("PREVIEW_PROXY_COUNTS", JSON.stringify({
   clubs: previewData.clubs?.length ?? 0,
   clubSeasons: previewData.clubSeasons?.length ?? 0
 }));
-const pageResponse = await fetch(previewBase + "/career-file", {
+const previewPageResponse = await fetch(previewBase + "/career-file", {
   headers: { "user-agent": "PLAYGROUND-CareerFile-Preview-QA/1.0" },
   cache: "no-store"
 });
-console.log("PREVIEW_CAREER_PAGE_HTTP", pageResponse.status);
-if (!pageResponse.ok) throw new Error("Career File preview page failed: HTTP " + pageResponse.status);
+console.log("PREVIEW_CAREER_PAGE_HTTP", previewPageResponse.status);
+if (!previewPageResponse.ok) throw new Error("Career File preview page failed: HTTP " + previewPageResponse.status);
