@@ -299,7 +299,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     const source=dailyDraw?options:(unused.length?unused:options);
     if(!dailyDraw&&!unused.length){seen.current.clear();persistRecentCareerIds(seen.current);setNote("You have worked through this player pool. The draw has restarted.");}
     const draw=shuffleCandidates(source,Math.min(180,source.length),dailyDraw?dailySeed+":"+selectedPool:undefined);
-    setNote("Picking a "+(selectedPool==="PREMIER_LEAGUE"?"former Premier League":selectedPool==="EFL_LEGEND"?"EFL legend":"world legend")+" career…");
+    setNote("Picking a "+(selectedPool==="PREMIER_LEAGUE"?"Premier League":selectedPool==="EFL_LEGEND"?"EFL legend":"world legend")+" career…");
     try{
       const eligible=selectedPool==="PREMIER_LEAGUE"
         ?getQuizFcStatEligibleCandidates(draw)
@@ -397,7 +397,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
     {dailyDone&&<div className="cf-daily-complete">TODAY'S CAREER FILE IS BANKED · NEXT FILES ARE PRACTICE</div>}
     <section className="cf-controlbar cf-pool-mix">
       <div className="cf-control-title"><span>01 / PLAYER DATABASE</span><strong>THREE FOOTBALL WORLDS. ONE DRAW.</strong></div>
-      <div className="cf-pool-mix-items"><span><b>95%</b> PREMIER LEAGUE CAREERS</span><span><b>3%</b> EFL LEGENDS</span><span><b>2%</b> WORLD LEGENDS</span></div>
+      <div className="cf-pool-mix-items"><span><b>95%</b> CURRENT + FORMER PREMIER LEAGUE</span><span><b>3%</b> EFL LEGENDS</span><span><b>2%</b> WORLD LEGENDS</span></div>
     </section>
     <section className="cf-mode-area">
       <div className="cf-mode-title"><span>02 / SET THE DIFFICULTY</span><span>THE HARDER THE FILE, THE LESS OBVIOUS THE NAME</span></div>
@@ -462,6 +462,7 @@ export default function CareerFilePage({dailyDone=false,onDailyComplete}:{dailyD
         <p>Player draw is weighted across three pools: 95% players with recorded Premier League careers (current and former), 3% EFL legends who never played in the Premier League, and 2% global legends from other leagues. The Premier League core uses Quiz FC PL history data (1992/93 onward). EFL and global legend files are looked up by curated player lists against OpenFootballBase career records, with Wikidata P54 club-membership fallback for EFL-only players not present in the squad-derived archive. Premier League stats are league-only; OpenFootballBase appearances/goals use Wikipedia senior-career infobox totals and are labelled unverified. Wikidata-only careers show club membership/dates where available but no invented appearance or goal totals. Missing figures remain blank. OpenFootballBase is Wikipedia CC BY-SA 4.0 and Wikidata CC0; attribution is provided with the data-source links.</p>
         <a href="https://quiz-fc.com/data/pl-history.v2.json" target="_blank" rel="noreferrer">OPEN PL HISTORY DATA ↗</a>
         <a href="https://github.com/florentfougeres/OpenFootballBase-Data" target="_blank" rel="noreferrer">OPENFOOTBALLBASE CAREER DATA ↗</a>
+        <a href="https://www.wikidata.org/wiki/Property:P54" target="_blank" rel="noreferrer">WIKIDATA CLUB HISTORY ↗</a>
         <a href="https://www.planetfootball.com/lists-and-rankings/amazing-xi-efl-legends-never-played-premier-league" target="_blank" rel="noreferrer">EFL LEGEND SELECTION RESEARCH ↗</a>
         <a href="https://therealefl.co.uk/2025/06/03/legendary-efl-strikers-who-never-played-in-the-premier-league/" target="_blank" rel="noreferrer">EFL PLAYER RESEARCH ↗</a>
         <a href="https://quiz-fc.com/data/ATTRIBUTION.md" target="_blank" rel="noreferrer">DATA ATTRIBUTION / CC BY-SA 4.0 ↗</a>
