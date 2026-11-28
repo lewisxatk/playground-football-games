@@ -18,4 +18,5 @@ jobs:
       - run: npm install
       - run: npm run build:questions
       - run: npm run validate:data
+      - run: npm run audit:football-grid
       - run: npm run build
