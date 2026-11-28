@@ -291,7 +291,7 @@ function LowballPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score
  };
  const restart=(newMode:Mode=mode)=>{
    setStep(0);setScore(0);setPick(null);setRunDone(false);setUsed([]);
-   if(newMode==="practice")setPracticeSeed(String(Math.floor(Math.random()*1e12)));
+   if(newMode==="practice"){setPracticeSeed(String(Math.floor(Math.random()*1e12)));setPracticeRerolls(0);}
  };
  return <Frame account={account} game="lowball" eyebrow="STAT FACE-OFF / QUICK FIRE" title="WHO'S GOT MORE?" description="Two players. One number. Pick the bigger recorded league goal total. Your streak gets harder every five correct answers." number="01" mode={mode} setMode={m=>{setMode(m);restart(m);}}>
   {done&&mode==="daily"?<Success title="DAILY DONE." detail="Today's ten-duel challenge is banked. Practice runs are unlimited." button="PRACTICE" onAgain={()=>{setMode("practice");restart("practice");}}/>:
@@ -752,6 +752,7 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
  const [active,setActive]=useState<number|null>(null);
  const [guess,setGuess]=useState("");
  const [practiceSeed,setPracticeSeed]=useState(()=>String(Math.floor(Math.random()*1e12)));
+ const [practiceRerolls,setPracticeRerolls]=useState(0);
  const [gridNotice,setGridNotice]=useState("");
  const [attempts,setAttempts]=useState(0);
  const [score,setScore]=useState(1000);
@@ -763,6 +764,19 @@ function GridPage({account,onDaily}:{account:Account;onDaily:(id:GameId,score:nu
  const {players:archivePlayers,loading,error,retry}=useArchivePlayers(true,mode==="daily"?ARCHIVE_POOL_SEED:ARCHIVE_POOL_SEED+":"+practiceSeed,1600);
  const playerPool=useMemo(()=>archivePlayers.map(archivePlayerToGamePlayer),[archivePlayers]);
  const puzzle=useMemo(()=>playerPool.length>=40?buildGridPuzzle(playerPool,difficulty,kind,seed):null,[playerPool,difficulty,kind,seed]);
+ const boardSignature=puzzle?kind+"|"+[...puzzle.rows].map(normalise).sort().join(",")+"|"+[...puzzle.columns].map(normalise).sort().join(","):"";
+ useEffect(()=>{
+   if(mode!=="practice"||!boardSignature)return;
+   let history:string[]=[];
+   try{const saved=JSON.parse(localStorage.getItem("playground.grid.recent-boards.v1")??"[]");if(Array.isArray(saved))history=saved.filter((value):value is string=>typeof value==="string");}catch{/* private browsing or corrupt local history */}
+   if(history.includes(boardSignature)&&practiceRerolls<8){
+     setPracticeRerolls(value=>value+1);
+     setPracticeSeed(String(Math.floor(Math.random()*1e12)));
+     return;
+   }
+   try{localStorage.setItem("playground.grid.recent-boards.v1",JSON.stringify([...history.filter(value=>value!==boardSignature),boardSignature].slice(-GRID_VARIANT_TARGET)));}catch{/* practice remains playable without local history */}
+   if(practiceRerolls)setPracticeRerolls(0);
+ },[mode,boardSignature,practiceRerolls]);
  const maxAttempts=GRID_ATTEMPTS[difficulty];
  const finish=(finalScore:number)=>{
    setFinished(true);setActive(null);
