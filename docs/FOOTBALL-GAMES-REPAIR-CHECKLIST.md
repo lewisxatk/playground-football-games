@@ -40,7 +40,8 @@ Rule: after every successful GitHub commit, update this checklist in the next co
 - [x] Fix the Grid retry button to reload the archive data instead of calling a stale, undefined retry handler. Commit: `f7d6f36f0e09949347ece76749a2660a68f0322b`.
 - [ ] Re-run CC0 database generation and confirm the corrected club match produces at least 500 valid Football Grid packs; previous run failed with zero packs.
 - [x] Link Up: generate ten unique runtime questions from the static OpenFootballBase season archive, requiring one shared teammate with overlapping dated spells at both English clubs; Premier League first, other English leagues as fallback. Commits: `6433666ce7`, `0b0badf03c`, `3aa6e8811a`.
-- [x] Link Up: display the exact overlapping year windows, six answer options, four progressive hints, three guesses plus an extra attempt, and a skip that does not reveal the answer. In-game source credit: OpenFootballBase-Data, CC BY-SA 4.0.
+- [x] Link Up: display the exact overlapping year windows, difficulty-scaled answer options, four progressive hints, three guesses plus an extra attempt, and a skip that does not reveal the answer. In-game source credit: OpenFootballBase-Data, CC BY-SA 4.0.
+- [x] Polish Link Up mobile evidence and player cards so labels do not run together on narrow screens. Commit: `5ba38acb59`.
 - [x] Keep Link Up answer choices English-football based, with unique displayed names and no endpoint/answer duplicates. Commits: `d29c328110`, `3d2ffd924e`.
 - [ ] Verify the runtime archive reliably produces ten unique links on fresh samples and remains responsive on mobile.
 - [x] Link Up database pool: replace the single 50,000-row Wikidata career query with up to four deterministic 50,000-row pages (ORDER BY player and statement), retaining P27 nationality labels and deduplicating statements. Commit: `dbb6a8fcc3`.
@@ -84,7 +85,7 @@ The full CC0 database build passed the Football Grid stage after moving it to th
 Latest data-generator fixes: `2713f3da463fe81e8a77846980ac71da0e51d0a7` (P27 nationality coverage); `0c822718d9` (Strands 500-board fallback); `dbb6a8fcc35bade22960e8bd6fc0f8bc0a920d18` (Wikidata pagination retained as a secondary archive).
 Latest Grid runtime fixes: `18b31b793394ed8808fbe5b97ba08bfc79441f44` (club-name normalization); `720b3fba6e` and `1cf67dd5bf` (static archive + generated club index); `ca2904fc9127738b4db1d6abfdd221a336a80df4` (static-shard retry rotation).
 
-Next action: verify the selector-filter and stricter validator commits with the full CC0 database build; inspect quiz counts, Football Grid pack counts and Link Up sample uniqueness; then audit all games and run the full typecheck/validation/build suite.
+Next action: finish the in-progress CC0 build; inspect generated quiz tier counts, Football Grid pack counts and Link Up sample uniqueness; then run the final site build and audit all games.
 
 - [x] Remove obsolete duplicate Grid builder and normalize dotted club suffixes in active runtime index. Commit: `f4dba2319d2bd2c3ba5cdf8a4aeff10d438052d7`.
 
